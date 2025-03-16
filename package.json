@@ -8,5 +8,8 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "ws": "^8.18.1"
+  }
 }

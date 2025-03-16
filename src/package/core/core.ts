@@ -6,16 +6,16 @@ export class Core {
   round: number = 0;
   turn: number = 0;
 
-  constructor(){
+  constructor() {
     this.id = crypto.randomUUID()
     this.players = [];
   }
 
-  addPlayer(player: Player){
+  entry(player: Player) {
     this.players.push(player)
   }
 
-  async start(){
+  async start() {
     for (this.round = 1; this.round <= 10; this.round++) {
       console.log(`Round ${this.round}`);
       console.log(
@@ -28,7 +28,7 @@ export class Core {
         // TODO: ターン開始処理
         // ...
         console.log(player.draw());
-        
+
 
         // TODO: ターン終了処理
         // ...
