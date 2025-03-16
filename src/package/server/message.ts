@@ -7,6 +7,15 @@ export interface RequestPayload extends BasePayload {
   requestId: string
 }
 
+export interface PlayerEntryPayload extends BasePayload {
+  deck: string[]
+  roomId: string;
+  player: {
+    name: string;
+    id: string;
+  }
+}
+
 export interface Message<T = BasePayload> {
   action: {
     handler: string;

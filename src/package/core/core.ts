@@ -14,6 +14,7 @@ export class Core {
 
   entry(player: Player) {
     this.players.push(player)
+    console.log(this)
   }
 
   async start() {

@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { Room } from "./room/room";
 import { User } from "./room/user";
-import type { Message } from "./message";
+import type { Message, RequestPayload } from "./message";
 
 export class Server {
   private wss: WebSocketServer;
@@ -69,13 +69,25 @@ export class Server {
     switch (message.action.type) {
       case 'open':
         console.log(message)
-        const { payload } = message
-        if ('name' in payload && typeof payload.name === 'string'){
+        const { payload } = message as Message<RequestPayload>
+        if ('name' in payload && typeof payload.name === 'string') {
           const room = new Room(payload.name);
           this.rooms.set(room.id, room);
           this.clientRooms.set(client, room.id);
+
+          const response = {
+            action: {
+              type: 'response',
+              handler: 'client',
+            },
+            payload: {
+              requestId: payload.requestId,
+              roomId: room.id,
+              result: true,
+            }
+          }
+          client.send(JSON.stringify(response))
         }
-        client.send('success.')
         break;
       case 'list':
     }
