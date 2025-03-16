@@ -1,3 +1,4 @@
+import type { Message } from "../server/message";
 import type { Player } from "./class/Player";
 
 export class Core {
@@ -34,5 +35,9 @@ export class Core {
         // ...
       }
     }
+  }
+
+  handleMessage(message: Message){
+    console.log('passed message to Core : type<%s>', message.action.type)
   }
 }

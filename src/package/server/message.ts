@@ -1,11 +1,16 @@
-interface BasePayload {
-  roomId: string;
-  userId: string;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface BasePayload {
+  // 今のところは何もなし
 }
 
-interface Payload extends BasePayload {};
+export interface RequestPayload extends BasePayload {
+  requestId: string
+}
 
-export interface Message {
-  action: string;
-  payload: Payload;
+export interface Message<T = BasePayload> {
+  action: {
+    handler: string;
+    type: string;
+  };
+  payload: T;
 }
