@@ -1,0 +1,32 @@
+# config
+server:
+  port: 3000
+game:
+  system:
+    round: 10
+    draw:
+      top: 2
+      override: 1
+    handicap:
+      # 先攻1Tのドローを無効にする?
+      draw: true
+      # 先攻1Tのアタックを無効にする?
+      attack: true
+      # 後攻1TのCPを1多い状態で始める?
+      cp: true
+    cp:
+      # 1TのCP
+      init: 2
+      # ラウンド毎に増える量
+      increase: 1
+      # increaseによって増やされる最大量
+      max: 7
+      # ラウンドを跨いで持ち越せるか?
+      carryover: false
+  player:
+    max:
+      life: 8
+      hand: 7
+      trigger: 4
+      field: 5
+      cp: 12
