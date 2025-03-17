@@ -2,6 +2,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { Room } from "./room/room";
 import { User } from "./room/user";
 import type { Message, RequestPayload } from "./message";
+import config from "../../config";
 
 export class Server {
   private wss: WebSocketServer;
@@ -9,9 +10,10 @@ export class Server {
   private clientRooms: Map<WebSocket, string> = new Map();
   private clients: Map<WebSocket, User> = new Map();
 
-  constructor(port: number = 4000) {
-    console.log(`PORT: ${port}`)
-    this.wss = new WebSocketServer({ port });
+  constructor(port?: number) {
+    const serverPort = port || config.server.port;
+    console.log(`PORT: ${serverPort}`);
+    this.wss = new WebSocketServer({ port: serverPort });
     this.setupServer();
   }
 

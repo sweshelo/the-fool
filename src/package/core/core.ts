@@ -1,5 +1,6 @@
 import type { Message } from "../server/message";
 import type { Player } from "./class/Player";
+import { config } from "../../config";
 
 export class Core {
   id: string;
@@ -18,7 +19,7 @@ export class Core {
   }
 
   async start() {
-    for (this.round = 1; this.round <= 10; this.round++) {
+    for (this.round = 1; this.round <= config.game.system.round; this.round++) {
       console.log(`Round ${this.round}`);
       console.log(
         'Players:',
@@ -37,7 +38,7 @@ export class Core {
     }
   }
 
-  handleMessage(message: Message){
+  handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type)
   }
 }
