@@ -7,7 +7,7 @@ export interface RequestPayload extends BasePayload {
   requestId: string
 }
 
-export interface PlayerEntryPayload extends BasePayload {
+export interface PlayerEntryPayload extends RequestPayload {
   deck: string[]
   roomId: string;
   player: {
