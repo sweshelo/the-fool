@@ -6,7 +6,8 @@ import type { Message, PlayerEntryPayload } from "../message";
 export class Room {
   id = crypto.randomUUID();
   name: string;
-  core: Core
+  core: Core;
+  players: Map<string, Player> = new Map<string, Player>();
 
   constructor(name: string) {
     this.core = new Core();
@@ -16,7 +17,7 @@ export class Room {
   // メッセージを処理
   handleMessage(message: Message) {
     console.log('handling message on Room: %s', message.action.type)
-    switch(message.action.type){
+    switch (message.action.type) {
       case 'join':
         this.join(message as Message<PlayerEntryPayload>)
     }
@@ -24,9 +25,14 @@ export class Room {
 
   // プレイヤー参加処理
   join(message: Message<PlayerEntryPayload>) {
-    const cards = message.payload.deck.map(ref => new Unit(ref));
-    const player = new Player(message.payload.player.id, message.payload.player.name, cards);
-    this.core.entry(player);
+    if (this.players.size < 2) {
+      const cards = message.payload.deck.map(ref => new Unit(ref));
+      const player = new Player(message.payload.player.id, message.payload.player.name, cards);
+      this.core.entry(player);
+      return true
+    } else {
+      return false
+    }
   }
 
   // ゲーム開始
