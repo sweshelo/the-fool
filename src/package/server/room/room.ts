@@ -26,7 +26,7 @@ export class Room {
   // プレイヤー参加処理
   join(message: Message<PlayerEntryPayload>) {
     if (this.players.size < 2) {
-      const cards = message.payload.deck.map(ref => new Unit(ref));
+      const cards = message.payload.player.deck.map(ref => new Unit(ref));
       const player = new Player(message.payload.player.id, message.payload.player.name, cards);
       this.core.entry(player);
       return true

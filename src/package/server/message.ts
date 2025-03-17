@@ -8,11 +8,11 @@ export interface RequestPayload extends BasePayload {
 }
 
 export interface PlayerEntryPayload extends RequestPayload {
-  deck: string[]
   roomId: string;
   player: {
     name: string;
     id: string;
+    deck: string[]
   }
 }
 

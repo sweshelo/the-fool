@@ -1,6 +1,6 @@
 import { load } from "js-yaml";
 
-const file = Bun.file('../config.yaml')
+const file = Bun.file('./config.yaml')
 const yaml = await file.text();
 
 interface Config {

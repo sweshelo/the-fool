@@ -144,6 +144,7 @@ export class Server {
             const room = this.rooms.get(payload.roomId)
             const result = room?.join(message as Message<PlayerEntryPayload>);
             this.responseJustBoolean(client, message as Message<PlayerEntryPayload>, result ?? false);
+            console.log(result)
           }
         }
         break;
