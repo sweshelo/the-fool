@@ -10,12 +10,14 @@ export interface PlayerAction {
 
 export class Player {
   id: string
+  name: string
   deck: Card[]
   hand: Card[]
   field: Card[]
 
-  constructor(deck: Card[]) {
-    this.id = crypto.randomUUID()
+  constructor(id: string, name: string, deck: Card[]) {
+    this.id = id
+    this.name = name
     this.deck = deck;
     this.hand = []
     this.field = []

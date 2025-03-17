@@ -1,3 +1,4 @@
+import type { Message } from "../server/message";
 import type { Player } from "./class/Player";
 
 export class Core {
@@ -6,16 +7,17 @@ export class Core {
   round: number = 0;
   turn: number = 0;
 
-  constructor(){
+  constructor() {
     this.id = crypto.randomUUID()
     this.players = [];
   }
 
-  addPlayer(player: Player){
+  entry(player: Player) {
     this.players.push(player)
+    console.log(this)
   }
 
-  async start(){
+  async start() {
     for (this.round = 1; this.round <= 10; this.round++) {
       console.log(`Round ${this.round}`);
       console.log(
@@ -28,11 +30,14 @@ export class Core {
         // TODO: ターン開始処理
         // ...
         console.log(player.draw());
-        
 
         // TODO: ターン終了処理
         // ...
       }
     }
+  }
+
+  handleMessage(message: Message){
+    console.log('passed message to Core : type<%s>', message.action.type)
   }
 }
