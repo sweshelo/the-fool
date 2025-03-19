@@ -1,4 +1,4 @@
-import type { Message } from "../server/message";
+import type { Message } from "@/submodule/suit/types/message/message";
 import type { Player } from "./class/Player";
 import { config } from "../../config";
 
