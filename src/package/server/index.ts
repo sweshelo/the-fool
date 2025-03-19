@@ -1,14 +1,16 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { Room } from "./room/room";
 import { User } from "./room/user";
-import type { Message, PlayerEntryPayload, RequestPayload } from "./message";
+
 import { config } from "../../config";
+import type { Message } from "@/submodule/suit/types/message/message";
+import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
 
 class ServerError extends Error { }
 
 export class Server {
   private wss: WebSocketServer;
-  private rooms: Map<string, Room> = new Map();
+  private rooms: Map<string, Room> = new Map(); // roomId <-> Room
   private clientRooms: Map<WebSocket, string> = new Map();
   private clients: Map<WebSocket, User> = new Map();
 
@@ -24,6 +26,7 @@ export class Server {
       console.log('Client connected');
 
       // 新しいユーザーを作成
+      // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
       const user = new User();
       this.clients.set(ws, user);
 
@@ -60,7 +63,7 @@ export class Server {
     return roomId ? this.rooms.get(roomId) : undefined
   }
 
-  public responseJustBoolean<T extends RequestPayload>(client: WebSocket, message: Message<T>, result: boolean){
+  public responseJustBoolean<T extends RequestPayload>(client: WebSocket, message: Message<T>, result: boolean) {
     const response = {
       action: {
         type: 'response',
@@ -76,9 +79,13 @@ export class Server {
 
   private handleMessage(client: WebSocket, message: Message) {
     try {
+      const { payload } = message;
       switch (message.action.handler) {
         case 'room':
-          this.getRoom(client)?.handleMessage(message);
+          if ('roomId' in payload) {
+            const room = this.rooms.get(payload.roomId)
+            room?.handleMessage(message);
+          }
           break;
         case 'core':
           this.getRoom(client)?.core.handleMessage(message);
@@ -112,12 +119,11 @@ export class Server {
   }
 
   private handleMessageForServer(client: WebSocket, message: Message) {
+    const { payload } = message;
     switch (message.action.type) {
       case 'open':
         {
-          console.log(message)
-          const { payload } = message as Message<RequestPayload>
-          if ('name' in payload && typeof payload.name === 'string') {
+          if (payload.type === 'RoomOpen') {
             const room = new Room(payload.name);
             this.rooms.set(room.id, room);
             this.clientRooms.set(client, room.id);
@@ -139,11 +145,12 @@ export class Server {
         }
       case 'join':
         {
-          const { payload } = message as Message<PlayerEntryPayload>
-          if (this.rooms.get(payload.roomId)) {
-            const room = this.rooms.get(payload.roomId)
-            const result = room?.join(message as Message<PlayerEntryPayload>);
-            this.responseJustBoolean(client, message as Message<PlayerEntryPayload>, result ?? false);
+          if (payload.type === 'PlayerEntry') {
+            if (this.rooms.get(payload.roomId)) {
+              const room = this.rooms.get(payload.roomId)
+              const result = room?.join(message);
+              this.responseJustBoolean(client, message, result ?? false);
+            }
           }
         }
         break;
