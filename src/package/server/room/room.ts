@@ -1,7 +1,7 @@
+import type { Message } from "@/submodule/suit/types/message/message";
 import { Unit } from "../../core/class/card/Unit";
 import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
-import type { Message, PlayerEntryPayload } from "../message";
 
 export class Room {
   id = crypto.randomUUID();
@@ -19,14 +19,14 @@ export class Room {
     console.log('handling message on Room: %s', message.action.type)
     switch (message.action.type) {
       case 'join':
-        this.join(message as Message<PlayerEntryPayload>)
+        this.join(message)
     }
   }
 
   // プレイヤー参加処理
-  join(message: Message<PlayerEntryPayload>) {
-    if (this.players.size < 2) {
-      const cards = message.payload.deck.map(ref => new Unit(ref));
+  join(message: Message) {
+    if (this.players.size < 2 && message.payload.type === 'PlayerEntry') {
+      const cards = message.payload.player.deck.map(ref => new Unit(ref));
       const player = new Player(message.payload.player.id, message.payload.player.name, cards);
       this.core.entry(player);
       return true
