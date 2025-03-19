@@ -5,6 +5,7 @@ import { User } from "./room/user";
 import { config } from "../../config";
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
+import type { RoomOpenResponsePayload } from "@/submodule/suit/types/message/payload/server";
 
 class ServerError extends Error { }
 
@@ -82,7 +83,7 @@ export class Server {
       const { payload } = message;
       switch (message.action.handler) {
         case 'room':
-          if ('roomId' in payload) {
+          if ('roomId' in payload && typeof payload.roomId === 'string') { // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId)
             room?.handleMessage(message);
           }
@@ -123,7 +124,7 @@ export class Server {
     switch (message.action.type) {
       case 'open':
         {
-          if (payload.type === 'RoomOpen') {
+          if (payload.type === 'RoomOpenRequest') {
             const room = new Room(payload.name);
             this.rooms.set(room.id, room);
             this.clientRooms.set(client, room.id);
@@ -134,11 +135,12 @@ export class Server {
                 handler: 'client',
               },
               payload: {
+                type: 'RoomOpenResponse',
                 requestId: payload.requestId,
                 roomId: room.id,
                 result: true,
               }
-            }
+            } satisfies Message<RoomOpenResponsePayload>
             client.send(JSON.stringify(response))
           }
           break;
@@ -149,7 +151,8 @@ export class Server {
             if (this.rooms.get(payload.roomId)) {
               const room = this.rooms.get(payload.roomId)
               const result = room?.join(message);
-              this.responseJustBoolean(client, message, result ?? false);
+              // FIXME: 型定義を直す
+              // this.responseJustBoolean(client, message, result ?? false);
             }
           }
         }
