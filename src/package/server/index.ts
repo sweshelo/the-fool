@@ -85,7 +85,8 @@ export class Server {
         case 'room':
           if ('roomId' in payload && typeof payload.roomId === 'string') { // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId)
-            room?.handleMessage(message);
+            if (!room) throw new Error('ルームが見つかりませんでした')
+            room.handleMessage(client, message);
           }
           break;
         case 'core':
@@ -97,6 +98,7 @@ export class Server {
       }
     } catch (e) {
       if (e instanceof Error) {
+        console.error(e)
         client.send(JSON.stringify({
           action: {
             type: 'error',
@@ -150,9 +152,11 @@ export class Server {
           if (payload.type === 'PlayerEntry') {
             if (this.rooms.get(payload.roomId)) {
               const room = this.rooms.get(payload.roomId)
-              const result = room?.join(message);
+              const result = room?.join(client, message);
               // FIXME: 型定義を直す
               // this.responseJustBoolean(client, message, result ?? false);
+            } else {
+              throw new Error('対象のルームが見つかりませんでした')
             }
           }
         }

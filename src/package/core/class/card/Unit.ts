@@ -1,9 +1,10 @@
+import type { IUnit } from "@/submodule/suit/types/card";
 import { Card } from "./Card";
 
-export class Unit extends Card {
+export class Unit extends Card implements IUnit {
   bp: number;
 
-  constructor(catalogId: string){
+  constructor(catalogId: string) {
     super(catalogId);
     this.bp = 1000;
   }
