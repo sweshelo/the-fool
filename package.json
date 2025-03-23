@@ -13,5 +13,8 @@
   "private": true,
   "dependencies": {
     "ws": "^8.18.1"
+  },
+  "scripts": {
+    "dev": "bun --hot run index.ts"
   }
 }
