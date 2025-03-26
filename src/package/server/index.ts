@@ -1,4 +1,3 @@
-import { WebSocket, WebSocketServer } from "ws";
 import { Room } from "./room/room";
 import { User } from "./room/user";
 
@@ -6,55 +5,61 @@ import { config } from "../../config";
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
 import type { RoomOpenResponsePayload } from "@/submodule/suit/types/message/payload/server";
+import type { ServerWebSocket } from "bun";
 
 class ServerError extends Error { }
 
 export class Server {
-  private wss: WebSocketServer;
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
-  private clientRooms: Map<WebSocket, string> = new Map();
-  private clients: Map<WebSocket, User> = new Map();
+  private clientRooms: Map<ServerWebSocket, string> = new Map();
+  private clients: Map<ServerWebSocket, User> = new Map();
 
   constructor(port?: number) {
     const serverPort = port || config.server.port;
     console.log(`PORT: ${serverPort}`);
-    this.wss = new WebSocketServer({ port: serverPort });
-    this.setupServer();
+    Bun.serve({
+      port: serverPort,
+      fetch(req, server) {
+        if (server.upgrade(req)) return;
+        return new Response("Upgrade failed", { status: 500 })
+      },
+      websocket: {
+        open: this.onOpen.bind(this),
+        close: this.onClose.bind(this),
+        message: this.onMessage.bind(this),
+      }
+    })
   }
 
-  private setupServer(): void {
-    this.wss.on('connection', (ws: WebSocket) => {
-      console.log('Client connected');
+  private onOpen(ws: ServerWebSocket) {
+    console.log('Client connected');
 
-      // 新しいユーザーを作成
-      // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
-      const user = new User();
-      this.clients.set(ws, user);
-
-      // メッセージ受信ハンドラ
-      ws.on('message', (data: string) => {
-        try {
-          const message: Message = JSON.parse(data);
-          this.handleMessage(ws, message);
-        } catch (error) {
-          console.error('Invalid message format:', error);
-        }
-      });
-
-      // 切断ハンドラ
-      ws.on('close', () => {
-        const roomId = this.clientRooms.get(ws);
-        if (roomId) {
-          // ルームからの退出処理などを実装
-          this.clientRooms.delete(ws);
-        }
-        this.clients.delete(ws);
-        console.log('Client disconnected');
-      });
-    });
+    // 新しいユーザーを作成
+    // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
+    const user = new User();
+    this.clients.set(ws, user);
   }
 
-  private getRoom(client: WebSocket) {
+  private onClose(ws: ServerWebSocket) {
+    const roomId = this.clientRooms.get(ws);
+    if (roomId) {
+      // ルームからの退出処理などを実装
+      this.clientRooms.delete(ws);
+    }
+    this.clients.delete(ws);
+    console.log('Client disconnected');
+  }
+
+  private onMessage(ws: ServerWebSocket, data: string) {
+    try {
+      const message: Message = JSON.parse(data);
+      this.handleMessage(ws, message);
+    } catch (error) {
+      console.error('Invalid message format:', error);
+    }
+  }
+
+  private getRoom(client: ServerWebSocket) {
     const roomId = this.clientRooms.get(client);
     if (!roomId) throw new ServerError('参加していないルームに対する操作が試みられました。');
 
@@ -64,7 +69,7 @@ export class Server {
     return roomId ? this.rooms.get(roomId) : undefined
   }
 
-  public responseJustBoolean<T extends RequestPayload>(client: WebSocket, message: Message<T>, result: boolean) {
+  public responseJustBoolean<T extends RequestPayload>(client: ServerWebSocket, message: Message<T>, result: boolean) {
     const response = {
       action: {
         type: 'response',
@@ -78,7 +83,7 @@ export class Server {
     client.send(JSON.stringify(response))
   }
 
-  private handleMessage(client: WebSocket, message: Message) {
+  private handleMessage(client: ServerWebSocket, message: Message) {
     try {
       const { payload } = message;
       switch (message.action.handler) {
@@ -121,7 +126,7 @@ export class Server {
     }
   }
 
-  private handleMessageForServer(client: WebSocket, message: Message) {
+  private handleMessageForServer(client: ServerWebSocket, message: Message) {
     const { payload } = message;
     switch (message.action.type) {
       case 'open':
