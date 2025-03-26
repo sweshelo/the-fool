@@ -5,13 +5,11 @@ import { config } from "../../config";
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
 import type { RoomOpenResponsePayload } from "@/submodule/suit/types/message/payload/server";
-import type { ServerWebSocket, Server as WebSocketServer } from "bun";
-import type { PlayerEntryPayload } from "@/submodule/suit/types";
+import type { ServerWebSocket } from "bun";
 
 class ServerError extends Error { }
 
 export class Server {
-  private wss: WebSocketServer;
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
   private clientRooms: Map<ServerWebSocket, string> = new Map();
   private clients: Map<ServerWebSocket, User> = new Map();
@@ -19,14 +17,18 @@ export class Server {
   constructor(port?: number) {
     const serverPort = port || config.server.port;
     console.log(`PORT: ${serverPort}`);
-    this.wss = Bun.serve({
-      fetch,
+    console.log(Bun.serve({
+      port: serverPort,
+      fetch(req, server) {
+        if (server.upgrade(req)) return;
+        return new Response("Upgrade failed", { status: 500 })
+      },
       websocket: {
-        open: this.onOpen,
-        close: this.onClose,
-        message: this.onMessage,
+        open: this.onOpen.bind(this),
+        close: this.onClose.bind(this),
+        message: this.onMessage.bind(this),
       }
-    })
+    }))
     this.setupServer();
   }
 
@@ -93,7 +95,8 @@ export class Server {
         case 'room':
           if ('roomId' in payload && typeof payload.roomId === 'string') { // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId)
-            room?.handleMessage(message);
+            if (!room) throw new Error('ルームが見つかりませんでした')
+            room.handleMessage(client, message);
           }
           break;
         case 'core':
@@ -105,6 +108,7 @@ export class Server {
       }
     } catch (e) {
       if (e instanceof Error) {
+        console.error(e)
         client.send(JSON.stringify({
           action: {
             type: 'error',
@@ -158,9 +162,11 @@ export class Server {
           if (payload.type === 'PlayerEntry') {
             if (this.rooms.get(payload.roomId)) {
               const room = this.rooms.get(payload.roomId)
-              const result = room?.join(message as Message<PlayerEntryPayload>);
+              const result = room?.join(client, message);
               // FIXME: 型定義を直す
               // this.responseJustBoolean(client, message, result ?? false);
+            } else {
+              throw new Error('対象のルームが見つかりませんでした')
             }
           }
         }
