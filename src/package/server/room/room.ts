@@ -3,14 +3,15 @@ import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
 import { Unit } from "@/package/core/class/card";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
-import { WebSocket } from "ws";
+import type { ServerWebSocket } from "bun";
+
 
 export class Room {
   id = crypto.randomUUID();
   name: string;
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();
-  clients: Map<string, WebSocket> = new Map<string, WebSocket>();
+  clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
 
   constructor(name: string) {
     this.core = new Core();
@@ -18,7 +19,7 @@ export class Room {
   }
 
   // メッセージを処理
-  handleMessage(socket: WebSocket, message: Message) {
+  handleMessage(socket: ServerWebSocket, message: Message) {
     console.log('handling message on Room: %s', message.action.type)
     switch (message.action.type) {
       case 'join':
@@ -27,10 +28,9 @@ export class Room {
   }
 
   // プレイヤー参加処理
-  join(socket: WebSocket, message: Message) {
+  join(socket: ServerWebSocket, message: Message) {
     if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
-      const cards = message.payload.player.deck.map(ref => new Unit(ref));
-      const player = new Player(message.payload.player.id, message.payload.player.name, cards);
+      const player = new Player(message.payload.player);
 
       // socket 登録
       this.clients.set(player.id, socket);
