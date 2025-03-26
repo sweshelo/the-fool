@@ -50,6 +50,11 @@ export class Room {
 
   // 現在のステータスを全て送信
   sync() {
+    const players: { [key: string]: Player } = this.core.players.reduce((acc, player) => {
+      acc[player.id] = player;
+      return acc;
+    }, {} as { [key: string]: Player })
+
     this.clients.forEach((client) => {
       console.log('Sending')
       client.send(JSON.stringify({
@@ -64,9 +69,7 @@ export class Room {
               round: this.core.round,
               turn: this.core.turn,
             },
-            players: this.core.players.map(player => ({
-              [player.id]: player,
-            }))
+            players,
           }
         }
       } satisfies Message<SyncPayload>))
