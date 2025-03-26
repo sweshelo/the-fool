@@ -30,8 +30,7 @@ export class Room {
   // プレイヤー参加処理
   join(socket: ServerWebSocket, message: Message) {
     if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
-      const cards = message.payload.player.deck.map(ref => new Unit(ref));
-      const player = new Player(message.payload.player.id, message.payload.player.name, cards);
+      const player = new Player(message.payload.player);
 
       // socket 登録
       this.clients.set(player.id, socket);
