@@ -1,7 +1,6 @@
 import type { PlayerEntryPayload } from "@/submodule/suit/types"
 import { config } from "../../../config"
 import type { Action } from "./action"
-import type { Atom } from "./card/Atom"
 import { Card } from "./card/Card"
 import { Unit } from "./card/Unit"
 

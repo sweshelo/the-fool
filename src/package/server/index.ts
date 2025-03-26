@@ -17,7 +17,7 @@ export class Server {
   constructor(port?: number) {
     const serverPort = port || config.server.port;
     console.log(`PORT: ${serverPort}`);
-    console.log(Bun.serve({
+    Bun.serve({
       port: serverPort,
       fetch(req, server) {
         if (server.upgrade(req)) return;
@@ -28,8 +28,7 @@ export class Server {
         close: this.onClose.bind(this),
         message: this.onMessage.bind(this),
       }
-    }))
-    this.setupServer();
+    })
   }
 
   private onOpen(ws: ServerWebSocket) {
@@ -58,10 +57,6 @@ export class Server {
     } catch (error) {
       console.error('Invalid message format:', error);
     }
-  }
-
-  private setupServer(): void {
-
   }
 
   private getRoom(client: ServerWebSocket) {
