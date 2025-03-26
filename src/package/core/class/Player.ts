@@ -1,4 +1,4 @@
-import type { PlayerEntryPayload } from "@/submodule/suit/types"
+import type { IPlayer, PlayerEntryPayload } from "@/submodule/suit/types"
 import { config } from "../../../config"
 import type { Action } from "./action"
 import { Card } from "./card/Card"
@@ -18,13 +18,13 @@ export interface FindResult {
   }
 }
 
-export class Player {
+export class Player implements IPlayer {
   id: string
   name: string
   library: string[]
   deck: Card[]
   hand: Card[]
-  field: Card[]
+  field: Unit[]
 
   constructor({ id, name, deck }: PlayerEntryPayload['player']) {
     this.id = id
