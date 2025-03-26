@@ -1,7 +1,8 @@
+import type { PlayerEntryPayload } from "@/submodule/suit/types"
 import { config } from "../../../config"
 import type { Action } from "./action"
 import type { Atom } from "./card/Atom"
-import type { Card } from "./card/Card"
+import { Card } from "./card/Card"
 import { Unit } from "./card/Unit"
 
 export interface PlayerAction {
@@ -21,16 +22,20 @@ export interface FindResult {
 export class Player {
   id: string
   name: string
+  library: string[]
   deck: Card[]
   hand: Card[]
   field: Card[]
 
-  constructor(id: string, name: string, deck: Card[]) {
+  constructor({ id, name, deck }: PlayerEntryPayload['player']) {
     this.id = id
     this.name = name
-    this.deck = deck;
     this.hand = []
     this.field = []
+
+    // ライブラリからデッキを生成する
+    this.library = [...deck];
+    this.deck = [...deck].map(id => new Unit(id)) // TODO: ファクトリメソッドを定義してcatalogIdから生成すべきインスタンスを判別する
   }
 
   // プレイヤー領域からカードを探す
@@ -82,6 +87,7 @@ export class Player {
         }
       }
     } else {
+      // TODO: デッキ0枚でドローする際は this.library から新デッキ生成して 捨札リセットかける
       return null
     }
   }
