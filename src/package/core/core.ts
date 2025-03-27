@@ -18,8 +18,16 @@ export class Core {
   }
 
   entry(player: Player) {
-    this.players.push(player)
-    console.log(this)
+    // 同じIDのプレイヤーが既に存在するか確認
+    const existingPlayerIndex = this.players.findIndex(p => p.id === player.id);
+    if (existingPlayerIndex >= 0) {
+      console.log(`Player with ID ${player.id} already exists. Replacing.`);
+      // 既存のプレイヤーを削除
+      this.players.splice(existingPlayerIndex, 1);
+    }
+    // 新しいプレイヤーを追加
+    this.players.push(player);
+    console.log('Player added:', player.id);
   }
 
   async start() {
@@ -44,13 +52,12 @@ export class Core {
 
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type)
-    switch(message.payload.type){
+    switch (message.payload.type) {
       case 'DebugDraw': {
         const payload: DebugDrawPayload = message.payload
         const target = this.players.find(player => player.id === payload.player)
-        if(target){
+        if (target) {
           target.draw()
-          console.log('success draw')
           this.room.sync()
         }
       }
