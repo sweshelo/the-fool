@@ -14,7 +14,7 @@ export class Room {
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
 
   constructor(name: string) {
-    this.core = new Core();
+    this.core = new Core(this);
     this.name = name;
   }
 
@@ -49,15 +49,16 @@ export class Room {
   }
 
   // 現在のステータスを全て送信
-  sync() {
+  sync = () => {
+    console.log('syncing')
     const players: { [key: string]: Player } = this.core.players.reduce((acc, player) => {
       acc[player.id] = player;
       return acc;
     }, {} as { [key: string]: Player })
 
     this.clients.forEach((client) => {
-      console.log('Sending')
-      client.send(JSON.stringify({
+      console.log('Sending: ', client)
+      const data = JSON.stringify({
         action: {
           type: 'sync',
           handler: 'client',
@@ -72,7 +73,9 @@ export class Room {
             players,
           }
         }
-      } satisfies Message<SyncPayload>))
+      } satisfies Message<SyncPayload>)
+      console.log(data)
+      client.send(data)
     })
   }
 }
