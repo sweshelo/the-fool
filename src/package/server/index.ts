@@ -91,7 +91,17 @@ export class Server {
           if ('roomId' in payload && typeof payload.roomId === 'string') { // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId)
             if (!room) throw new Error('ルームが見つかりませんでした')
-            room.handleMessage(client, message);
+
+            // 参加処理だけServer側で登録処理を走らせる
+            if (message.payload.type === 'PlayerEntry') {
+              const result = room.join(client, message)
+              if (result) {
+                this.clientRooms.delete(client)
+                this.clientRooms.set(client, room.id)
+              }
+            } else {
+              room.handleMessage(client, message);
+            }
           }
           break;
         case 'core':
@@ -152,20 +162,6 @@ export class Server {
           }
           break;
         }
-      case 'join':
-        {
-          if (payload.type === 'PlayerEntry') {
-            if (this.rooms.get(payload.roomId)) {
-              const room = this.rooms.get(payload.roomId)
-              const result = room?.join(client, message);
-              // FIXME: 型定義を直す
-              // this.responseJustBoolean(client, message, result ?? false);
-            } else {
-              throw new Error('対象のルームが見つかりませんでした')
-            }
-          }
-        }
-        break;
       case 'list':
     }
   }
