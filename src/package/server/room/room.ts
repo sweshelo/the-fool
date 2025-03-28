@@ -32,13 +32,22 @@ export class Room {
   // プレイヤー参加処理
   join(socket: ServerWebSocket, message: Message) {
     if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
-      const player = new Player(message.payload.player);
+      // 再接続チェック
+      const exists = this.players.get(message.payload.player.id)
 
-      // socket 登録
-      this.clients.set(player.id, socket);
-      this.core.entry(player);
-      this.players.set(player.id, player)
-      this.sync();
+      if (exists) {
+        // clients再登録
+        this.clients.delete(exists.id)
+        this.clients.set(exists.id, socket);
+        this.sync();
+      } else {
+        const player = new Player(message.payload.player);
+        // socket 登録
+        this.clients.set(player.id, socket);
+        this.core.entry(player);
+        this.players.set(player.id, player)
+        this.sync();
+      }
       return true
     } else {
       return false
