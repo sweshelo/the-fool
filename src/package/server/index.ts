@@ -98,6 +98,8 @@ export class Server {
               if (result) {
                 this.clientRooms.delete(client)
                 this.clientRooms.set(client, room.id)
+              } else {
+                throw new Error('ルームの参加に失敗しました')
               }
             } else {
               room.handleMessage(client, message);
