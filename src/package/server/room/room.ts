@@ -1,9 +1,10 @@
 import type { Message } from "@/submodule/suit/types/message/message";
 import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
-import { Unit } from "@/package/core/class/card";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
 import type { ServerWebSocket } from "bun";
+import type { Rule } from "@/submodule/suit/types";
+import { config } from "@/config";
 
 
 export class Room {
@@ -12,6 +13,7 @@ export class Room {
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
+  rule: Rule = { ...config.game } // デフォルトのルールをコピー
 
   constructor(name: string) {
     this.core = new Core(this);
