@@ -1,9 +1,10 @@
 import type { Message } from "@/submodule/suit/types/message/message";
 import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
-import { Unit } from "@/package/core/class/card";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
 import type { ServerWebSocket } from "bun";
+import type { Rule } from "@/submodule/suit/types";
+import { config } from "@/config";
 
 
 export class Room {
@@ -12,9 +13,10 @@ export class Room {
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
+  rule: Rule = { ...config.game } // デフォルトのルールをコピー
 
   constructor(name: string) {
-    this.core = new Core();
+    this.core = new Core(this);
     this.name = name;
   }
 
@@ -30,13 +32,22 @@ export class Room {
   // プレイヤー参加処理
   join(socket: ServerWebSocket, message: Message) {
     if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
-      const player = new Player(message.payload.player);
+      // 再接続チェック
+      const exists = this.players.get(message.payload.player.id)
 
-      // socket 登録
-      this.clients.set(player.id, socket);
-      this.core.entry(player);
-      this.players.set(player.id, player)
-      this.sync();
+      if (exists) {
+        // clients再登録
+        this.clients.delete(exists.id)
+        this.clients.set(exists.id, socket);
+        this.sync();
+      } else {
+        const player = new Player(message.payload.player);
+        // socket 登録
+        this.clients.set(player.id, socket);
+        this.core.entry(player);
+        this.players.set(player.id, player)
+        this.sync();
+      }
       return true
     } else {
       return false
@@ -49,10 +60,16 @@ export class Room {
   }
 
   // 現在のステータスを全て送信
-  sync() {
+  sync = () => {
+    console.log('syncing')
+    const players: { [key: string]: Player } = this.core.players.reduce((acc, player) => {
+      acc[player.id] = player;
+      return acc;
+    }, {} as { [key: string]: Player })
+
     this.clients.forEach((client) => {
-      console.log('Sending')
-      client.send(JSON.stringify({
+      console.log('Sending: ', client)
+      const data = JSON.stringify({
         action: {
           type: 'sync',
           handler: 'client',
@@ -64,12 +81,12 @@ export class Room {
               round: this.core.round,
               turn: this.core.turn,
             },
-            players: this.core.players.map(player => ({
-              [player.id]: player,
-            }))
+            players,
           }
         }
-      } satisfies Message<SyncPayload>))
+      } satisfies Message<SyncPayload>)
+      console.log(data)
+      client.send(data)
     })
   }
 }
