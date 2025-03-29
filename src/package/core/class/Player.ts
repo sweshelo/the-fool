@@ -1,4 +1,4 @@
-import type { IPlayer, PlayerEntryPayload } from "@/submodule/suit/types"
+import type { IAtom, IPlayer, PlayerEntryPayload } from "@/submodule/suit/types"
 import { config } from "../../../config"
 import type { Action } from "./action"
 import { Card } from "./card/Card"
@@ -24,6 +24,7 @@ export class Player implements IPlayer {
   library: string[]
   deck: Card[]
   hand: Card[]
+  trash: Card[]
   field: Unit[]
   cp: {
     current: number
@@ -42,6 +43,7 @@ export class Player implements IPlayer {
     this.name = name
     this.hand = []
     this.field = []
+    this.trash = []
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
@@ -49,7 +51,7 @@ export class Player implements IPlayer {
   }
 
   // プレイヤー領域からカードを探す
-  find(target: Card): FindResult {
+  find(target: IAtom): FindResult {
     const onDeck = this.deck.find(({ id }) => id === target.id)
     if (onDeck) return ({
       result: true,
