@@ -1,6 +1,4 @@
 # config
-server:
-  port: 5000
 game:
   system:
     round: 10

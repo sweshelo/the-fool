@@ -1,6 +1,5 @@
 import { Room } from "./room/room";
 import { User } from "./room/user";
-
 import { config } from "../../config";
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
@@ -15,20 +14,61 @@ export class Server {
   private clients: Map<ServerWebSocket, User> = new Map();
 
   constructor(port?: number) {
-    const serverPort = port || config.server.port;
+    const serverPort = port || process.env.PORT;
     console.log(`PORT: ${serverPort}`);
-    Bun.serve({
-      port: serverPort,
-      fetch(req, server) {
-        if (server.upgrade(req)) return;
-        return new Response("Upgrade failed", { status: 500 })
-      },
-      websocket: {
-        open: this.onOpen.bind(this),
-        close: this.onClose.bind(this),
-        message: this.onMessage.bind(this),
-      }
-    })
+
+    if (process.env.USE_TLS) {
+      console.log('Running server with TLS enabled');
+
+      // Use Bun's built-in file reading capability with full path from project root
+      const projectRoot = process.cwd();
+      const keyPath = `${projectRoot}/certs/key.pem`;
+      const certPath = `${projectRoot}/certs/cert.pem`;
+
+      console.log(`Key path: ${keyPath}`);
+      console.log(`Cert path: ${certPath}`);
+
+      import('fs').then(fs => {
+        // Directly read the content of the files
+        const keyContent = fs.readFileSync(keyPath, 'utf8');
+        const certContent = fs.readFileSync(certPath, 'utf8');
+
+        // Start server with TLS
+        Bun.serve({
+          port: serverPort,
+          tls: {
+            key: keyContent,
+            cert: certContent
+          },
+          fetch(req, server) {
+            if (server.upgrade(req)) return;
+            return new Response("Upgrade failed", { status: 500 })
+          },
+          websocket: {
+            open: this.onOpen.bind(this),
+            close: this.onClose.bind(this),
+            message: this.onMessage.bind(this),
+          }
+        });
+      }).catch(err => {
+        console.error('Failed to read certificate files:', err);
+        throw new Error('Unable to start TLS server due to certificate error');
+      });
+    } else {
+      console.log('Running server without TLS (HTTP mode)');
+      Bun.serve({
+        port: serverPort,
+        fetch(req, server) {
+          if (server.upgrade(req)) return;
+          return new Response("Upgrade failed", { status: 500 })
+        },
+        websocket: {
+          open: this.onOpen.bind(this),
+          close: this.onClose.bind(this),
+          message: this.onMessage.bind(this),
+        }
+      });
+    }
   }
 
   private onOpen(ws: ServerWebSocket) {
