@@ -25,6 +25,17 @@ export class Player implements IPlayer {
   deck: Card[]
   hand: Card[]
   field: Unit[]
+  cp: {
+    current: number
+    max: number
+  } = {
+    current: 0,
+    max: 0,
+  }
+  life: { current: number; max: number; } = {
+    current: config.game.player.max.life,
+    max: config.game.player.max.life,
+  };
 
   constructor({ id, name, deck }: PlayerEntryPayload['player']) {
     this.id = id
@@ -78,6 +89,7 @@ export class Player implements IPlayer {
     if (this.deck.length > 0) {
       const source = this.deck.pop() as Card
       this.hand.push(source!)
+      console.log(this)
       return {
         action: {
           role: 'system',
