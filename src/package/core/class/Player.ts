@@ -89,7 +89,7 @@ export class Player implements IPlayer {
   // カードを引く
   draw(): PlayerAction | null {
     if (this.deck.length > 0) {
-      const source = this.deck.pop() as Card
+      const source = this.deck.shift() as Card
       this.hand.push(source!)
       console.log(this)
       return {
