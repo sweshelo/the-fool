@@ -1,9 +1,11 @@
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { Player } from "./class/Player";
 import { config } from "../../config";
-import type { DebugDrawPayload, IAtom, OverridePayload } from "@/submodule/suit/types";
+import type { DebugDrawPayload, IAtom, OverridePayload, UnitDrivePayload } from "@/submodule/suit/types";
 import type { Room } from "../server/room/room";
 import catalog from "@/submodule/suit/catalog/catalog";
+import type { Unit } from "./class/card";
+import { isUnit as checkIsUnit } from "@/helper";
 
 export class Core {
   id: string;
@@ -77,7 +79,7 @@ export class Core {
 
         // 2つのカードが同じである
         // TODO: strictModeな設定を作り、同名判定を厳密にするモードを用意する
-        const isSameCard = catalog.get(parent.card.catalogId) === catalog.get(target.card.catalogId)
+        const isSameCard = catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name
 
         // 受け皿がLv3未満
         const isUnderLv3 = parent?.card?.lv < 3
@@ -89,6 +91,32 @@ export class Core {
           player.draw()
           this.room.sync()
         }
+        break;
+      }
+      case 'UnitDrive': {
+        const payload: UnitDrivePayload = message.payload
+        const player = this.players.find(p => p.id === payload.player)
+        const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {}
+        if (!card || !player) return;
+
+        const cardCatalog = catalog.get(card.catalogId)
+        if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました')
+
+        // CPが足りている
+        const isEnoughCP = cardCatalog.cost <= player.cp.current || true // debug用
+
+        // フィールドのユニット数が規定未満
+        const isEnoughField = player.field.length < this.room.rule.player.max.field
+
+        // ユニットである
+        const isUnit = checkIsUnit(card)
+
+        if (isEnoughCP && isEnoughField && isUnit) {
+          player.hand = player?.hand.filter(c => c.id !== card?.id)
+          player.field.unshift(card)
+          this.room.sync()
+        }
+        break;
       }
     }
   }
