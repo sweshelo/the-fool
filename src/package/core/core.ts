@@ -6,6 +6,7 @@ import type { Room } from "../server/room/room";
 import catalog from "@/submodule/suit/catalog/catalog";
 import type { Unit } from "./class/card";
 import { isUnit as checkIsUnit } from "@/helper";
+import { Stack } from "./class/stack";
 
 export class Core {
   id: string;
@@ -13,6 +14,7 @@ export class Core {
   round: number = 0;
   turn: number = 0;
   room: Room;
+  stack: Stack | undefined = undefined;
 
   constructor(room: Room) {
     this.id = crypto.randomUUID()
@@ -115,6 +117,12 @@ export class Core {
           player.hand = player?.hand.filter(c => c.id !== card?.id)
           player.field.unshift(card)
           this.room.sync()
+
+          // Stack追加
+          this.stack = new Stack({
+            type: 'drive',
+            source: card,
+          })
         }
         break;
       }
