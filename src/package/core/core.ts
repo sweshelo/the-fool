@@ -2,6 +2,7 @@ import type { Message } from "@/submodule/suit/types/message/message";
 import type { Player } from "./class/Player";
 import { config } from "../../config";
 import type { DebugDrawPayload, IAtom, OverridePayload, UnitDrivePayload } from "@/submodule/suit/types";
+import type { EffectResponsePayload } from "@/submodule/suit/types/message/payload/client";
 import type { Room } from "../server/room/room";
 import catalog from "@/submodule/suit/catalog/catalog";
 import type { Unit } from "./class/card";
@@ -15,6 +16,12 @@ export class Core {
   turn: number = 0;
   room: Room;
   stack: Stack | undefined = undefined;
+
+  /**
+   * 効果の応答ハンドラを保存するマップ
+   * promptId をキーとして、対応するコールバック関数を保持する
+   */
+  private effectResponses: Map<string, (response: any) => void> = new Map();
 
   constructor(room: Room) {
     this.id = crypto.randomUUID()
@@ -55,9 +62,70 @@ export class Core {
     }
   }
 
+  /**
+   * 現在のターンプレイヤーのIDを取得する
+   * @returns ターンプレイヤーのID
+   */
+  getTurnPlayerId(): string | undefined {
+    // 現在のターン数から、対応するプレイヤーのインデックスを計算
+    const playerIndex = (this.turn - 1) % this.players.length;
+    return this.players[playerIndex]?.id;
+  }
+
+  /**
+   * 効果応答のハンドラを設定する
+   * @param promptId プロンプトID
+   * @param handler 応答を処理するコールバック関数
+   */
+  setEffectResponseHandler(promptId: string, handler: (response: any) => void): void {
+    this.effectResponses.set(promptId, handler);
+  }
+
+  /**
+   * 現在のスタックを解決する
+   * UnitDrive操作などでスタックが作成された後に呼び出される
+   */
+  async resolveStack(): Promise<void> {
+    if (this.stack) {
+      try {
+        // スタックの解決処理を開始
+        await this.stack.resolve(this);
+
+        // 処理完了後、スタックをクリア
+        this.stack = undefined;
+
+        // 状態を同期
+        this.room.sync();
+      } catch (error) {
+        console.error('Error resolving stack:', error);
+        this.stack = undefined;
+      }
+    }
+  }
+
+  /**
+   * クライアントからの効果応答を処理する
+   * @param promptId プロンプトID
+   * @param response ユーザーの選択内容
+   */
+  handleEffectResponse(promptId: string, response: any): void {
+    const handler = this.effectResponses.get(promptId);
+    if (handler) {
+      handler(response);
+      this.effectResponses.delete(promptId);
+    } else {
+      console.warn(`No handler found for prompt ${promptId}`);
+    }
+  }
+
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type)
     switch (message.payload.type) {
+      case 'EffectResponse': {
+        const payload: EffectResponsePayload = message.payload;
+        this.handleEffectResponse(payload.promptId, payload.choice);
+        break;
+      }
       case 'DebugDraw': {
         const payload: DebugDrawPayload = message.payload
         const target = this.players.find(player => player.id === payload.player)
@@ -122,7 +190,10 @@ export class Core {
           this.stack = new Stack({
             type: 'drive',
             source: card,
-          })
+          });
+
+          // スタックの解決処理を開始
+          this.resolveStack();
         }
         break;
       }
