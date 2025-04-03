@@ -24,7 +24,7 @@ game:
   player:
     max:
       life: 8
-      hand: 7
+      hand: 12
       trigger: 4
       field: 5
       cp: 12

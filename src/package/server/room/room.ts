@@ -2,6 +2,7 @@ import type { Message } from "@/submodule/suit/types/message/message";
 import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
+import type { BasePayload } from "@/submodule/suit/types/message/payload/base";
 import type { ServerWebSocket } from "bun";
 import type { Rule } from "@/submodule/suit/types";
 import { config } from "@/config";
@@ -59,6 +60,52 @@ export class Room {
     this.core.start();
   }
 
+  /**
+   * 特定のプレイヤーにメッセージを送信する
+   * @param playerId 送信先プレイヤーID
+   * @param payload 送信するペイロード
+   */
+  broadcastToPlayer(playerId: string, payload: { type: string, payload: any }) {
+    const client = this.clients.get(playerId);
+    if (client) {
+      const message: Message<BasePayload> = {
+        action: {
+          type: payload.type.toLowerCase(),
+          handler: 'client',
+        },
+        payload: {
+          type: payload.type,
+          ...payload.payload
+        } as any
+      };
+
+      client.send(JSON.stringify(message));
+    } else {
+      console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
+    }
+  }
+
+  /**
+   * 全プレイヤーにメッセージを送信する
+   * @param payload 送信するペイロード
+   */
+  broadcastToAll(payload: { type: string, payload: any }) {
+    this.clients.forEach((client, playerId) => {
+      const message: Message<BasePayload> = {
+        action: {
+          type: payload.type.toLowerCase(),
+          handler: 'client',
+        },
+        payload: {
+          type: payload.type,
+          ...payload.payload
+        } as any
+      };
+
+      client.send(JSON.stringify(message));
+    });
+  }
+
   // 現在のステータスを全て送信
   sync = () => {
     console.log('syncing')
@@ -68,7 +115,6 @@ export class Room {
     }, {} as { [key: string]: Player })
 
     this.clients.forEach((client) => {
-      console.log('Sending: ', client)
       const data = JSON.stringify({
         action: {
           type: 'sync',
@@ -85,7 +131,6 @@ export class Room {
           }
         }
       } satisfies Message<SyncPayload>)
-      console.log(data)
       client.send(data)
     })
   }
