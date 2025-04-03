@@ -1,5 +1,5 @@
-import { EffectTester } from '../../submodule/suit/catalog/effectTester';
-import catalog from '../../submodule/suit/catalog/catalog';
+import { EffectTester } from '../../database/effectTester';
+import catalog from '../../database/catalog';
 import { EffectExamples } from '../core/class/effect';
 
 /**

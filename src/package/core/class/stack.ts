@@ -1,7 +1,7 @@
-import type { IAtom } from "@/submodule/suit/types"
+import type { DisplayEffectPayload, IAtom, Message } from "@/submodule/suit/types"
 import type { Player } from "./Player"
 import type { Core } from "../core"
-import catalog from "@/submodule/suit/catalog/catalog"
+import catalog from "@/database/catalog"
 
 interface IStack {
   /**
@@ -216,7 +216,7 @@ export class Stack implements IStack {
 
     // クライアントに選択肢を送信
     core.room.broadcastToAll({
-      type: 'EffectChoice',
+      type: 'DisplayEffect',
       payload: {
         promptId,
         stackId: this.id,
@@ -227,7 +227,7 @@ export class Stack implements IStack {
 
     // クライアントからの応答を待つ
     return new Promise((resolve) => {
-      core.setEffectResponseHandler(promptId, () => {
+      core.setEffectDisplayHandler(promptId, () => {
         resolve();
       });
     });

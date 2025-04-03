@@ -2,12 +2,14 @@ import type { Message } from "@/submodule/suit/types/message/message";
 import type { Player } from "./class/Player";
 import { config } from "../../config";
 import type { DebugDrawPayload, IAtom, OverridePayload, UnitDrivePayload } from "@/submodule/suit/types";
-import type { EffectResponsePayload } from "@/submodule/suit/types/message/payload/client";
+import type { ContinuePayload, EffectResponsePayload } from "@/submodule/suit/types/message/payload/client";
 import type { Room } from "../server/room/room";
-import catalog from "@/submodule/suit/catalog/catalog";
+import catalog from "@/database/catalog";
 import type { Unit } from "./class/card";
 import { isUnit as checkIsUnit } from "@/helper";
 import { Stack } from "./class/stack";
+
+type EffectResponseCallback = Function;
 
 export class Core {
   id: string;
@@ -21,7 +23,7 @@ export class Core {
    * 効果の応答ハンドラを保存するマップ
    * promptId をキーとして、対応するコールバック関数を保持する
    */
-  private effectResponses: Map<string, (response: any) => void> = new Map();
+  private effectResponses: Map<string, EffectResponseCallback> = new Map();
 
   constructor(room: Room) {
     this.id = crypto.randomUUID()
@@ -77,7 +79,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param handler 応答を処理するコールバック関数
    */
-  setEffectResponseHandler(promptId: string, handler: (response: any) => void): void {
+  setEffectDisplayHandler(promptId: string, handler: EffectResponseCallback): void {
     this.effectResponses.set(promptId, handler);
   }
 
@@ -118,12 +120,31 @@ export class Core {
     }
   }
 
+    /**
+   * クライアントからの再開処理を受け取る
+   * @param promptId プロンプトID
+   */
+    handleContinue(promptId: string): void {
+      const handler = this.effectResponses.get(promptId);
+      if (handler) {
+        handler();
+        this.effectResponses.delete(promptId);
+      } else {
+        console.warn(`No handler found for prompt ${promptId}`);
+      }
+    }
+
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type)
     switch (message.payload.type) {
       case 'EffectResponse': {
         const payload: EffectResponsePayload = message.payload;
         this.handleEffectResponse(payload.promptId, payload.choice);
+        break;
+      }
+      case 'Continue': {
+        const payload: ContinuePayload = message.payload;
+        this.handleContinue(payload.promptId);
         break;
       }
       case 'DebugDraw': {
