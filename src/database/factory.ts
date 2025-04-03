@@ -16,7 +16,7 @@ export interface CatalogWithHandler extends Catalog {
   onDraw?: HandlerFunction
   onOverclock?: HandlerFunction
   onOverclockSelf?: HandlerFunction
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export function effectFactory(catalog: CatalogWithHandler): void {

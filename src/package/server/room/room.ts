@@ -4,7 +4,7 @@ import { Core } from "../../core/core";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
 import type { BasePayload } from "@/submodule/suit/types/message/payload/base";
 import type { ServerWebSocket } from "bun";
-import type { Rule } from "@/submodule/suit/types";
+import type { Payload, Rule } from "@/submodule/suit/types";
 import { config } from "@/config";
 
 
@@ -65,7 +65,7 @@ export class Room {
    * @param playerId 送信先プレイヤーID
    * @param payload 送信するペイロード
    */
-  broadcastToPlayer(playerId: string, payload: { type: string, payload: any }) {
+  broadcastToPlayer(playerId: string, payload: { type: string, payload: Payload }) {
     const client = this.clients.get(playerId);
     if (client) {
       const message: Message<BasePayload> = {
@@ -74,9 +74,9 @@ export class Room {
           handler: 'client',
         },
         payload: {
+          ...payload.payload,
           type: payload.type,
-          ...payload.payload
-        } as any
+        } as Payload
       };
 
       client.send(JSON.stringify(message));
@@ -89,17 +89,17 @@ export class Room {
    * 全プレイヤーにメッセージを送信する
    * @param payload 送信するペイロード
    */
-  broadcastToAll(payload: { type: string, payload: any }) {
-    this.clients.forEach((client, playerId) => {
+  broadcastToAll(payload: { type: string, payload: Payload }) {
+    this.clients.forEach((client) => {
       const message: Message<BasePayload> = {
         action: {
           type: payload.type.toLowerCase(),
           handler: 'client',
         },
         payload: {
+          ...payload.payload,
           type: payload.type,
-          ...payload.payload
-        } as any
+        } as Payload
       };
 
       client.send(JSON.stringify(message));

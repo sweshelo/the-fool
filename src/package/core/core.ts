@@ -5,10 +5,10 @@ import type { DebugDrawPayload, IAtom, OverridePayload, UnitDrivePayload } from 
 import type { ContinuePayload, EffectResponsePayload } from "@/submodule/suit/types/message/payload/client";
 import type { Room } from "../server/room/room";
 import catalog from "@/database/catalog";
-import type { Unit } from "./class/card";
 import { isUnit as checkIsUnit } from "@/helper";
 import { Stack } from "./class/stack";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
 
 export class Core {
@@ -110,7 +110,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: any): void {
+  handleEffectResponse(promptId: string, response: string): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);

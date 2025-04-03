@@ -4,6 +4,7 @@ import { Core } from '../core/core';
 import { Player } from '../core/class/Player';
 import { Unit } from '../core/class/card';
 import type { Room } from '../server/room/room';
+import type { BasePayload } from '@/submodule/suit/types';
 
 /**
  * カード効果テスター
@@ -21,7 +22,7 @@ export class EffectTester {
     const mockRoom = this.createMockRoom();
 
     // コア作成
-    const core = new Core(mockRoom as any);
+    const core = new Core(mockRoom as Room);
 
     // プレイヤー作成
     const player1 = new Player({
@@ -72,7 +73,7 @@ export class EffectTester {
     const mockRoom = this.createMockRoom();
 
     // コア作成
-    const core = new Core(mockRoom as any);
+    const core = new Core(mockRoom as Room);
 
     // プレイヤー作成
     const player1 = new Player({
@@ -119,10 +120,10 @@ export class EffectTester {
       sync: () => {
         console.log('Mock sync called');
       },
-      broadcastToAll: (payload: any) => {
+      broadcastToAll: (payload: BasePayload) => {
         console.log('Mock broadcastToAll called with:', payload);
       },
-      broadcastToPlayer: (playerId: string, payload: any) => {
+      broadcastToPlayer: (playerId: string, payload: BasePayload) => {
         console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, payload);
       },
       rule: {

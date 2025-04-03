@@ -1,8 +1,7 @@
-import type { DisplayEffectPayload, IAtom, Message } from "@/submodule/suit/types"
+import type { IAtom, ICard } from "@/submodule/suit/types"
 import type { Player } from "./Player"
 import type { Core } from "../core"
 import catalog from "@/database/catalog"
-import type { EffectHandler } from "./effect"
 import type { CatalogWithHandler } from "@/database/factory"
 
 interface IStack {
@@ -106,7 +105,7 @@ export class Stack implements IStack {
     if (!turnPlayer) return;
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source, core, true);
+    await this.processCardEffect(this.source as ICard, core, true);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
@@ -129,9 +128,9 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processCardEffect(card: IAtom, core: Core, self: boolean): Promise<void> {
+  private async processCardEffect(card: ICard, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
-    const catalogId = (card as any).catalogId;
+    const catalogId = card.catalogId;
     if (!catalogId) return;
 
     // カードのカタログデータを取得
@@ -143,7 +142,7 @@ export class Stack implements IStack {
     const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`;
 
     // カタログからハンドラー関数を取得
-    const effectHandler: EffectHandler | undefined = cardCatalog[handlerName];
+    const effectHandler = cardCatalog[handlerName];
 
     if (typeof effectHandler === 'function') {
       try {
@@ -185,7 +184,7 @@ export class Stack implements IStack {
    * @param message 表示メッセージ
    * @returns 選択された選択肢
    */
-  async promptUserChoice(core: Core, playerId: string, options: any[], message: string): Promise<any> {
+  async promptUserChoice(core: Core, playerId: string, options: unknown[], message: string): Promise<string> {
     // 一意のプロンプトIDを生成
     const promptId = `${this.id}_${Date.now()}`;
 
@@ -202,7 +201,7 @@ export class Stack implements IStack {
 
     // クライアントからの応答を待つ
     return new Promise((resolve) => {
-      core.setEffectDisplayHandler(promptId, (choice: unknown) => {
+      core.setEffectDisplayHandler(promptId, (choice: string) => {
         resolve(choice);
       });
     });

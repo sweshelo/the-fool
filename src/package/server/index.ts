@@ -1,6 +1,5 @@
 import { Room } from "./room/room";
 import { User } from "./room/user";
-import { config } from "../../config";
 import type { Message } from "@/submodule/suit/types/message/message";
 import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
 import type { RoomOpenResponsePayload } from "@/submodule/suit/types/message/payload/server";

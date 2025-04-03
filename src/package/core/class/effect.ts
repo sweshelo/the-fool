@@ -1,8 +1,6 @@
 import type { Stack } from "./stack";
 import type { Core } from "../core";
 import type { IAtom } from "@/submodule/suit/types";
-import type { Card, Unit } from "./card";
-import { Player } from "./Player";
 
 /**
  * カード効果ハンドラの型定義
@@ -98,7 +96,7 @@ export class EffectUtils {
             }
 
             // 破壊スタックを作成
-            const breakStack = stack.addChildStack('break', card, target);
+            // const breakStack = stack.addChildStack('break', card, target);
 
             break; // 見つかったらループ終了
           }
