@@ -91,7 +91,6 @@ export class Player implements IPlayer {
     if (this.deck.length > 0) {
       const source = this.deck.shift() as Card
       this.hand.push(source!)
-      console.log(this)
       return {
         action: {
           role: 'system',

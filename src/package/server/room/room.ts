@@ -115,7 +115,6 @@ export class Room {
     }, {} as { [key: string]: Player })
 
     this.clients.forEach((client) => {
-      console.log('Sending: ', client)
       const data = JSON.stringify({
         action: {
           type: 'sync',
