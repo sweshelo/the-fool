@@ -78,13 +78,13 @@ export class Room {
           ...payload.payload
         } as any
       };
-      
+
       client.send(JSON.stringify(message));
     } else {
       console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
     }
   }
-  
+
   /**
    * 全プレイヤーにメッセージを送信する
    * @param payload 送信するペイロード
@@ -101,7 +101,7 @@ export class Room {
           ...payload.payload
         } as any
       };
-      
+
       client.send(JSON.stringify(message));
     });
   }
@@ -132,7 +132,6 @@ export class Room {
           }
         }
       } satisfies Message<SyncPayload>)
-      console.log(data)
       client.send(data)
     })
   }

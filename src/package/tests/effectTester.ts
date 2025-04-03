@@ -1,9 +1,9 @@
-import catalog from './catalog';
-import { Stack } from '../package/core/class/stack';
-import { Core } from '../package/core/core';
-import { Player } from '../package/core/class/Player';
-import { Unit } from '../package/core/class/card';
-import type { Room } from '../package/server/room/room';
+import catalog from '../../database/catalog';
+import { Stack } from '../core/class/stack';
+import { Core } from '../core/core';
+import { Player } from '../core/class/Player';
+import { Unit } from '../core/class/card';
+import type { Room } from '../server/room/room';
 
 /**
  * カード効果テスター
@@ -50,7 +50,7 @@ export class EffectTester {
     });
 
     // コアにスタックをセット
-    core.stack = stack;
+    core.stack = [stack];
 
     // スタック解決
     try {
@@ -99,7 +99,7 @@ export class EffectTester {
     });
 
     // コアにスタックをセット
-    core.stack = stack;
+    core.stack = [stack];
 
     // スタック解決
     try {
@@ -130,11 +130,25 @@ export class EffectTester {
           max: {
             field: 5,
             hand: 7,
-            life: 3
+            life: 3,
+            trigger: 4,
+            cp: 12,
           }
         },
         system: {
-          round: 3
+          round: 3,
+          draw: {
+            top: 2,
+            override: 1,
+          },
+          handicap: {
+            cp: true,
+            draw: true,
+          },
+          cp: {
+            increase: 1,
+            init: 2,
+          }
         }
       }
     };

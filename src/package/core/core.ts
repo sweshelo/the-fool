@@ -14,10 +14,10 @@ type EffectResponseCallback = Function;
 export class Core {
   id: string;
   players: Player[];
-  round: number = 0;
-  turn: number = 0;
+  round: number = 1;
+  turn: number = 1;
   room: Room;
-  stack: Stack | undefined = undefined;
+  stack: Stack[] | undefined = undefined;
 
   /**
    * 効果の応答ハンドラを保存するマップ
@@ -88,16 +88,16 @@ export class Core {
    * UnitDrive操作などでスタックが作成された後に呼び出される
    */
   async resolveStack(): Promise<void> {
-    if (this.stack) {
+    if (this.stack !== undefined) {
       try {
-        // スタックの解決処理を開始
-        await this.stack.resolve(this);
+        while (this.stack.length > 0){
+          const stackItem = this.stack.shift()
+          await stackItem?.resolve(this);
+          this.room.sync()
+        }
 
         // 処理完了後、スタックをクリア
         this.stack = undefined;
-
-        // 状態を同期
-        this.room.sync();
       } catch (error) {
         console.error('Error resolving stack:', error);
         this.stack = undefined;
@@ -120,19 +120,19 @@ export class Core {
     }
   }
 
-    /**
-   * クライアントからの再開処理を受け取る
-   * @param promptId プロンプトID
-   */
-    handleContinue(promptId: string): void {
-      const handler = this.effectResponses.get(promptId);
-      if (handler) {
-        handler();
-        this.effectResponses.delete(promptId);
-      } else {
-        console.warn(`No handler found for prompt ${promptId}`);
-      }
+  /**
+ * クライアントからの再開処理を受け取る
+ * @param promptId プロンプトID
+ */
+  handleContinue(promptId: string): void {
+    const handler = this.effectResponses.get(promptId);
+    if (handler) {
+      handler();
+      this.effectResponses.delete(promptId);
+    } else {
+      console.warn(`No handler found for prompt ${promptId}`);
     }
+  }
 
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type)
@@ -208,10 +208,16 @@ export class Core {
           this.room.sync()
 
           // Stack追加
-          this.stack = new Stack({
-            type: 'drive',
-            source: card,
-          });
+          this.stack = [
+            new Stack({
+              type: 'drive',
+              source: card,
+            }),
+            card.lv === 3 && new Stack({
+              type: 'overclock',
+              source: card,
+            })
+          ].filter((_) => !!_);
 
           // スタックの解決処理を開始
           this.resolveStack();

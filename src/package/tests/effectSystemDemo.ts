@@ -1,4 +1,4 @@
-import { EffectTester } from '../../database/effectTester';
+import { EffectTester } from './effectTester';
 import catalog from '../../database/catalog';
 import { EffectExamples } from '../core/class/effect';
 

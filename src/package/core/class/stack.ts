@@ -2,6 +2,8 @@ import type { DisplayEffectPayload, IAtom, Message } from "@/submodule/suit/type
 import type { Player } from "./Player"
 import type { Core } from "../core"
 import catalog from "@/database/catalog"
+import type { EffectHandler } from "./effect"
+import type { CatalogWithHandler } from "@/database/factory"
 
 interface IStack {
   /**
@@ -94,25 +96,27 @@ export class Stack implements IStack {
   private async processEffect(core: Core): Promise<void> {
     // ターンプレイヤーを取得
     const turnPlayerId = core.getTurnPlayerId();
+    console.log("turnPlayerId", turnPlayerId);
     if (!turnPlayerId) return;
 
     const turnPlayer = core.players.find(p => p.id === turnPlayerId);
     const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId);
 
+    console.log("turnPlayer", turnPlayer);
     if (!turnPlayer) return;
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source, core);
+    await this.processCardEffect(this.source, core, true);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
-      await this.processCardEffect(unit, core);
+      await this.processCardEffect(unit, core, false);
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
     for (const player of nonTurnPlayers) {
       for (const unit of player.field) {
-        await this.processCardEffect(unit, core);
+        await this.processCardEffect(unit, core, false);
       }
     }
 
@@ -125,21 +129,21 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processCardEffect(card: IAtom, core: Core): Promise<void> {
+  private async processCardEffect(card: IAtom, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = (card as any).catalogId;
     if (!catalogId) return;
 
     // カードのカタログデータを取得
-    const cardCatalog = catalog.get(catalogId);
+    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
     if (!cardCatalog) return;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
-    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`;
 
     // カタログからハンドラー関数を取得
-    const effectHandler = cardCatalog[handlerName];
+    const effectHandler: EffectHandler | undefined = cardCatalog[handlerName];
 
     if (typeof effectHandler === 'function') {
       try {
@@ -198,7 +202,7 @@ export class Stack implements IStack {
 
     // クライアントからの応答を待つ
     return new Promise((resolve) => {
-      core.setEffectResponseHandler(promptId, (choice) => {
+      core.setEffectDisplayHandler(promptId, (choice: unknown) => {
         resolve(choice);
       });
     });
