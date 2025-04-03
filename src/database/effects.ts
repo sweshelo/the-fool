@@ -5,7 +5,7 @@ import type { ICard } from "@/submodule/suit/types";
 
 interface ReinforcementMatcher {
   color?: number;
-  spicies?: string;
+  species?: string;
 }
 
 export class EffectTemplate {
@@ -39,7 +39,7 @@ export class EffectTemplate {
       // 色の一致
       const colorMatch = match.color ? catalog.color === match.color : true;
       // 種族の一致
-      const speciesMatch = match.spicies ? catalog.species?.some(s => s === match.spicies) : true;
+      const speciesMatch = match.species ? catalog.species?.includes(match.species) : true;
       return colorMatch && speciesMatch;
     });
 

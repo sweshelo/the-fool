@@ -72,8 +72,8 @@ export function effectFactory(catalog: CatalogWithHandler): void {
     // カパじい
     case '2-0-121': {
       catalog.onOverclockSelf = async (stack: Stack, card: ICard, core: Core) => {
-        await stack.displayEffect(core, 'この指とーまれい', '【珍獣】ユニットを2枚引く')
-        new Array(2).forEach(() => EffectTemplate.reinforcements(stack, card, core, { spicies: '珍獣' }))
+        await stack.displayEffect(core, 'この指とーまれい', '【珍獣】ユニットを2枚引く');
+        [...Array(2)].forEach(() => EffectTemplate.reinforcements(stack, card, core, { species: '珍獣' }));
       }
     }
   }
