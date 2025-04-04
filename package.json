@@ -24,7 +24,8 @@
     "ws": "^8.18.1"
   },
   "scripts": {
-    "dev": "bun --hot run index.ts"
+    "dev": "bun --hot run index.ts",
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
