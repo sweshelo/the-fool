@@ -1,4 +1,4 @@
-import type { IAtom, ICard } from "@/submodule/suit/types"
+import { createMessage, type IAtom, type ICard } from "@/submodule/suit/types"
 import type { Player } from "./Player"
 import type { Core } from "../core"
 import catalog from "@/database/catalog"
@@ -72,16 +72,22 @@ export class Stack implements IStack {
    */
   private async notifyStackProcessing(core: Core, state: 'start' | 'end'): Promise<void> {
     // 通知メッセージを送信
-    core.room.broadcastToAll({
-      type: 'StackProcessing',
+    core.room.broadcastToAll(createMessage({
+      action: {
+        type: 'debug',
+        handler: 'client',
+      },
       payload: {
-        stackId: this.id,
-        stackType: this.type,
-        state: state,
-        source: this.source ? { id: this.source.id } : undefined,
-        target: this.target ? { id: (this.target as IAtom).id } : undefined
+        type: 'DebugPrint',
+        message: {
+          stackId: this.id,
+          stackType: this.type,
+          state: state,
+          source: this.source ? { id: this.source.id } : undefined,
+          target: this.target ? { id: (this.target as IAtom).id } : undefined
+        }
       }
-    });
+    }));
 
     // 少し待機してアニメーションなどの時間を確保
     await new Promise(resolve => setTimeout(resolve, 300));

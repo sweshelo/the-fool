@@ -134,7 +134,7 @@ export class EffectHelper {
    * @param playerId 選択を行うプレイヤーID
    * @param options 選択肢配列
    * @param message 表示メッセージ
-   * @returns 選択された項目
+   * @returns 選択された項目のID
    */
   static async promptChoice<T>(
     stack: Stack,
@@ -143,7 +143,7 @@ export class EffectHelper {
     playerId: string,
     options: T[],
     message: string
-  ): Promise<T> {
+  ): Promise<string> {
     return await stack.promptUserChoice(core, playerId, options, message);
   }
 

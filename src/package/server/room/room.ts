@@ -65,20 +65,9 @@ export class Room {
    * @param playerId 送信先プレイヤーID
    * @param payload 送信するペイロード
    */
-  broadcastToPlayer(playerId: string, payload: { type: string, payload: Payload }) {
+  broadcastToPlayer(playerId: string, message: Message) {
     const client = this.clients.get(playerId);
     if (client) {
-      const message: Message<BasePayload> = {
-        action: {
-          type: payload.type.toLowerCase(),
-          handler: 'client',
-        },
-        payload: {
-          ...payload.payload,
-          type: payload.type,
-        } as Payload
-      };
-
       client.send(JSON.stringify(message));
     } else {
       console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
@@ -89,19 +78,8 @@ export class Room {
    * 全プレイヤーにメッセージを送信する
    * @param payload 送信するペイロード
    */
-  broadcastToAll(payload: { type: string, payload: Payload }) {
+  broadcastToAll(message: Message) {
     this.clients.forEach((client) => {
-      const message: Message<BasePayload> = {
-        action: {
-          type: payload.type.toLowerCase(),
-          handler: 'client',
-        },
-        payload: {
-          ...payload.payload,
-          type: payload.type,
-        } as Payload
-      };
-
       client.send(JSON.stringify(message));
     });
   }
