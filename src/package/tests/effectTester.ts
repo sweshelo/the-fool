@@ -4,6 +4,7 @@ import { Core } from '../core/core';
 import { Player } from '../core/class/Player';
 import { Unit } from '../core/class/card';
 import type { Room } from '../server/room/room';
+import type { Message } from '@/submodule/suit/types';
 
 /**
  * カード効果テスター
@@ -21,19 +22,19 @@ export class EffectTester {
     const mockRoom = this.createMockRoom();
 
     // コア作成
-    const core = new Core(mockRoom as any);
+    const core = new Core(mockRoom as Room);
 
     // プレイヤー作成
     const player1 = new Player({
       id: 'player1',
       name: 'Player 1',
-      deck: [catalogId]
+      deck: [catalogId],
     });
 
     const player2 = new Player({
       id: 'player2',
       name: 'Player 2',
-      deck: ['dummy_card_id']
+      deck: ['dummy_card_id'],
     });
 
     // プレイヤーをコアに登録
@@ -46,7 +47,7 @@ export class EffectTester {
     // スタック作成
     const stack = new Stack({
       type: 'drive',
-      source: card
+      source: card,
     });
 
     // コアにスタックをセット
@@ -72,13 +73,13 @@ export class EffectTester {
     const mockRoom = this.createMockRoom();
 
     // コア作成
-    const core = new Core(mockRoom as any);
+    const core = new Core(mockRoom as Room);
 
     // プレイヤー作成
     const player1 = new Player({
       id: 'player1',
       name: 'Player 1',
-      deck: [catalogId]
+      deck: [catalogId],
     });
 
     // プレイヤーをコアに登録
@@ -95,7 +96,7 @@ export class EffectTester {
     const stack = new Stack({
       type: 'break',
       source: sourceCard,
-      target: card
+      target: card,
     });
 
     // コアにスタックをセット
@@ -119,11 +120,11 @@ export class EffectTester {
       sync: () => {
         console.log('Mock sync called');
       },
-      broadcastToAll: (payload: any) => {
-        console.log('Mock broadcastToAll called with:', payload);
+      broadcastToAll: (message: Message) => {
+        console.log('Mock broadcastToAll called with:', message);
       },
-      broadcastToPlayer: (playerId: string, payload: any) => {
-        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, payload);
+      broadcastToPlayer: (playerId: string, message: Message) => {
+        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, message);
       },
       rule: {
         player: {
@@ -133,7 +134,7 @@ export class EffectTester {
             life: 3,
             trigger: 4,
             cp: 12,
-          }
+          },
         },
         system: {
           round: 3,
@@ -148,9 +149,9 @@ export class EffectTester {
           cp: {
             increase: 1,
             init: 2,
-          }
-        }
-      }
+          },
+        },
+      },
     };
   }
 

@@ -1,8 +1,7 @@
-import type { Stack } from "./stack";
-import type { Core } from "../core";
-import type { IAtom } from "@/submodule/suit/types";
-import type { Card, Unit } from "./card";
-import { Player } from "./Player";
+import type { Stack } from './stack';
+import type { Core } from '../core';
+import type { IAtom } from '@/submodule/suit/types';
+import type { Choices } from '@/submodule/suit/types/game/system';
 
 /**
  * カード効果ハンドラの型定義
@@ -59,9 +58,8 @@ export class EffectUtils {
   static drawCards(count: number = 1): EffectHandler {
     return async (stack: Stack, card: IAtom, core: Core): Promise<void> => {
       // カードの所有者を特定
-      const player = core.players.find(p =>
-        p.field.some(c => c.id === card.id) ||
-        p.hand.some(c => c.id === card.id)
+      const player = core.players.find(
+        p => p.field.some(c => c.id === card.id) || p.hand.some(c => c.id === card.id)
       );
 
       if (player) {
@@ -98,7 +96,7 @@ export class EffectUtils {
             }
 
             // 破壊スタックを作成
-            const breakStack = stack.addChildStack('break', card, target);
+            // const breakStack = stack.addChildStack('break', card, target);
 
             break; // 見つかったらループ終了
           }
@@ -134,27 +132,20 @@ export class EffectHelper {
    * @param card 効果の発動元カード
    * @param core ゲームコア
    * @param playerId 選択を行うプレイヤーID
-   * @param options 選択肢配列
-   * @param message 表示メッセージ
-   * @returns 選択された項目
+   * @param options 選択肢
+   * @returns 選択された項目のID
    */
-  static async promptChoice<T>(
+  static async promptChoice(
     stack: Stack,
     card: IAtom,
     core: Core,
     playerId: string,
-    options: T[],
-    message: string
-  ): Promise<T> {
-    return await stack.promptUserChoice(core, playerId, options, message);
+    choices: Choices
+  ): Promise<string> {
+    return await stack.promptUserChoice(core, playerId, choices);
   }
 
-  static async showEffect(
-    stack: Stack,
-    core: Core,
-    title: string,
-    message: string
-  ): Promise<void> {
-    return await stack.displayEffect(core, title, message)
+  static async showEffect(stack: Stack, core: Core, title: string, message: string): Promise<void> {
+    return await stack.displayEffect(core, title, message);
   }
 }

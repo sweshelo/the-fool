@@ -1,7 +1,7 @@
-import type { Stack } from "@/package/core/class/stack";
-import type { Core } from "@/package/core/core";
-import master from "@/submodule/suit/catalog/catalog";
-import type { ICard } from "@/submodule/suit/types";
+import type { Stack } from '@/package/core/class/stack';
+import type { Core } from '@/package/core/core';
+import master from '@/submodule/suit/catalog/catalog';
+import type { ICard } from '@/submodule/suit/types';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -11,9 +11,10 @@ interface ReinforcementMatcher {
 export class EffectTemplate {
   static draw(stack: Stack, card: ICard, core: Core): void {
     // 召喚者特定
-    const driver = core.players.find(p => p.find(card).result)
+    const driver = core.players.find(p => p.find(card).result);
     // 召喚者の手札が上限に達している場合は何もしない
-    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand) return;
+    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand)
+      return;
 
     driver.draw();
     return;
@@ -26,14 +27,15 @@ export class EffectTemplate {
    */
   static reinforcements(stack: Stack, card: ICard, core: Core, match: ReinforcementMatcher): void {
     // 召喚者特定
-    const driver = core.players.find(p => p.find(card).result)
+    const driver = core.players.find(p => p.find(card).result);
 
     // 召喚者の手札が上限に達している場合は何もしない
-    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand) return;
+    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand)
+      return;
 
     // 召喚者のデッキから条件に合致するカードを探す
-    const target = driver?.deck.find((c) => {
-      const catalog = master.get(c.catalogId)
+    const target = driver?.deck.find(c => {
+      const catalog = master.get(c.catalogId);
       if (!catalog || (catalog.type !== 'unit' && catalog.type !== 'advanced_unit')) return false;
 
       // 色の一致

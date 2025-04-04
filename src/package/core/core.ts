@@ -1,14 +1,22 @@
-import type { Message } from "@/submodule/suit/types/message/message";
-import type { Player } from "./class/Player";
-import { config } from "../../config";
-import type { DebugDrawPayload, IAtom, OverridePayload, UnitDrivePayload } from "@/submodule/suit/types";
-import type { ContinuePayload, EffectResponsePayload } from "@/submodule/suit/types/message/payload/client";
-import type { Room } from "../server/room/room";
-import catalog from "@/database/catalog";
-import type { Unit } from "./class/card";
-import { isUnit as checkIsUnit } from "@/helper";
-import { Stack } from "./class/stack";
+import type { Message } from '@/submodule/suit/types/message/message';
+import type { Player } from './class/Player';
+import { config } from '../../config';
+import type {
+  DebugDrawPayload,
+  IAtom,
+  OverridePayload,
+  UnitDrivePayload,
+} from '@/submodule/suit/types';
+import type {
+  ContinuePayload,
+  EffectResponsePayload,
+} from '@/submodule/suit/types/message/payload/client';
+import type { Room } from '../server/room/room';
+import catalog from '@/database/catalog';
+import { isUnit as checkIsUnit } from '@/helper';
+import { Stack } from './class/stack';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
 
 export class Core {
@@ -26,9 +34,9 @@ export class Core {
   private effectResponses: Map<string, EffectResponseCallback> = new Map();
 
   constructor(room: Room) {
-    this.id = crypto.randomUUID()
+    this.id = crypto.randomUUID();
     this.players = [];
-    this.room = room
+    this.room = room;
   }
 
   entry(player: Player) {
@@ -49,7 +57,7 @@ export class Core {
       console.log(`Round ${this.round}`);
       console.log(
         'Players:',
-        this.players.map((p) => p.id),
+        this.players.map(p => p.id)
       );
 
       for await (const player of this.players) {
@@ -90,10 +98,10 @@ export class Core {
   async resolveStack(): Promise<void> {
     if (this.stack !== undefined) {
       try {
-        while (this.stack.length > 0){
-          const stackItem = this.stack.shift()
+        while (this.stack.length > 0) {
+          const stackItem = this.stack.shift();
           await stackItem?.resolve(this);
-          this.room.sync()
+          this.room.sync();
         }
 
         // 処理完了後、スタックをクリア
@@ -110,7 +118,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: any): void {
+  handleEffectResponse(promptId: string, response: string): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);
@@ -121,9 +129,9 @@ export class Core {
   }
 
   /**
- * クライアントからの再開処理を受け取る
- * @param promptId プロンプトID
- */
+   * クライアントからの再開処理を受け取る
+   * @param promptId プロンプトID
+   */
   handleContinue(promptId: string): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
@@ -135,7 +143,7 @@ export class Core {
   }
 
   handleMessage(message: Message) {
-    console.log('passed message to Core : type<%s>', message.action.type)
+    console.log('passed message to Core : type<%s>', message.action.type);
     switch (message.payload.type) {
       case 'EffectResponse': {
         const payload: EffectResponsePayload = message.payload;
@@ -148,64 +156,65 @@ export class Core {
         break;
       }
       case 'DebugDraw': {
-        const payload: DebugDrawPayload = message.payload
-        const target = this.players.find(player => player.id === payload.player)
+        const payload: DebugDrawPayload = message.payload;
+        const target = this.players.find(player => player.id === payload.player);
         if (target) {
-          target.draw()
-          this.room.sync()
+          target.draw();
+          this.room.sync();
         }
         break;
       }
       case 'Override': {
-        const payload: OverridePayload = message.payload
+        const payload: OverridePayload = message.payload;
         // オーバーライド要件を満たしているかチェックする
-        const player = this.players.find(p => p.id === payload.player)
-        const parent = player?.find({ ...payload.parent } satisfies IAtom)
-        const target = player?.find({ ...payload.target } satisfies IAtom)
+        const player = this.players.find(p => p.id === payload.player);
+        const parent = player?.find({ ...payload.parent } satisfies IAtom);
+        const target = player?.find({ ...payload.target } satisfies IAtom);
 
         if (!parent?.card || !target?.card || !player) return;
 
         // 2つのカードがどちらも手札の中にある
-        const isOnHand = parent.place?.name === 'hand' && target?.place?.name === 'hand'
+        const isOnHand = parent.place?.name === 'hand' && target?.place?.name === 'hand';
 
         // 2つのカードが同じである
         // TODO: strictModeな設定を作り、同名判定を厳密にするモードを用意する
-        const isSameCard = catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name
+        const isSameCard =
+          catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
 
         // 受け皿がLv3未満
-        const isUnderLv3 = parent?.card?.lv < 3
+        const isUnderLv3 = parent?.card?.lv < 3;
 
         if (isOnHand && isSameCard && isUnderLv3) {
-          player.hand = player?.hand.filter(card => card.id !== target.card?.id)
-          parent.card.lv++
-          player.trash.unshift(target.card)
-          player.draw()
-          this.room.sync()
+          player.hand = player?.hand.filter(card => card.id !== target.card?.id);
+          parent.card.lv++;
+          player.trash.unshift(target.card);
+          player.draw();
+          this.room.sync();
         }
         break;
       }
       case 'UnitDrive': {
-        const payload: UnitDrivePayload = message.payload
-        const player = this.players.find(p => p.id === payload.player)
-        const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {}
+        const payload: UnitDrivePayload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
         if (!card || !player) return;
 
-        const cardCatalog = catalog.get(card.catalogId)
-        if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました')
+        const cardCatalog = catalog.get(card.catalogId);
+        if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
         // CPが足りている
-        const isEnoughCP = cardCatalog.cost <= player.cp.current || true // debug用
+        const isEnoughCP = cardCatalog.cost <= player.cp.current || true; // debug用
 
         // フィールドのユニット数が規定未満
-        const isEnoughField = player.field.length < this.room.rule.player.max.field
+        const isEnoughField = player.field.length < this.room.rule.player.max.field;
 
         // ユニットである
-        const isUnit = checkIsUnit(card)
+        const isUnit = checkIsUnit(card);
 
         if (isEnoughCP && isEnoughField && isUnit) {
-          player.hand = player?.hand.filter(c => c.id !== card?.id)
-          player.field.unshift(card)
-          this.room.sync()
+          player.hand = player?.hand.filter(c => c.id !== card?.id);
+          player.field.unshift(card);
+          this.room.sync();
 
           // Stack追加
           this.stack = [
@@ -213,11 +222,12 @@ export class Core {
               type: 'drive',
               source: card,
             }),
-            card.lv === 3 && new Stack({
-              type: 'overclock',
-              source: card,
-            })
-          ].filter((_) => !!_);
+            card.lv === 3 &&
+              new Stack({
+                type: 'overclock',
+                source: card,
+              }),
+          ].filter(_ => !!_);
 
           // スタックの解決処理を開始
           this.resolveStack();
