@@ -1,10 +1,10 @@
-import { createMessage, type IAtom, type ICard } from "@/submodule/suit/types"
-import type { Player } from "./Player"
-import type { Core } from "../core"
-import catalog from "@/database/catalog"
-import type { CatalogWithHandler } from "@/database/factory"
-import master from "@/database/catalog"
-import type { Choices } from "@/submodule/suit/types/game/system"
+import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types'
+import type { Player } from './Player'
+import type { Core } from '../core'
+import catalog from '@/database/catalog'
+import type { CatalogWithHandler } from '@/database/factory'
+import master from '@/database/catalog'
+import type { Choices } from '@/submodule/suit/types/game/system'
 
 interface IStack {
   /**
@@ -53,18 +53,18 @@ export class Stack implements IStack {
    */
   async resolve(core: Core): Promise<void> {
     // スタックの処理開始をクライアントに通知
-    await this.notifyStackProcessing(core, 'start');
+    await this.notifyStackProcessing(core, 'start')
 
     // 1. 自身の効果を処理
-    await this.processEffect(core);
+    await this.processEffect(core)
 
     // 2. 子スタックを順番に処理 (深さ優先で処理)
     for (const child of this.children) {
-      await child.resolve(core);
+      await child.resolve(core)
     }
 
     // スタックの処理完了をクライアントに通知
-    await this.notifyStackProcessing(core, 'end');
+    await this.notifyStackProcessing(core, 'end')
   }
 
   /**
@@ -74,25 +74,27 @@ export class Stack implements IStack {
    */
   private async notifyStackProcessing(core: Core, state: 'start' | 'end'): Promise<void> {
     // 通知メッセージを送信
-    core.room.broadcastToAll(createMessage({
-      action: {
-        type: 'debug',
-        handler: 'client',
-      },
-      payload: {
-        type: 'DebugPrint',
-        message: {
-          stackId: this.id,
-          stackType: this.type,
-          state: state,
-          source: this.source ? { id: this.source.id } : undefined,
-          target: this.target ? { id: (this.target as IAtom).id } : undefined
-        }
-      }
-    }));
+    core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'debug',
+          handler: 'client',
+        },
+        payload: {
+          type: 'DebugPrint',
+          message: {
+            stackId: this.id,
+            stackType: this.type,
+            state: state,
+            source: this.source ? { id: this.source.id } : undefined,
+            target: this.target ? { id: (this.target as IAtom).id } : undefined,
+          },
+        },
+      })
+    )
 
     // 少し待機してアニメーションなどの時間を確保
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 300))
   }
 
   /**
@@ -102,33 +104,33 @@ export class Stack implements IStack {
    */
   private async processEffect(core: Core): Promise<void> {
     // ターンプレイヤーを取得
-    const turnPlayerId = core.getTurnPlayerId();
-    console.log("turnPlayerId", turnPlayerId);
-    if (!turnPlayerId) return;
+    const turnPlayerId = core.getTurnPlayerId()
+    console.log('turnPlayerId', turnPlayerId)
+    if (!turnPlayerId) return
 
-    const turnPlayer = core.players.find(p => p.id === turnPlayerId);
-    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId);
+    const turnPlayer = core.players.find(p => p.id === turnPlayerId)
+    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId)
 
-    console.log("turnPlayer", turnPlayer);
-    if (!turnPlayer) return;
+    console.log('turnPlayer', turnPlayer)
+    if (!turnPlayer) return
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source as ICard, core, true);
+    await this.processCardEffect(this.source as ICard, core, true)
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
-      await this.processCardEffect(unit, core, false);
+      await this.processCardEffect(unit, core, false)
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
     for (const player of nonTurnPlayers) {
       for (const unit of player.field) {
-        await this.processCardEffect(unit, core, false);
+        await this.processCardEffect(unit, core, false)
       }
     }
 
     // 処理が終わったら状態を同期
-    core.room.sync();
+    core.room.sync()
   }
 
   /**
@@ -138,60 +140,64 @@ export class Stack implements IStack {
    */
   private async processCardEffect(card: ICard, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
-    const catalogId = card.catalogId;
-    if (!catalogId) return;
+    const catalogId = card.catalogId
+    if (!catalogId) return
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
-    if (!cardCatalog) return;
+    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId)
+    if (!cardCatalog) return
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
-    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`;
+    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`
 
     // カタログからハンドラー関数を取得
-    const effectHandler = cardCatalog[handlerName];
+    const effectHandler = cardCatalog[handlerName]
 
     if (typeof effectHandler === 'function') {
       try {
         // 効果実行前に通知
-        core.room.broadcastToAll(createMessage({
-          action: {
-            type: 'debug',
-            handler: 'client',
-          },
-          payload: {
-            type: 'DebugPrint',
-            message: {
-              stackId: this.id,
-              card: master.get(card.catalogId)?.name,
-              effectType: this.type,
-              state: 'start'
-            }
-          }
-        }));
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'debug',
+              handler: 'client',
+            },
+            payload: {
+              type: 'DebugPrint',
+              message: {
+                stackId: this.id,
+                card: master.get(card.catalogId)?.name,
+                effectType: this.type,
+                state: 'start',
+              },
+            },
+          })
+        )
 
         // 効果を実行
-        await effectHandler(this, card, core);
+        await effectHandler(this, card, core)
 
         // 効果実行後に通知
-        core.room.broadcastToAll(createMessage({
-          action: {
-            type: 'debug',
-            handler: 'client',
-          },
-          payload: {
-            type: 'DebugPrint',
-            message: {
-              stackId: this.id,
-              card: master.get(card.catalogId)?.name,
-              effectType: this.type,
-              state: 'end'
-            }
-          }
-        }));
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'debug',
+              handler: 'client',
+            },
+            payload: {
+              type: 'DebugPrint',
+              message: {
+                stackId: this.id,
+                card: master.get(card.catalogId)?.name,
+                effectType: this.type,
+                state: 'end',
+              },
+            },
+          })
+        )
       } catch (error) {
-        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
+        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error)
       }
     }
   }
@@ -206,28 +212,31 @@ export class Stack implements IStack {
    */
   async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string> {
     // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
+    const promptId = `${this.id}_${Date.now()}`
 
     // クライアントに選択肢を送信
-    core.room.broadcastToPlayer(playerId, createMessage({
-      action: {
-        type: 'pause',
-        handler: 'client'
-      },
-      payload: {
-        type: 'Choise',
-        promptId,
-        choices,
-        player: playerId,
-      }
-    }));
+    core.room.broadcastToPlayer(
+      playerId,
+      createMessage({
+        action: {
+          type: 'pause',
+          handler: 'client',
+        },
+        payload: {
+          type: 'Choise',
+          promptId,
+          choices,
+          player: playerId,
+        },
+      })
+    )
 
     // クライアントからの応答を待つ
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       core.setEffectDisplayHandler(promptId, (choice: string) => {
-        resolve(choice);
-      });
-    });
+        resolve(choice)
+      })
+    })
   }
 
   /**
@@ -238,29 +247,31 @@ export class Stack implements IStack {
    */
   async displayEffect(core: Core, title: string, message: string): Promise<void> {
     // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
+    const promptId = `${this.id}_${Date.now()}`
 
     // クライアントに選択肢を送信
-    core.room.broadcastToAll(createMessage({
-      action: {
-        type: 'pause',
-        handler: 'client'
-      },
-      payload: {
-        type: 'DisplayEffect',
-        promptId,
-        stackId: this.id,
-        title,
-        message,
-      }
-    }));
+    core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'pause',
+          handler: 'client',
+        },
+        payload: {
+          type: 'DisplayEffect',
+          promptId,
+          stackId: this.id,
+          title,
+          message,
+        },
+      })
+    )
 
     // クライアントからの応答を待つ
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       core.setEffectDisplayHandler(promptId, () => {
-        resolve();
-      });
-    });
+        resolve()
+      })
+    })
   }
 
   /**
@@ -275,17 +286,17 @@ export class Stack implements IStack {
       type,
       source,
       target,
-      parent: this
-    });
+      parent: this,
+    })
 
-    this.children.push(childStack);
-    return childStack;
+    this.children.push(childStack)
+    return childStack
   }
 
   /**
    * スタックのIDを取得する（ユニークな識別子として使用）
    */
   get id(): string {
-    return `${this.source.id}_${this.type}_${Date.now()}`;
+    return `${this.source.id}_${this.type}_${Date.now()}`
   }
 }

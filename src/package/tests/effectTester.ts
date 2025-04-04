@@ -1,10 +1,10 @@
-import catalog from '../../database/catalog';
-import { Stack } from '../core/class/stack';
-import { Core } from '../core/core';
-import { Player } from '../core/class/Player';
-import { Unit } from '../core/class/card';
-import type { Room } from '../server/room/room';
-import type { Message } from '@/submodule/suit/types';
+import catalog from '../../database/catalog'
+import { Stack } from '../core/class/stack'
+import { Core } from '../core/core'
+import { Player } from '../core/class/Player'
+import { Unit } from '../core/class/card'
+import type { Room } from '../server/room/room'
+import type { Message } from '@/submodule/suit/types'
 
 /**
  * カード効果テスター
@@ -16,49 +16,49 @@ export class EffectTester {
    * @param catalogId テスト対象のカードカタログID
    */
   static async testDriveEffect(catalogId: string): Promise<void> {
-    console.log(`Testing drive effect for card ${catalogId}...`);
+    console.log(`Testing drive effect for card ${catalogId}...`)
 
     // モックルーム作成
-    const mockRoom = this.createMockRoom();
+    const mockRoom = this.createMockRoom()
 
     // コア作成
-    const core = new Core(mockRoom as Room);
+    const core = new Core(mockRoom as Room)
 
     // プレイヤー作成
     const player1 = new Player({
       id: 'player1',
       name: 'Player 1',
-      deck: [catalogId]
-    });
+      deck: [catalogId],
+    })
 
     const player2 = new Player({
       id: 'player2',
       name: 'Player 2',
-      deck: ['dummy_card_id']
-    });
+      deck: ['dummy_card_id'],
+    })
 
     // プレイヤーをコアに登録
-    core.entry(player1);
-    core.entry(player2);
+    core.entry(player1)
+    core.entry(player2)
 
     // テスト用カード作成
-    const card = new Unit(catalogId);
+    const card = new Unit(catalogId)
 
     // スタック作成
     const stack = new Stack({
       type: 'drive',
-      source: card
-    });
+      source: card,
+    })
 
     // コアにスタックをセット
-    core.stack = [stack];
+    core.stack = [stack]
 
     // スタック解決
     try {
-      await core.resolveStack();
-      console.log(`Drive effect for card ${catalogId} successfully processed.`);
+      await core.resolveStack()
+      console.log(`Drive effect for card ${catalogId} successfully processed.`)
     } catch (error) {
-      console.error(`Error testing drive effect for card ${catalogId}:`, error);
+      console.error(`Error testing drive effect for card ${catalogId}:`, error)
     }
   }
 
@@ -67,47 +67,47 @@ export class EffectTester {
    * @param catalogId テスト対象のカードカタログID
    */
   static async testBreakEffect(catalogId: string): Promise<void> {
-    console.log(`Testing break effect for card ${catalogId}...`);
+    console.log(`Testing break effect for card ${catalogId}...`)
 
     // モックルーム作成
-    const mockRoom = this.createMockRoom();
+    const mockRoom = this.createMockRoom()
 
     // コア作成
-    const core = new Core(mockRoom as Room);
+    const core = new Core(mockRoom as Room)
 
     // プレイヤー作成
     const player1 = new Player({
       id: 'player1',
       name: 'Player 1',
-      deck: [catalogId]
-    });
+      deck: [catalogId],
+    })
 
     // プレイヤーをコアに登録
-    core.entry(player1);
+    core.entry(player1)
 
     // テスト用カード作成
-    const card = new Unit(catalogId);
-    player1.field.push(card);
+    const card = new Unit(catalogId)
+    player1.field.push(card)
 
     // 破壊元カード（ダミー）を作成
-    const sourceCard = new Unit('dummy_source_id');
+    const sourceCard = new Unit('dummy_source_id')
 
     // スタック作成
     const stack = new Stack({
       type: 'break',
       source: sourceCard,
-      target: card
-    });
+      target: card,
+    })
 
     // コアにスタックをセット
-    core.stack = [stack];
+    core.stack = [stack]
 
     // スタック解決
     try {
-      await core.resolveStack();
-      console.log(`Break effect for card ${catalogId} successfully processed.`);
+      await core.resolveStack()
+      console.log(`Break effect for card ${catalogId} successfully processed.`)
     } catch (error) {
-      console.error(`Error testing break effect for card ${catalogId}:`, error);
+      console.error(`Error testing break effect for card ${catalogId}:`, error)
     }
   }
 
@@ -118,13 +118,13 @@ export class EffectTester {
   private static createMockRoom(): Partial<Room> {
     return {
       sync: () => {
-        console.log('Mock sync called');
+        console.log('Mock sync called')
       },
       broadcastToAll: (message: Message) => {
-        console.log('Mock broadcastToAll called with:', message);
+        console.log('Mock broadcastToAll called with:', message)
       },
       broadcastToPlayer: (playerId: string, message: Message) => {
-        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, message);
+        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, message)
       },
       rule: {
         player: {
@@ -134,7 +134,7 @@ export class EffectTester {
             life: 3,
             trigger: 4,
             cp: 12,
-          }
+          },
         },
         system: {
           round: 3,
@@ -149,49 +149,49 @@ export class EffectTester {
           cp: {
             increase: 1,
             init: 2,
-          }
-        }
-      }
-    };
+          },
+        },
+      },
+    }
   }
 
   /**
    * テスト用のユーティリティメソッド群
    */
   static async runAllTests(): Promise<void> {
-    console.log('Running all effect tests...');
+    console.log('Running all effect tests...')
 
     // カタログからテスト対象のカードをリストアップ
-    const driveEffectCards: string[] = [];
-    const breakEffectCards: string[] = [];
+    const driveEffectCards: string[] = []
+    const breakEffectCards: string[] = []
 
     catalog.forEach((card, id) => {
       if (typeof card.onDrive === 'function') {
-        driveEffectCards.push(id);
+        driveEffectCards.push(id)
       }
 
       if (typeof card.onBreak === 'function') {
-        breakEffectCards.push(id);
+        breakEffectCards.push(id)
       }
-    });
+    })
 
     // 召喚効果テスト
-    console.log(`Testing ${driveEffectCards.length} cards with drive effects...`);
+    console.log(`Testing ${driveEffectCards.length} cards with drive effects...`)
     for (const id of driveEffectCards) {
-      await this.testDriveEffect(id);
+      await this.testDriveEffect(id)
     }
 
     // 破壊効果テスト
-    console.log(`Testing ${breakEffectCards.length} cards with break effects...`);
+    console.log(`Testing ${breakEffectCards.length} cards with break effects...`)
     for (const id of breakEffectCards) {
-      await this.testBreakEffect(id);
+      await this.testBreakEffect(id)
     }
 
-    console.log('All effect tests completed.');
+    console.log('All effect tests completed.')
   }
 }
 
 // 単体で実行できるようにするためのエントリポイント
 if (require.main === module) {
-  EffectTester.runAllTests().catch(console.error);
+  EffectTester.runAllTests().catch(console.error)
 }

@@ -1,3 +1,3 @@
-import { Server } from "./src/package/server";
+import { Server } from './src/package/server'
 
 new Server()

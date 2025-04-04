@@ -1,22 +1,22 @@
-import type { Message } from "@/submodule/suit/types/message/message";
-import { Player } from "../../core/class/Player";
-import { Core } from "../../core/core";
-import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
-import type { ServerWebSocket } from "bun";
-import type { Rule } from "@/submodule/suit/types";
-import { config } from "@/config";
+import type { Message } from '@/submodule/suit/types/message/message'
+import { Player } from '../../core/class/Player'
+import { Core } from '../../core/core'
+import type { SyncPayload } from '@/submodule/suit/types/message/payload/client'
+import type { ServerWebSocket } from 'bun'
+import type { Rule } from '@/submodule/suit/types'
+import { config } from '@/config'
 
 export class Room {
-  id = crypto.randomUUID();
-  name: string;
-  core: Core;
-  players: Map<string, Player> = new Map<string, Player>();
-  clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
+  id = crypto.randomUUID()
+  name: string
+  core: Core
+  players: Map<string, Player> = new Map<string, Player>()
+  clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>()
   rule: Rule = { ...config.game } // デフォルトのルールをコピー
 
   constructor(name: string) {
-    this.core = new Core(this);
-    this.name = name;
+    this.core = new Core(this)
+    this.name = name
   }
 
   // メッセージを処理
@@ -37,15 +37,15 @@ export class Room {
       if (exists) {
         // clients再登録
         this.clients.delete(exists.id)
-        this.clients.set(exists.id, socket);
-        this.sync();
+        this.clients.set(exists.id, socket)
+        this.sync()
       } else {
-        const player = new Player(message.payload.player);
+        const player = new Player(message.payload.player)
         // socket 登録
-        this.clients.set(player.id, socket);
-        this.core.entry(player);
+        this.clients.set(player.id, socket)
+        this.core.entry(player)
         this.players.set(player.id, player)
-        this.sync();
+        this.sync()
       }
       return true
     } else {
@@ -55,7 +55,7 @@ export class Room {
 
   // ゲーム開始
   start() {
-    this.core.start();
+    this.core.start()
   }
 
   /**
@@ -64,11 +64,11 @@ export class Room {
    * @param payload 送信するペイロード
    */
   broadcastToPlayer(playerId: string, message: Message) {
-    const client = this.clients.get(playerId);
+    const client = this.clients.get(playerId)
     if (client) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify(message))
     } else {
-      console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
+      console.warn(`Failed to broadcast to player ${playerId}: Player not found`)
     }
   }
 
@@ -77,20 +77,23 @@ export class Room {
    * @param payload 送信するペイロード
    */
   broadcastToAll(message: Message) {
-    this.clients.forEach((client) => {
-      client.send(JSON.stringify(message));
-    });
+    this.clients.forEach(client => {
+      client.send(JSON.stringify(message))
+    })
   }
 
   // 現在のステータスを全て送信
   sync = () => {
     console.log('syncing')
-    const players: { [key: string]: Player } = this.core.players.reduce((acc, player) => {
-      acc[player.id] = player;
-      return acc;
-    }, {} as { [key: string]: Player })
+    const players: { [key: string]: Player } = this.core.players.reduce(
+      (acc, player) => {
+        acc[player.id] = player
+        return acc
+      },
+      {} as { [key: string]: Player }
+    )
 
-    this.clients.forEach((client) => {
+    this.clients.forEach(client => {
       const data = JSON.stringify({
         action: {
           type: 'sync',
@@ -104,8 +107,8 @@ export class Room {
               turn: this.core.turn,
             },
             players,
-          }
-        }
+          },
+        },
       } satisfies Message<SyncPayload>)
       client.send(data)
     })

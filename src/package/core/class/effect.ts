@@ -1,14 +1,14 @@
-import type { Stack } from "./stack";
-import type { Core } from "../core";
-import type { IAtom } from "@/submodule/suit/types";
-import type { Choices } from "@/submodule/suit/types/game/system";
+import type { Stack } from './stack'
+import type { Core } from '../core'
+import type { IAtom } from '@/submodule/suit/types'
+import type { Choices } from '@/submodule/suit/types/game/system'
 
 /**
  * カード効果ハンドラの型定義
  * スタック、カード、コアを受け取り、非同期で効果を処理する
  */
 export interface EffectHandler {
-  (stack: Stack, card: IAtom, core: Core): Promise<void>;
+  (stack: Stack, card: IAtom, core: Core): Promise<void>
 }
 
 /**
@@ -17,13 +17,13 @@ export interface EffectHandler {
  */
 export interface CardEffects {
   // 召喚時の効果
-  onDrive?: EffectHandler;
+  onDrive?: EffectHandler
   // 破壊時の効果
-  onBreak?: EffectHandler;
+  onBreak?: EffectHandler
   // ダメージを与えた時の効果
-  onDamage?: EffectHandler;
+  onDamage?: EffectHandler
   // ドローした時の効果
-  onDraw?: EffectHandler;
+  onDraw?: EffectHandler
   // [その他の効果タイプ]
 }
 
@@ -32,16 +32,16 @@ export interface CardEffects {
  * カタログデータにCardEffectsを含める
  */
 export interface ExtendedCatalog {
-  id: string;
-  name: string;
-  cost: number;
+  id: string
+  name: string
+  cost: number
   // 他のカタログフィールド
 
   // 効果ハンドラ
-  onDrive?: EffectHandler;
-  onBreak?: EffectHandler;
-  onDamage?: EffectHandler;
-  onDraw?: EffectHandler;
+  onDrive?: EffectHandler
+  onBreak?: EffectHandler
+  onDamage?: EffectHandler
+  onDraw?: EffectHandler
   // [その他の効果タイプ]
 }
 
@@ -58,18 +58,17 @@ export class EffectUtils {
   static drawCards(count: number = 1): EffectHandler {
     return async (stack: Stack, card: IAtom, core: Core): Promise<void> => {
       // カードの所有者を特定
-      const player = core.players.find(p =>
-        p.field.some(c => c.id === card.id) ||
-        p.hand.some(c => c.id === card.id)
-      );
+      const player = core.players.find(
+        p => p.field.some(c => c.id === card.id) || p.hand.some(c => c.id === card.id)
+      )
 
       if (player) {
         // 指定枚数のカードをドロー
         for (let i = 0; i < count; i++) {
-          player.draw();
+          player.draw()
         }
       }
-    };
+    }
   }
 
   /**
@@ -82,28 +81,28 @@ export class EffectUtils {
   ): EffectHandler {
     return async (stack: Stack, card: IAtom, core: Core): Promise<void> => {
       // 対象を選択
-      const targets = await targetSelector(stack, card, core);
+      const targets = await targetSelector(stack, card, core)
 
       // 各対象に対して破壊処理
       for (const target of targets) {
         // 対象の所有者を特定
         for (const player of core.players) {
-          const index = player.field.findIndex(c => c.id === target.id);
+          const index = player.field.findIndex(c => c.id === target.id)
           if (index >= 0) {
             // 対象をフィールドから取り除き、墓地に置く
-            const removedCard = player.field.splice(index, 1)[0];
+            const removedCard = player.field.splice(index, 1)[0]
             if (removedCard) {
-              player.trash.unshift(removedCard);
+              player.trash.unshift(removedCard)
             }
 
             // 破壊スタックを作成
             // const breakStack = stack.addChildStack('break', card, target);
 
-            break; // 見つかったらループ終了
+            break // 見つかったらループ終了
           }
         }
       }
-    };
+    }
   }
 
   /**
@@ -111,18 +110,18 @@ export class EffectUtils {
    */
   static selectAllOpponentUnits(stack: Stack, card: IAtom, core: Core): Promise<IAtom[]> {
     // 現在のターンプレイヤーを取得
-    const turnPlayerId = core.getTurnPlayerId();
-    if (!turnPlayerId) return Promise.resolve([]);
+    const turnPlayerId = core.getTurnPlayerId()
+    if (!turnPlayerId) return Promise.resolve([])
 
     // 非ターンプレイヤーのユニットを全て選択
-    const opponents = core.players.filter(p => p.id !== turnPlayerId);
-    const units: IAtom[] = [];
+    const opponents = core.players.filter(p => p.id !== turnPlayerId)
+    const units: IAtom[] = []
 
     for (const opponent of opponents) {
-      units.push(...opponent.field);
+      units.push(...opponent.field)
     }
 
-    return Promise.resolve(units);
+    return Promise.resolve(units)
   }
 }
 
@@ -141,17 +140,12 @@ export class EffectHelper {
     card: IAtom,
     core: Core,
     playerId: string,
-    choices: Choices,
+    choices: Choices
   ): Promise<string> {
-    return await stack.promptUserChoice(core, playerId, choices);
+    return await stack.promptUserChoice(core, playerId, choices)
   }
 
-  static async showEffect(
-    stack: Stack,
-    core: Core,
-    title: string,
-    message: string
-  ): Promise<void> {
+  static async showEffect(stack: Stack, core: Core, title: string, message: string): Promise<void> {
     return await stack.displayEffect(core, title, message)
   }
 }

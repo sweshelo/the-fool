@@ -1,8 +1,8 @@
-import type { IAtom, IPlayer, PlayerEntryPayload } from "@/submodule/suit/types"
-import { config } from "../../../config"
-import type { Action } from "./action"
-import { Card } from "./card/Card"
-import { Unit } from "./card/Unit"
+import type { IAtom, IPlayer, PlayerEntryPayload } from '@/submodule/suit/types'
+import { config } from '../../../config'
+import type { Action } from './action'
+import { Card } from './card/Card'
+import { Unit } from './card/Unit'
 
 export interface PlayerAction {
   action: Action
@@ -33,10 +33,10 @@ export class Player implements IPlayer {
     current: 0,
     max: 0,
   }
-  life: { current: number; max: number; } = {
+  life: { current: number; max: number } = {
     current: config.game.player.max.life,
     max: config.game.player.max.life,
-  };
+  }
 
   constructor({ id, name, deck }: PlayerEntryPayload['player']) {
     this.id = id
@@ -46,42 +46,45 @@ export class Player implements IPlayer {
     this.trash = []
 
     // ライブラリからデッキを生成する
-    this.library = [...deck];
+    this.library = [...deck]
     this.deck = [...deck].map(id => new Unit(id)) // TODO: ファクトリメソッドを定義してcatalogIdから生成すべきインスタンスを判別する
   }
 
   // プレイヤー領域からカードを探す
   find(target: IAtom): FindResult {
     const onDeck = this.deck.find(({ id }) => id === target.id)
-    if (onDeck) return ({
-      result: true,
-      card: onDeck,
-      place: {
-        name: 'deck',
-        ref: this.deck
+    if (onDeck)
+      return {
+        result: true,
+        card: onDeck,
+        place: {
+          name: 'deck',
+          ref: this.deck,
+        },
       }
-    })
 
     const onHand = this.hand.find(({ id }) => id === target.id)
-    if (onHand) return ({
-      result: true,
-      card: onHand,
-      place: {
-        name: 'hand',
-        ref: this.hand
+    if (onHand)
+      return {
+        result: true,
+        card: onHand,
+        place: {
+          name: 'hand',
+          ref: this.hand,
+        },
       }
-    })
 
     // 本当に必要?
     const onField = this.field.find(({ id }) => id === target.id)
-    if (onField) return ({
-      result: true,
-      card: onField,
-      place: {
-        name: 'field',
-        ref: this.field
+    if (onField)
+      return {
+        result: true,
+        card: onField,
+        place: {
+          name: 'field',
+          ref: this.field,
+        },
       }
-    })
 
     return { result: false }
   }
@@ -96,7 +99,7 @@ export class Player implements IPlayer {
           role: 'system',
           type: 'draw',
           source: source,
-        }
+        },
       }
     } else {
       // TODO: デッキ0枚でドローする際は this.library から新デッキ生成して 捨札リセットかける
@@ -107,13 +110,13 @@ export class Player implements IPlayer {
   // ドライブ
   drive(target: Unit) {
     if (this.field.length < config.game.player.max.field) {
-      this.field.push(target);
+      this.field.push(target)
       return {
         action: {
           role: 'user',
           type: 'drive',
-          source: target
-        }
+          source: target,
+        },
       }
     } else {
       return null

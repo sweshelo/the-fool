@@ -27,7 +27,7 @@
 
     // import aliases
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*"]
     }
   }
 }
