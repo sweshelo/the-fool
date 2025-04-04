@@ -2,11 +2,9 @@ import type { Message } from "@/submodule/suit/types/message/message";
 import { Player } from "../../core/class/Player";
 import { Core } from "../../core/core";
 import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
-import type { BasePayload } from "@/submodule/suit/types/message/payload/base";
 import type { ServerWebSocket } from "bun";
-import type { Payload, Rule } from "@/submodule/suit/types";
+import type { Rule } from "@/submodule/suit/types";
 import { config } from "@/config";
-
 
 export class Room {
   id = crypto.randomUUID();

@@ -4,7 +4,7 @@ import { Core } from '../core/core';
 import { Player } from '../core/class/Player';
 import { Unit } from '../core/class/card';
 import type { Room } from '../server/room/room';
-import type { BasePayload } from '@/submodule/suit/types';
+import type { Message } from '@/submodule/suit/types';
 
 /**
  * カード効果テスター
@@ -120,11 +120,11 @@ export class EffectTester {
       sync: () => {
         console.log('Mock sync called');
       },
-      broadcastToAll: (payload: BasePayload) => {
-        console.log('Mock broadcastToAll called with:', payload);
+      broadcastToAll: (message: Message) => {
+        console.log('Mock broadcastToAll called with:', message);
       },
-      broadcastToPlayer: (playerId: string, payload: BasePayload) => {
-        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, payload);
+      broadcastToPlayer: (playerId: string, message: Message) => {
+        console.log(`Mock broadcastToPlayer called for player ${playerId} with:`, message);
       },
       rule: {
         player: {

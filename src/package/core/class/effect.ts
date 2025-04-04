@@ -1,6 +1,7 @@
 import type { Stack } from "./stack";
 import type { Core } from "../core";
 import type { IAtom } from "@/submodule/suit/types";
+import type { Choices } from "@/submodule/suit/types/game/system";
 
 /**
  * カード効果ハンドラの型定義
@@ -132,19 +133,17 @@ export class EffectHelper {
    * @param card 効果の発動元カード
    * @param core ゲームコア
    * @param playerId 選択を行うプレイヤーID
-   * @param options 選択肢配列
-   * @param message 表示メッセージ
+   * @param options 選択肢
    * @returns 選択された項目のID
    */
-  static async promptChoice<T>(
+  static async promptChoice(
     stack: Stack,
     card: IAtom,
     core: Core,
     playerId: string,
-    options: T[],
-    message: string
+    choices: Choices,
   ): Promise<string> {
-    return await stack.promptUserChoice(core, playerId, options, message);
+    return await stack.promptUserChoice(core, playerId, choices);
   }
 
   static async showEffect(

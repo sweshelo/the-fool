@@ -3,6 +3,8 @@ import type { Player } from "./Player"
 import type { Core } from "../core"
 import catalog from "@/database/catalog"
 import type { CatalogWithHandler } from "@/database/factory"
+import master from "@/database/catalog"
+import type { Choices } from "@/submodule/suit/types/game/system"
 
 interface IStack {
   /**
@@ -153,29 +155,41 @@ export class Stack implements IStack {
     if (typeof effectHandler === 'function') {
       try {
         // 効果実行前に通知
-        core.room.broadcastToAll({
-          type: 'EffectProcessing',
+        core.room.broadcastToAll(createMessage({
+          action: {
+            type: 'debug',
+            handler: 'client',
+          },
           payload: {
-            stackId: this.id,
-            cardId: card.id,
-            effectType: this.type,
-            state: 'start'
+            type: 'DebugPrint',
+            message: {
+              stackId: this.id,
+              card: master.get(card.catalogId)?.name,
+              effectType: this.type,
+              state: 'start'
+            }
           }
-        });
+        }));
 
         // 効果を実行
         await effectHandler(this, card, core);
 
         // 効果実行後に通知
-        core.room.broadcastToAll({
-          type: 'EffectProcessing',
+        core.room.broadcastToAll(createMessage({
+          action: {
+            type: 'debug',
+            handler: 'client',
+          },
           payload: {
-            stackId: this.id,
-            cardId: card.id,
-            effectType: this.type,
-            state: 'end'
+            type: 'DebugPrint',
+            message: {
+              stackId: this.id,
+              card: master.get(card.catalogId)?.name,
+              effectType: this.type,
+              state: 'end'
+            }
           }
-        });
+        }));
       } catch (error) {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
@@ -186,24 +200,27 @@ export class Stack implements IStack {
    * ユーザーに選択を促す
    * @param core ゲームのコアインスタンス
    * @param playerId 選択を行うプレイヤーID
-   * @param options 選択肢の配列
+   * @param choises 選択肢の配列
    * @param message 表示メッセージ
    * @returns 選択された選択肢
    */
-  async promptUserChoice(core: Core, playerId: string, options: unknown[], message: string): Promise<string> {
+  async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string> {
     // 一意のプロンプトIDを生成
     const promptId = `${this.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
-    core.room.broadcastToPlayer(playerId, {
-      type: 'EffectChoice',
+    core.room.broadcastToPlayer(playerId, createMessage({
+      action: {
+        type: 'pause',
+        handler: 'client'
+      },
       payload: {
+        type: 'Choise',
         promptId,
-        stackId: this.id,
-        message,
-        options
+        choices,
+        player: playerId,
       }
-    });
+    }));
 
     // クライアントからの応答を待つ
     return new Promise((resolve) => {
@@ -224,15 +241,19 @@ export class Stack implements IStack {
     const promptId = `${this.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
-    core.room.broadcastToAll({
-      type: 'DisplayEffect',
+    core.room.broadcastToAll(createMessage({
+      action: {
+        type: 'pause',
+        handler: 'client'
+      },
       payload: {
+        type: 'DisplayEffect',
         promptId,
         stackId: this.id,
         title,
         message,
       }
-    });
+    }));
 
     // クライアントからの応答を待つ
     return new Promise((resolve) => {
