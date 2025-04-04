@@ -1,49 +1,49 @@
-import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types'
-import type { Player } from './Player'
-import type { Core } from '../core'
-import catalog from '@/database/catalog'
-import type { CatalogWithHandler } from '@/database/factory'
-import master from '@/database/catalog'
-import type { Choices } from '@/submodule/suit/types/game/system'
+import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
+import type { Player } from './Player';
+import type { Core } from '../core';
+import catalog from '@/database/catalog';
+import type { CatalogWithHandler } from '@/database/factory';
+import master from '@/database/catalog';
+import type { Choices } from '@/submodule/suit/types/game/system';
 
 interface IStack {
   /**
    * @param type そのStackのタイプを示す
    */
-  type: string
+  type: string;
   /**
    * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
    */
-  source: IAtom
+  source: IAtom;
   /**
    * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
    */
-  target?: IAtom | Player
+  target?: IAtom | Player;
   /**
    * @param parent そのStackが発生した契機の親にあたる。例えば召喚効果によって相手を破壊するStackが発生した場合、親が召喚スタック、子が破壊スタックとなる。
    */
-  parent?: Stack
+  parent?: Stack;
   /**
    * @param parent あるStackが発生した際、その解決途中に新規で発生したスタックに当たる。例えば召喚効果によって相手を破壊するStackが発生した場合、親が召喚スタック、子が破壊スタックとなる。
    * 子はいくつでも持つことが出来るが、同時に発生しない限り兄弟は持たない。
    * つまり「全体を破壊する」効果であれば、破壊スタックは兄弟になりえるが、破壊によって発生した新スタック(例: 《ミイラくん》によるハンデス)は兄弟ではなく子になる。
    */
-  children: Stack[]
+  children: Stack[];
 }
 
 export class Stack implements IStack {
-  type: string
-  source: IAtom
-  target?: IAtom | Player
-  parent: undefined | Stack
-  children: Stack[]
+  type: string;
+  source: IAtom;
+  target?: IAtom | Player;
+  parent: undefined | Stack;
+  children: Stack[];
 
   constructor({ type, source, target, parent }: Omit<IStack, 'children'>) {
-    this.type = type
-    this.source = source
-    this.target = target
-    this.parent = parent
-    this.children = []
+    this.type = type;
+    this.source = source;
+    this.target = target;
+    this.parent = parent;
+    this.children = [];
   }
 
   /**
@@ -53,18 +53,18 @@ export class Stack implements IStack {
    */
   async resolve(core: Core): Promise<void> {
     // スタックの処理開始をクライアントに通知
-    await this.notifyStackProcessing(core, 'start')
+    await this.notifyStackProcessing(core, 'start');
 
     // 1. 自身の効果を処理
-    await this.processEffect(core)
+    await this.processEffect(core);
 
     // 2. 子スタックを順番に処理 (深さ優先で処理)
     for (const child of this.children) {
-      await child.resolve(core)
+      await child.resolve(core);
     }
 
     // スタックの処理完了をクライアントに通知
-    await this.notifyStackProcessing(core, 'end')
+    await this.notifyStackProcessing(core, 'end');
   }
 
   /**
@@ -91,10 +91,10 @@ export class Stack implements IStack {
           },
         },
       })
-    )
+    );
 
     // 少し待機してアニメーションなどの時間を確保
-    await new Promise(resolve => setTimeout(resolve, 300))
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   /**
@@ -104,30 +104,30 @@ export class Stack implements IStack {
    */
   private async processEffect(core: Core): Promise<void> {
     // ターンプレイヤーを取得
-    const turnPlayerId = core.getTurnPlayerId()
-    if (!turnPlayerId) return
+    const turnPlayerId = core.getTurnPlayerId();
+    if (!turnPlayerId) return;
 
-    const turnPlayer = core.players.find(p => p.id === turnPlayerId)
-    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId)
-    if (!turnPlayer) return
+    const turnPlayer = core.players.find(p => p.id === turnPlayerId);
+    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId);
+    if (!turnPlayer) return;
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source as ICard, core, true)
+    await this.processCardEffect(this.source as ICard, core, true);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
-      await this.processCardEffect(unit, core, false)
+      await this.processCardEffect(unit, core, false);
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
     for (const player of nonTurnPlayers) {
       for (const unit of player.field) {
-        await this.processCardEffect(unit, core, false)
+        await this.processCardEffect(unit, core, false);
       }
     }
 
     // 処理が終わったら状態を同期
-    core.room.sync()
+    core.room.sync();
   }
 
   /**
@@ -137,19 +137,19 @@ export class Stack implements IStack {
    */
   private async processCardEffect(card: ICard, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
-    const catalogId = card.catalogId
-    if (!catalogId) return
+    const catalogId = card.catalogId;
+    if (!catalogId) return;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId)
-    if (!cardCatalog) return
+    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    if (!cardCatalog) return;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
-    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`
+    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`;
 
     // カタログからハンドラー関数を取得
-    const effectHandler = cardCatalog[handlerName]
+    const effectHandler = cardCatalog[handlerName];
 
     if (typeof effectHandler === 'function') {
       try {
@@ -170,10 +170,10 @@ export class Stack implements IStack {
               },
             },
           })
-        )
+        );
 
         // 効果を実行
-        await effectHandler(this, card, core)
+        await effectHandler(this, card, core);
 
         // 効果実行後に通知
         core.room.broadcastToAll(
@@ -192,9 +192,9 @@ export class Stack implements IStack {
               },
             },
           })
-        )
+        );
       } catch (error) {
-        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error)
+        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
   }
@@ -209,7 +209,7 @@ export class Stack implements IStack {
    */
   async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string> {
     // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`
+    const promptId = `${this.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
     core.room.broadcastToPlayer(
@@ -226,14 +226,14 @@ export class Stack implements IStack {
           player: playerId,
         },
       })
-    )
+    );
 
     // クライアントからの応答を待つ
     return new Promise(resolve => {
       core.setEffectDisplayHandler(promptId, (choice: string) => {
-        resolve(choice)
-      })
-    })
+        resolve(choice);
+      });
+    });
   }
 
   /**
@@ -244,7 +244,7 @@ export class Stack implements IStack {
    */
   async displayEffect(core: Core, title: string, message: string): Promise<void> {
     // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`
+    const promptId = `${this.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
     core.room.broadcastToAll(
@@ -261,14 +261,14 @@ export class Stack implements IStack {
           message,
         },
       })
-    )
+    );
 
     // クライアントからの応答を待つ
     return new Promise(resolve => {
       core.setEffectDisplayHandler(promptId, () => {
-        resolve()
-      })
-    })
+        resolve();
+      });
+    });
   }
 
   /**
@@ -284,16 +284,16 @@ export class Stack implements IStack {
       source,
       target,
       parent: this,
-    })
+    });
 
-    this.children.push(childStack)
-    return childStack
+    this.children.push(childStack);
+    return childStack;
   }
 
   /**
    * スタックのIDを取得する（ユニークな識別子として使用）
    */
   get id(): string {
-    return `${this.source.id}_${this.type}_${Date.now()}`
+    return `${this.source.id}_${this.type}_${Date.now()}`;
   }
 }
