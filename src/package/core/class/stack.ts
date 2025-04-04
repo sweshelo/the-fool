@@ -207,7 +207,7 @@ export class Stack implements IStack {
    * @param message 表示メッセージ
    * @returns 選択された選択肢
    */
-  async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string> {
+  async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string[]> {
     // 一意のプロンプトIDを生成
     const promptId = `${this.id}_${Date.now()}`;
 
@@ -220,7 +220,7 @@ export class Stack implements IStack {
           handler: 'client',
         },
         payload: {
-          type: 'Choise',
+          type: 'Choices',
           promptId,
           choices,
           player: playerId,
@@ -230,7 +230,7 @@ export class Stack implements IStack {
 
     // クライアントからの応答を待つ
     return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, (choice: string) => {
+      core.setEffectDisplayHandler(promptId, (choice: string[]) => {
         resolve(choice);
       });
     });

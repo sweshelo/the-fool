@@ -1,7 +1,7 @@
 import type { Core } from '@/package/core/core';
 import type { Catalog, ICard } from '../submodule/suit/types/game/card';
 import type { Stack } from '@/package/core/class/stack';
-import { EffectTemplate } from './effects';
+import { EffectTemplate } from './templates';
 import { Color } from '@/submodule/suit/constant/color';
 
 export interface HandlerFunction {
@@ -21,6 +21,17 @@ export interface CatalogWithHandler extends Catalog {
 
 export function effectFactory(catalog: CatalogWithHandler): void {
   switch (catalog.id) {
+    // 小リーナ
+    case '1-0-031':
+    case 'SP-012':
+    case 'PR-188': {
+      catalog.onOverclockSelf = async (stack: Stack, card: ICard, core: Core) => {
+        await stack.displayEffect(core, 'リバイブ', '捨札から1枚選んで回収');
+        await EffectTemplate.revive(stack, card, core, 1);
+      };
+      break;
+    }
+
     // ハッパ
     case '1-0-040': {
       catalog.onDriveSelf = async (stack: Stack, card: ICard, core: Core) => {

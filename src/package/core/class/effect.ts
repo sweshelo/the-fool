@@ -141,7 +141,7 @@ export class EffectHelper {
     core: Core,
     playerId: string,
     choices: Choices
-  ): Promise<string> {
+  ): Promise<string[]> {
     return await stack.promptUserChoice(core, playerId, choices);
   }
 

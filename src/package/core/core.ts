@@ -6,11 +6,9 @@ import type {
   IAtom,
   OverridePayload,
   UnitDrivePayload,
+  ChoosePayload,
 } from '@/submodule/suit/types';
-import type {
-  ContinuePayload,
-  EffectResponsePayload,
-} from '@/submodule/suit/types/message/payload/client';
+import type { ContinuePayload } from '@/submodule/suit/types/message/payload/client';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { isUnit as checkIsUnit } from '@/helper';
@@ -118,7 +116,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: string): void {
+  handleEffectResponse(promptId: string, response: string[]): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);
@@ -145,8 +143,8 @@ export class Core {
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type);
     switch (message.payload.type) {
-      case 'EffectResponse': {
-        const payload: EffectResponsePayload = message.payload;
+      case 'Choose': {
+        const payload: ChoosePayload = message.payload;
         this.handleEffectResponse(payload.promptId, payload.choice);
         break;
       }
