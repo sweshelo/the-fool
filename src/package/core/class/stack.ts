@@ -125,9 +125,6 @@ export class Stack implements IStack {
         await this.processCardEffect(unit, core, false);
       }
     }
-
-    // 処理が終わったら状態を同期
-    core.room.sync();
   }
 
   /**
@@ -195,6 +192,9 @@ export class Stack implements IStack {
         );
       } catch (error) {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
+      } finally {
+        // 処理が終わったら状態を同期
+        core.room.sync();
       }
     }
   }
