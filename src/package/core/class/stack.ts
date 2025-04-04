@@ -105,13 +105,10 @@ export class Stack implements IStack {
   private async processEffect(core: Core): Promise<void> {
     // ターンプレイヤーを取得
     const turnPlayerId = core.getTurnPlayerId()
-    console.log('turnPlayerId', turnPlayerId)
     if (!turnPlayerId) return
 
     const turnPlayer = core.players.find(p => p.id === turnPlayerId)
     const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId)
-
-    console.log('turnPlayer', turnPlayer)
     if (!turnPlayer) return
 
     // まず source カードの効果を処理
