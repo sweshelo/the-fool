@@ -26,6 +26,8 @@ export class Player implements IPlayer {
   hand: Card[];
   trash: Card[];
   field: Unit[];
+  trigger: Card[];
+
   cp: {
     current: number;
     max: number;
@@ -44,6 +46,7 @@ export class Player implements IPlayer {
     this.hand = [];
     this.field = [];
     this.trash = [];
+    this.trigger = [];
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
