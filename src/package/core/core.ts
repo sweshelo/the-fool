@@ -212,6 +212,7 @@ export class Core {
         if (isEnoughCP && isEnoughField && isUnit) {
           player.hand = player?.hand.filter(c => c.id !== card?.id);
           player.field.unshift(card);
+          card.initBP();
           this.room.sync();
 
           // Stack追加

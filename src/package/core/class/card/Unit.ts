@@ -1,11 +1,35 @@
 import type { IUnit } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
+import master from '@/database/catalog';
 
 export class Unit extends Card implements IUnit {
-  bp: number;
+  bp: {
+    base: number;
+    diff: number;
+    damage: number;
+  };
+  active: boolean;
 
   constructor(catalogId: string) {
     super(catalogId);
-    this.bp = 1000;
+    const catalog = master.get(catalogId);
+
+    if (!catalog) throw new Error('存在しないカードが指定されました');
+
+    this.bp = {
+      base: catalog?.bp?.[this.lv - 1] ?? 0,
+      diff: 0,
+      damage: 0,
+    };
+    this.active = true;
+  }
+
+  initBP() {
+    const catalog = master.get(this.catalogId);
+    this.bp = {
+      base: catalog?.bp?.[this.lv - 1] ?? 0,
+      diff: 0,
+      damage: 0,
+    };
   }
 }
