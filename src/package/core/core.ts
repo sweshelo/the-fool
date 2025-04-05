@@ -8,8 +8,8 @@ import type {
   UnitDrivePayload,
   ChoosePayload,
   WithdrawalPayload,
+  ContinuePayload,
 } from '@/submodule/suit/types';
-import type { ContinuePayload } from '@/submodule/suit/types/message/payload/client';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { isUnit as checkIsUnit } from '@/helper';
