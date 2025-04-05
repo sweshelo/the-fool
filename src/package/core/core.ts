@@ -7,6 +7,7 @@ import type {
   OverridePayload,
   UnitDrivePayload,
   ChoosePayload,
+  WithdrawalPayload,
 } from '@/submodule/suit/types';
 import type { ContinuePayload } from '@/submodule/suit/types/message/payload/client';
 import type { Room } from '../server/room/room';
@@ -230,6 +231,20 @@ export class Core {
 
           // スタックの解決処理を開始
           this.resolveStack();
+        }
+        break;
+      }
+
+      case 'Withdrawal': {
+        const payload: WithdrawalPayload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnField = target?.place?.name === 'field';
+
+        if (target && target.card && player && isOnField) {
+          player.field = player.field.filter(u => u.id !== target.card?.id);
+          player.trash.unshift(target.card);
+          this.room.sync();
         }
         break;
       }
