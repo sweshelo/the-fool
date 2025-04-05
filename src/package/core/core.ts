@@ -9,6 +9,7 @@ import type {
   ChoosePayload,
   WithdrawalPayload,
   ContinuePayload,
+  TriggerSetPayload,
 } from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
@@ -247,6 +248,20 @@ export class Core {
           this.room.sync();
         }
         break;
+      }
+
+      case 'TriggerSet': {
+        const payload: TriggerSetPayload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnHand = target?.place?.name === 'hand';
+        const isEnoughTriggerZone = player!.trigger.length < this.room.rule.player.max.trigger;
+
+        if (target && target.card && player && isEnoughTriggerZone && isOnHand) {
+          player.hand = player.hand.filter(c => c.id !== target.card?.id);
+          player.trigger.push(target.card);
+          this.room.sync();
+        }
       }
     }
   }
