@@ -191,26 +191,38 @@ export class Stack implements IStack {
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
       console.log(catalog.name, checkerName);
-      return typeof catalog[checkerName] === 'function' ? catalog[checkerName]() : false;
+      return typeof catalog[checkerName] === 'function'
+        ? catalog.type === 'intercept' && catalog[checkerName]()
+        : false;
     });
 
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
-    const [turnPlayerSelected] = await this.promptUserChoice(core, player.id, {
+    const [selected] = await this.promptUserChoice(core, player.id, {
       title: '入力受付中',
       type: 'intercept',
       items: targets,
     });
 
-    if (turnPlayerSelected) {
-      const card = player.trigger.find(c => c.id === turnPlayerSelected);
+    if (selected) {
+      const card = player.trigger.find(c => c.id === selected);
       if (!card) throw new Error('対象がトリガーゾーンに存在しません');
 
       const effectHandler = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
-      if (typeof catalog[effectHandler] === 'function') await catalog[effectHandler]();
+      if (typeof catalog[effectHandler] === 'function') {
+        player.trigger = player.trigger.filter(c => c.id !== card.id);
+        player.called.push(card);
+        core.room.sync();
+
+        await catalog[effectHandler](this, card, core);
+
+        // 発動したトリガーカードを捨札に送る
+        player.called.filter(c => c.id !== card.id);
+        player.trash.unshift(card);
+      }
     } else {
       return true;
     }
