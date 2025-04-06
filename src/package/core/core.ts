@@ -6,11 +6,11 @@ import type {
   IAtom,
   OverridePayload,
   UnitDrivePayload,
-} from '@/submodule/suit/types';
-import type {
+  ChoosePayload,
+  WithdrawalPayload,
   ContinuePayload,
-  EffectResponsePayload,
-} from '@/submodule/suit/types/message/payload/client';
+  TriggerSetPayload,
+} from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { isUnit as checkIsUnit } from '@/helper';
@@ -118,7 +118,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: string): void {
+  handleEffectResponse(promptId: string, response: string[]): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);
@@ -145,8 +145,8 @@ export class Core {
   handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type);
     switch (message.payload.type) {
-      case 'EffectResponse': {
-        const payload: EffectResponsePayload = message.payload;
+      case 'Choose': {
+        const payload: ChoosePayload = message.payload;
         this.handleEffectResponse(payload.promptId, payload.choice);
         break;
       }
@@ -214,6 +214,7 @@ export class Core {
         if (isEnoughCP && isEnoughField && isUnit) {
           player.hand = player?.hand.filter(c => c.id !== card?.id);
           player.field.unshift(card);
+          card.initBP();
           this.room.sync();
 
           // Stack追加
@@ -233,6 +234,34 @@ export class Core {
           this.resolveStack();
         }
         break;
+      }
+
+      case 'Withdrawal': {
+        const payload: WithdrawalPayload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnField = target?.place?.name === 'field';
+
+        if (target && target.card && player && isOnField) {
+          player.field = player.field.filter(u => u.id !== target.card?.id);
+          player.trash.unshift(target.card);
+          this.room.sync();
+        }
+        break;
+      }
+
+      case 'TriggerSet': {
+        const payload: TriggerSetPayload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnHand = target?.place?.name === 'hand';
+        const isEnoughTriggerZone = player!.trigger.length < this.room.rule.player.max.trigger;
+
+        if (target && target.card && player && isEnoughTriggerZone && isOnHand) {
+          player.hand = player.hand.filter(c => c.id !== target.card?.id);
+          player.trigger.push(target.card);
+          this.room.sync();
+        }
       }
     }
   }
