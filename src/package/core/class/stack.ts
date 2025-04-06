@@ -5,6 +5,7 @@ import catalog from '@/database/catalog';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
+import { EffectHelper } from '@/database/effects/helper';
 
 interface IStack {
   /**
@@ -125,6 +126,31 @@ export class Stack implements IStack {
         await this.processCardEffect(unit, core, false);
       }
     }
+
+    // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
+    let index = 0;
+    while (turnPlayer.trigger.length > index) {
+      const card = turnPlayer.trigger[index];
+      if (card === undefined) {
+        break;
+      }
+
+      const catalog = master.get(card?.catalogId);
+      if (catalog === undefined) {
+        throw new Error('不正なカードが指定されました');
+      }
+
+      if (catalog.type === 'trigger') {
+        const result = await this.processTriggerCardEffect(card, core);
+        if (!result) index++;
+      } else {
+        index++;
+        continue;
+      }
+    }
+
+    // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
+    // TODO
   }
 
   /**
@@ -197,6 +223,100 @@ export class Stack implements IStack {
         core.room.sync();
       }
     }
+  }
+
+  /**
+   * トリガーゾーン上のカードを処理する
+   * @param card 処理対象のカード
+   * @param core ゲームのコアインスタンス
+   */
+  private async processTriggerCardEffect(card: ICard, core: Core): Promise<boolean> {
+    // IAtomはcatalogIdを持っていない可能性があるのでチェック
+    const catalogId = card.catalogId;
+    if (!catalogId) return false;
+
+    // カードのカタログデータを取得
+    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    if (!cardCatalog) return false;
+
+    // カタログからこのスタックタイプに対応する効果関数名を生成
+    // 例: type='drive' の場合、'onDrive'
+    const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+
+    // カタログからハンドラー関数を取得
+    const effectChecker = cardCatalog[checkerName];
+    const effectHandler = cardCatalog[handlerName];
+
+    if (typeof effectChecker === 'function' && typeof effectHandler === 'function') {
+      try {
+        // 効果実行前に通知
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'debug',
+              handler: 'client',
+            },
+            payload: {
+              type: 'DebugPrint',
+              message: {
+                stackId: this.id,
+                card: master.get(card.catalogId)?.name,
+                effectType: this.type,
+                state: 'start',
+              },
+            },
+          })
+        );
+
+        // 効果チェックを実行
+        const check: boolean = await effectChecker(this, card, core);
+
+        // 効果実行後に通知
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'debug',
+              handler: 'client',
+            },
+            payload: {
+              type: 'DebugPrint',
+              message: {
+                stackId: this.id,
+                card: master.get(card.catalogId)?.name,
+                effectType: this.type,
+                state: check ? 'call' : 'through',
+              },
+            },
+          })
+        );
+
+        // 効果を呼び出せる状況であれば呼び出す
+        if (check) {
+          // トリガーゾーンからカードを取り除く
+          const owner = EffectHelper.owner(core, card);
+          owner.trigger = owner.trigger.filter(c => c.id !== card.id);
+          owner.called.push(card);
+          core.room.sync();
+
+          // 呼び出す
+          await effectHandler(this, card, core);
+
+          // 発動したトリガーカードを捨札に送る
+          owner.called.filter(c => c.id !== card.id);
+          owner.trash.unshift(card);
+        }
+
+        return check;
+      } catch (error) {
+        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
+      } finally {
+        // 処理が終わったら状態を同期
+        core.room.sync();
+      }
+    }
+
+    return false;
   }
 
   /**

@@ -27,6 +27,7 @@ export class Player implements IPlayer {
   trash: Card[];
   field: Unit[];
   trigger: Card[];
+  called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
 
   cp: {
     current: number;
@@ -47,6 +48,7 @@ export class Player implements IPlayer {
     this.field = [];
     this.trash = [];
     this.trigger = [];
+    this.called = [];
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
@@ -74,6 +76,28 @@ export class Player implements IPlayer {
         place: {
           name: 'hand',
           ref: this.hand,
+        },
+      };
+
+    const onTrigger = this.trigger.find(({ id }) => id === target.id);
+    if (onTrigger)
+      return {
+        result: true,
+        card: onTrigger,
+        place: {
+          name: 'trigger',
+          ref: this.trigger,
+        },
+      };
+
+    const onCalled = this.called.find(({ id }) => id === target.id);
+    if (onCalled)
+      return {
+        result: true,
+        card: onCalled,
+        place: {
+          name: 'called',
+          ref: this.called,
         },
       };
 
@@ -105,8 +129,17 @@ export class Player implements IPlayer {
         },
       };
     } else {
-      // TODO: デッキ0枚でドローする際は this.library から新デッキ生成して 捨札リセットかける
-      return null;
+      this.trash = [];
+      this.deck = this.library.map(id => new Unit(id));
+      const source = this.deck.shift() as Card;
+      this.hand.push(source!);
+      return {
+        action: {
+          role: 'system',
+          type: 'draw',
+          source: source,
+        },
+      };
     }
   }
 
