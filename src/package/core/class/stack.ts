@@ -192,7 +192,7 @@ export class Stack implements IStack {
       if (!catalog) throw new Error('不正なカードが指定されました');
       console.log(catalog.name, checkerName);
       return typeof catalog[checkerName] === 'function'
-        ? catalog.type === 'intercept' && catalog[checkerName]()
+        ? catalog.type === 'intercept' && catalog[checkerName](this, card, core)
         : false;
     });
 
@@ -219,9 +219,10 @@ export class Stack implements IStack {
 
         await catalog[effectHandler](this, card, core);
 
-        // 発動したトリガーカードを捨札に送る
+        // 発動したインターセプトカードを捨札に送る
         player.called.filter(c => c.id !== card.id);
         player.trash.unshift(card);
+        core.room.sync();
       }
     } else {
       return true;
