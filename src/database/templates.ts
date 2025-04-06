@@ -1,3 +1,4 @@
+import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
 import master from '@/submodule/suit/catalog/catalog';
@@ -10,14 +11,11 @@ interface ReinforcementMatcher {
 }
 
 export class EffectTemplate {
-  static draw(stack: Stack, card: ICard, core: Core): void {
-    // 召喚者特定
-    const driver = core.players.find(p => p.find(card).result);
-    // 召喚者の手札が上限に達している場合は何もしない
-    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand)
-      return;
+  static draw(player: Player, core: Core): void {
+    // 手札が上限に達している場合は何もしない
+    if (player.hand.length >= core.room.rule.player.max.hand) return;
 
-    driver.draw();
+    player.draw();
     return;
   }
 

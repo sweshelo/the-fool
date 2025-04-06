@@ -1,7 +1,6 @@
 import type { Stack } from './stack';
 import type { Core } from '../core';
 import type { IAtom } from '@/submodule/suit/types';
-import type { Choices } from '@/submodule/suit/types/game/system';
 
 /**
  * カード効果ハンドラの型定義
@@ -122,30 +121,5 @@ export class EffectUtils {
     }
 
     return Promise.resolve(units);
-  }
-}
-
-export class EffectHelper {
-  /**
-   * プレイヤーに選択を促し、選択結果を返す
-   * @param stack 現在処理中のスタック
-   * @param card 効果の発動元カード
-   * @param core ゲームコア
-   * @param playerId 選択を行うプレイヤーID
-   * @param options 選択肢
-   * @returns 選択された項目のID
-   */
-  static async promptChoice(
-    stack: Stack,
-    card: IAtom,
-    core: Core,
-    playerId: string,
-    choices: Choices
-  ): Promise<string[]> {
-    return await stack.promptUserChoice(core, playerId, choices);
-  }
-
-  static async showEffect(stack: Stack, core: Core, title: string, message: string): Promise<void> {
-    return await stack.displayEffect(core, title, message);
   }
 }
