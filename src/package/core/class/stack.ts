@@ -1,7 +1,6 @@
 import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
 import type { Player } from './Player';
 import type { Core } from '../core';
-import catalog from '@/database/catalog';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
@@ -109,7 +108,7 @@ export class Stack implements IStack {
     if (!turnPlayerId) return;
 
     const turnPlayer = core.players.find(p => p.id === turnPlayerId);
-    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId);
+    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
     if (!turnPlayer) return;
 
     // まず source カードの効果を処理
@@ -121,11 +120,10 @@ export class Stack implements IStack {
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
-    for (const player of nonTurnPlayers) {
-      for (const unit of player.field) {
+    if (nonTurnPlayer)
+      for (const unit of nonTurnPlayer.field) {
         await this.processCardEffect(unit, core, false);
       }
-    }
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
@@ -150,7 +148,73 @@ export class Stack implements IStack {
     }
 
     // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
-    // TODO
+    index = 0;
+    if (nonTurnPlayer)
+      while (nonTurnPlayer.trigger.length > index) {
+        const card = turnPlayer.trigger[index];
+        if (card === undefined) {
+          break;
+        }
+
+        const catalog = master.get(card?.catalogId);
+        if (catalog === undefined) {
+          throw new Error('不正なカードが指定されました');
+        }
+
+        if (catalog.type === 'trigger') {
+          const result = await this.processTriggerCardEffect(card, core);
+          if (!result) index++;
+        } else {
+          index++;
+          continue;
+        }
+      }
+
+    // トリガーゾーン上のインターセプトカードを処理
+    let finish = false;
+    do {
+      finish =
+        (await this.processUserInterceptInteract(core, turnPlayer)) &&
+        (!nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer)));
+    } while (!finish);
+  }
+
+  /**
+   * プレイヤーのインターセプト使用をチェックする
+   * @param player 対象のプレイヤー
+   * @returns プレイヤーがインターセプトの利用をキャンセルした場合が、利用できるカードがない場合にのみ true を返す
+   */
+  private async processUserInterceptInteract(core: Core, player: Player): Promise<boolean> {
+    // 使用可能なカードを列挙
+    const targets = player.trigger.filter(card => {
+      const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+      const catalog = master.get(card.catalogId);
+      if (!catalog) throw new Error('不正なカードが指定されました');
+      console.log(catalog.name, checkerName);
+      return typeof catalog[checkerName] === 'function' ? catalog[checkerName]() : false;
+    });
+
+    if (targets.length === 0) return true;
+
+    // クライアントに送信して返事を待つ
+    const [turnPlayerSelected] = await this.promptUserChoice(core, player.id, {
+      title: '入力受付中',
+      type: 'intercept',
+      items: targets,
+    });
+
+    if (turnPlayerSelected) {
+      const card = player.trigger.find(c => c.id === turnPlayerSelected);
+      if (!card) throw new Error('対象がトリガーゾーンに存在しません');
+
+      const effectHandler = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+      const catalog = master.get(card.catalogId);
+      if (!catalog) throw new Error('不正なカードが指定されました');
+      if (typeof catalog[effectHandler] === 'function') await catalog[effectHandler]();
+    } else {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -164,7 +228,7 @@ export class Stack implements IStack {
     if (!catalogId) return;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
@@ -236,7 +300,7 @@ export class Stack implements IStack {
     if (!catalogId) return false;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return false;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
