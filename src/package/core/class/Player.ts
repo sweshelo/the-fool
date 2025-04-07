@@ -37,9 +37,9 @@ export class Player implements IPlayer {
     current: number;
     max: number;
   } = {
-      current: 0,
-      max: 0,
-    };
+    current: 0,
+    max: 0,
+  };
   life: { current: number; max: number } = {
     current: config.game.player.max.life,
     max: config.game.player.max.life,
@@ -62,7 +62,7 @@ export class Player implements IPlayer {
 
       switch (catalog.type) {
         case 'unit':
-          return new Unit(id)
+          return new Unit(id);
         case 'advanced_unit':
           return new Evolve(id);
         case 'intercept':
@@ -70,7 +70,7 @@ export class Player implements IPlayer {
         case 'trigger':
           return new Trigger(id);
         default:
-          throw new Error('未知のタイプが指定されました')
+          throw new Error('未知のタイプが指定されました');
       }
     });
   }
