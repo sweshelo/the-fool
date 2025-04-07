@@ -16,6 +16,16 @@ export class EffectTemplate {
     if (player.hand.length >= core.room.rule.player.max.hand) return;
 
     player.draw();
+    core.room.broadcastToAll({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'SoundEffect',
+        soundId: 'draw',
+      },
+    });
     return;
   }
 

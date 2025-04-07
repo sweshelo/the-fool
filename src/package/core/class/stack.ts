@@ -90,6 +90,24 @@ export class Stack implements IStack {
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
     if (!turnPlayer) return;
 
+    if (this.type === 'overclock') {
+      core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'SoundEffect',
+            soundId: 'clock-up-field',
+          },
+        })
+      );
+    }
+    await new Promise(resolve => {
+      setTimeout(resolve, 1000);
+    });
+
     // まず source カードの効果を処理
     await this.processCardEffect(this.source as ICard, core, true);
     await this.resolveChild(core);
