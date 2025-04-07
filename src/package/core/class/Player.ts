@@ -3,6 +3,10 @@ import { config } from '../../../config';
 import type { Action } from './action';
 import { Card } from './card/Card';
 import { Unit } from './card/Unit';
+import master from '@/database/catalog';
+import { Intercept } from './card/Intercept';
+import { Trigger } from './card/Trigger';
+import { Evolve } from './card/Evolve';
 
 export interface PlayerAction {
   action: Action;
@@ -33,9 +37,9 @@ export class Player implements IPlayer {
     current: number;
     max: number;
   } = {
-    current: 0,
-    max: 0,
-  };
+      current: 0,
+      max: 0,
+    };
   life: { current: number; max: number } = {
     current: config.game.player.max.life,
     max: config.game.player.max.life,
@@ -52,7 +56,23 @@ export class Player implements IPlayer {
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
-    this.deck = [...deck].map(id => new Unit(id)); // TODO: ファクトリメソッドを定義してcatalogIdから生成すべきインスタンスを判別する
+    this.deck = [...deck].map(id => {
+      const catalog = master.get(id);
+      if (!catalog) throw new Error('不正なカードがデッキに含まれています');
+
+      switch (catalog.type) {
+        case 'unit':
+          return new Unit(id)
+        case 'advanced_unit':
+          return new Evolve(id);
+        case 'intercept':
+          return new Intercept(id);
+        case 'trigger':
+          return new Trigger(id);
+        default:
+          throw new Error('未知のタイプが指定されました')
+      }
+    });
   }
 
   // プレイヤー領域からカードを探す
