@@ -220,7 +220,7 @@ export class Stack implements IStack {
         await catalog[effectHandler](this, card, core);
 
         // 発動したインターセプトカードを捨札に送る
-        player.called.filter(c => c.id !== card.id);
+        player.called = player.called.filter(c => c.id !== card.id);
         player.trash.unshift(card);
         core.room.sync();
       }
