@@ -1,7 +1,7 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
 import type { ICard } from '@/submodule/suit/types';
-import { EffectTemplate } from '../../templates';
+import { EffectTemplate } from '../templates';
 import { Color } from '@/submodule/suit/constant/color';
 
 export const effects = {
