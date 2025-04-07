@@ -7,7 +7,7 @@ import { EffectHelper } from '../helper';
 
 export const effects = {
   onDriveSelf: async (stack: Stack, card: ICard, core: Core) => {
-    await stack.displayEffect(core, 'チャージ＆ドロー', 'カードを1枚引く');
+    await stack.displayEffect(core, 'チャージ＆ドロー', 'CP+1\nカードを1枚引く');
     EffectTemplate.draw(EffectHelper.owner(core, card), core);
   },
 };
