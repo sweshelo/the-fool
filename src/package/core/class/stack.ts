@@ -47,27 +47,6 @@ export class Stack implements IStack {
   }
 
   /**
-   * スタックの解決処理を行う
-   * 自身の効果を処理した後、子スタックを順番に処理する
-   * @param core ゲームのコアインスタンス
-   */
-  async resolve(core: Core): Promise<void> {
-    // スタックの処理開始をクライアントに通知
-    await this.notifyStackProcessing(core, 'start');
-
-    // 1. 自身の効果を処理
-    await this.processEffect(core);
-
-    // 2. 子スタックを順番に処理 (深さ優先で処理)
-    for (const child of this.children) {
-      await child.resolve(core);
-    }
-
-    // スタックの処理完了をクライアントに通知
-    await this.notifyStackProcessing(core, 'end');
-  }
-
-  /**
    * スタックの処理状態をクライアントに通知する
    * @param core ゲームのコアインスタンス
    * @param state 処理の状態 ('start'|'end')
@@ -102,7 +81,7 @@ export class Stack implements IStack {
    * ターンプレイヤーのカード、非ターンプレイヤーのカードの順に処理する
    * @param core ゲームのコアインスタンス
    */
-  private async processEffect(core: Core): Promise<void> {
+  async resolve(core: Core): Promise<void> {
     // ターンプレイヤーを取得
     const turnPlayerId = core.getTurnPlayerId();
     if (!turnPlayerId) return;
@@ -113,16 +92,19 @@ export class Stack implements IStack {
 
     // まず source カードの効果を処理
     await this.processCardEffect(this.source as ICard, core, true);
+    await this.resolveChild(core)
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
       await this.processCardEffect(unit, core, false);
+      await this.resolveChild(core);
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
     if (nonTurnPlayer)
       for (const unit of nonTurnPlayer.field) {
         await this.processCardEffect(unit, core, false);
+        await this.resolveChild(core);
       }
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
@@ -140,6 +122,7 @@ export class Stack implements IStack {
 
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
+        await this.resolveChild(core)
         if (!result) index++;
       } else {
         index++;
@@ -163,6 +146,7 @@ export class Stack implements IStack {
 
         if (catalog.type === 'trigger') {
           const result = await this.processTriggerCardEffect(card, core);
+          await this.resolveChild(core)
           if (!result) index++;
         } else {
           index++;
@@ -171,12 +155,22 @@ export class Stack implements IStack {
       }
 
     // トリガーゾーン上のインターセプトカードを処理
-    let finish = false;
     do {
-      finish =
-        (await this.processUserInterceptInteract(core, turnPlayer)) &&
-        (!nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer)));
-    } while (!finish);
+      const turnPlayerCanceled = await this.processUserInterceptInteract(core, turnPlayer)
+      await this.resolveChild(core)
+
+      const nonTurnPlayerCanceled = (!nonTurnPlayer) || await this.processUserInterceptInteract(core, nonTurnPlayer);
+      await this.resolveChild(core)
+
+      if (turnPlayerCanceled && nonTurnPlayerCanceled) break;
+    } while (true);
+  }
+
+  private async resolveChild(core: Core): Promise<void> {
+    for (const child of this.children) {
+      await child.resolve(core);
+    }
+    this.children = [];
   }
 
   /**
