@@ -245,6 +245,7 @@ export class Core {
         if (target && target.card && player && isOnField) {
           player.field = player.field.filter(u => u.id !== target.card?.id);
           player.trash.unshift(target.card);
+          target.card.lv = 1;
           this.room.sync();
         }
         break;

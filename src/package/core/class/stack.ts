@@ -1,7 +1,6 @@
 import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
 import type { Player } from './Player';
 import type { Core } from '../core';
-import catalog from '@/database/catalog';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
@@ -48,27 +47,6 @@ export class Stack implements IStack {
   }
 
   /**
-   * スタックの解決処理を行う
-   * 自身の効果を処理した後、子スタックを順番に処理する
-   * @param core ゲームのコアインスタンス
-   */
-  async resolve(core: Core): Promise<void> {
-    // スタックの処理開始をクライアントに通知
-    await this.notifyStackProcessing(core, 'start');
-
-    // 1. 自身の効果を処理
-    await this.processEffect(core);
-
-    // 2. 子スタックを順番に処理 (深さ優先で処理)
-    for (const child of this.children) {
-      await child.resolve(core);
-    }
-
-    // スタックの処理完了をクライアントに通知
-    await this.notifyStackProcessing(core, 'end');
-  }
-
-  /**
    * スタックの処理状態をクライアントに通知する
    * @param core ゲームのコアインスタンス
    * @param state 処理の状態 ('start'|'end')
@@ -103,29 +81,31 @@ export class Stack implements IStack {
    * ターンプレイヤーのカード、非ターンプレイヤーのカードの順に処理する
    * @param core ゲームのコアインスタンス
    */
-  private async processEffect(core: Core): Promise<void> {
+  async resolve(core: Core): Promise<void> {
     // ターンプレイヤーを取得
     const turnPlayerId = core.getTurnPlayerId();
     if (!turnPlayerId) return;
 
     const turnPlayer = core.players.find(p => p.id === turnPlayerId);
-    const nonTurnPlayers = core.players.filter(p => p.id !== turnPlayerId);
+    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
     if (!turnPlayer) return;
 
     // まず source カードの効果を処理
     await this.processCardEffect(this.source as ICard, core, true);
+    await this.resolveChild(core);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
       await this.processCardEffect(unit, core, false);
+      await this.resolveChild(core);
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
-    for (const player of nonTurnPlayers) {
-      for (const unit of player.field) {
+    if (nonTurnPlayer)
+      for (const unit of nonTurnPlayer.field) {
         await this.processCardEffect(unit, core, false);
+        await this.resolveChild(core);
       }
-    }
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
@@ -142,6 +122,7 @@ export class Stack implements IStack {
 
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
+        await this.resolveChild(core);
         if (!result) index++;
       } else {
         index++;
@@ -150,7 +131,103 @@ export class Stack implements IStack {
     }
 
     // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
-    // TODO
+    index = 0;
+    if (nonTurnPlayer)
+      while (nonTurnPlayer.trigger.length > index) {
+        const card = nonTurnPlayer.trigger[index];
+        if (card === undefined) {
+          break;
+        }
+
+        const catalog = master.get(card?.catalogId);
+        if (catalog === undefined) {
+          throw new Error('不正なカードが指定されました');
+        }
+
+        if (catalog.type === 'trigger') {
+          const result = await this.processTriggerCardEffect(card, core);
+          await this.resolveChild(core);
+          if (!result) index++;
+        } else {
+          index++;
+          continue;
+        }
+      }
+
+    // トリガーゾーン上のインターセプトカードを処理
+    do {
+      const turnPlayerCanceled = await this.processUserInterceptInteract(core, turnPlayer);
+      await this.resolveChild(core);
+
+      const nonTurnPlayerCanceled =
+        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer));
+      await this.resolveChild(core);
+
+      if (turnPlayerCanceled && nonTurnPlayerCanceled) break;
+      // eslint-disable-next-line no-constant-condition
+    } while (true);
+  }
+
+  private async resolveChild(core: Core): Promise<void> {
+    for (const child of this.children) {
+      await child.resolve(core);
+    }
+    this.children = [];
+  }
+
+  /**
+   * プレイヤーのインターセプト使用をチェックする
+   * @param player 対象のプレイヤー
+   * @returns プレイヤーがインターセプトの利用をキャンセルした場合が、利用できるカードがない場合にのみ true を返す
+   */
+  private async processUserInterceptInteract(core: Core, player: Player): Promise<boolean> {
+    // 使用可能なカードを列挙
+    const targets = player.trigger.filter(card => {
+      const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+      const catalog = master.get(card.catalogId);
+      if (!catalog) throw new Error('不正なカードが指定されました');
+      console.log(catalog.name, checkerName);
+      return typeof catalog[checkerName] === 'function'
+        ? catalog.type === 'intercept' && catalog[checkerName](this, card, core)
+        : false;
+    });
+
+    if (targets.length === 0) return true;
+
+    // クライアントに送信して返事を待つ
+    const [selected] = await this.promptUserChoice(core, player.id, {
+      title: '入力受付中',
+      type: 'intercept',
+      items: targets,
+    });
+
+    if (selected) {
+      const card = player.trigger.find(c => c.id === selected);
+      if (!card) throw new Error('対象がトリガーゾーンに存在しません');
+
+      const effectHandler = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
+      const catalog = master.get(card.catalogId);
+      if (!catalog) throw new Error('不正なカードが指定されました');
+      if (typeof catalog[effectHandler] === 'function') {
+        player.trigger = player.trigger.filter(c => c.id !== card.id);
+        player.called.push(card);
+        core.room.sync();
+
+        await catalog[effectHandler](this, card, core);
+
+        // 発動したインターセプトカードを捨札に送る
+        card.lv = 1;
+        player.called = player.called.filter(c => c.id !== card.id);
+        player.trash.unshift(card);
+        core.room.sync();
+
+        // インターセプトカード発動スタックを積む
+        this.addChildStack('intercept', card);
+      }
+    } else {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -164,7 +241,7 @@ export class Stack implements IStack {
     if (!catalogId) return;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
@@ -236,7 +313,7 @@ export class Stack implements IStack {
     if (!catalogId) return false;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = catalog.get(catalogId);
+    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return false;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
@@ -303,8 +380,12 @@ export class Stack implements IStack {
           await effectHandler(this, card, core);
 
           // 発動したトリガーカードを捨札に送る
+          card.lv = 1;
           owner.called.filter(c => c.id !== card.id);
           owner.trash.unshift(card);
+
+          // トリガーカード発動スタックを積む
+          this.addChildStack('trigger', card);
         }
 
         return check;
