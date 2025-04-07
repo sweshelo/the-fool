@@ -92,7 +92,7 @@ export class Stack implements IStack {
 
     // まず source カードの効果を処理
     await this.processCardEffect(this.source as ICard, core, true);
-    await this.resolveChild(core)
+    await this.resolveChild(core);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
@@ -122,7 +122,7 @@ export class Stack implements IStack {
 
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
-        await this.resolveChild(core)
+        await this.resolveChild(core);
         if (!result) index++;
       } else {
         index++;
@@ -146,7 +146,7 @@ export class Stack implements IStack {
 
         if (catalog.type === 'trigger') {
           const result = await this.processTriggerCardEffect(card, core);
-          await this.resolveChild(core)
+          await this.resolveChild(core);
           if (!result) index++;
         } else {
           index++;
@@ -156,13 +156,15 @@ export class Stack implements IStack {
 
     // トリガーゾーン上のインターセプトカードを処理
     do {
-      const turnPlayerCanceled = await this.processUserInterceptInteract(core, turnPlayer)
-      await this.resolveChild(core)
+      const turnPlayerCanceled = await this.processUserInterceptInteract(core, turnPlayer);
+      await this.resolveChild(core);
 
-      const nonTurnPlayerCanceled = (!nonTurnPlayer) || await this.processUserInterceptInteract(core, nonTurnPlayer);
-      await this.resolveChild(core)
+      const nonTurnPlayerCanceled =
+        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer));
+      await this.resolveChild(core);
 
       if (turnPlayerCanceled && nonTurnPlayerCanceled) break;
+      // eslint-disable-next-line no-constant-condition
     } while (true);
   }
 
@@ -218,6 +220,9 @@ export class Stack implements IStack {
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.unshift(card);
         core.room.sync();
+
+        // インターセプトカード発動スタックを積む
+        this.addChildStack('intercept', card);
       }
     } else {
       return true;
@@ -378,6 +383,9 @@ export class Stack implements IStack {
           card.lv = 1;
           owner.called.filter(c => c.id !== card.id);
           owner.trash.unshift(card);
+
+          // トリガーカード発動スタックを積む
+          this.addChildStack('trigger', card);
         }
 
         return check;
