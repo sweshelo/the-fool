@@ -151,7 +151,7 @@ export class Stack implements IStack {
     index = 0;
     if (nonTurnPlayer)
       while (nonTurnPlayer.trigger.length > index) {
-        const card = turnPlayer.trigger[index];
+        const card = nonTurnPlayer.trigger[index];
         if (card === undefined) {
           break;
         }
