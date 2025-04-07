@@ -56,7 +56,11 @@ export class Player implements IPlayer {
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
-    this.deck = [...deck].map(id => {
+    this.deck = this.initDeck();
+  }
+
+  initDeck() {
+    return this.library.map(id => {
       const catalog = master.get(id);
       if (!catalog) throw new Error('不正なカードがデッキに含まれています');
 
@@ -150,7 +154,7 @@ export class Player implements IPlayer {
       };
     } else {
       this.trash = [];
-      this.deck = this.library.map(id => new Unit(id));
+      this.deck = this.initDeck();
       const source = this.deck.shift() as Card;
       this.hand.push(source!);
       return {
