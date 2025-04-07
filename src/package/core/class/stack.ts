@@ -1,10 +1,11 @@
 import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
-import type { Player } from './Player';
+import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { EffectHelper } from '@/database/effects/helper';
+import type { Unit } from './card';
 
 interface IStack {
   /**
@@ -104,9 +105,6 @@ export class Stack implements IStack {
         })
       );
     }
-    await new Promise(resolve => {
-      setTimeout(resolve, 1000);
-    });
 
     // まず source カードの効果を処理
     await this.processCardEffect(this.source as ICard, core, true);
@@ -190,6 +188,38 @@ export class Stack implements IStack {
     for (const child of this.children) {
       await child.resolve(core);
     }
+
+    // Stackによって移動が約束されたユニットを移動させる
+    if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
+    this.children.forEach(stack => {
+      switch (stack.type) {
+        case 'break': {
+          const broken: Unit = stack.target as Unit;
+          const owner = EffectHelper.owner(core, broken);
+
+          // ターゲットがフィールドに残留しているかチェック
+          const isOnField = owner.field.some(unit => unit.id === broken.id);
+          // 捨札に送る
+          if (isOnField) {
+            owner.field = owner.field.filter(unit => unit.id !== broken.id);
+            owner.trash.unshift(broken);
+            core.room.broadcastToAll({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'SoundEffect',
+                soundId: 'leave',
+              },
+            });
+            core.room.sync();
+          }
+          break;
+        }
+      }
+    });
+
     this.children = [];
   }
 
@@ -291,6 +321,7 @@ export class Stack implements IStack {
         );
 
         // 効果を実行
+        await new Promise(resolve => setTimeout(resolve, 500));
         await effectHandler(this, card, core);
 
         // 効果実行後に通知

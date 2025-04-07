@@ -9,6 +9,7 @@ export class Unit extends Card implements IUnit {
     damage: number;
   };
   active: boolean;
+  destination?: string;
 
   constructor(catalogId: string) {
     super(catalogId);
@@ -22,6 +23,7 @@ export class Unit extends Card implements IUnit {
       damage: 0,
     };
     this.active = true;
+    this.destination = undefined;
   }
 
   initBP() {
