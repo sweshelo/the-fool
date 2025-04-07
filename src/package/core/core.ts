@@ -13,8 +13,8 @@ import type {
 } from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
-import { isUnit as checkIsUnit } from '@/helper';
 import { Stack } from './class/stack';
+import { Unit } from './class/card';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -209,7 +209,7 @@ export class Core {
         const isEnoughField = player.field.length < this.room.rule.player.max.field;
 
         // ユニットである
-        const isUnit = checkIsUnit(card);
+        const isUnit = card instanceof Unit;
 
         if (isEnoughCP && isEnoughField && isUnit) {
           player.hand = player?.hand.filter(c => c.id !== card?.id);

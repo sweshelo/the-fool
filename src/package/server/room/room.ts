@@ -102,6 +102,7 @@ export class Room {
         payload: {
           type: 'Sync',
           body: {
+            rule: this.rule,
             game: {
               round: this.core.round,
               turn: this.core.turn,
