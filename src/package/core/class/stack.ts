@@ -1,10 +1,10 @@
-import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
+import { createMessage } from '@/submodule/suit/types';
 import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import { EffectHelper } from '@/database/effects/classes/helper';
-import type { Unit } from './card';
+import type { Unit, Card } from './card';
 import { System } from '@/database/effects';
 
 interface IStack {
@@ -15,11 +15,11 @@ interface IStack {
   /**
    * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
    */
-  source: IAtom;
+  source: Card;
   /**
    * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
    */
-  target?: IAtom | Player;
+  target?: Card | Player;
   /**
    * @param parent そのStackが発生した契機の親にあたる。例えば召喚効果によって相手を破壊するStackが発生した場合、親が召喚スタック、子が破壊スタックとなる。
    */
@@ -34,8 +34,8 @@ interface IStack {
 
 export class Stack implements IStack {
   type: string;
-  source: IAtom;
-  target?: IAtom | Player;
+  source: Card;
+  target?: Card | Player;
   parent: undefined | Stack;
   children: Stack[];
 
@@ -45,36 +45,6 @@ export class Stack implements IStack {
     this.target = target;
     this.parent = parent;
     this.children = [];
-  }
-
-  /**
-   * スタックの処理状態をクライアントに通知する
-   * @param core ゲームのコアインスタンス
-   * @param state 処理の状態 ('start'|'end')
-   */
-  private async notifyStackProcessing(core: Core, state: 'start' | 'end'): Promise<void> {
-    // 通知メッセージを送信
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'debug',
-          handler: 'client',
-        },
-        payload: {
-          type: 'DebugPrint',
-          message: {
-            stackId: this.id,
-            stackType: this.type,
-            state: state,
-            source: this.source ? { id: this.source.id } : undefined,
-            target: this.target ? { id: (this.target as IAtom).id } : undefined,
-          },
-        },
-      })
-    );
-
-    // 少し待機してアニメーションなどの時間を確保
-    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   /**
@@ -107,7 +77,7 @@ export class Stack implements IStack {
     }
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source as ICard, core, true);
+    await this.processCardEffect(this.source, core, true);
     await this.resolveChild(core);
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
@@ -283,7 +253,7 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processCardEffect(card: ICard, core: Core, self: boolean): Promise<void> {
+  private async processCardEffect(card: Card, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = card.catalogId;
     if (!catalogId) return;
@@ -356,7 +326,7 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processTriggerCardEffect(card: ICard, core: Core): Promise<boolean> {
+  private async processTriggerCardEffect(card: Card, core: Core): Promise<boolean> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = card.catalogId;
     if (!catalogId) return false;
@@ -456,7 +426,7 @@ export class Stack implements IStack {
    * @param target 効果の対象
    * @returns 作成されたスタック
    */
-  addChildStack(type: string, source: IAtom, target?: IAtom | Player): Stack {
+  addChildStack(type: string, source: Card, target?: Card | Player): Stack {
     const childStack = new Stack({
       type,
       source,

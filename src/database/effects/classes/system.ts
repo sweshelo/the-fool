@@ -24,8 +24,8 @@ export class System {
             stackId: stack.id,
             stackType: stack.type,
             state: state,
-            source: stack.source ? { id: stack.source.id } : undefined,
-            target: stack.target ? { id: (stack.target as any).id } : undefined,
+            source: stack.source,
+            target: stack.target,
           },
         },
       })
@@ -43,7 +43,12 @@ export class System {
    * @param choices 選択肢の配列
    * @returns 選択された選択肢
    */
-  static async prompt(stack: Stack, core: Core, playerId: string, choices: Choices): Promise<string[]> {
+  static async prompt(
+    stack: Stack,
+    core: Core,
+    playerId: string,
+    choices: Choices
+  ): Promise<string[]> {
     // 一意のプロンプトIDを生成
     const promptId = `${stack.id}_${Date.now()}`;
 
