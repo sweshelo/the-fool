@@ -34,4 +34,14 @@ export class EffectHelper {
       .filter(u => u.id !== card.id);
     units.forEach(effect);
   }
+
+  static candidate(core: Core, filter: (unit: Unit) => boolean): Unit[] {
+    // TODO: 加護持ち除外メソッドを実装する
+    const exceptBlessing = () => true;
+    return core.players
+      .map(p => p.field)
+      .flat()
+      .filter(exceptBlessing)
+      .filter(filter);
+  }
 }

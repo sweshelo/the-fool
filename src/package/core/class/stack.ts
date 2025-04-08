@@ -172,6 +172,7 @@ export class Stack implements IStack {
           // 捨札に送る
           if (isOnField) {
             owner.field = owner.field.filter(unit => unit.id !== broken.id);
+            broken.lv = 1;
             owner.trash.unshift(broken);
             core.room.broadcastToAll({
               action: {
