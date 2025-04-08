@@ -3,6 +3,11 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import type { HandlerFunction } from '../factory';
 
+export { System } from './classes/system';
+export { Effect } from './classes/effect';
+export { EffectHelper } from './classes/helper';
+export { EffectTemplate } from './classes/templates';
+
 // ESモジュールでの__dirnameの代替
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

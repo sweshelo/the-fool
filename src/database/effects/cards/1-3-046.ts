@@ -1,10 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
-import type { ICard } from '@/submodule/suit/types';
-import { EffectHelper } from '../helper';
+import type { Card } from '@/package/core/class/card';
+import { EffectHelper, System } from '..';
 
 export const effects = {
-  checkTrigger: (stack: Stack, card: ICard, core: Core): boolean => {
+  checkTrigger: (stack: Stack, card: Card, core: Core): boolean => {
     const owner = EffectHelper.owner(core, card);
     const player = EffectHelper.owner(core, stack.source);
 
@@ -16,8 +16,8 @@ export const effects = {
     return isSamePlayer && isOnTrash;
   },
 
-  onTrigger: async (stack: Stack, card: ICard, core: Core) => {
-    await stack.displayEffect(core, 'トリガー・コネクト', '発動したインターセプトを回収');
+  onTrigger: async (stack: Stack, card: Card, core: Core) => {
+    await System.show(stack, core, 'トリガー・コネクト', '発動したインターセプトを回収');
     const owner = EffectHelper.owner(core, stack.source);
     const target = owner.trash.find(c => c.id === stack.source.id);
 

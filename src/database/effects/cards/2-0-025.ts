@@ -1,12 +1,12 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
-import type { ICard } from '@/submodule/suit/types';
-import { EffectTemplate } from '../templates';
+import type { Card } from '@/package/core/class/card';
+import { EffectTemplate, System } from '..';
 import { Color } from '@/submodule/suit/constant/color';
 
 export const effects = {
-  onDriveSelf: async (stack: Stack, card: ICard, core: Core) => {
-    await stack.displayEffect(core, '援軍／紫', '紫属性ユニットを1枚引く');
+  onDriveSelf: async (stack: Stack, card: Card, core: Core) => {
+    await System.show(stack, core, '援軍／紫', '紫属性ユニットを1枚引く');
     EffectTemplate.reinforcements(stack, card, core, { color: Color.PURPLE });
   },
 };

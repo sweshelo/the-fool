@@ -3,9 +3,9 @@ import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { EffectHelper } from '@/database/effects/helper';
+import { EffectHelper } from '@/database/effects/classes/helper';
 import type { Unit } from './card';
+import { System } from '@/database/effects';
 
 interface IStack {
   /**
@@ -243,7 +243,7 @@ export class Stack implements IStack {
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
-    const [selected] = await this.promptUserChoice(core, player.id, {
+    const [selected] = await System.prompt(this, core, player.id, {
       title: '入力受付中',
       type: 'intercept',
       items: targets,
@@ -447,78 +447,6 @@ export class Stack implements IStack {
     }
 
     return false;
-  }
-
-  /**
-   * ユーザーに選択を促す
-   * @param core ゲームのコアインスタンス
-   * @param playerId 選択を行うプレイヤーID
-   * @param choises 選択肢の配列
-   * @param message 表示メッセージ
-   * @returns 選択された選択肢
-   */
-  async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string[]> {
-    // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
-
-    // クライアントに選択肢を送信
-    core.room.broadcastToPlayer(
-      playerId,
-      createMessage({
-        action: {
-          type: 'pause',
-          handler: 'client',
-        },
-        payload: {
-          type: 'Choices',
-          promptId,
-          choices,
-          player: playerId,
-        },
-      })
-    );
-
-    // クライアントからの応答を待つ
-    return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, (choice: string[]) => {
-        resolve(choice);
-      });
-    });
-  }
-
-  /**
-   * ユーザーに効果内容を表示する
-   * @param core ゲームのコアインスタンス
-   * @param title 効果名
-   * @param message 表示メッセージ
-   */
-  async displayEffect(core: Core, title: string, message: string): Promise<void> {
-    // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
-
-    // クライアントに選択肢を送信
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'pause',
-          handler: 'client',
-        },
-        payload: {
-          type: 'DisplayEffect',
-          promptId,
-          stackId: this.id,
-          title,
-          message,
-        },
-      })
-    );
-
-    // クライアントからの応答を待つ
-    return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, () => {
-        resolve();
-      });
-    });
   }
 
   /**
