@@ -6,6 +6,10 @@ CODE OF JOKERのシミュレーションシステムを提供するWebSocketサ�
 
 This project was created using `bun init` in bun v1.2.5. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
 
+## 関係リポジトリ
+- [the-magician](https://github.com/sweshelo/the-magician) - WebUI
+- [suit](https://github.com/sweshelo/suit) - 共通型定義
+
 ## 環境構築
 
 ### インストール
