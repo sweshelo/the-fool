@@ -9,7 +9,13 @@ export const effects = {
     const opponent = EffectHelper.opponent(core, card);
     if (opponent.field.length <= 0) return;
     const damage = opponent.field.length * 1000;
-    await System.show(stack, core, '破界炎舞・絶華繚乱', '相手フィールドのユニット数×1000ダメージ');
+    await System.show(
+      stack,
+      core,
+      '破界炎舞・絶華繚乱',
+      '相手フィールドのユニット数×1000ダメージ',
+      card
+    );
 
     const effect = (unit: Unit) => Effect.damage(stack, core, card, unit, damage);
     EffectHelper.exceptSelf(core, card as Unit, effect);
@@ -25,7 +31,7 @@ export const effects = {
     const units = EffectHelper.candidate(core, filter);
 
     if (Array.isArray(units) && units.length > 0) {
-      await System.show(stack, core, '破界炎舞・絶華繚乱', '10000ダメージ');
+      await System.show(stack, core, '破界炎舞・絶華繚乱', '10000ダメージ', card);
       const [target] = await System.prompt(stack, core, EffectHelper.owner(core, card).id, {
         title: 'ダメージを与えるユニットを選択',
         type: 'unit',

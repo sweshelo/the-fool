@@ -6,7 +6,7 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects = {
   onDriveSelf: async (stack: Stack, card: Card, core: Core) => {
-    await System.show(stack, core, '援軍／緑', '緑属性ユニットを1枚引く');
+    await System.show(stack, core, '援軍／緑', '緑属性ユニットを1枚引く', card);
     EffectTemplate.reinforcements(stack, card, core, { color: Color.GREEN });
   },
 };

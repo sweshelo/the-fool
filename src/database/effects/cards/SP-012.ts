@@ -5,7 +5,7 @@ import { EffectTemplate, System } from '..';
 
 export const effects = {
   onOverclockSelf: async (stack: Stack, card: Card, core: Core) => {
-    await System.show(stack, core, 'リバイブ', '捨札から1枚選んで回収');
+    await System.show(stack, core, 'リバイブ', '捨札から1枚選んで回収', card);
     await EffectTemplate.revive(stack, card, core, 1);
   },
 };

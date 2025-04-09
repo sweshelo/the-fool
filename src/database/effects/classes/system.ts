@@ -2,6 +2,7 @@ import { createMessage } from '@/submodule/suit/types';
 import type { Core } from '@/package/core/core';
 import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
+import { Card, Unit } from '@/package/core/class/card';
 
 export class System {
   /**
@@ -84,7 +85,13 @@ export class System {
    * @param title 効果名
    * @param message 表示メッセージ
    */
-  static async show(stack: Stack, core: Core, title: string, message: string): Promise<void> {
+  static async show(
+    stack: Stack,
+    core: Core,
+    title: string,
+    message: string,
+    card?: Card
+  ): Promise<void> {
     // 一意のプロンプトIDを生成
     const promptId = `${stack.id}_${Date.now()}`;
 
@@ -101,6 +108,7 @@ export class System {
           stackId: stack.id,
           title,
           message,
+          unitId: card instanceof Unit ? card.id : undefined,
         },
       })
     );

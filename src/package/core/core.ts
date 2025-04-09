@@ -99,6 +99,7 @@ export class Core {
     if (this.stack !== undefined) {
       try {
         while (this.stack.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
           const stackItem = this.stack.shift();
           await stackItem?.resolve(this);
           this.room.sync();
