@@ -1,6 +1,5 @@
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { Player } from './class/Player';
-import { config } from '../../config';
 import type {
   DebugDrawPayload,
   IAtom,
@@ -15,6 +14,7 @@ import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
 import { Unit } from './class/card';
+import { MessageHelper } from './message';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -49,27 +49,54 @@ export class Core {
     }
     // 新しいプレイヤーを追加
     this.players.push(player);
+    this.room.broadcastToPlayer(player.id, MessageHelper.freeze());
     console.log('Player added:', player.id);
+
+    // 2人が揃ったら開始
+    if (this.players.length >= 2) {
+      this.start();
+      this.room.broadcastToAll(MessageHelper.sound('agent-interrupt'));
+    }
   }
 
   async start() {
-    for (this.round = 1; this.round <= config.game.system.round; this.round++) {
-      console.log(`Round ${this.round}`);
-      console.log(
-        'Players:',
-        this.players.map(p => p.id)
-      );
+    this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+  }
 
-      for await (const player of this.players) {
-        this.turn++;
-        // TODO: ターン開始処理
-        // ...
-        console.log(player.draw());
+  // ターンチェンジ
+  async turnChange() {
+    // freeze
+    this.room.broadcastToAll(MessageHelper.freeze());
 
-        // TODO: ターン終了処理
-        // ...
-      }
-    }
+    // ターン終了スタックを積み、解決する
+    this.stack = [
+      new Stack({
+        type: 'turnEnd',
+        source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+      }),
+    ];
+    await this.resolveStack();
+
+    // ターン終了処理
+    // TODO: 不屈 ダメージリセット
+
+    // ターン開始処理
+    this.turn++;
+    this.round = Math.floor(this.turn / 2);
+
+    // TODO: 行動権復活
+
+    // ターン開始スタックを積み、解決する
+    this.stack = [
+      new Stack({
+        type: 'turnStart',
+        source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+      }),
+    ];
+    await this.resolveStack();
+
+    // defrost
+    this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
   }
 
   /**
@@ -143,7 +170,7 @@ export class Core {
     }
   }
 
-  handleMessage(message: Message) {
+  async handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type);
     switch (message.payload.type) {
       case 'Choose': {
@@ -195,6 +222,7 @@ export class Core {
         break;
       }
       case 'UnitDrive': {
+        this.room.broadcastToAll(MessageHelper.freeze());
         const payload: UnitDrivePayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
@@ -218,22 +246,34 @@ export class Core {
           card.initBP();
           this.room.sync();
 
+          // 召喚時点でのLv
+          const lv = card.lv;
+
           // Stack追加
           this.stack = [
             new Stack({
               type: 'drive',
               source: card,
             }),
-            card.lv === 3 &&
+          ].filter(_ => !!_);
+
+          // スタックの解決処理を開始
+          await this.resolveStack();
+
+          // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
+          if (lv === 3 && card.lv === 3 && !card.overclocked) {
+            // && player.field.find(unit => unit.id === card.id)) {
+            this.stack = [
               new Stack({
                 type: 'overclock',
                 source: card,
               }),
-          ].filter(_ => !!_);
-
-          // スタックの解決処理を開始
-          this.resolveStack();
+            ];
+            await this.resolveStack();
+          }
         }
+
+        this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
         break;
       }
 
@@ -264,6 +304,11 @@ export class Core {
           player.trigger.push(target.card);
           this.room.sync();
         }
+        break;
+      }
+
+      case 'TurnEnd': {
+        this.turnChange();
       }
     }
   }

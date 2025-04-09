@@ -4,7 +4,7 @@ import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import { EffectHelper } from '@/database/effects/classes/helper';
-import type { Unit, Card } from './card';
+import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 
 interface IStack {
@@ -15,7 +15,7 @@ interface IStack {
   /**
    * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
    */
-  source: Card;
+  source: Card | Player;
   /**
    * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
    */
@@ -34,7 +34,7 @@ interface IStack {
 
 export class Stack implements IStack {
   type: string;
-  source: Card;
+  source: Card | Player;
   target?: Card | Player;
   parent: undefined | Stack;
   children: Stack[];
@@ -61,7 +61,8 @@ export class Stack implements IStack {
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
     if (!turnPlayer) return;
 
-    if (this.type === 'overclock') {
+    if (this.type === 'overclock' && this.target instanceof Unit) {
+      this.target.overclocked = true;
       core.room.broadcastToAll(
         createMessage({
           action: {
@@ -77,8 +78,10 @@ export class Stack implements IStack {
     }
 
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source, core, true);
-    await this.resolveChild(core);
+    if (this.source instanceof Card) {
+      await this.processCardEffect(this.source, core, true);
+      await this.resolveChild(core);
+    }
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
@@ -156,6 +159,7 @@ export class Stack implements IStack {
 
   private async resolveChild(core: Core): Promise<void> {
     for (const child of this.children) {
+      console.log('子スタック解決!');
       await child.resolve(core);
     }
 

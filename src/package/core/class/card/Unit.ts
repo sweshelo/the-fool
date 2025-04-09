@@ -10,6 +10,7 @@ export class Unit extends Card implements IUnit {
   };
   active: boolean;
   destination?: string;
+  overclocked?: boolean;
 
   constructor(catalogId: string) {
     super(catalogId);
