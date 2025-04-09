@@ -25,6 +25,6 @@ game:
     max:
       life: 8
       hand: 12
-      trigger: 4
-      field: 5
+      trigger: 6
+      field: 8
       cp: 12
