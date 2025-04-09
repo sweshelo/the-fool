@@ -4,6 +4,7 @@ import type { Core } from '@/package/core/core';
 import master from '@/submodule/suit/catalog/catalog';
 import type { ICard } from '@/submodule/suit/types';
 import type { Choices } from '@/submodule/suit/types/game/system';
+import { System } from './system';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -16,6 +17,16 @@ export class EffectTemplate {
     if (player.hand.length >= core.room.rule.player.max.hand) return;
 
     player.draw();
+    core.room.broadcastToAll({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'SoundEffect',
+        soundId: 'draw',
+      },
+    });
     return;
   }
 
@@ -36,7 +47,7 @@ export class EffectTemplate {
       items: driver?.trash ?? [],
       count,
     };
-    const [response] = await stack.promptUserChoice(core, driver.id, choices);
+    const [response] = await System.prompt(stack, core, driver.id, choices);
     console.log('response', response);
 
     // 召喚者の手札が上限に達している場合は何もしない

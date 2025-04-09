@@ -60,23 +60,25 @@ export class Player implements IPlayer {
   }
 
   initDeck() {
-    return this.library.map(id => {
-      const catalog = master.get(id);
-      if (!catalog) throw new Error('不正なカードがデッキに含まれています');
+    return this.library
+      .map(id => {
+        const catalog = master.get(id);
+        if (!catalog) throw new Error('不正なカードがデッキに含まれています');
 
-      switch (catalog.type) {
-        case 'unit':
-          return new Unit(id);
-        case 'advanced_unit':
-          return new Evolve(id);
-        case 'intercept':
-          return new Intercept(id);
-        case 'trigger':
-          return new Trigger(id);
-        default:
-          throw new Error('未知のタイプが指定されました');
-      }
-    });
+        switch (catalog.type) {
+          case 'unit':
+            return new Unit(id);
+          case 'advanced_unit':
+            return new Evolve(id);
+          case 'intercept':
+            return new Intercept(id);
+          case 'trigger':
+            return new Trigger(id);
+          default:
+            throw new Error('未知のタイプが指定されました');
+        }
+      })
+      .sort(() => Math.random() - 0.5);
   }
 
   // プレイヤー領域からカードを探す

@@ -30,7 +30,7 @@ export class Room {
 
   // プレイヤー参加処理
   join(socket: ServerWebSocket, message: Message) {
-    if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
+    if (message.payload.type === 'PlayerEntry') {
       // 再接続チェック
       const exists = this.players.get(message.payload.player.id);
 
@@ -38,15 +38,14 @@ export class Room {
         // clients再登録
         this.clients.delete(exists.id);
         this.clients.set(exists.id, socket);
-        this.sync();
-      } else {
+      } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player);
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);
         this.players.set(player.id, player);
-        this.sync();
       }
+      this.sync();
       return true;
     } else {
       return false;

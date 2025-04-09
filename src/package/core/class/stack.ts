@@ -1,10 +1,11 @@
-import { createMessage, type IAtom, type ICard } from '@/submodule/suit/types';
-import type { Player } from './Player';
+import { createMessage } from '@/submodule/suit/types';
+import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { EffectHelper } from '@/database/effects/helper';
+import { EffectHelper } from '@/database/effects/classes/helper';
+import { Card, Unit } from './card';
+import { System } from '@/database/effects';
 
 interface IStack {
   /**
@@ -14,11 +15,11 @@ interface IStack {
   /**
    * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
    */
-  source: IAtom;
+  source: Card | Player;
   /**
    * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
    */
-  target?: IAtom | Player;
+  target?: Card | Player;
   /**
    * @param parent そのStackが発生した契機の親にあたる。例えば召喚効果によって相手を破壊するStackが発生した場合、親が召喚スタック、子が破壊スタックとなる。
    */
@@ -33,8 +34,8 @@ interface IStack {
 
 export class Stack implements IStack {
   type: string;
-  source: IAtom;
-  target?: IAtom | Player;
+  source: Card | Player;
+  target?: Card | Player;
   parent: undefined | Stack;
   children: Stack[];
 
@@ -44,36 +45,6 @@ export class Stack implements IStack {
     this.target = target;
     this.parent = parent;
     this.children = [];
-  }
-
-  /**
-   * スタックの処理状態をクライアントに通知する
-   * @param core ゲームのコアインスタンス
-   * @param state 処理の状態 ('start'|'end')
-   */
-  private async notifyStackProcessing(core: Core, state: 'start' | 'end'): Promise<void> {
-    // 通知メッセージを送信
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'debug',
-          handler: 'client',
-        },
-        payload: {
-          type: 'DebugPrint',
-          message: {
-            stackId: this.id,
-            stackType: this.type,
-            state: state,
-            source: this.source ? { id: this.source.id } : undefined,
-            target: this.target ? { id: (this.target as IAtom).id } : undefined,
-          },
-        },
-      })
-    );
-
-    // 少し待機してアニメーションなどの時間を確保
-    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   /**
@@ -90,9 +61,27 @@ export class Stack implements IStack {
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
     if (!turnPlayer) return;
 
+    if (this.type === 'overclock' && this.target instanceof Unit) {
+      this.target.overclocked = true;
+      core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'SoundEffect',
+            soundId: 'clock-up-field',
+          },
+        })
+      );
+    }
+
     // まず source カードの効果を処理
-    await this.processCardEffect(this.source as ICard, core, true);
-    await this.resolveChild(core);
+    if (this.source instanceof Card) {
+      await this.processCardEffect(this.source, core, true);
+      await this.resolveChild(core);
+    }
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
@@ -170,8 +159,42 @@ export class Stack implements IStack {
 
   private async resolveChild(core: Core): Promise<void> {
     for (const child of this.children) {
+      console.log('子スタック解決!');
       await child.resolve(core);
     }
+
+    // Stackによって移動が約束されたユニットを移動させる
+    if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
+    this.children.forEach(stack => {
+      switch (stack.type) {
+        case 'break': {
+          const broken: Unit = stack.target as Unit;
+          const owner = EffectHelper.owner(core, broken);
+
+          // ターゲットがフィールドに残留しているかチェック
+          const isOnField = owner.field.some(unit => unit.id === broken.id);
+          // 捨札に送る
+          if (isOnField) {
+            owner.field = owner.field.filter(unit => unit.id !== broken.id);
+            broken.lv = 1;
+            owner.trash.unshift(broken);
+            core.room.broadcastToAll({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'SoundEffect',
+                soundId: 'leave',
+              },
+            });
+            core.room.sync();
+          }
+          break;
+        }
+      }
+    });
+
     this.children = [];
   }
 
@@ -195,7 +218,7 @@ export class Stack implements IStack {
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
-    const [selected] = await this.promptUserChoice(core, player.id, {
+    const [selected] = await System.prompt(this, core, player.id, {
       title: '入力受付中',
       type: 'intercept',
       items: targets,
@@ -235,7 +258,7 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processCardEffect(card: ICard, core: Core, self: boolean): Promise<void> {
+  private async processCardEffect(card: Card, core: Core, self: boolean): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = card.catalogId;
     if (!catalogId) return;
@@ -273,6 +296,7 @@ export class Stack implements IStack {
         );
 
         // 効果を実行
+        await new Promise(resolve => setTimeout(resolve, 500));
         await effectHandler(this, card, core);
 
         // 効果実行後に通知
@@ -307,7 +331,7 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processTriggerCardEffect(card: ICard, core: Core): Promise<boolean> {
+  private async processTriggerCardEffect(card: Card, core: Core): Promise<boolean> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = card.catalogId;
     if (!catalogId) return false;
@@ -401,85 +425,13 @@ export class Stack implements IStack {
   }
 
   /**
-   * ユーザーに選択を促す
-   * @param core ゲームのコアインスタンス
-   * @param playerId 選択を行うプレイヤーID
-   * @param choises 選択肢の配列
-   * @param message 表示メッセージ
-   * @returns 選択された選択肢
-   */
-  async promptUserChoice(core: Core, playerId: string, choices: Choices): Promise<string[]> {
-    // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
-
-    // クライアントに選択肢を送信
-    core.room.broadcastToPlayer(
-      playerId,
-      createMessage({
-        action: {
-          type: 'pause',
-          handler: 'client',
-        },
-        payload: {
-          type: 'Choices',
-          promptId,
-          choices,
-          player: playerId,
-        },
-      })
-    );
-
-    // クライアントからの応答を待つ
-    return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, (choice: string[]) => {
-        resolve(choice);
-      });
-    });
-  }
-
-  /**
-   * ユーザーに効果内容を表示する
-   * @param core ゲームのコアインスタンス
-   * @param title 効果名
-   * @param message 表示メッセージ
-   */
-  async displayEffect(core: Core, title: string, message: string): Promise<void> {
-    // 一意のプロンプトIDを生成
-    const promptId = `${this.id}_${Date.now()}`;
-
-    // クライアントに選択肢を送信
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'pause',
-          handler: 'client',
-        },
-        payload: {
-          type: 'DisplayEffect',
-          promptId,
-          stackId: this.id,
-          title,
-          message,
-        },
-      })
-    );
-
-    // クライアントからの応答を待つ
-    return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, () => {
-        resolve();
-      });
-    });
-  }
-
-  /**
    * 新しい子スタックを作成して追加する
    * @param type スタックのタイプ
    * @param source 効果の発生源
    * @param target 効果の対象
    * @returns 作成されたスタック
    */
-  addChildStack(type: string, source: IAtom, target?: IAtom | Player): Stack {
+  addChildStack(type: string, source: Card, target?: Card | Player): Stack {
     const childStack = new Stack({
       type,
       source,

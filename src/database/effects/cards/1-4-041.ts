@@ -1,12 +1,11 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
-import type { ICard } from '@/submodule/suit/types';
-import { EffectTemplate } from '../templates';
-import { EffectHelper } from '../helper';
+import type { Card } from '@/package/core/class/card';
+import { EffectTemplate , System, EffectHelper } from '..';
 import master from '@/database/catalog';
 
 export const effects = {
-  checkDrive: (stack: Stack, card: ICard, core: Core): boolean => {
+  checkDrive: (stack: Stack, card: Card, core: Core): boolean => {
     // 召喚者とこのカードの所有者が一致しているか確認する
     const driver = EffectHelper.owner(core, stack.source);
     const player = EffectHelper.owner(core, card);
@@ -19,9 +18,9 @@ export const effects = {
     return isSamePlayer && isGreaterThan4Colors;
   },
 
-  onDrive: async (stack: Stack, card: ICard, core: Core) => {
+  onDrive: async (stack: Stack, card: Card, core: Core) => {
     const player = EffectHelper.owner(core, card);
-    await stack.displayEffect(core, 'フラワーアレンジメント', 'カードを2枚引く');
+    await System.show(stack, core, 'フラワーアレンジメント', 'カードを2枚引く');
     [...Array(2)].forEach(() => EffectTemplate.draw(player, core));
   },
 };
