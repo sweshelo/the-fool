@@ -81,7 +81,7 @@ export class System {
     // 一意のプロンプトIDを生成
     const promptId = `${stack.id}_${Date.now()}`;
 
-    // クライアントに選択肢を送信
+    // クライアントにエフェクトを送信
     stack.core.room.broadcastToAll(
       createMessage({
         action: {

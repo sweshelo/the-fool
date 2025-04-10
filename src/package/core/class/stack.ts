@@ -242,6 +242,25 @@ export class Stack implements IStack {
         player.called.push(card);
         core.room.sync();
 
+        // 効果実行前に通知
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'drive',
+                image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                player: EffectHelper.owner(core, card).id,
+                type: 'INTERCEPT',
+              },
+            },
+          })
+        );
+
         this.processing = card;
         await catalog[effectHandler](this);
         this.processing = undefined;
@@ -361,25 +380,6 @@ export class Stack implements IStack {
 
     if (typeof effectChecker === 'function' && typeof effectHandler === 'function') {
       try {
-        // 効果実行前に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'debug',
-              handler: 'client',
-            },
-            payload: {
-              type: 'DebugPrint',
-              message: {
-                stackId: this.id,
-                card: master.get(card.catalogId)?.name,
-                effectType: this.type,
-                state: 'start',
-              },
-            },
-          })
-        );
-
         // 効果チェックを実行
         this.processing = card;
         const check: boolean = await effectChecker(this);
@@ -411,6 +411,25 @@ export class Stack implements IStack {
           owner.trigger = owner.trigger.filter(c => c.id !== card.id);
           owner.called.push(card);
           core.room.sync();
+
+          // 効果実行前に通知
+          core.room.broadcastToAll(
+            createMessage({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'VisualEffect',
+                body: {
+                  effect: 'drive',
+                  image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                  player: EffectHelper.owner(core, card).id,
+                  type: 'TRIGGER',
+                },
+              },
+            })
+          );
 
           // 呼び出す
           this.processing = card;
