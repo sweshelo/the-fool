@@ -1,27 +1,32 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Core } from '@/package/core/core';
-import { Unit, type Card } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { Choices } from '@/submodule/suit/types/game/system';
 
 export const effects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
-  checkDrive: (stack: Stack, card: Card, core: Core): boolean => {
+  checkDrive: (stack: Stack): boolean => {
+    // Make sure processing is defined
+    if (!stack.processing) throw new Error('Stack processing is undefined');
+
     const isOpponentUnit =
-      EffectHelper.owner(core, stack.source).id !== EffectHelper.owner(core, card).id;
+      EffectHelper.owner(stack.core, stack.source).id !==
+      EffectHelper.owner(stack.core, stack.processing).id;
     const isUnit =
-      EffectHelper.owner(core, stack.source).find(stack.source).place?.name === 'field';
-    const hasHand = EffectHelper.owner(core, card).hand.length > 0;
+      EffectHelper.owner(stack.core, stack.source).find(stack.source).place?.name === 'field';
+    const hasHand = EffectHelper.owner(stack.core, stack.processing).hand.length > 0;
     return isOpponentUnit && isUnit && hasHand;
   },
 
   // 実際の効果本体
   // 関数名に self は付かない
-  onDrive: async (stack: Stack, card: Card, core: Core) => {
-    const owner = EffectHelper.owner(core, card);
+  onDrive: async (stack: Stack) => {
+    // Make sure processing is defined
+    if (!stack.processing) throw new Error('Stack processing is undefined');
+
+    const owner = EffectHelper.owner(stack.core, stack.processing);
     await System.show(
       stack,
-      core,
       'デストラクションスピア',
       '手札を1枚選んで捨てる\nユニットを破壊\n1ライフダメージ'
     );
@@ -32,8 +37,8 @@ export const effects = {
       count: 1,
     };
 
-    const [response] = await System.prompt(stack, core, owner.id, choices);
-    Effect.break(stack, core, card, stack.source as Unit);
+    const [response] = await System.prompt(stack, owner.id, choices);
+    Effect.break(stack, stack.processing, stack.source as Unit);
     const target = owner.hand.find(card => card.id === response);
     if (!target) throw new Error('正しいカードが選択されませんでした');
 

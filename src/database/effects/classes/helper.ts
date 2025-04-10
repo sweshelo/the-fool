@@ -4,7 +4,9 @@ import type { Core } from '@/package/core/core';
 import type { IAtom } from '@/submodule/suit/types';
 
 export class EffectHelper {
-  static owner(core: Core, card: IAtom): Player {
+  static owner(core: Core, card: IAtom | undefined): Player {
+    if (!card) throw new Error('所有者を特定したいカードが渡されませんでした');
+
     const result = core.players.find(player => player.find(card).result);
     if (result === undefined) throw new Error('存在しないカードが選択されました');
 

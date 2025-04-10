@@ -1,11 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Core } from '@/package/core/core';
-import type { Card } from '@/package/core/class/card';
 import { EffectTemplate, System, EffectHelper } from '..';
 
 export const effects = {
-  onDriveSelf: async (stack: Stack, card: Card, core: Core) => {
-    await System.show(stack, core, 'チャージ＆ドロー', 'CP+1\nカードを1枚引く', card);
-    EffectTemplate.draw(EffectHelper.owner(core, card), core);
+  onDriveSelf: async (stack: Stack) => {
+    await System.show(stack, 'チャージ＆ドロー', 'CP+1\nカードを1枚引く');
+    const owner = EffectHelper.owner(stack.core, stack.processing);
+    EffectTemplate.draw(owner, stack.core);
   },
 };

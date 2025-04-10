@@ -48,6 +48,7 @@ export class EffectTester {
     const stack = new Stack({
       type: 'drive',
       source: card,
+      core,
     });
 
     // コアにスタックをセット
@@ -97,6 +98,7 @@ export class EffectTester {
       type: 'break',
       source: sourceCard,
       target: card,
+      core,
     });
 
     // コアにスタックをセット

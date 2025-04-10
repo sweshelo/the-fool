@@ -73,6 +73,7 @@ export class Core {
       new Stack({
         type: 'turnEnd',
         source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+        core: this,
       }),
     ];
     await this.resolveStack();
@@ -91,6 +92,7 @@ export class Core {
       new Stack({
         type: 'turnStart',
         source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+        core: this,
       }),
     ];
     await this.resolveStack();
@@ -254,8 +256,9 @@ export class Core {
             new Stack({
               type: 'drive',
               source: card,
+              core: this,
             }),
-          ].filter(_ => !!_);
+          ];
 
           // スタックの解決処理を開始
           await this.resolveStack();
@@ -267,6 +270,7 @@ export class Core {
               new Stack({
                 type: 'overclock',
                 source: card,
+                core: this,
               }),
             ];
             await this.resolveStack();

@@ -30,6 +30,7 @@ interface IStack {
    * つまり「全体を破壊する」効果であれば、破壊スタックは兄弟になりえるが、破壊によって発生した新スタック(例: 《ミイラくん》によるハンデス)は兄弟ではなく子になる。
    */
   children: Stack[];
+  core: Core;
 }
 
 export class Stack implements IStack {
@@ -38,13 +39,16 @@ export class Stack implements IStack {
   target?: Card | Player;
   parent: undefined | Stack;
   children: Stack[];
+  core: Core;
+  processing: Card | undefined;
 
-  constructor({ type, source, target, parent }: Omit<IStack, 'children'>) {
+  constructor({ type, source, target, parent, core }: Omit<IStack, 'children'>) {
     this.type = type;
     this.source = source;
     this.target = target;
     this.parent = parent;
     this.children = [];
+    this.core = core;
   }
 
   /**
@@ -134,6 +138,7 @@ export class Stack implements IStack {
         }
 
         if (catalog.type === 'trigger') {
+          this.processing = card;
           const result = await this.processTriggerCardEffect(card, core);
           await this.resolveChild(core);
           if (!result) index++;
@@ -210,15 +215,16 @@ export class Stack implements IStack {
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
       console.log(catalog.name, checkerName);
+      this.processing = card;
       return typeof catalog[checkerName] === 'function'
-        ? catalog.type === 'intercept' && catalog[checkerName](this, card, core)
+        ? catalog.type === 'intercept' && catalog[checkerName](this)
         : false;
     });
 
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
-    const [selected] = await System.prompt(this, core, player.id, {
+    const [selected] = await System.prompt(this, player.id, {
       title: '入力受付中',
       type: 'intercept',
       items: targets,
@@ -236,7 +242,9 @@ export class Stack implements IStack {
         player.called.push(card);
         core.room.sync();
 
-        await catalog[effectHandler](this, card, core);
+        this.processing = card;
+        await catalog[effectHandler](this);
+        this.processing = undefined;
 
         // 発動したインターセプトカードを捨札に送る
         card.lv = 1;
@@ -297,7 +305,9 @@ export class Stack implements IStack {
 
         // 効果を実行
         await new Promise(resolve => setTimeout(resolve, 500));
-        await effectHandler(this, card, core);
+        this.processing = card;
+        await effectHandler(this);
+        this.processing = undefined;
 
         // 効果実行後に通知
         core.room.broadcastToAll(
@@ -371,7 +381,9 @@ export class Stack implements IStack {
         );
 
         // 効果チェックを実行
-        const check: boolean = await effectChecker(this, card, core);
+        this.processing = card;
+        const check: boolean = await effectChecker(this);
+        this.processing = undefined;
 
         // 効果実行後に通知
         core.room.broadcastToAll(
@@ -401,7 +413,9 @@ export class Stack implements IStack {
           core.room.sync();
 
           // 呼び出す
-          await effectHandler(this, card, core);
+          this.processing = card;
+          await effectHandler(this);
+          this.processing = undefined;
 
           // 発動したトリガーカードを捨札に送る
           card.lv = 1;
@@ -437,6 +451,7 @@ export class Stack implements IStack {
       source,
       target,
       parent: this,
+      core: this.core,
     });
 
     this.children.push(childStack);
