@@ -1,13 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Core } from '@/package/core/core';
-import type { Card } from '@/package/core/class/card';
-import { EffectTemplate, System } from '..';
+import { EffectTemplate, System, EffectHelper } from '..';
 
 export const effects = {
-  onOverclockSelf: async (stack: Stack, card: Card, core: Core) => {
-    await System.show(stack, core, 'この指とーまれい', '【珍獣】ユニットを2枚引く', card);
-    [...Array(2)].forEach(() =>
-      EffectTemplate.reinforcements(stack, card, core, { species: '珍獣' })
-    );
+  onOverclockSelf: async (stack: Stack) => {
+    await System.show(stack, 'この指とーまれい', '【珍獣】ユニットを2枚引く');
+    const owner = EffectHelper.owner(stack.core, stack.processing);
+    [...Array(2)].forEach(() => EffectTemplate.reinforcements(stack, owner, { species: '珍獣' }));
   },
 };

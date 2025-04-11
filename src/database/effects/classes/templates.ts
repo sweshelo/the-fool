@@ -2,9 +2,9 @@ import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
 import master from '@/submodule/suit/catalog/catalog';
-import type { ICard } from '@/submodule/suit/types';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
+import { EffectHelper } from './helper';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -34,9 +34,9 @@ export class EffectTemplate {
    * [リバイブ]効果
    * @param count 回収する枚数
    */
-  static async revive(stack: Stack, card: ICard, core: Core, count: number = 1): Promise<void> {
+  static async revive(stack: Stack, count: number = 1): Promise<void> {
     // 召喚者特定
-    const driver = core.players.find(p => p.find(card).result);
+    const driver = EffectHelper.owner(stack.core, stack.processing);
 
     if (!driver) return;
 
@@ -47,11 +47,11 @@ export class EffectTemplate {
       items: driver?.trash ?? [],
       count,
     };
-    const [response] = await System.prompt(stack, core, driver.id, choices);
+    const [response] = await System.prompt(stack, driver.id, choices);
     console.log('response', response);
 
     // 召喚者の手札が上限に達している場合は何もしない
-    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand)
+    if (driver?.hand === undefined || driver?.hand?.length >= stack.core.room.rule.player.max.hand)
       return;
 
     const target = driver.trash.find(c => c.id === response);
@@ -67,19 +67,17 @@ export class EffectTemplate {
 
   /**
    * [援軍]効果
+   * @param player ドローするプレイヤー
    * @param match サーチする条件
    * @returns void
    */
-  static reinforcements(stack: Stack, card: ICard, core: Core, match: ReinforcementMatcher): void {
-    // 召喚者特定
-    const driver = core.players.find(p => p.find(card).result);
-
+  static reinforcements(stack: Stack, player: Player, match: ReinforcementMatcher): void {
     // 召喚者の手札が上限に達している場合は何もしない
-    if (driver?.hand === undefined || driver?.hand?.length >= core.room.rule.player.max.hand)
+    if (player.hand === undefined || player.hand.length >= stack.core.room.rule.player.max.hand)
       return;
 
     // 召喚者のデッキから条件に合致するカードを探す
-    const target = driver?.deck.find(c => {
+    const target = player.deck.find(c => {
       const catalog = master.get(c.catalogId);
       if (!catalog || (catalog.type !== 'unit' && catalog.type !== 'advanced_unit')) return false;
 
@@ -92,8 +90,8 @@ export class EffectTemplate {
 
     // targetを引き抜き、手札に加える
     if (target) {
-      driver.deck = driver.deck.filter(c => c.id !== target.id);
-      driver.hand.push(target);
+      player.deck = player.deck.filter(c => c.id !== target.id);
+      player.hand.push(target);
     }
 
     return;

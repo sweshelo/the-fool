@@ -1,4 +1,4 @@
-import type { Message } from '@/submodule/suit/types/message/message';
+import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import type { Player } from './class/Player';
 import type {
   DebugDrawPayload,
@@ -73,6 +73,7 @@ export class Core {
       new Stack({
         type: 'turnEnd',
         source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+        core: this,
       }),
     ];
     await this.resolveStack();
@@ -91,6 +92,7 @@ export class Core {
       new Stack({
         type: 'turnStart',
         source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+        core: this,
       }),
     ];
     await this.resolveStack();
@@ -254,8 +256,27 @@ export class Core {
             new Stack({
               type: 'drive',
               source: card,
+              core: this,
             }),
-          ].filter(_ => !!_);
+          ];
+
+          this.room.broadcastToAll(
+            createMessage({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'VisualEffect',
+                body: {
+                  effect: 'drive',
+                  image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                  player: player.id,
+                  type: card.catalog().type === 'unit' ? 'UNIT' : 'EVOLVE',
+                },
+              },
+            })
+          );
 
           // スタックの解決処理を開始
           await this.resolveStack();
@@ -267,6 +288,7 @@ export class Core {
               new Stack({
                 type: 'overclock',
                 source: card,
+                core: this,
               }),
             ];
             await this.resolveStack();

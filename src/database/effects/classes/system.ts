@@ -1,8 +1,7 @@
 import { createMessage } from '@/submodule/suit/types';
-import type { Core } from '@/package/core/core';
 import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
-import { Card, Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 
 export class System {
   /**
@@ -11,9 +10,9 @@ export class System {
    * @param core ゲームのコアインスタンス
    * @param state 処理の状態 ('start'|'end')
    */
-  static async notify(stack: Stack, core: Core, state: 'start' | 'end'): Promise<void> {
+  static async notify(stack: Stack, state: 'start' | 'end'): Promise<void> {
     // 通知メッセージを送信
-    core.room.broadcastToAll(
+    stack.core.room.broadcastToAll(
       createMessage({
         action: {
           type: 'debug',
@@ -39,22 +38,16 @@ export class System {
   /**
    * ユーザーに選択を促す
    * @param stack 対象のスタック
-   * @param core ゲームのコアインスタンス
    * @param playerId 選択を行うプレイヤーID
    * @param choices 選択肢の配列
    * @returns 選択された選択肢
    */
-  static async prompt(
-    stack: Stack,
-    core: Core,
-    playerId: string,
-    choices: Choices
-  ): Promise<string[]> {
+  static async prompt(stack: Stack, playerId: string, choices: Choices): Promise<string[]> {
     // 一意のプロンプトIDを生成
     const promptId = `${stack.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
-    core.room.broadcastToPlayer(
+    stack.core.room.broadcastToPlayer(
       playerId,
       createMessage({
         action: {
@@ -72,7 +65,7 @@ export class System {
 
     // クライアントからの応答を待つ
     return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, (choice: string[]) => {
+      stack.core.setEffectDisplayHandler(promptId, (choice: string[]) => {
         resolve(choice);
       });
     });
@@ -81,22 +74,15 @@ export class System {
   /**
    * ユーザーに効果内容を表示する
    * @param stack 対象のスタック
-   * @param core ゲームのコアインスタンス
    * @param title 効果名
    * @param message 表示メッセージ
    */
-  static async show(
-    stack: Stack,
-    core: Core,
-    title: string,
-    message: string,
-    card?: Card
-  ): Promise<void> {
+  static async show(stack: Stack, title: string, message: string): Promise<void> {
     // 一意のプロンプトIDを生成
     const promptId = `${stack.id}_${Date.now()}`;
 
-    // クライアントに選択肢を送信
-    core.room.broadcastToAll(
+    // クライアントにエフェクトを送信
+    stack.core.room.broadcastToAll(
       createMessage({
         action: {
           type: 'pause',
@@ -108,14 +94,14 @@ export class System {
           stackId: stack.id,
           title,
           message,
-          unitId: card instanceof Unit ? card.id : undefined,
+          unitId: stack.processing instanceof Unit ? stack.processing.id : undefined,
         },
       })
     );
 
     // クライアントからの応答を待つ
     return new Promise(resolve => {
-      core.setEffectDisplayHandler(promptId, () => {
+      stack.core.setEffectDisplayHandler(promptId, () => {
         resolve();
       });
     });

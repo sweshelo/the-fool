@@ -14,9 +14,10 @@ export class Room {
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
 
-  constructor(name: string) {
+  constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
     this.name = name;
+    if (rule) this.rule = rule;
   }
 
   // メッセージを処理
