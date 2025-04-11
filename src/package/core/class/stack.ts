@@ -215,10 +215,17 @@ export class Stack implements IStack {
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
       console.log(catalog.name, checkerName);
+
+      // 使用者のフィールドに該当色のユニットが存在するか
+      const isOnFieldSameColor = player.field.some(u => u.catalog().color === card.catalog().color);
+
       this.processing = card;
-      return typeof catalog[checkerName] === 'function'
-        ? catalog.type === 'intercept' && catalog[checkerName](this)
-        : false;
+      return (
+        isOnFieldSameColor &&
+        (typeof catalog[checkerName] === 'function'
+          ? catalog.type === 'intercept' && catalog[checkerName](this)
+          : false)
+      );
     });
 
     if (targets.length === 0) return true;
