@@ -140,6 +140,7 @@ export class Stack implements IStack {
         if (catalog.type === 'trigger') {
           this.processing = card;
           const result = await this.processTriggerCardEffect(card, core);
+          this.processing = undefined;
           await this.resolveChild(core);
           if (!result) index++;
         } else {

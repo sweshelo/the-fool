@@ -5,7 +5,8 @@ import { Color } from '@/submodule/suit/constant/color';
 export const effects = {
   onDriveSelf: async (stack: Stack) => {
     await System.show(stack, '援軍／黄', '黄属性ユニットを1枚引く');
-    EffectTemplate.reinforcements(stack, EffectHelper.owner(stack.core, stack.processing), {
+    const owner = EffectHelper.owner(stack.core, stack.processing);
+    EffectTemplate.reinforcements(stack, owner, {
       color: Color.YELLOW,
     });
   },
