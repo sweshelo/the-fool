@@ -193,7 +193,7 @@ export class Server {
     switch (message.action.type) {
       case 'open': {
         if (payload.type === 'RoomOpenRequest') {
-          const room = new Room(payload.name);
+          const room = new Room(payload.name, payload.rule);
           this.rooms.set(room.id, room);
           this.clientRooms.set(client, room.id);
 

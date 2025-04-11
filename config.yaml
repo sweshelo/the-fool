@@ -5,6 +5,7 @@ game:
     draw:
       top: 2
       override: 1
+      mulligan: 4
     handicap:
       # 先攻1Tのドローを無効にする?
       draw: true
@@ -19,12 +20,18 @@ game:
       increase: 1
       # increaseによって増やされる最大量
       max: 7
+      # CPの最大保有可能量
+      ceil: 12
       # ラウンドを跨いで持ち越せるか?
       carryover: false
   player:
     max:
       life: 8
-      hand: 12
-      trigger: 6
-      field: 8
-      cp: 12
+      hand: 7
+      trigger: 4
+      field: 5
+  misc:
+    # オーバーライドを厳密にするか
+    strictOverride: false
+    # 自傷ダメージでジョーカーゲージを増加させるか
+    suicideJoker: false
