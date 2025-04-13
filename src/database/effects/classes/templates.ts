@@ -17,16 +17,7 @@ export class EffectTemplate {
     if (player.hand.length >= core.room.rule.player.max.hand) return;
 
     player.draw();
-    core.room.broadcastToAll({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'SoundEffect',
-        soundId: 'draw',
-      },
-    });
+    core.room.soundEffect('draw');
     return;
   }
 
@@ -92,6 +83,7 @@ export class EffectTemplate {
     if (target) {
       player.deck = player.deck.filter(c => c.id !== target.id);
       player.hand.push(target);
+      stack.core.room.soundEffect('draw');
     }
 
     return;

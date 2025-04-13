@@ -55,7 +55,7 @@ export class Core {
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
       this.start();
-      this.room.broadcastToAll(MessageHelper.sound('agent-interrupt'));
+      this.room.soundEffect('agent-interrupt');
     }
   }
 
@@ -220,6 +220,9 @@ export class Core {
           player.trash.unshift(target.card);
           player.draw();
           this.room.sync();
+          this.room.soundEffect('draw');
+          this.room.soundEffect('clock-up');
+          this.room.soundEffect('trash');
         }
         break;
       }
@@ -247,6 +250,7 @@ export class Core {
           player.field.unshift(card);
           card.initBP();
           this.room.sync();
+          this.room.soundEffect('drive');
 
           // 召喚時点でのLv
           const lv = card.lv;
@@ -310,6 +314,7 @@ export class Core {
           player.trash.unshift(target.card);
           target.card.lv = 1;
           this.room.sync();
+          this.room.soundEffect('withdrawal');
         }
         break;
       }
@@ -325,6 +330,7 @@ export class Core {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);
           player.trigger.push(target.card);
           this.room.sync();
+          this.room.soundEffect('trigger');
         }
         break;
       }

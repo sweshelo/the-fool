@@ -1,4 +1,4 @@
-import type { Message } from '@/submodule/suit/types/message/message';
+import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core/core';
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
@@ -80,6 +80,26 @@ export class Room {
     this.clients.forEach(client => {
       client.send(JSON.stringify(message));
     });
+  }
+
+  // SEイベントを送信
+  soundEffect(soundId: string, playerId?: string) {
+    const message = createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'SoundEffect',
+        soundId: soundId,
+      },
+    });
+
+    if (playerId) {
+      this.broadcastToPlayer(playerId, message);
+    } else {
+      this.broadcastToAll(message);
+    }
   }
 
   // 現在のステータスを全て送信

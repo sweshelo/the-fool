@@ -6,6 +6,7 @@ import master from '@/database/catalog';
 import { EffectHelper } from '@/database/effects/classes/helper';
 import { Card, Unit } from './card';
 import { System } from '@/database/effects';
+import { Color } from '@/submodule/suit/constant/color';
 
 interface IStack {
   /**
@@ -67,18 +68,7 @@ export class Stack implements IStack {
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
-      core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'SoundEffect',
-            soundId: 'clock-up-field',
-          },
-        })
-      );
+      core.room.soundEffect('clock');
     }
 
     // まず source カードの効果を処理
@@ -184,17 +174,7 @@ export class Stack implements IStack {
             owner.field = owner.field.filter(unit => unit.id !== broken.id);
             broken.lv = 1;
             owner.trash.unshift(broken);
-            core.room.broadcastToAll({
-              action: {
-                type: 'effect',
-                handler: 'client',
-              },
-              payload: {
-                type: 'SoundEffect',
-                soundId: 'leave',
-              },
-            });
-            core.room.sync();
+            core.room.soundEffect('leave');
           }
           break;
         }
@@ -218,7 +198,9 @@ export class Stack implements IStack {
       console.log(catalog.name, checkerName);
 
       // 使用者のフィールドに該当色のユニットが存在するか
-      const isOnFieldSameColor = player.field.some(u => u.catalog().color === card.catalog().color);
+      const isOnFieldSameColor =
+        card.catalog().color === Color.NONE ||
+        player.field.some(u => u.catalog().color === card.catalog().color);
 
       this.processing = card;
       return (

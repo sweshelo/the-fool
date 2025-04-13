@@ -1,7 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import { EffectHelper } from './helper';
 import type { Card, Unit } from '@/package/core/class/card';
-import { MessageHelper } from '@/package/core/message';
 
 export class Effect {
   static async damage(stack: Stack, source: Card, target: Unit, value: number) {
@@ -14,7 +13,7 @@ export class Effect {
 
     target.bp.damage += value;
     stack.addChildStack('damage', source, target);
-    stack.core.room.broadcastToAll(MessageHelper.sound('damage'));
+    stack.core.room.soundEffect('damage');
 
     // 破壊された?
     if (target.bp.base + target.bp.diff - target.bp.damage <= 0) {
@@ -44,7 +43,6 @@ export class Effect {
     // TODO: 耐性持ちのチェックをここでやる
     stack.addChildStack('break', source, target);
     target.destination = 'trash';
-    stack.core.room.broadcastToAll(MessageHelper.sound('bang'));
-    console.log('破壊スタック!!');
+    stack.core.room.soundEffect('bang');
   }
 }
