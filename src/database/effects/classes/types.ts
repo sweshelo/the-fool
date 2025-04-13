@@ -17,7 +17,7 @@ export type OnEffectMethod = (stack: StackWithCard) => Promise<void>;
  * Type for card effect methods starting with "check"
  * These methods return Promise<boolean>
  */
-export type CheckEffectMethod = (stack: StackWithCard) => Promise<boolean>;
+export type CheckEffectMethod = (stack: StackWithCard) => Promise<boolean> | boolean;
 
 /**
  * Interface for the effects object exported by card effect files

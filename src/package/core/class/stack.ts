@@ -68,7 +68,7 @@ export class Stack implements IStack {
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
-      core.room.soundEffect('clock');
+      core.room.soundEffect('clock-up-field');
     }
 
     // まず source カードの効果を処理
@@ -173,7 +173,7 @@ export class Stack implements IStack {
           if (isOnField) {
             owner.field = owner.field.filter(unit => unit.id !== broken.id);
             broken.lv = 1;
-            owner.trash.unshift(broken);
+            owner.trash.push(broken);
             core.room.soundEffect('leave');
           }
           break;
@@ -258,7 +258,7 @@ export class Stack implements IStack {
         // 発動したインターセプトカードを捨札に送る
         card.lv = 1;
         player.called = player.called.filter(c => c.id !== card.id);
-        player.trash.unshift(card);
+        player.trash.push(card);
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
@@ -429,7 +429,7 @@ export class Stack implements IStack {
           // 発動したトリガーカードを捨札に送る
           card.lv = 1;
           owner.called.filter(c => c.id !== card.id);
-          owner.trash.unshift(card);
+          owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
           this.addChildStack('trigger', card);

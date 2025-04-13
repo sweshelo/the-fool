@@ -1,8 +1,9 @@
 import type { Stack } from '@/package/core/class/stack';
-import { EffectHelper, System } from '..';
+import { Effect, EffectHelper, System } from '..';
+import type { StackWithCard } from '../classes/types';
 
 export const effects = {
-  checkTrigger: (stack: Stack): boolean => {
+  checkTrigger: (stack: StackWithCard): boolean => {
     const owner = EffectHelper.owner(stack.core, stack.processing);
     const player = EffectHelper.owner(stack.core, stack.source);
 
@@ -20,9 +21,8 @@ export const effects = {
     const target = owner.trash.find(c => c.id === stack.source.id);
 
     // 捨札から削除
-    if (target && owner.hand.length < stack.core.room.rule.player.max.hand) {
-      owner.trash = owner.trash.filter(c => c.id !== target?.id);
-      owner.hand.push(target);
+    if (target && stack.processing) {
+      Effect.move(stack, stack.processing, target, 'hand');
     }
   },
 };

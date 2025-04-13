@@ -41,8 +41,6 @@ export const effects = {
     Effect.break(stack, stack.processing, stack.source as Unit);
     const target = owner.hand.find(card => card.id === response);
     if (!target) throw new Error('正しいカードが選択されませんでした');
-
-    owner.hand = owner.hand.filter(card => card.id !== response);
-    owner.trash.unshift(target);
+    Effect.handes(stack, stack.processing, target);
   },
 };

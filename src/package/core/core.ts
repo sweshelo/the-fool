@@ -217,7 +217,7 @@ export class Core {
         if (isOnHand && isSameCard && isUnderLv3) {
           player.hand = player?.hand.filter(card => card.id !== target.card?.id);
           parent.card.lv++;
-          player.trash.unshift(target.card);
+          player.trash.push(target.card);
           player.draw();
           this.room.sync();
           this.room.soundEffect('draw');
@@ -247,7 +247,7 @@ export class Core {
 
         if (isEnoughCP && isEnoughField && isUnit) {
           player.hand = player?.hand.filter(c => c.id !== card?.id);
-          player.field.unshift(card);
+          player.field.push(card);
           card.initBP();
           this.room.sync();
           this.room.soundEffect('drive');
@@ -311,7 +311,7 @@ export class Core {
 
         if (target && target.card && player && isOnField) {
           player.field = player.field.filter(u => u.id !== target.card?.id);
-          player.trash.unshift(target.card);
+          player.trash.push(target.card);
           target.card.lv = 1;
           this.room.sync();
           this.room.soundEffect('withdrawal');
@@ -337,6 +337,30 @@ export class Core {
 
       case 'TurnEnd': {
         this.turnChange();
+        break;
+      }
+
+      case 'Attack': {
+        break;
+      }
+
+      case 'Boot': {
+        break;
+      }
+
+      case 'Discard': {
+        const payload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnHand = target?.place?.name === 'hand';
+
+        if (target && target.card && player && isOnHand) {
+          player.hand = player.hand.filter(c => c.id !== target.card?.id);
+          player.trash.push(target.card);
+          this.room.sync();
+          this.room.soundEffect('trash');
+        }
+        break;
       }
     }
   }
