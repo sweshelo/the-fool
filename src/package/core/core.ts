@@ -128,10 +128,14 @@ export class Core {
     if (this.stack !== undefined) {
       try {
         while (this.stack.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
           const stackItem = this.stack.shift();
           await stackItem?.resolve(this);
           this.room.sync();
+
+          // 後続のStackがある場合は待たせる
+          if (this.stack.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 750));
+          }
         }
 
         // 処理完了後、スタックをクリア
@@ -281,6 +285,9 @@ export class Core {
               },
             })
           );
+
+          // wait
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
           // スタックの解決処理を開始
           await this.resolveStack();

@@ -182,6 +182,7 @@ export class Stack implements IStack {
     });
 
     this.children = [];
+    this.core.room.sync();
   }
 
   /**

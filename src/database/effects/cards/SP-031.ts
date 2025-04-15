@@ -12,7 +12,8 @@ export const effects: CardEffects = {
       EffectHelper.owner(stack.core, stack.source).id ===
       EffectHelper.owner(stack.core, stack.processing).id;
     const hasHand = EffectHelper.owner(stack.core, stack.processing).hand.length > 0;
-    return isOpponentUnit && hasHand;
+    const isRemainDeck = EffectHelper.owner(stack.core, stack.processing).deck.length > 0;
+    return isOpponentUnit && hasHand && isRemainDeck;
   },
 
   // 実際の効果本体
