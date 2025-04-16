@@ -61,31 +61,60 @@ export class Core {
 
   async start() {
     this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+    this.turnChange(true);
   }
 
   // ターンチェンジ
-  async turnChange() {
+  async turnChange(isFirstTurn: boolean = false) {
     // freeze
     this.room.broadcastToAll(MessageHelper.freeze());
 
-    // ターン終了スタックを積み、解決する
-    this.stack = [
-      new Stack({
-        type: 'turnEnd',
-        source: this.players.find(player => player.id === this.getTurnPlayerId())!,
-        core: this,
-      }),
-    ];
-    await this.resolveStack();
+    if (!isFirstTurn) {
+      // ターン終了スタックを積み、解決する
+      this.stack = [
+        new Stack({
+          type: 'turnEnd',
+          source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
 
-    // ターン終了処理
-    // TODO: 不屈 ダメージリセット
+      // ターン終了処理
+      // TODO: 不屈 ダメージリセット
 
-    // ターン開始処理
-    this.turn++;
-    this.round = Math.floor(this.turn / 2);
+      // ターン開始処理
+      this.turn++;
+      this.round = Math.floor(this.turn / 2);
+    }
+
+    // CP初期化
+    const turnPlayer = this.players.find(player => player.id === this.getTurnPlayerId());
+    if (turnPlayer) {
+      const max =
+        this.room.rule.system.cp.init +
+        this.room.rule.system.cp.increase * (this.round - 1) +
+        (this.room.rule.system.handicap.cp && this.round === 1 && this.turn === 2 ? 1 : 0);
+      turnPlayer.cp = {
+        current: Math.min(
+          max + (this.room.rule.system.cp.carryover ? turnPlayer.cp.current : 0),
+          this.room.rule.system.cp.ceil,
+          this.room.rule.system.cp.max
+        ),
+        max: Math.min(max, this.room.rule.system.cp.ceil, this.room.rule.system.cp.max),
+      };
+    }
+    this.room.soundEffect('cp-increase');
+
+    // ドロー
+    [...Array(this.room.rule.system.draw.top)].forEach(() => {
+      if (turnPlayer?.hand.length && turnPlayer?.hand.length < this.room.rule.player.max.hand)
+        turnPlayer?.draw();
+    });
+    this.room.soundEffect('draw');
 
     // TODO: 行動権復活
+    // this.room.soundEffect('reboot')
 
     // ターン開始スタックを積み、解決する
     this.stack = [
@@ -211,9 +240,9 @@ export class Core {
         const isOnHand = parent.place?.name === 'hand' && target?.place?.name === 'hand';
 
         // 2つのカードが同じである
-        // TODO: strictModeな設定を作り、同名判定を厳密にするモードを用意する
-        const isSameCard =
-          catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
+        const isSameCard = this.room.rule.misc.strictOverride
+          ? catalog.get(parent.card.catalogId)?.id === catalog.get(target.card.catalogId)?.id
+          : catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
 
         // 受け皿がLv3未満
         const isUnderLv3 = parent?.card?.lv < 3;
@@ -222,7 +251,11 @@ export class Core {
           player.hand = player?.hand.filter(card => card.id !== target.card?.id);
           parent.card.lv++;
           player.trash.push(target.card);
-          player.draw();
+          [...Array(this.room.rule.system.draw.override)].forEach(() => {
+            if (player.hand.length < this.room.rule.player.max.hand) {
+              player.draw();
+            }
+          });
           this.room.sync();
           this.room.soundEffect('draw');
           this.room.soundEffect('clock-up');
@@ -241,7 +274,13 @@ export class Core {
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
         // CPが足りている
-        const isEnoughCP = cardCatalog.cost <= player.cp.current || true; // debug用
+        // 軽減チェック
+        const mitigate = player.trigger.find(
+          c =>
+            c.catalog().color === card.catalog().color &&
+            (c.catalog().type === 'advanced_unit' || c.catalog().type === 'unit')
+        );
+        const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
 
         // フィールドのユニット数が規定未満
         const isEnoughField = player.field.length < this.room.rule.player.max.field;
@@ -250,6 +289,17 @@ export class Core {
         const isUnit = card instanceof Unit;
 
         if (isEnoughCP && isEnoughField && isUnit) {
+          const cost = card.catalog().cost;
+
+          // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
+          if (cost > 0 && mitigate) {
+            player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
+            player.trash.push(mitigate);
+          }
+
+          player.cp.current -= cost - (mitigate ? 1 : 0);
+          if (cost > 0) this.room.soundEffect('cp-consume');
+
           player.hand = player?.hand.filter(c => c.id !== card?.id);
           player.field.push(card);
           card.initBP();
