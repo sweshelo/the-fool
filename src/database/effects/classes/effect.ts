@@ -1,9 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
 import { EffectHelper } from './helper';
 import type { Card, Unit } from '@/package/core/class/card';
+import type { Player } from '@/package/core/class/Player';
 
 export class Effect {
-  static async damage(stack: Stack, source: Card, target: Unit, value: number) {
+  static async damage(stack: Stack, source: Card, target: Unit, value: number): Promise<void> {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
@@ -30,9 +31,8 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _cause: string = 'effect'
-  ) {
+    cause: 'effect' | 'damage' | 'battle' | 'death' = 'effect'
+  ): Promise<void> {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField =
@@ -41,7 +41,10 @@ export class Effect {
     if (!isOnField) return;
 
     // TODO: 耐性持ちのチェックをここでやる
-    stack.addChildStack('break', source, target);
+    stack.addChildStack('break', source, target, {
+      type: 'break',
+      cause,
+    });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
   }
@@ -51,7 +54,7 @@ export class Effect {
    * @param source 効果の発動元
    * @param target 破壊する手札
    */
-  static async handes(stack: Stack, source: Card, target: Card) {
+  static async handes(stack: Stack, source: Card, target: Card): Promise<void> {
     const owner = EffectHelper.owner(stack.core, target);
     const card = owner.find(target);
 
@@ -65,12 +68,20 @@ export class Effect {
     }
   }
 
+  /**
+   * 効果によってカードを移動させる
+   * ! 手札を捨てる動作は `handes` を利用する
+   * @param source 効果の発動元
+   * @param target 対象のカード
+   * @param location 移動先
+   * @returns void
+   */
   static async move(
     stack: Stack,
     source: Card,
     target: Card,
     location: 'hand' | 'trigger' | 'deck' | 'trash'
-  ) {
+  ): Promise<void> {
     const owner = EffectHelper.owner(stack.core, target);
     const cardFind = owner.find(target);
 
@@ -129,5 +140,23 @@ export class Effect {
     }
 
     stack.addChildStack('move', source, target);
+  }
+
+  static async modifyCP(stack: Stack, source: Card, target: Player, value: number): Promise<void> {
+    if (value === 0) return;
+
+    const updatedCP = Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil);
+    target.cp.current = updatedCP;
+
+    if (value > 0) {
+      stack.core.room.soundEffect('cp-increase');
+    } else {
+      stack.core.room.soundEffect('cp-consume');
+    }
+
+    stack.addChildStack('modifyCP', source, target, {
+      type: 'cp',
+      value,
+    });
   }
 }

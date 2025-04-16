@@ -32,7 +32,26 @@ interface IStack {
    */
   children: Stack[];
   core: Core;
+  option?: StackOption;
 }
+
+type StackOption =
+  | {
+      // 破壊
+      type: 'break';
+      cause: 'effect' | 'battle' | 'damage' | 'death';
+    }
+  | {
+      // ダメージ
+      type: 'damage';
+      cause: 'effect' | 'battle';
+      value: number;
+    }
+  | {
+      // CP増減
+      type: 'cp';
+      value: number;
+    };
 
 export class Stack implements IStack {
   type: string;
@@ -42,14 +61,16 @@ export class Stack implements IStack {
   children: Stack[];
   core: Core;
   processing: Card | undefined;
+  option?: StackOption;
 
-  constructor({ type, source, target, parent, core }: Omit<IStack, 'children'>) {
+  constructor({ type, source, target, parent, core, option }: Omit<IStack, 'children'>) {
     this.type = type;
     this.source = source;
     this.target = target;
     this.parent = parent;
     this.children = [];
     this.core = core;
+    this.option = option;
   }
 
   /**
@@ -140,17 +161,15 @@ export class Stack implements IStack {
       }
 
     // トリガーゾーン上のインターセプトカードを処理
+    index = 0;
     do {
-      const turnPlayerCanceled = await this.processUserInterceptInteract(core, turnPlayer);
+      index += (await this.processUserInterceptInteract(core, turnPlayer)) ? 1 : 0;
       await this.resolveChild(core);
 
-      const nonTurnPlayerCanceled =
-        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer));
+      index +=
+        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer)) ? 1 : 0;
       await this.resolveChild(core);
-
-      if (turnPlayerCanceled && nonTurnPlayerCanceled) break;
-      // eslint-disable-next-line no-constant-condition
-    } while (true);
+    } while (index < 2);
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -188,7 +207,7 @@ export class Stack implements IStack {
   /**
    * プレイヤーのインターセプト使用をチェックする
    * @param player 対象のプレイヤー
-   * @returns プレイヤーがインターセプトの利用をキャンセルした場合が、利用できるカードがない場合にのみ true を返す
+   * @returns プレイヤーがインターセプトの利用をキャンセルした場合か、利用できるカードがない場合にのみ true を返す
    */
   private async processUserInterceptInteract(core: Core, player: Player): Promise<boolean> {
     // 使用可能なカードを列挙
@@ -231,6 +250,10 @@ export class Stack implements IStack {
       if (typeof catalog[effectHandler] === 'function') {
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
+
+        const cost = card.catalog().cost;
+        player.cp.current -= cost;
+        if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
 
         // 効果実行前に通知
@@ -264,11 +287,11 @@ export class Stack implements IStack {
 
         // インターセプトカード発動スタックを積む
         this.addChildStack('intercept', card);
+        return false;
       }
-    } else {
-      return true;
     }
-    return false;
+
+    return true;
   }
 
   /**
@@ -455,13 +478,14 @@ export class Stack implements IStack {
    * @param target 効果の対象
    * @returns 作成されたスタック
    */
-  addChildStack(type: string, source: Card, target?: Card | Player): Stack {
+  addChildStack(type: string, source: Card, target?: Card | Player, option?: StackOption): Stack {
     const childStack = new Stack({
       type,
       source,
       target,
       parent: this,
       core: this.core,
+      option,
     });
 
     this.children.push(childStack);
