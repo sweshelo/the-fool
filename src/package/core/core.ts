@@ -55,37 +55,66 @@ export class Core {
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
       this.start();
-      this.room.broadcastToAll(MessageHelper.sound('agent-interrupt'));
+      this.room.soundEffect('agent-interrupt');
     }
   }
 
   async start() {
     this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+    this.turnChange(true);
   }
 
   // ターンチェンジ
-  async turnChange() {
+  async turnChange(isFirstTurn: boolean = false) {
     // freeze
     this.room.broadcastToAll(MessageHelper.freeze());
 
-    // ターン終了スタックを積み、解決する
-    this.stack = [
-      new Stack({
-        type: 'turnEnd',
-        source: this.players.find(player => player.id === this.getTurnPlayerId())!,
-        core: this,
-      }),
-    ];
-    await this.resolveStack();
+    if (!isFirstTurn) {
+      // ターン終了スタックを積み、解決する
+      this.stack = [
+        new Stack({
+          type: 'turnEnd',
+          source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
 
-    // ターン終了処理
-    // TODO: 不屈 ダメージリセット
+      // ターン終了処理
+      // TODO: 不屈 ダメージリセット
 
-    // ターン開始処理
-    this.turn++;
-    this.round = Math.floor(this.turn / 2);
+      // ターン開始処理
+      this.turn++;
+      this.round = Math.floor(this.turn / 2);
+    }
+
+    // CP初期化
+    const turnPlayer = this.players.find(player => player.id === this.getTurnPlayerId());
+    if (turnPlayer) {
+      const max =
+        this.room.rule.system.cp.init +
+        this.room.rule.system.cp.increase * (this.round - 1) +
+        (this.room.rule.system.handicap.cp && this.round === 1 && this.turn === 2 ? 1 : 0);
+      turnPlayer.cp = {
+        current: Math.min(
+          max + (this.room.rule.system.cp.carryover ? turnPlayer.cp.current : 0),
+          this.room.rule.system.cp.ceil,
+          this.room.rule.system.cp.max
+        ),
+        max: Math.min(max, this.room.rule.system.cp.ceil, this.room.rule.system.cp.max),
+      };
+    }
+    this.room.soundEffect('cp-increase');
+
+    // ドロー
+    [...Array(this.room.rule.system.draw.top)].forEach(() => {
+      if (turnPlayer?.hand.length && turnPlayer?.hand.length < this.room.rule.player.max.hand)
+        turnPlayer?.draw();
+    });
+    this.room.soundEffect('draw');
 
     // TODO: 行動権復活
+    // this.room.soundEffect('reboot')
 
     // ターン開始スタックを積み、解決する
     this.stack = [
@@ -128,10 +157,14 @@ export class Core {
     if (this.stack !== undefined) {
       try {
         while (this.stack.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
           const stackItem = this.stack.shift();
           await stackItem?.resolve(this);
           this.room.sync();
+
+          // 後続のStackがある場合は待たせる
+          if (this.stack.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 750));
+          }
         }
 
         // 処理完了後、スタックをクリア
@@ -207,9 +240,9 @@ export class Core {
         const isOnHand = parent.place?.name === 'hand' && target?.place?.name === 'hand';
 
         // 2つのカードが同じである
-        // TODO: strictModeな設定を作り、同名判定を厳密にするモードを用意する
-        const isSameCard =
-          catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
+        const isSameCard = this.room.rule.misc.strictOverride
+          ? catalog.get(parent.card.catalogId)?.id === catalog.get(target.card.catalogId)?.id
+          : catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
 
         // 受け皿がLv3未満
         const isUnderLv3 = parent?.card?.lv < 3;
@@ -217,9 +250,16 @@ export class Core {
         if (isOnHand && isSameCard && isUnderLv3) {
           player.hand = player?.hand.filter(card => card.id !== target.card?.id);
           parent.card.lv++;
-          player.trash.unshift(target.card);
-          player.draw();
+          player.trash.push(target.card);
+          [...Array(this.room.rule.system.draw.override)].forEach(() => {
+            if (player.hand.length < this.room.rule.player.max.hand) {
+              player.draw();
+            }
+          });
           this.room.sync();
+          this.room.soundEffect('draw');
+          this.room.soundEffect('clock-up');
+          this.room.soundEffect('trash');
         }
         break;
       }
@@ -234,7 +274,13 @@ export class Core {
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
         // CPが足りている
-        const isEnoughCP = cardCatalog.cost <= player.cp.current || true; // debug用
+        // 軽減チェック
+        const mitigate = player.trigger.find(
+          c =>
+            c.catalog().color === card.catalog().color &&
+            (c.catalog().type === 'advanced_unit' || c.catalog().type === 'unit')
+        );
+        const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
 
         // フィールドのユニット数が規定未満
         const isEnoughField = player.field.length < this.room.rule.player.max.field;
@@ -243,10 +289,22 @@ export class Core {
         const isUnit = card instanceof Unit;
 
         if (isEnoughCP && isEnoughField && isUnit) {
+          const cost = card.catalog().cost;
+
+          // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
+          if (cost > 0 && mitigate) {
+            player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
+            player.trash.push(mitigate);
+          }
+
+          player.cp.current -= cost - (mitigate ? 1 : 0);
+          if (cost > 0) this.room.soundEffect('cp-consume');
+
           player.hand = player?.hand.filter(c => c.id !== card?.id);
-          player.field.unshift(card);
+          player.field.push(card);
           card.initBP();
           this.room.sync();
+          this.room.soundEffect('drive');
 
           // 召喚時点でのLv
           const lv = card.lv;
@@ -278,6 +336,9 @@ export class Core {
             })
           );
 
+          // wait
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
           // スタックの解決処理を開始
           await this.resolveStack();
 
@@ -307,9 +368,10 @@ export class Core {
 
         if (target && target.card && player && isOnField) {
           player.field = player.field.filter(u => u.id !== target.card?.id);
-          player.trash.unshift(target.card);
+          player.trash.push(target.card);
           target.card.lv = 1;
           this.room.sync();
+          this.room.soundEffect('withdrawal');
         }
         break;
       }
@@ -325,12 +387,37 @@ export class Core {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);
           player.trigger.push(target.card);
           this.room.sync();
+          this.room.soundEffect('trigger');
         }
         break;
       }
 
       case 'TurnEnd': {
         this.turnChange();
+        break;
+      }
+
+      case 'Attack': {
+        break;
+      }
+
+      case 'Boot': {
+        break;
+      }
+
+      case 'Discard': {
+        const payload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.find(payload.target);
+        const isOnHand = target?.place?.name === 'hand';
+
+        if (target && target.card && player && isOnHand) {
+          player.hand = player.hand.filter(c => c.id !== target.card?.id);
+          player.trash.push(target.card);
+          this.room.sync();
+          this.room.soundEffect('trash');
+        }
+        break;
       }
     }
   }

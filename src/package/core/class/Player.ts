@@ -94,6 +94,17 @@ export class Player implements IPlayer {
         },
       };
 
+    const onTrash = this.trash.find(({ id }) => id === target.id);
+    if (onTrash)
+      return {
+        result: true,
+        card: onTrash,
+        place: {
+          name: 'trash',
+          ref: this.trash,
+        },
+      };
+
     const onHand = this.hand.find(({ id }) => id === target.id);
     if (onHand)
       return {

@@ -5,6 +5,7 @@ import master from '@/submodule/suit/catalog/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
+import { Effect } from './effect';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -17,16 +18,7 @@ export class EffectTemplate {
     if (player.hand.length >= core.room.rule.player.max.hand) return;
 
     player.draw();
-    core.room.broadcastToAll({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'SoundEffect',
-        soundId: 'draw',
-      },
-    });
+    core.room.soundEffect('draw');
     return;
   }
 
@@ -58,9 +50,8 @@ export class EffectTemplate {
     console.log('target', target);
 
     // targetを引き抜き、手札に加える
-    if (target) {
-      driver.trash = driver.trash.filter(c => c.id !== response);
-      driver.hand.push(target);
+    if (target && stack.processing) {
+      Effect.move(stack, stack.processing, target, 'hand');
     }
     return;
   }
@@ -89,9 +80,8 @@ export class EffectTemplate {
     });
 
     // targetを引き抜き、手札に加える
-    if (target) {
-      player.deck = player.deck.filter(c => c.id !== target.id);
-      player.hand.push(target);
+    if (target && stack.processing) {
+      Effect.move(stack, stack.processing, target, 'hand');
     }
 
     return;
