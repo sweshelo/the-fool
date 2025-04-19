@@ -289,7 +289,8 @@ export class Core {
         const isUnit = card instanceof Unit;
 
         if (isEnoughCP && isEnoughField && isUnit) {
-          const cost = card.catalog().cost;
+          const cost = card.catalog().cost; // 本来のコスト (コスト減少系はこちらに勘定する)
+          const pay = cost - (mitigate ? 1 : 0); // 実際に支払ったコスト (コスト軽減のみこちらに勘定する)
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
           if (cost > 0 && mitigate) {
@@ -297,8 +298,8 @@ export class Core {
             player.trash.push(mitigate);
           }
 
-          player.cp.current -= cost - (mitigate ? 1 : 0);
-          if (cost > 0) this.room.soundEffect('cp-consume');
+          player.cp.current -= pay;
+          if (pay > 0) this.room.soundEffect('cp-consume');
 
           player.hand = player?.hand.filter(c => c.id !== card?.id);
           player.field.push(card);
