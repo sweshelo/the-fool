@@ -393,7 +393,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: string[]): void {
+  handleEffectResponse(promptId: string, response: string[] | undefined): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);
