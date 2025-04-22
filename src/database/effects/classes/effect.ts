@@ -190,8 +190,8 @@ export class Effect {
       }
 
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
-      const beforeBBP = target.catalog().bp?.[before] ?? 0;
-      const afterBBP = target.catalog().bp?.[target.lv] ?? 0;
+      const beforeBBP = target.catalog().bp?.[before - 1] ?? 0;
+      const afterBBP = target.catalog().bp?.[target.lv - 1] ?? 0;
       const diff = afterBBP - beforeBBP;
       target.bp.base += diff;
 
@@ -199,6 +199,10 @@ export class Effect {
         type: 'lv',
         value: target.lv - before,
       });
+
+      if (target.lv === 3) {
+        stack.addChildStack('overclock', target);
+      }
     }
   }
 }

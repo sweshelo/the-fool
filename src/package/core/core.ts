@@ -332,7 +332,7 @@ export class Core {
         core: this,
       });
       Effect.clock(winnerStack, loser, winner, 1);
-      this.stack = [stack];
+      this.stack = [winnerStack];
       await this.resolveStack();
     }
 
