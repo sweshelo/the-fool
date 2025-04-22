@@ -229,7 +229,7 @@ export class Core {
         blockerOwner.id,
         createMessage({
           action: {
-            type: '',
+            type: 'pause',
             handler: 'client',
           },
           payload: {
