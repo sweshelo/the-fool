@@ -4,13 +4,13 @@ import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 
 export class Effect {
-  static async damage(
+  static damage(
     stack: Stack,
     source: Card,
     target: Unit,
     value: number,
     type: 'effect' | 'battle' = 'effect'
-  ): Promise<void> {
+  ): void {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
@@ -40,12 +40,12 @@ export class Effect {
    * @param source 効果の発動元
    * @param target 破壊の対象
    */
-  static async break(
+  static break(
     stack: Stack,
     source: Card,
     target: Unit,
     cause: 'effect' | 'damage' | 'battle' | 'death' = 'effect'
-  ): Promise<void> {
+  ): void {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField =
@@ -67,7 +67,7 @@ export class Effect {
    * @param source 効果の発動元
    * @param target 破壊する手札
    */
-  static async handes(stack: Stack, source: Card, target: Card): Promise<void> {
+  static handes(stack: Stack, source: Card, target: Card): void {
     const owner = EffectHelper.owner(stack.core, target);
     const card = owner.find(target);
 
@@ -89,12 +89,12 @@ export class Effect {
    * @param location 移動先
    * @returns void
    */
-  static async move(
+  static move(
     stack: Stack,
     source: Card,
     target: Card,
     location: 'hand' | 'trigger' | 'deck' | 'trash'
-  ): Promise<void> {
+  ): void {
     const owner = EffectHelper.owner(stack.core, target);
     const cardFind = owner.find(target);
 
@@ -155,7 +155,7 @@ export class Effect {
     stack.addChildStack('move', source, target);
   }
 
-  static async modifyCP(stack: Stack, source: Card, target: Player, value: number): Promise<void> {
+  static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {
     if (value === 0) return;
 
     const updatedCP = Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil);
@@ -173,7 +173,7 @@ export class Effect {
     });
   }
 
-  static async clock(stack: Stack, source: Unit, target: Unit, value: number): Promise<void> {
+  static clock(stack: Stack, source: Unit, target: Unit, value: number): void {
     const before = target.lv;
 
     target.lv += value;
