@@ -35,4 +35,8 @@ export class Unit extends Card implements IUnit {
       damage: 0,
     };
   }
+
+  currentBP() {
+    return this.bp.base + this.bp.diff - this.bp.damage;
+  }
 }

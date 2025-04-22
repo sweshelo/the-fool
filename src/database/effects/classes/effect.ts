@@ -4,7 +4,13 @@ import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 
 export class Effect {
-  static async damage(stack: Stack, source: Card, target: Unit, value: number): Promise<void> {
+  static async damage(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    value: number,
+    type: 'effect' | 'battle' = 'effect'
+  ): Promise<void> {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
@@ -13,11 +19,18 @@ export class Effect {
     // TODO: 耐性持ちのチェックをここでやる
 
     target.bp.damage += value;
-    stack.addChildStack('damage', source, target);
-    stack.core.room.soundEffect('damage');
+    stack.addChildStack('damage', source, target, {
+      type: 'damage',
+      cause: type,
+      value,
+    });
+
+    if (type !== 'battle') {
+      stack.core.room.soundEffect('damage');
+    }
 
     // 破壊された?
-    if (target.bp.base + target.bp.diff - target.bp.damage <= 0) {
+    if (target.currentBP() <= 0) {
       this.break(stack, source, target, 'damage');
     }
   }
@@ -158,5 +171,34 @@ export class Effect {
       type: 'cp',
       value,
     });
+  }
+
+  static async clock(stack: Stack, source: Unit, target: Unit, value: number): Promise<void> {
+    const before = target.lv;
+
+    target.lv += value;
+    if (target.lv > 3) target.lv = 3;
+    if (target.lv < 1) target.lv = 1;
+
+    // 結果としてLvが変動した場合にのみStackを積む
+    if (target.lv !== before) {
+      // Lv上昇の場合はダメージをリセットする
+      if (value > 0) {
+        target.bp.damage = 0;
+        stack.core.room.soundEffect('clock-up');
+        stack.core.room.soundEffect('clock-up-field');
+      }
+
+      // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
+      const beforeBBP = target.catalog().bp?.[before] ?? 0;
+      const afterBBP = target.catalog().bp?.[target.lv] ?? 0;
+      const diff = afterBBP - beforeBBP;
+      target.bp.base += diff;
+
+      stack.addChildStack('clock', source, target, {
+        type: 'lv',
+        value: target.lv - before,
+      });
+    }
   }
 }

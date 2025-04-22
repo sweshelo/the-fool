@@ -51,6 +51,10 @@ type StackOption =
       // CP増減
       type: 'cp';
       value: number;
+    }
+  | {
+      type: 'lv';
+      value: number;
     };
 
 export class Stack implements IStack {
