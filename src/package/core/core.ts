@@ -265,7 +265,7 @@ export class Core {
     if (blocker) {
       this.stack = [
         new Stack({
-          type: 'attack',
+          type: 'block',
           source: blocker,
           target: attacker,
           core: this,
@@ -300,6 +300,10 @@ export class Core {
    * @param blocker ブロックするユニット
    */
   async postBattle(attacker: Unit, blocker: Unit) {
+    // BP順にソートして暫定的に勝敗を決める
+    // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
+    // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
+    // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
     const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP() - a.currentBP());
 
     if (!winner || !loser) {
@@ -315,16 +319,22 @@ export class Core {
     });
 
     // 「戦闘によって破壊されたとき」のスタック解決が行われる
-    const [winnerDamage, loserDamage] = [winner.currentBP(), loser.currentBP()];
-    Effect.damage(stack, winner, loser, winnerDamage, 'battle');
-    Effect.damage(stack, loser, winner, loserDamage, 'battle');
+    const [loserDamage, winnedDamage] = [winner.currentBP(), loser.currentBP()];
+    const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
+    const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     this.stack = [stack];
     await this.resolveStack();
 
     // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
-    if (EffectHelper.owner(this, winner).field.find(unit => unit.id === winner.id)) {
+    // NOTE: 戦闘による破壊スタックによってフィールドを離れる可能性があるので生存チェックをする
+    if (
+      !isWinnerBreaked &&
+      isLoserBreaked &&
+      winner.lv < 3 &&
+      EffectHelper.owner(this, winner).field.find(unit => unit.id === winner.id)
+    ) {
       const winnerStack = new Stack({
         type: '_postBattle',
         source: blocker,

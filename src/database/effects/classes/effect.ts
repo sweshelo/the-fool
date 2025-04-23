@@ -4,17 +4,26 @@ import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 
 export class Effect {
+  /**
+   * 対象にダメージを与える
+   * @param stack 親スタック
+   * @param source ダメージを与える効果を発動したカード
+   * @param target ダメージを受けるユニット
+   * @param value ダメージ量
+   * @param type ダメージのタイプ
+   * @returns 対象が破壊される場合は true を、そうでない場合は false を返す
+   */
   static damage(
     stack: Stack,
     source: Card,
     target: Unit,
     value: number,
     type: 'effect' | 'battle' = 'effect'
-  ): void {
+  ): boolean | undefined {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
-    if (!isOnField) return;
+    if (!isOnField) throw new Error('対象が見つかりませんでした');
 
     // TODO: 耐性持ちのチェックをここでやる
 
@@ -32,7 +41,10 @@ export class Effect {
     // 破壊された?
     if (target.currentBP() <= 0) {
       this.break(stack, source, target, 'damage');
+      return true;
     }
+
+    return false;
   }
 
   /**
