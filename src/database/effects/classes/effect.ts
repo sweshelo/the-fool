@@ -4,22 +4,47 @@ import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 
 export class Effect {
-  static async damage(stack: Stack, source: Card, target: Unit, value: number): Promise<void> {
+  /**
+   * 対象にダメージを与える
+   * @param stack 親スタック
+   * @param source ダメージを与える効果を発動したカード
+   * @param target ダメージを受けるユニット
+   * @param value ダメージ量
+   * @param type ダメージのタイプ
+   * @returns 対象が破壊される場合は true を、そうでない場合は false を返す
+   */
+  static damage(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    value: number,
+    type: 'effect' | 'battle' = 'effect'
+  ): boolean | undefined {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
-    if (!isOnField) return;
+    if (!isOnField) throw new Error('対象が見つかりませんでした');
 
     // TODO: 耐性持ちのチェックをここでやる
 
     target.bp.damage += value;
-    stack.addChildStack('damage', source, target);
-    stack.core.room.soundEffect('damage');
+    stack.addChildStack('damage', source, target, {
+      type: 'damage',
+      cause: type,
+      value,
+    });
+
+    if (type !== 'battle') {
+      stack.core.room.soundEffect('damage');
+    }
 
     // 破壊された?
-    if (target.bp.base + target.bp.diff - target.bp.damage <= 0) {
+    if (target.currentBP() <= 0) {
       this.break(stack, source, target, 'damage');
+      return true;
     }
+
+    return false;
   }
 
   /**
@@ -27,12 +52,12 @@ export class Effect {
    * @param source 効果の発動元
    * @param target 破壊の対象
    */
-  static async break(
+  static break(
     stack: Stack,
     source: Card,
     target: Unit,
     cause: 'effect' | 'damage' | 'battle' | 'death' = 'effect'
-  ): Promise<void> {
+  ): void {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
     const isOnField =
@@ -54,7 +79,7 @@ export class Effect {
    * @param source 効果の発動元
    * @param target 破壊する手札
    */
-  static async handes(stack: Stack, source: Card, target: Card): Promise<void> {
+  static handes(stack: Stack, source: Card, target: Card): void {
     const owner = EffectHelper.owner(stack.core, target);
     const card = owner.find(target);
 
@@ -76,12 +101,12 @@ export class Effect {
    * @param location 移動先
    * @returns void
    */
-  static async move(
+  static move(
     stack: Stack,
     source: Card,
     target: Card,
     location: 'hand' | 'trigger' | 'deck' | 'trash'
-  ): Promise<void> {
+  ): void {
     const owner = EffectHelper.owner(stack.core, target);
     const cardFind = owner.find(target);
 
@@ -142,7 +167,7 @@ export class Effect {
     stack.addChildStack('move', source, target);
   }
 
-  static async modifyCP(stack: Stack, source: Card, target: Player, value: number): Promise<void> {
+  static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {
     if (value === 0) return;
 
     const updatedCP = Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil);
@@ -158,5 +183,38 @@ export class Effect {
       type: 'cp',
       value,
     });
+  }
+
+  static clock(stack: Stack, source: Unit, target: Unit, value: number): void {
+    const before = target.lv;
+
+    target.lv += value;
+    if (target.lv > 3) target.lv = 3;
+    if (target.lv < 1) target.lv = 1;
+
+    // 結果としてLvが変動した場合にのみStackを積む
+    if (target.lv !== before) {
+      // Lv上昇の場合はダメージをリセットする
+      if (value > 0) {
+        target.bp.damage = 0;
+        stack.core.room.soundEffect('clock-up');
+        stack.core.room.soundEffect('clock-up-field');
+      }
+
+      // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
+      const beforeBBP = target.catalog().bp?.[before - 1] ?? 0;
+      const afterBBP = target.catalog().bp?.[target.lv - 1] ?? 0;
+      const diff = afterBBP - beforeBBP;
+      target.bp.base += diff;
+
+      stack.addChildStack('clock', source, target, {
+        type: 'lv',
+        value: target.lv - before,
+      });
+
+      if (target.lv === 3) {
+        stack.addChildStack('overclock', target);
+      }
+    }
   }
 }

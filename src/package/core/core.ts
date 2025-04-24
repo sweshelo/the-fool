@@ -15,6 +15,7 @@ import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
+import { Effect, EffectHelper } from '@/database/effects';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -130,6 +131,227 @@ export class Core {
     this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
   }
 
+  // アタック
+  async attack(attacker: Unit) {
+    this.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'attack',
+            attackerId: attacker.id,
+          },
+        },
+      })
+    );
+    this.room.soundEffect('decide');
+
+    this.stack = [
+      new Stack({
+        type: 'attack',
+        source: attacker,
+        core: this,
+      }),
+    ];
+    await this.resolveStack();
+
+    // TODO: この時点でattackerが生存しているか確認する
+
+    const blocker = await this.block(attacker);
+
+    // TODO: この時点でattackerとblocker(非undefinedの場合)が生存しているか確認する (blockerのブロックとそれに伴う効果解決が行われる)
+
+    if (blocker) {
+      await this.preBattle(attacker, blocker);
+      // TODO: この時点でattackerとblockerが生存しているか確認する (両者の戦闘に伴う効果解決が行われる)
+    }
+
+    // NOTE: 生存確認処理を行い、attacker/blocker(非undefinedの場合)の両者が生存していれば以下が実行される
+    this.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'launch',
+            attackerId: attacker.id,
+            blockerId: blocker?.id,
+          },
+        },
+      })
+    );
+
+    if (blocker) {
+      await this.postBattle(attacker, blocker);
+    }
+
+    this.room.sync();
+  }
+
+  /**
+   * アタック後、ブロックして効果を解決する
+   * @param attacker 攻撃するユニット
+   */
+  async block(attacker: Unit): Promise<Unit | undefined> {
+    // プレイヤーを特定
+    const attackerOwner = EffectHelper.owner(this, attacker);
+    const blockerOwner = this.players.find(player => player.id !== attackerOwner.id);
+
+    if (!blockerOwner || !attackerOwner)
+      throw new Error('存在しないプレイヤーまたはユニットが指定されました');
+
+    // ブロック側ユニットのブロック可能ユニットを列挙
+    const blockable = blockerOwner.field.filter((unit: Unit) => {
+      // TODO: 次元干渉系のチェックを行う
+      return unit.active;
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const forceBlock = blockable.filter((unit: Unit) => {
+      // TODO: ここで強制防御を持つユニットをフィルタする
+      return false;
+    });
+
+    // 強制防御を持つユニットがいない場合はそのまま素のcandidateを返却する
+    const candidate = forceBlock.length > 0 ? forceBlock : blockable;
+
+    // ブロックさせる
+    const promptId = `${attacker.id}_attack_${Date.now()}`;
+    if (candidate.length > 0) {
+      this.room.broadcastToPlayer(
+        blockerOwner.id,
+        createMessage({
+          action: {
+            type: 'pause',
+            handler: 'client',
+          },
+          payload: {
+            type: 'Choices',
+            promptId,
+            player: blockerOwner.id,
+            choices: {
+              title: 'ブロックするユニットを選択してください',
+              type: 'block',
+              items: candidate,
+            },
+          },
+        })
+      );
+    }
+
+    // クライアントからの応答を待つ
+    const [blockerId] =
+      candidate.length > 0
+        ? await new Promise<string[]>(resolve => {
+            this.setEffectDisplayHandler(promptId, (choice: string[]) => {
+              resolve(choice);
+            });
+          })
+        : [];
+
+    // IDから対象を割り出し
+    const blocker = blockerOwner.field.find(unit => unit.id === blockerId);
+
+    this.room.soundEffect('decide');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    if (blocker) {
+      this.stack = [
+        new Stack({
+          type: 'block',
+          source: blocker,
+          target: attacker,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
+    }
+
+    return blocker;
+  }
+
+  /**
+   * 戦闘 前処理 - Stack解決
+   * @param attacker 攻撃するユニット
+   * @param blocker ブロックするユニット
+   */
+  async preBattle(attacker: Unit, blocker: Unit) {
+    this.stack = [
+      new Stack({
+        type: 'battle',
+        source: attacker,
+        target: blocker,
+        core: this,
+      }),
+    ];
+    await this.resolveStack();
+  }
+
+  /**
+   * 戦闘 後処理 - BP比較演算
+   * @param attacker 攻撃するユニット
+   * @param blocker ブロックするユニット
+   */
+  async postBattle(attacker: Unit, blocker: Unit) {
+    // BP順にソートして暫定的に勝敗を決める
+    // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
+    // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
+    // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
+    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP() - a.currentBP());
+
+    if (!winner || !loser) {
+      throw new Error('ユニットの勝敗判定に失敗しました');
+    }
+
+    // システムスタック: Effect.damage() を呼ぶために生成している
+    const stack = new Stack({
+      type: '_postBattle',
+      source: attacker,
+      target: blocker,
+      core: this,
+    });
+
+    // 「戦闘によって破壊されたとき」のスタック解決が行われる
+    const [loserDamage, winnedDamage] = [winner.currentBP(), loser.currentBP()];
+    const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
+    const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    this.stack = [stack];
+    await this.resolveStack();
+
+    // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
+    // NOTE: 戦闘による破壊スタックによってフィールドを離れる可能性があるので生存チェックをする
+    if (
+      !isWinnerBreaked &&
+      isLoserBreaked &&
+      winner.lv < 3 &&
+      EffectHelper.owner(this, winner).field.find(unit => unit.id === winner.id)
+    ) {
+      const winnerStack = new Stack({
+        type: '_postBattle',
+        source: blocker,
+        target: attacker,
+        core: this,
+      });
+      Effect.clock(winnerStack, loser, winner, 1);
+      this.stack = [winnerStack];
+      await this.resolveStack();
+    }
+
+    // TODO:「戦闘に勝利したとき」のスタック解決を行う
+
+    this.room.sync();
+    return;
+  }
+
   /**
    * 現在のターンプレイヤーのIDを取得する
    * @returns ターンプレイヤーのID
@@ -181,7 +403,7 @@ export class Core {
    * @param promptId プロンプトID
    * @param response ユーザーの選択内容
    */
-  handleEffectResponse(promptId: string, response: string[]): void {
+  handleEffectResponse(promptId: string, response: string[] | undefined): void {
     const handler = this.effectResponses.get(promptId);
     if (handler) {
       handler(response);
@@ -398,6 +620,14 @@ export class Core {
       }
 
       case 'Attack': {
+        const { payload } = message;
+
+        // IUnit -> Unitに変換
+        const attacker = this.players
+          .find(player => player.id === payload.player)
+          ?.field.find(unit => unit.id === payload.target.id);
+        if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
+        this.attack(attacker);
         break;
       }
 
