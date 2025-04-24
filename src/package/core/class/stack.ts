@@ -8,6 +8,14 @@ import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 
+// PlayerのうちCard[]型であるプロパティ名から"called"を除外
+type CardArrayKeys = Exclude<
+  {
+    [K in keyof Player]: Player[K] extends Card[] ? K : never;
+  }[keyof Player],
+  'called'
+>;
+
 interface IStack {
   /**
    * @param type そのStackのタイプを示す
@@ -40,6 +48,10 @@ type StackOption =
       // 破壊
       type: 'break';
       cause: 'effect' | 'battle' | 'damage' | 'death';
+    }
+  | {
+      type: 'bounce';
+      location: 'hand' | 'deck' | 'trigger';
     }
   | {
       // ダメージ
@@ -184,28 +196,48 @@ export class Stack implements IStack {
 
     // Stackによって移動が約束されたユニットを移動させる
     if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
-    this.children.forEach(stack => {
+    const isProcessed = this.children.map(stack => {
+      const target = stack.target as Unit;
       switch (stack.type) {
-        case 'break': {
-          const broken: Unit = stack.target as Unit;
-          const owner = EffectHelper.owner(core, broken);
-
-          // ターゲットがフィールドに残留しているかチェック
-          const isOnField = owner.field.some(unit => unit.id === broken.id);
-          // 捨札に送る
-          if (isOnField) {
-            owner.field = owner.field.filter(unit => unit.id !== broken.id);
-            broken.lv = 1;
-            owner.trash.push(broken);
-            core.room.soundEffect('leave');
+        case 'break':
+          this.moveUnit(target, 'trash');
+          return true;
+        case 'bounce':
+          if (stack.option?.type === 'bounce') {
+            this.moveUnit(target, stack.option?.location, 'bounce');
           }
-          break;
-        }
+          return true;
       }
     });
 
     this.children = [];
     this.core.room.sync();
+
+    if (isProcessed.includes(true)) await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
+    const owner = EffectHelper.owner(this.core, target);
+    // ターゲットがフィールドに残留しているかチェック
+    const isOnField = owner.field.some(unit => unit.id === target.id);
+
+    // destinationに送る
+    if (isOnField) {
+      console.log('%s を %s に移動', target.catalog().name, destination);
+      this.core.room.soundEffect(sound);
+      owner.field = owner.field.filter(unit => unit.id !== target.id);
+      target.lv = 1;
+      target.destination = undefined;
+      target.bp.damage = 0;
+      target.bp.diff = 0;
+      target.overclocked = false;
+
+      if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
+        owner.trash.push(target);
+      } else {
+        owner[destination].push(target);
+      }
+    }
   }
 
   /**
