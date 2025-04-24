@@ -227,14 +227,16 @@ export class Stack implements IStack {
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.lv = 1;
+      target.destination = undefined;
+      target.bp.damage = 0;
+      target.bp.diff = 0;
+      target.overclocked = false;
 
       if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
         owner.trash.push(target);
       } else {
         owner[destination].push(target);
       }
-
-      target.destination = undefined;
     }
   }
 

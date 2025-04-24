@@ -75,9 +75,9 @@ export class Effect {
   }
 
   /**
-   * 対象を破壊する
+   * 対象を移動させる
    * @param source 効果の発動元
-   * @param target 破壊の対象
+   * @param target 移動の対象
    */
   static bounce(
     stack: Stack,
