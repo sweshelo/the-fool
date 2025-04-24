@@ -233,6 +233,8 @@ export class Stack implements IStack {
       } else {
         owner[destination].push(target);
       }
+
+      target.destination = undefined;
     }
   }
 
