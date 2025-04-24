@@ -75,6 +75,41 @@ export class Effect {
   }
 
   /**
+   * 対象を破壊する
+   * @param source 効果の発動元
+   * @param target 破壊の対象
+   */
+  static bounce(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    location: 'hand' | 'deck' | 'trigger' = 'hand'
+  ): void {
+    // 対象がフィールド上に存在するか確認
+    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const isOnField =
+      exists.result && exists.place?.name === 'field' && target.destination !== location;
+
+    console.log(exists);
+    if (!isOnField) return;
+
+    console.log(
+      '[発動] %s の効果によって %s を %s に移動',
+      source.catalog().name,
+      target.catalog().name,
+      location
+    );
+
+    // TODO: 耐性持ちのチェックをここでやる
+    stack.addChildStack('bounce', source, target, {
+      type: 'bounce',
+      location,
+    });
+    target.destination = location;
+    stack.core.room.soundEffect('bang');
+  }
+
+  /**
    * 効果によって手札を捨てさせる
    * @param source 効果の発動元
    * @param target 破壊する手札
