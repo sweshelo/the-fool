@@ -47,8 +47,7 @@ export class System {
     const promptId = `${stack.id}_${Date.now()}`;
 
     // クライアントに選択肢を送信
-    stack.core.room.broadcastToPlayer(
-      playerId,
+    stack.core.room.broadcastToAll(
       createMessage({
         action: {
           type: 'pause',
@@ -64,11 +63,30 @@ export class System {
     );
 
     // クライアントからの応答を待つ
-    return new Promise(resolve => {
+    const result: string[] = await new Promise(resolve => {
       stack.core.setEffectDisplayHandler(promptId, (choice: string[]) => {
         resolve(choice);
       });
     });
+
+    if (choices.type === 'option') {
+      stack.core.room.soundEffect('select');
+    }
+
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'continue',
+          handler: 'client',
+        },
+        payload: {
+          type: 'Selected',
+          promptId,
+        },
+      })
+    );
+
+    return result;
   }
 
   /**

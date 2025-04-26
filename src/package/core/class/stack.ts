@@ -47,7 +47,7 @@ type StackOption =
   | {
       // 破壊
       type: 'break';
-      cause: 'effect' | 'battle' | 'damage' | 'death';
+      cause: 'effect' | 'battle' | 'damage' | 'death' | 'system';
     }
   | {
       type: 'bounce';

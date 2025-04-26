@@ -56,7 +56,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    cause: 'effect' | 'damage' | 'battle' | 'death' = 'effect'
+    cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
@@ -247,7 +247,9 @@ export class Effect {
         value: target.lv - before,
       });
 
-      if (target.lv === 3) {
+      if (target.currentBP() <= 0) {
+        Effect.break(stack, target, target, 'system');
+      } else if (target.lv === 3) {
         stack.addChildStack('overclock', target);
       }
     }
