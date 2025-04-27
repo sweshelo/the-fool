@@ -1,3 +1,5 @@
+// FIXME: 何故か対戦相手のターン中に発動可能になるバグが有る
+
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
