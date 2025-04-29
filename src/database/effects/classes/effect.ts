@@ -25,14 +25,23 @@ export class Effect {
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
-    // TODO: 耐性持ちのチェックをここでやる
-
-    target.bp.damage += value;
-    stack.addChildStack('damage', source, target, {
-      type: 'damage',
-      cause: type,
-      value,
-    });
+    // 既に破壊されているユニットにはダメージを与えない
+    if (target.destination !== undefined) {
+      stack.addChildStack('damage', source, target, {
+        type: 'damage',
+        cause: type,
+        value,
+      });
+      return false;
+    } else {
+      // TODO: 耐性持ちのチェックをここでやる
+      target.bp.damage += value;
+      stack.addChildStack('damage', source, target, {
+        type: 'damage',
+        cause: type,
+        value,
+      });
+    }
 
     if (type !== 'battle') {
       stack.core.room.soundEffect('damage');
@@ -40,7 +49,33 @@ export class Effect {
 
     // 破壊された?
     if (target.currentBP() <= 0) {
-      this.break(stack, source, target, 'damage');
+      Effect.break(stack, source, target, 'damage');
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 対象のBPを操作する
+   * @param stack 親スタック
+   * @param source BPを変動させる効果を発動したカード
+   * @param target BPが変動するユニット
+   * @param value 操作量
+   * @returns この効果で相手を破壊した時は true を返す
+   */
+  static modifyBP(stack: Stack, source: Card, target: Unit, value: number) {
+    // 対象がフィールド上に存在するか確認
+    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const isOnField = exists.result && exists.place?.name === 'field';
+    if (!isOnField) throw new Error('対象が見つかりませんでした');
+
+    // 既に破壊されているユニットのBPは変動させない
+    if (target.destination !== undefined) return false;
+
+    target.bp.diff += value;
+    if (target.currentBP() <= 0) {
+      Effect.break(stack, source, target, 'effect');
       return true;
     }
 
@@ -56,7 +91,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    cause: 'effect' | 'damage' | 'battle' | 'death' = 'effect'
+    cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
     const exists = EffectHelper.owner(stack.core, target).find(target);
@@ -95,8 +130,8 @@ export class Effect {
 
     console.log(
       '[発動] %s の効果によって %s を %s に移動',
-      source.catalog().name,
-      target.catalog().name,
+      source.catalog.name,
+      target.catalog.name,
       location
     );
 
@@ -220,7 +255,42 @@ export class Effect {
     });
   }
 
-  static clock(stack: Stack, source: Unit, target: Unit, value: number): void {
+  /**
+   * 紫ゲージを操作する
+   * この関数は Promise を返すが、演出のための待機なので、呼び出し元で必ずしも await しなくても良い。
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のプレイヤー
+   * @param value 増減量
+   */
+  static async modifyPurple(
+    stack: Stack,
+    source: Card,
+    target: Player,
+    value: number
+  ): Promise<void> {
+    if (value === 0) return;
+
+    // TODO: これを紫ゲージの増減操作に変える
+    // const updatedPurple = Math.max(Math.min(target.cp.current + value, 0), 5))
+
+    stack.addChildStack('modifyCP', source, target, {
+      type: 'cp',
+      value,
+    });
+
+    // 演出
+    for (let i = 0; i < Math.abs(value); i++) {
+      if (value > 0) {
+        stack.core.room.soundEffect('purple-increase');
+      } else {
+        stack.core.room.soundEffect('purple-consume');
+      }
+      await new Promise(resolve => setTimeout(resolve, 0.25));
+    }
+  }
+
+  static clock(stack: Stack, source: Card, target: Unit, value: number): void {
     const before = target.lv;
 
     target.lv += value;
@@ -237,8 +307,8 @@ export class Effect {
       }
 
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
-      const beforeBBP = target.catalog().bp?.[before - 1] ?? 0;
-      const afterBBP = target.catalog().bp?.[target.lv - 1] ?? 0;
+      const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
+      const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;
       const diff = afterBBP - beforeBBP;
       target.bp.base += diff;
 
@@ -247,7 +317,9 @@ export class Effect {
         value: target.lv - before,
       });
 
-      if (target.lv === 3) {
+      if (target.currentBP() <= 0) {
+        Effect.break(stack, target, target, 'system');
+      } else if (target.lv === 3) {
         stack.addChildStack('overclock', target);
       }
     }

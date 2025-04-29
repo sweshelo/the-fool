@@ -499,8 +499,8 @@ export class Core {
         // 軽減チェック
         const mitigate = player.trigger.find(
           c =>
-            c.catalog().color === card.catalog().color &&
-            (c.catalog().type === 'advanced_unit' || c.catalog().type === 'unit')
+            c.catalog.color === card.catalog.color &&
+            (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
         );
         const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
 
@@ -511,7 +511,7 @@ export class Core {
         const isUnit = card instanceof Unit;
 
         if (isEnoughCP && isEnoughField && isUnit) {
-          const cost = card.catalog().cost;
+          const cost = card.catalog.cost;
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
           if (cost > 0 && mitigate) {
@@ -550,9 +550,9 @@ export class Core {
                 type: 'VisualEffect',
                 body: {
                   effect: 'drive',
-                  image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                  image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
                   player: player.id,
-                  type: card.catalog().type === 'unit' ? 'UNIT' : 'EVOLVE',
+                  type: card.catalog.type === 'unit' ? 'UNIT' : 'EVOLVE',
                 },
               },
             })
