@@ -44,8 +44,7 @@ export class EffectHelper {
   }
 
   static candidate(core: Core, filter: (unit: Unit) => boolean): Unit[] {
-    // TODO: 加護持ち除外メソッドを実装する
-    const exceptBlessing = () => true;
+    const exceptBlessing = (unit: Unit) => unit.hasKeyword('加護');
     return core.players
       .map(p => p.field)
       .flat()

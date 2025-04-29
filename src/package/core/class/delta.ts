@@ -1,6 +1,13 @@
 import type { Stack } from './stack';
 
-export type KeywordEffect = '秩序の盾' | '沈黙';
+export type KeywordEffect =
+  | '固着'
+  | '加護'
+  | '不滅'
+  | '王の治癒力'
+  | '秩序の盾'
+  | '沈黙'
+  | '破壊効果耐性';
 
 export type DeltaEffect =
   | {

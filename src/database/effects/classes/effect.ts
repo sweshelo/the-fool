@@ -38,20 +38,27 @@ export class Effect {
         value,
       });
       return false;
-    } else if (
-      target.hasKeyword('秩序の盾') &&
-      type === 'effect' &&
-      source.owner.id !== target.owner.id
-    ) {
-      stack.core.room.soundEffect('block');
-    } else {
-      target.bp.damage += value;
-      stack.addChildStack('damage', source, target, {
-        type: 'damage',
-        cause: type,
-        value,
-      });
     }
+
+    // 耐性チェック
+    // 【不滅】: ダメージを受けない
+    const hasImmotal = target.hasKeyword('不滅');
+    // 【秩序の盾】: 対戦相手の効果によるダメージを受けない
+    const hasOrderShield =
+      target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
+    // 【王の治癒力】: 自身のBP未満のダメージを受けない
+    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > value;
+    if (hasImmotal || hasOrderShield || hasKingsHealing) {
+      stack.core.room.soundEffect('block');
+      return false;
+    }
+
+    target.bp.damage += value;
+    stack.addChildStack('damage', source, target, {
+      type: 'damage',
+      cause: type,
+      value,
+    });
 
     if (type !== 'battle') {
       stack.core.room.soundEffect('damage');
@@ -110,7 +117,16 @@ export class Effect {
 
     if (!isOnField) return;
 
-    // TODO: 耐性持ちのチェックをここでやる
+    // 【破壊効果耐性】: 対戦相手の効果によって破壊されない
+    if (
+      cause === 'effect' &&
+      target.hasKeyword('破壊効果耐性') &&
+      source.owner.id !== target.owner.id
+    ) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
     stack.addChildStack('break', source, target, {
       type: 'break',
       cause,
@@ -145,7 +161,12 @@ export class Effect {
       location
     );
 
-    // TODO: 耐性持ちのチェックをここでやる
+    // 【固着】: 対戦相手の効果によって手札に戻らない
+    if (location === 'hand' && target.hasKeyword('固着') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
     stack.addChildStack('bounce', source, target, {
       type: 'bounce',
       location,
@@ -364,6 +385,11 @@ export class Effect {
 
     switch (keyword) {
       case '秩序の盾':
+      case '不滅':
+      case '加護':
+      case '王の治癒力':
+      case '固着':
+      case '破壊効果耐性':
         stack.core.room.soundEffect('guard');
         break;
       case '沈黙':
