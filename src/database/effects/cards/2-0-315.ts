@@ -4,8 +4,8 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+    const owner = stack.processing.owner;
+    const opponent = owner.opponent;
 
     const [choice] =
       opponent.hand.length === 0

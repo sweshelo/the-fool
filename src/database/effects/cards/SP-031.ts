@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     if (!stack.processing) throw new Error('Stack processing is undefined');
 
     const isOpponentUnit =
-      EffectHelper.owner(stack.core, stack.source).id ===
+      EffectHelper.owner(stack.core, stack.target).id ===
       EffectHelper.owner(stack.core, stack.processing).id;
     const hasHand = EffectHelper.owner(stack.core, stack.processing).hand.length > 0;
     const isRemainDeck = EffectHelper.owner(stack.core, stack.processing).deck.length > 0;

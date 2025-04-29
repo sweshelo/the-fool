@@ -10,7 +10,8 @@ export type KeywordEffect =
   | '王の治癒力'
   | '秩序の盾'
   | '沈黙'
-  | '破壊効果耐性';
+  | '破壊効果耐性'
+  | 'オーバーヒート';
 
 export type DeltaEffect =
   | {

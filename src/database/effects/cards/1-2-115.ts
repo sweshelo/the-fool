@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
@@ -9,17 +9,20 @@ export const effects: CardEffects = {
     // 対戦相手のハンデスに限る (手札を捨てたのが対戦相手で、その効果の発生源が自分である)
     // stack.target: 捨てた手札 / stack.source: 効果の発生源
     if (
-      !(stack.processing instanceof Unit) ||
-      EffectHelper.owner(stack.core, stack.target).id === owner.id ||
-      EffectHelper.owner(stack.core, stack.target).id ===
-        EffectHelper.owner(stack.core, stack.source).id
+      !(
+        stack.processing instanceof Unit &&
+        stack.target instanceof Card &&
+        stack.source instanceof Card
+      ) ||
+      stack.target.owner.id === owner.id ||
+      stack.target.owner.id === stack.source.owner.id
     )
       return;
 
     // 自身のレベルに応じて処理を分岐
     switch (stack.processing.lv) {
       case 3: {
-        const opponent = EffectHelper.opponent(stack.core, stack.processing);
+        const opponent = stack.processing.owner;
         const candidate = EffectHelper.candidate(stack.core, (unit: Unit) =>
           opponent.field.includes(unit)
         );

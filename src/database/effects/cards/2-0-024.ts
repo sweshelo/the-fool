@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     );
 
     // 手札を選んで捨てる
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const choices: Choices = {
       title: '捨てるカードを選択してください',
       type: 'card',
@@ -39,25 +39,23 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     // stack.source が自ユニットでない or stack.sourceがコスト2以上のユニットでない場合は中断
     if (
-      !(stack.source instanceof Unit) ||
-      stack.source.catalog.cost < 2 ||
-      EffectHelper.owner(stack.core, stack.source).id !==
+      !(stack.target instanceof Unit) ||
+      stack.target.catalog.cost < 2 ||
+      EffectHelper.owner(stack.core, stack.target).id !==
         EffectHelper.owner(stack.core, stack.processing).id
     )
       return;
 
     // 相手フィールドに選択可能なユニットが存在するか
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const candidate = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) => EffectHelper.owner(stack.core, unit).id !== owner.id
+      (unit: Unit) => unit.owner.id !== owner.id
     );
 
     // ユニットが生存していない場合は処理を中断する
     if (
-      !EffectHelper.owner(stack.core, stack.processing).field.find(
-        unit => unit.id === stack.processing.id
-      ) ||
+      !stack.processing.owner.field.find(unit => unit.id === stack.processing.id) ||
       candidate.length === 0
     )
       return;
@@ -75,8 +73,8 @@ export const effects: CardEffects = {
     const damageUnit = candidate.find(unit => unit.id === damageUnitId);
     if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
 
-    const [damageA, damageB] = [stack.source.currentBP(), damageUnit.currentBP()];
+    const [damageA, damageB] = [stack.target.currentBP(), damageUnit.currentBP()];
     Effect.damage(stack, stack.processing, damageUnit, damageA, 'effect');
-    Effect.damage(stack, stack.processing, stack.source, damageB, 'effect');
+    Effect.damage(stack, stack.processing, stack.target, damageB, 'effect');
   },
 };

@@ -164,7 +164,8 @@ export class Core {
     this.stack = [
       new Stack({
         type: 'attack',
-        source: attacker,
+        source: attacker.owner,
+        target: attacker,
         core: this,
       }),
     ];
@@ -277,8 +278,8 @@ export class Core {
       this.stack = [
         new Stack({
           type: 'block',
-          source: blocker,
-          target: attacker,
+          source: attacker,
+          target: blocker,
           core: this,
         }),
       ];
@@ -549,7 +550,8 @@ export class Core {
           this.stack = [
             new Stack({
               type: 'drive',
-              source: card,
+              source: player,
+              target: card,
               core: this,
             }),
           ];
@@ -585,6 +587,7 @@ export class Core {
               new Stack({
                 type: 'overclock',
                 source: card,
+                target: card,
                 core: this,
               }),
             ];

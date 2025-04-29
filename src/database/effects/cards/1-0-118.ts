@@ -1,13 +1,10 @@
-import { EffectHelper, EffectTemplate, System } from '..';
+import { EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: async (stack: StackWithCard): Promise<boolean> => {
-    return (
-      EffectHelper.owner(stack.core, stack.source).id ===
-      EffectHelper.owner(stack.core, stack.processing).id
-    );
+    return stack.source.id === stack.processing.owner.id;
   },
 
   // 実際の効果本体

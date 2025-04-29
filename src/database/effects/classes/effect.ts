@@ -40,6 +40,9 @@ export class Effect {
       return false;
     }
 
+    // 実際のダメージ量を計算
+    const damage = type === 'effect' && target.hasKeyword('オーバーヒート') ? value * 2 : value;
+
     // 耐性チェック
     // 【不滅】: ダメージを受けない
     const hasImmotal = target.hasKeyword('不滅');
@@ -47,17 +50,17 @@ export class Effect {
     const hasOrderShield =
       target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
     // 【王の治癒力】: 自身のBP未満のダメージを受けない
-    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > value;
+    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > damage;
     if (hasImmotal || hasOrderShield || hasKingsHealing) {
       stack.core.room.soundEffect('block');
       return false;
     }
 
-    target.bp.damage += value;
+    target.bp.damage += damage;
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
-      value,
+      value: damage,
     });
 
     if (type !== 'battle') {

@@ -22,11 +22,11 @@ interface IStack {
    */
   type: string;
   /**
-   * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
+   * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚したPlayerが指定される。破壊効果の場合は、その効果を発動したUnitが指定される。
    */
   source: Card | Player;
   /**
-   * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
+   * @param target そのStackによって影響を受ける対象を示す。例えば召喚操作の場合、召喚されたUnitが指定される。破壊効果の場合は、破壊されたUnitが指定される。
    */
   target?: Card | Player;
   /**
@@ -106,8 +106,9 @@ export class Stack implements IStack {
     }
 
     // まず source カードの効果を処理
-    if (this.source instanceof Card) {
-      await this.processCardEffect(this.source, core, true);
+    if (this.target instanceof Card) {
+      console.log('checking %s <%s> ...', this.target.catalog.name, this.type);
+      await this.processCardEffect(this.target, core, true);
       await this.resolveChild(core);
     }
 
@@ -319,7 +320,7 @@ export class Stack implements IStack {
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
-        this.addChildStack('intercept', card);
+        this.addChildStack('intercept', player, card);
         return false;
       }
     }
@@ -489,7 +490,7 @@ export class Stack implements IStack {
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
-          this.addChildStack('trigger', card);
+          this.addChildStack('trigger', owner, card);
         }
 
         return check;
@@ -511,7 +512,12 @@ export class Stack implements IStack {
    * @param target 効果の対象
    * @returns 作成されたスタック
    */
-  addChildStack(type: string, source: Card, target?: Card | Player, option?: StackOption): Stack {
+  addChildStack(
+    type: string,
+    source: Card | Player,
+    target?: Card | Player,
+    option?: StackOption
+  ): Stack {
     const childStack = new Stack({
       type,
       source,
