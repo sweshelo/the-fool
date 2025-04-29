@@ -139,6 +139,30 @@ export class Effect {
   }
 
   /**
+   * 対象を消滅させる
+   * @param source 効果の発動元
+   * @param target 消滅の対象
+   */
+  static delete(stack: Stack, source: Card, target: Unit): void {
+    // 対象がフィールド上に存在するか確認
+    const exists = target.owner.find(target);
+    const isOnField =
+      exists.result && exists.place?.name === 'field' && target.destination !== 'delete';
+
+    if (!isOnField) return;
+
+    // 【消滅効果耐性】: 対戦相手の効果によって消滅しない
+    if (target.hasKeyword('消滅効果耐性') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
+    stack.addChildStack('delete', source, target);
+    target.destination = 'delete';
+    stack.core.room.soundEffect('bang');
+  }
+
+  /**
    * 対象を移動させる
    * @param source 効果の発動元
    * @param target 移動の対象

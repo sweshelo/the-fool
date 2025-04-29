@@ -30,6 +30,7 @@ export class Player implements IPlayer {
   deck: Card[];
   hand: Card[];
   trash: Card[];
+  delete: Card[];
   field: Unit[];
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
@@ -54,6 +55,7 @@ export class Player implements IPlayer {
     this.hand = [];
     this.field = [];
     this.trash = [];
+    this.delete = [];
     this.trigger = [];
     this.called = [];
     this.#core = core;

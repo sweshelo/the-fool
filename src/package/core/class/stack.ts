@@ -200,6 +200,9 @@ export class Stack implements IStack {
         case 'break':
           this.moveUnit(target, 'trash');
           return true;
+        case 'delete':
+          this.moveUnit(target, 'delete', 'deleted');
+          return true;
         case 'bounce':
           if (stack.option?.type === 'bounce') {
             this.moveUnit(target, stack.option?.location, 'bounce');

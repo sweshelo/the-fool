@@ -11,6 +11,7 @@ export type KeywordEffect =
   | '秩序の盾'
   | '沈黙'
   | '破壊効果耐性'
+  | '消滅効果耐性'
   | 'オーバーヒート';
 
 export type DeltaEffect =

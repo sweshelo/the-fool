@@ -49,8 +49,8 @@ export const effects: CardEffects = {
     if (!opponentUnits || opponentUnits.length === 0)
       throw new Error('選択された対象ユニットが見つかりませんでした');
 
-    [...EffectHelper.owner(stack.core, stack.processing).field, ...opponentUnits].forEach(unit =>
-      Effect.break(stack, stack.processing, unit, 'effect')
-    ); // FIXME: 現在は消滅の代わりに破壊している
+    [...stack.processing.owner.field, ...opponentUnits].forEach(unit =>
+      Effect.delete(stack, stack.processing, unit)
+    );
   },
 };
