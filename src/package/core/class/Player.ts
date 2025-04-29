@@ -34,7 +34,7 @@ export class Player implements IPlayer {
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
 
-  private core: Core;
+  #core: Core;
 
   cp: {
     current: number;
@@ -56,7 +56,7 @@ export class Player implements IPlayer {
     this.trash = [];
     this.trigger = [];
     this.called = [];
-    this.core = core;
+    this.#core = core;
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
@@ -202,7 +202,7 @@ export class Player implements IPlayer {
 
   // 対戦相手特定
   get opponent() {
-    const result = this.core.players.find(player => player.id !== this.id);
+    const result = this.#core.players.find(player => player.id !== this.id);
     if (!result) {
       throw new Error('プレイヤーが見つかりませんでした');
     } else {

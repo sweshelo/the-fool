@@ -1,7 +1,12 @@
 import type { Stack } from '@/package/core/class/stack';
-import { EffectHelper } from './helper';
 import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
+import { Delta, type KeywordEffect } from '@/package/core/class/delta';
+
+interface KeywordOptionParams {
+  event?: string;
+  count?: number;
+}
 
 export class Effect {
   /**
@@ -21,7 +26,7 @@ export class Effect {
     type: 'effect' | 'battle' = 'effect'
   ): boolean | undefined {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
@@ -33,8 +38,13 @@ export class Effect {
         value,
       });
       return false;
+    } else if (
+      target.hasKeyword('秩序の盾') &&
+      type === 'effect' &&
+      source.owner.id !== target.owner.id
+    ) {
+      stack.core.room.soundEffect('block');
     } else {
-      // TODO: 耐性持ちのチェックをここでやる
       target.bp.damage += value;
       stack.addChildStack('damage', source, target, {
         type: 'damage',
@@ -66,7 +76,7 @@ export class Effect {
    */
   static modifyBP(stack: Stack, source: Card, target: Unit, value: number) {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
@@ -94,7 +104,7 @@ export class Effect {
     cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField =
       exists.result && exists.place?.name === 'field' && target.destination !== 'trash';
 
@@ -121,7 +131,7 @@ export class Effect {
     location: 'hand' | 'deck' | 'trigger' = 'hand'
   ): void {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField =
       exists.result && exists.place?.name === 'field' && target.destination !== location;
 
@@ -150,7 +160,7 @@ export class Effect {
    * @param target 破壊する手札
    */
   static handes(stack: Stack, source: Card, target: Card): void {
-    const owner = EffectHelper.owner(stack.core, target);
+    const owner = target.owner;
     const card = owner.find(target);
 
     if (card.place?.name === 'hand') {
@@ -177,7 +187,7 @@ export class Effect {
     target: Card,
     location: 'hand' | 'trigger' | 'deck' | 'trash'
   ): void {
-    const owner = EffectHelper.owner(stack.core, target);
+    const owner = target.owner;
     const cardFind = owner.find(target);
 
     if (!cardFind.result || !cardFind.place) {
@@ -322,6 +332,43 @@ export class Effect {
       } else if (target.lv === 3) {
         stack.addChildStack('overclock', target);
       }
+    }
+  }
+
+  /**
+   * ユニットにキーワード能力を付与する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のユニット
+   * @param delta { keyword: '<対象のキーワード>', event: '<キーワード能力の剥奪が行われるイベント>', count: '<キーワード能力の剥奪までのイベント発生回数>'}
+   * @example
+   * // 次のターン終了を迎えるまで【貫通】を得る
+   * Effect.keyword(stack, source, target, { keyword: '貫通', event: 'turnEnd', count: 1 })
+   * // 無期限に【秩序の盾】を得る
+   * Effect.keyword(stack, source, target, { keyword: '秩序の盾' })
+   */
+  static keyword(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    keyword: KeywordEffect,
+    option?: KeywordOptionParams
+  ) {
+    // @ts-expect-error 沈黙効果耐性は未実装
+    if (target.hasKeyword('沈黙効果耐性') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+    }
+
+    const delta = new Delta({ type: 'keyword', name: keyword }, option?.event, option?.count);
+    target.delta.push(delta);
+
+    switch (keyword) {
+      case '秩序の盾':
+        stack.core.room.soundEffect('guard');
+        break;
+      case '沈黙':
+        stack.core.room.soundEffect('silent');
+        break;
     }
   }
 }

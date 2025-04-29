@@ -1,5 +1,5 @@
 import type { Unit } from '@/package/core/class/card';
-import { EffectHelper, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -30,11 +30,9 @@ export const effects: CardEffects = {
           items: candidate,
         }
       );
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const unit = candidate.find(unit => unit.id === unitId);
 
-      // TODO: 能力付与
-      stack.core.room.soundEffect('guard');
+      const unit = candidate.find(unit => unit.id === unitId);
+      if (unit) Effect.keyword(stack, stack.processing, unit, '秩序の盾');
     }
 
     stack.core.players.forEach(player => {
