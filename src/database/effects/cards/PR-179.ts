@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     await System.show(
       stack,
       '飛天矛槍演舞',
-      `お互いの捨札をデッキに戻す\n${isBouncedMoreThan10Cards ? 'カードを1枚引く' : ''}\n【天使】に【秩序の盾】を与える\n効果によるダメージを受けない`
+      `お互いの捨札をデッキに戻す\n${isBouncedMoreThan10Cards ? 'カードを1枚引く\n' : ''}【天使】に【秩序の盾】を与える`
     );
 
     // 天使を1体選ぶ
