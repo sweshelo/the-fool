@@ -1,25 +1,20 @@
 // FIXME: 何故か対戦相手のターン中に発動可能になるバグが有る
 
+import type { Card } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: async (stack: StackWithCard): Promise<boolean> => {
-    console.log(
-      EffectHelper.owner(stack.core, stack.processing).id,
-      EffectHelper.owner(stack.core, stack.source).id
-    );
-    const isOwnUnit =
-      EffectHelper.owner(stack.core, stack.processing).id ===
-      EffectHelper.owner(stack.core, stack.source).id;
+    const isOwnUnit = stack.processing.owner.id === (stack.source as Card).owner.id;
     return isOwnUnit;
   },
 
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const [choice] = await System.prompt(stack, owner.id, {
       type: 'option',
       title: '選略・魔導の心得',

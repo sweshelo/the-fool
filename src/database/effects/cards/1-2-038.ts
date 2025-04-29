@@ -4,10 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard): Promise<void> => {
-    if (
-      stack.source.id !== EffectHelper.owner(stack.core, stack.processing).id ||
-      !(stack.processing instanceof Unit)
-    )
+    if (stack.source.id !== stack.processing.owner.id || !(stack.processing instanceof Unit))
       return;
 
     await System.show(stack, 'クロック・アップ', 'レベル+1');
@@ -17,10 +14,10 @@ export const effects: CardEffects = {
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     if (!(stack.processing instanceof Unit)) return;
 
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const candidate = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) => EffectHelper.owner(stack.core, unit).id !== owner.id
+      (unit: Unit) => unit.owner.id !== owner.id
     );
 
     await System.show(
@@ -34,15 +31,11 @@ export const effects: CardEffects = {
       const selection: string[] = [];
 
       for (let i = 0; i < count; i++) {
-        const [unit] = await System.prompt(
-          stack,
-          EffectHelper.owner(stack.core, stack.processing).id,
-          {
-            type: 'unit',
-            title: '消滅させるユニットを選択',
-            items: candidate.filter(unit => !selection.includes(unit.id)),
-          }
-        );
+        const [unit] = await System.prompt(stack, owner.id, {
+          type: 'unit',
+          title: 'レベルを+1するユニットを選択',
+          items: candidate.filter(unit => !selection.includes(unit.id)),
+        });
 
         if (unit) selection.push(unit);
       }
@@ -50,7 +43,8 @@ export const effects: CardEffects = {
       candidate
         .filter(unit => selection.includes(unit.id))
         .forEach(unit => Effect.clock(stack, stack.processing, unit, 1));
-      Effect.break(stack, stack.processing, stack.processing, 'effect');
     }
+
+    Effect.break(stack, stack.processing, stack.processing, 'effect');
   },
 };

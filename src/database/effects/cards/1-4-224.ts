@@ -24,7 +24,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '惰世の黒冥球',
-        `自身以外の味方ユニットを破壊\n${opponentMoreThanLv2Units.length > 0 ? '敵全体のLv2以上のユニットを破壊' : ''}`
+        `自身以外の味方ユニットを破壊${opponentMoreThanLv2Units.length > 0 ? '\n敵全体のLv2以上のユニットを破壊' : ''}`
       );
       [
         ...owner.field.filter(unit => unit.id !== stack.processing.id),

@@ -27,7 +27,7 @@ export const effects: CardEffects = {
         await System.show(
           stack,
           'スリーピングホロウ',
-          `${candidate.length > 0 ? '相手ユニットを1体選んで破壊\n' : ''}自身のレベル-1`
+          `${candidate.length > 0 ? '相手ユニットを1体選んで破壊\n' : ''}自身のレベル-2`
         );
         if (candidate.length > 0) {
           const [unitId] = await System.prompt(
@@ -41,9 +41,8 @@ export const effects: CardEffects = {
           );
           const unit = candidate.find(unit => unit.id === unitId);
           if (unit) Effect.break(stack, stack.processing, unit, 'effect');
-
-          Effect.clock(stack, stack.processing, stack.processing, -2);
         }
+        Effect.clock(stack, stack.processing, stack.processing, -2);
         break;
       }
       default: {

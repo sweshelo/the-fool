@@ -49,7 +49,7 @@ export class Effect {
 
     // 破壊された?
     if (target.currentBP() <= 0) {
-      this.break(stack, source, target, 'damage');
+      Effect.break(stack, source, target, 'damage');
       return true;
     }
 
@@ -75,7 +75,7 @@ export class Effect {
 
     target.bp.diff += value;
     if (target.currentBP() <= 0) {
-      this.break(stack, source, target, 'effect');
+      Effect.break(stack, source, target, 'effect');
       return true;
     }
 
