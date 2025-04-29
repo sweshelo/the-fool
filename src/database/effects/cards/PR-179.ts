@@ -9,8 +9,8 @@ export const effects: CardEffects = {
     const isBouncedMoreThan10Cards = owner.trash.length >= 10;
     await System.show(
       stack,
-      '飛天矛槍演舞＆秩序の盾',
-      `お互いの捨札をデッキに戻す\n${isBouncedMoreThan10Cards ? 'カードを1枚引く' : ''}\n【天使】に【秩序の盾】を与える\n効果によるダメージを受けない`
+      '飛天矛槍演舞',
+      `お互いの捨札をデッキに戻す\n${isBouncedMoreThan10Cards ? 'カードを1枚引く\n' : ''}【天使】に【秩序の盾】を与える`
     );
 
     // 天使を1体選ぶ
