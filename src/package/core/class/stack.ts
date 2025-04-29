@@ -96,11 +96,8 @@ export class Stack implements IStack {
    */
   async resolve(core: Core): Promise<void> {
     // ターンプレイヤーを取得
-    const turnPlayerId = core.getTurnPlayerId();
-    if (!turnPlayerId) return;
-
-    const turnPlayer = core.players.find(p => p.id === turnPlayerId);
-    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
+    const turnPlayer = core.getTurnPlayer();
+    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayer.id);
     if (!turnPlayer) return;
 
     if (this.type === 'overclock' && this.target instanceof Unit) {

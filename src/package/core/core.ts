@@ -61,7 +61,7 @@ export class Core {
   }
 
   async start() {
-    this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+    this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
     this.turnChange(true);
   }
 
@@ -75,14 +75,21 @@ export class Core {
       this.stack = [
         new Stack({
           type: 'turnEnd',
-          source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+          source: this.getTurnPlayer(),
           core: this,
         }),
       ];
       await this.resolveStack();
 
       // ターン終了処理
-      // TODO: 不屈 ダメージリセット
+      this.getTurnPlayer().field.forEach(unit => {
+        if (unit.hasKeyword('不屈') && !unit.active) {
+          unit.active = true;
+          this.room.soundEffect('reboot');
+        }
+      });
+      this.players.flatMap(player => player.field).forEach(unit => (unit.bp.damage = 0));
+      this.room.sync();
 
       // ターン開始処理
       this.turn++;
@@ -90,7 +97,7 @@ export class Core {
     }
 
     // CP初期化
-    const turnPlayer = this.players.find(player => player.id === this.getTurnPlayerId());
+    const turnPlayer = this.getTurnPlayer();
     if (turnPlayer) {
       const max =
         this.room.rule.system.cp.init +
@@ -114,21 +121,25 @@ export class Core {
     });
     this.room.soundEffect('draw');
 
-    // TODO: 行動権復活
-    // this.room.soundEffect('reboot')
+    turnPlayer.field.forEach(unit => {
+      if (!unit.hasKeyword('呪縛') && !unit.active) {
+        unit.active = true;
+        this.room.soundEffect('reboot');
+      }
+    });
 
     // ターン開始スタックを積み、解決する
     this.stack = [
       new Stack({
         type: 'turnStart',
-        source: this.players.find(player => player.id === this.getTurnPlayerId())!,
+        source: this.getTurnPlayer(),
         core: this,
       }),
     ];
     await this.resolveStack();
 
     // defrost
-    this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+    this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
   }
 
   // アタック
@@ -356,10 +367,13 @@ export class Core {
    * 現在のターンプレイヤーのIDを取得する
    * @returns ターンプレイヤーのID
    */
-  getTurnPlayerId(): string | undefined {
+  getTurnPlayer(): Player {
     // 現在のターン数から、対応するプレイヤーのインデックスを計算
     const playerIndex = (this.turn - 1) % this.players.length;
-    return this.players[playerIndex]?.id;
+    const player = this.players[playerIndex];
+
+    if (!player) throw new Error('ターンプレイヤーが見つかりませんでした');
+    return player;
   }
 
   /**
@@ -578,7 +592,7 @@ export class Core {
           }
         }
 
-        this.room.broadcastToPlayer(this.getTurnPlayerId()!, MessageHelper.defrost());
+        this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;
       }
 

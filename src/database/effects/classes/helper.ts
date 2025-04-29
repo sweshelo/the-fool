@@ -44,7 +44,7 @@ export class EffectHelper {
   }
 
   static candidate(core: Core, filter: (unit: Unit) => boolean): Unit[] {
-    const exceptBlessing = (unit: Unit) => unit.hasKeyword('加護');
+    const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
     return core.players
       .map(p => p.field)
       .flat()

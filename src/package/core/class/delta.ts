@@ -1,8 +1,11 @@
 import type { Stack } from './stack';
 
 export type KeywordEffect =
+  | '不屈'
+  | '無我の境地'
   | '固着'
   | '加護'
+  | '呪縛'
   | '不滅'
   | '王の治癒力'
   | '秩序の盾'

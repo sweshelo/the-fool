@@ -390,7 +390,14 @@ export class Effect {
       case '王の治癒力':
       case '固着':
       case '破壊効果耐性':
+      case '無我の境地':
         stack.core.room.soundEffect('guard');
+        break;
+      case '呪縛':
+        stack.core.room.soundEffect('bind');
+        break;
+      case '不屈':
+        // stack.core.room.soundEffect('');
         break;
       case '沈黙':
         stack.core.room.soundEffect('silent');
