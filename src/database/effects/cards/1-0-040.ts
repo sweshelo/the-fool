@@ -1,9 +1,9 @@
-import type { Stack } from '@/package/core/class/stack';
-import { System, EffectHelper, EffectTemplate } from '..';
+import { System, EffectTemplate } from '..';
+import type { StackWithCard } from '../classes/types';
 
 export const effects = {
-  onDriveSelf: async (stack: Stack) => {
+  onDriveSelf: async (stack: StackWithCard) => {
     await System.show(stack, 'ドロー', 'カードを1枚引く');
-    EffectTemplate.draw(EffectHelper.owner(stack.core, stack.processing), stack.core);
+    EffectTemplate.draw(stack.processing?.owner, stack.core);
   },
 };

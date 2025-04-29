@@ -130,8 +130,8 @@ export class Effect {
 
     console.log(
       '[発動] %s の効果によって %s を %s に移動',
-      source.catalog().name,
-      target.catalog().name,
+      source.catalog.name,
+      target.catalog.name,
       location
     );
 
@@ -307,8 +307,8 @@ export class Effect {
       }
 
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
-      const beforeBBP = target.catalog().bp?.[before - 1] ?? 0;
-      const afterBBP = target.catalog().bp?.[target.lv - 1] ?? 0;
+      const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
+      const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;
       const diff = afterBBP - beforeBBP;
       target.bp.base += diff;
 

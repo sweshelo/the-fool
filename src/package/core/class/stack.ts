@@ -223,7 +223,7 @@ export class Stack implements IStack {
 
     // destinationに送る
     if (isOnField) {
-      console.log('%s を %s に移動', target.catalog().name, destination);
+      console.log('%s を %s に移動', target.catalog.name, destination);
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.lv = 1;
@@ -255,8 +255,8 @@ export class Stack implements IStack {
 
       // 使用者のフィールドに該当色のユニットが存在するか
       const isOnFieldSameColor =
-        card.catalog().color === Color.NONE ||
-        player.field.some(u => u.catalog().color === card.catalog().color);
+        card.catalog.color === Color.NONE ||
+        player.field.some(u => u.catalog.color === card.catalog.color);
 
       this.processing = card;
       return (
@@ -287,7 +287,7 @@ export class Stack implements IStack {
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
 
-        const cost = card.catalog().cost;
+        const cost = card.catalog.cost;
         player.cp.current -= cost;
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
@@ -303,7 +303,7 @@ export class Stack implements IStack {
               type: 'VisualEffect',
               body: {
                 effect: 'drive',
-                image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
                 player: EffectHelper.owner(core, card).id,
                 type: 'INTERCEPT',
               },
@@ -473,7 +473,7 @@ export class Stack implements IStack {
                 type: 'VisualEffect',
                 body: {
                   effect: 'drive',
-                  image: `https://coj.sega.jp/player/img/${card.catalog().img}`,
+                  image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
                   player: EffectHelper.owner(core, card).id,
                   type: 'TRIGGER',
                 },

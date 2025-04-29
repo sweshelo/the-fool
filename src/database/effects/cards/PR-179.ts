@@ -16,7 +16,7 @@ export const effects: CardEffects = {
     // 天使を1体選ぶ
     const candidate = EffectHelper.candidate(stack.core, (unit: Unit) => {
       return (
-        unit.catalog().species!.includes('天使') &&
+        unit.catalog.species!.includes('天使') &&
         EffectHelper.owner(stack.core, unit).id === owner.id
       );
     });

@@ -1,10 +1,10 @@
-import { Effect, EffectHelper, System } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+    const owner = stack.processing.owner;
+    const opponent = owner.opponent;
     const isOnField = opponent.field.length > 0;
 
     if (isOnField) {

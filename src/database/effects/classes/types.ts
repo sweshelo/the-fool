@@ -1,13 +1,11 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card/Card';
-import type { Unit } from '@/package/core/class/card';
 
 /**
  * A Stack with a guaranteed Card in the processing property
  * Used for card effect methods where we can guarantee processing is a Card
  */
-export type StackWithCard = Stack & { processing: Card };
-export type StackWithUnit = Stack & { processing: Unit };
+export type StackWithCard<T = Card> = Stack & { processing: T };
 
 /**
  * Type for card effect methods starting with "on"

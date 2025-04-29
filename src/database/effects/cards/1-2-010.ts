@@ -26,7 +26,7 @@ export const effects: CardEffects = {
 
     // 昆虫ユニットがいるか
     const incectsFilter = (unit: Unit) =>
-      unit.catalog().species!.includes('昆虫') &&
+      unit.catalog.species!.includes('昆虫') &&
       EffectHelper.owner(stack.core, unit).id === owner.id; // Unitは必ずspeciesを持つ
     const isIncectsUnitsOnOwnersField = owner.field.some(incectsFilter);
 
@@ -40,9 +40,7 @@ export const effects: CardEffects = {
     );
 
     // BP増加
-    const numberDaemons = owner.field.filter(unit =>
-      unit.catalog().species?.includes('悪魔')
-    ).length;
+    const numberDaemons = owner.field.filter(unit => unit.catalog.species?.includes('悪魔')).length;
     Effect.modifyBP(stack, stack.processing, stack.processing as Unit, numberDaemons * 2000);
 
     if (isIncectsUnitsOnOwnersField) {

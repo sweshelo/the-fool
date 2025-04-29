@@ -39,7 +39,7 @@ export const effects: CardEffects = {
       case '2': {
         await System.show(stack, '選略・魔導の心得', 'デッキからインターセプトを1枚セット');
         const owner = EffectHelper.owner(stack.core, stack.processing);
-        const intercepts = owner.deck.filter(card => card.catalog().type === 'intercept');
+        const intercepts = owner.deck.filter(card => card.catalog.type === 'intercept');
         const target = intercepts[Math.ceil(Math.random() * intercepts.length - 1)];
 
         if (target) {

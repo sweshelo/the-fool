@@ -40,7 +40,7 @@ export class Room {
         this.clients.delete(exists.id);
         this.clients.set(exists.id, socket);
       } else if (this.core.players.length < 2) {
-        const player = new Player(message.payload.player);
+        const player = new Player(message.payload.player, this.core);
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);

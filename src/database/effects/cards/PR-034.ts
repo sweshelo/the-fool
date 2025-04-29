@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     const unitOwner = EffectHelper.owner(stack.core, stack.source);
 
     const isOwenersUnit = owner.id === unitOwner.id;
-    const isOceanUnit = (stack.source as Unit).catalog().species!.includes('海洋');
+    const isOceanUnit = (stack.source as Unit).catalog.species!.includes('海洋');
 
     return isOwenersUnit && isOceanUnit;
   },

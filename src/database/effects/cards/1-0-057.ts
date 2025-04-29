@@ -15,7 +15,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, 'サプライズボックス', 'トリガーカードを2枚引く');
     const owner = EffectHelper.owner(stack.core, stack.processing);
-    const targets = owner.deck.filter(card => card.catalog().type === 'trigger').slice(0, 2);
+    const targets = owner.deck.filter(card => card.catalog.type === 'trigger').slice(0, 2);
 
     targets.forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
   },

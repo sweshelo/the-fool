@@ -4,6 +4,9 @@ import type { Core } from '@/package/core/core';
 import type { IAtom } from '@/submodule/suit/types';
 
 export class EffectHelper {
+  /**
+   * @deprecated Card.owner を使用して下さい
+   */
   static owner(core: Core, card: IAtom | undefined): Player {
     if (!card) throw new Error('所有者を特定したいカードが渡されませんでした');
 
@@ -13,6 +16,9 @@ export class EffectHelper {
     return result;
   }
 
+  /**
+   * @deprecated Player.opponent を使用して下さい
+   */
   static opponent(core: Core, card: IAtom): Player {
     const owner = this.owner(core, card);
     const opponent = core.players.find(p => p.id !== owner.id);

@@ -28,7 +28,7 @@ export const effects: CardEffects = {
 
     // コスト3のユニットを引く
     const [card] = EffectHelper.random(
-      owner.deck.filter(card => card.catalog().cost === 3 && card instanceof Unit),
+      owner.deck.filter(card => card.catalog.cost === 3 && card instanceof Unit),
       1
     );
     if (card) Effect.move(stack, stack.processing, card, 'hand');
@@ -40,7 +40,7 @@ export const effects: CardEffects = {
     // stack.source が自ユニットでない or stack.sourceがコスト2以上のユニットでない場合は中断
     if (
       !(stack.source instanceof Unit) ||
-      stack.source.catalog().cost < 2 ||
+      stack.source.catalog.cost < 2 ||
       EffectHelper.owner(stack.core, stack.source).id !==
         EffectHelper.owner(stack.core, stack.processing).id
     )

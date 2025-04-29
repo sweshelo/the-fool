@@ -2,6 +2,7 @@ import { defineConfig } from 'eslint/config';
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import _import from 'eslint-plugin-import';
+import tsParser from '@typescript-eslint/parser';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
@@ -17,13 +18,13 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   {
+    files: ['src/**/*.ts'],
     extends: fixupConfigRules(
       compat.extends(
-        'next/core-web-vitals',
         'plugin:@typescript-eslint/recommended',
         'plugin:import/recommended',
         'plugin:import/typescript',
-        'prettier'
+        'plugin:deprecation/recommended'
       )
     ),
 
@@ -32,9 +33,26 @@ export default defineConfig([
       import: fixupPluginRules(_import),
     },
 
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 2020,
+      sourceType: 'module',
+
+      parserOptions: {
+        project: './tsconfig.json',
+      },
+    },
+
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
+      'deprecation/deprecation': 'warn',
     },
+
+    settings: {
+      "import/resolver": {
+        "typescript": [],
+      }
+    }
   },
 ]);

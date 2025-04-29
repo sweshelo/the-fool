@@ -7,6 +7,7 @@ import master from '@/database/catalog';
 import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
 import { Evolve } from './card/Evolve';
+import type { Core } from '../core';
 
 export interface PlayerAction {
   action: Action;
@@ -33,6 +34,8 @@ export class Player implements IPlayer {
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
 
+  private core: Core;
+
   cp: {
     current: number;
     max: number;
@@ -45,7 +48,7 @@ export class Player implements IPlayer {
     max: config.game.player.max.life,
   };
 
-  constructor({ id, name, deck }: PlayerEntryPayload['player']) {
+  constructor({ id, name, deck }: PlayerEntryPayload['player'], core: Core) {
     this.id = id;
     this.name = name;
     this.hand = [];
@@ -53,6 +56,7 @@ export class Player implements IPlayer {
     this.trash = [];
     this.trigger = [];
     this.called = [];
+    this.core = core;
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
@@ -67,13 +71,13 @@ export class Player implements IPlayer {
 
         switch (catalog.type) {
           case 'unit':
-            return new Unit(id);
+            return new Unit(this, id);
           case 'advanced_unit':
-            return new Evolve(id);
+            return new Evolve(this, id);
           case 'intercept':
-            return new Intercept(id);
+            return new Intercept(this, id);
           case 'trigger':
-            return new Trigger(id);
+            return new Trigger(this, id);
           default:
             throw new Error('未知のタイプが指定されました');
         }
@@ -193,6 +197,16 @@ export class Player implements IPlayer {
       };
     } else {
       return null;
+    }
+  }
+
+  // 対戦相手特定
+  get opponent() {
+    const result = this.core.players.find(player => player.id !== this.id);
+    if (!result) {
+      throw new Error('プレイヤーが見つかりませんでした');
+    } else {
+      return result;
     }
   }
 }
