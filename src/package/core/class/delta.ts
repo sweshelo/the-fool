@@ -1,30 +1,7 @@
+import type { DeltaEffect, IDelta } from '@/submodule/suit/types';
 import type { Stack } from './stack';
 
-export type KeywordEffect =
-  | '不屈'
-  | '無我の境地'
-  | '固着'
-  | '加護'
-  | '呪縛'
-  | '不滅'
-  | '王の治癒力'
-  | '秩序の盾'
-  | '沈黙'
-  | '破壊効果耐性'
-  | '消滅効果耐性'
-  | 'オーバーヒート';
-
-export type DeltaEffect =
-  | {
-      type: 'bp';
-      diff: number;
-    }
-  | {
-      type: 'keyword';
-      name: KeywordEffect;
-    };
-
-export class Delta {
+export class Delta implements IDelta {
   count: number;
   event: string | undefined;
   effect: DeltaEffect;

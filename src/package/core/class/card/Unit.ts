@@ -1,8 +1,8 @@
-import type { IUnit } from '@/submodule/suit/types/game/card';
+import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
 import master from '@/database/catalog';
 import type { Player } from '../Player';
-import type { Delta, KeywordEffect } from '../delta';
+import type { Delta } from '../delta';
 
 export class Unit extends Card implements IUnit {
   bp: {
