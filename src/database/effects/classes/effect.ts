@@ -298,13 +298,17 @@ export class Effect {
   static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {
     if (value === 0) return;
 
-    const updatedCP = Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil);
+    const updatedCP = Math.max(
+      Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil),
+      0
+    );
+    const actualDiff = updatedCP - target.cp.current;
     target.cp.current = updatedCP;
 
     if (value > 0) {
-      stack.core.room.soundEffect('cp-increase');
+      if (actualDiff > 0) stack.core.room.soundEffect('cp-increase');
     } else {
-      stack.core.room.soundEffect('cp-consume');
+      if (actualDiff < 0) stack.core.room.soundEffect('cp-consume');
     }
 
     stack.addChildStack('modifyCP', source, target, {
