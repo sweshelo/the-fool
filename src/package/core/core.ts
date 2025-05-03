@@ -534,8 +534,9 @@ export class Core {
             player.trash.push(mitigate);
           }
 
-          player.cp.current -= cost - (mitigate ? 1 : 0);
-          if (cost > 0) this.room.soundEffect('cp-consume');
+          const actualCost = cost - (mitigate ? 1 : 0);
+          player.cp.current -= actualCost;
+          if (actualCost > 0) this.room.soundEffect('cp-consume');
 
           player.hand = player?.hand.filter(c => c.id !== card?.id);
           player.field.push(card);
