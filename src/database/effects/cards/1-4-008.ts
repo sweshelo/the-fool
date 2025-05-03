@@ -5,7 +5,7 @@ import type { StackWithCard } from '../classes/types';
 export const effects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard) => {
-    const opponent = stack.processing.owner;
+    const opponent = stack.processing.owner.opponent;
     if (opponent.field.length <= 0) return;
     const damage = opponent.field.length * 1000;
     await System.show(stack, '破界炎舞・絶華繚乱', '相手フィールドのユニット数×1000ダメージ');

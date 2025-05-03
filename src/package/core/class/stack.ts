@@ -175,15 +175,18 @@ export class Stack implements IStack {
       }
 
     // トリガーゾーン上のインターセプトカードを処理
+    let canceled = 0;
+    const player: Player[] = [turnPlayer, nonTurnPlayer].filter(p => p !== undefined);
     index = 0;
     do {
-      index += (await this.processUserInterceptInteract(core, turnPlayer)) ? 1 : 0;
+      if (await this.processUserInterceptInteract(core, player[index % 2]!)) {
+        canceled += 1;
+      } else {
+        canceled = 0;
+      }
       await this.resolveChild(core);
-
-      index +=
-        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer)) ? 1 : 0;
-      await this.resolveChild(core);
-    } while (index < 2);
+      index++;
+    } while (canceled < player.length);
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -259,9 +262,13 @@ export class Stack implements IStack {
         card.catalog.color === Color.NONE ||
         player.field.some(u => u.catalog.color === card.catalog.color);
 
+      // CPが足りているか
+      const isEnoughCP = card.catalog.cost <= player.cp.current;
+
       this.processing = card;
       return (
         isOnFieldSameColor &&
+        isEnoughCP &&
         (typeof catalog[checkerName] === 'function'
           ? catalog.type === 'intercept' && catalog[checkerName](this)
           : false)

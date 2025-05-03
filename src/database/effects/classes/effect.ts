@@ -378,7 +378,7 @@ export class Effect {
       if (target.currentBP() <= 0) {
         Effect.break(stack, target, target, 'system');
       } else if (target.lv === 3) {
-        stack.addChildStack('overclock', target);
+        stack.addChildStack('overclock', source, target);
       }
     }
   }
