@@ -1,7 +1,8 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
-import { Delta, type KeywordEffect } from '@/package/core/class/delta';
+import { Delta } from '@/package/core/class/delta';
+import type { KeywordEffect } from '@/submodule/suit/types';
 
 interface KeywordOptionParams {
   event?: string;
@@ -212,6 +213,7 @@ export class Effect {
     const card = owner.find(target);
 
     if (card.place?.name === 'hand') {
+      target.lv = 1;
       owner.hand = owner.hand.filter(c => c.id !== target.id);
       owner.trash.push(target);
       stack.core.room.sync();
@@ -272,6 +274,8 @@ export class Effect {
       case 'deck':
         owner.deck = owner.deck.filter(c => c.id !== target.id);
     }
+
+    target.lv = 1;
 
     // Add card to destination location
     switch (location) {
@@ -406,7 +410,6 @@ export class Effect {
     keyword: KeywordEffect,
     option?: KeywordOptionParams
   ) {
-    // @ts-expect-error 沈黙効果耐性は未実装
     if (target.hasKeyword('沈黙効果耐性') && source.owner.id !== target.owner.id) {
       stack.core.room.soundEffect('block');
     }
@@ -423,6 +426,9 @@ export class Effect {
       case '破壊効果耐性':
       case '無我の境地':
         stack.core.room.soundEffect('guard');
+        break;
+      case '貫通':
+        stack.core.room.soundEffect('penetrate');
         break;
       case '呪縛':
         stack.core.room.soundEffect('bind');

@@ -3,7 +3,7 @@ import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
-  checkDrive: async (stack: StackWithCard): Promise<boolean> => {
+  checkDrive: (stack: StackWithCard): boolean => {
     const isOwnUnit = stack.source.id === stack.processing.owner.id;
     const hasMoreThan2Hand = stack.processing.owner.hand.length > 2;
 

@@ -9,6 +9,7 @@ import type {
   WithdrawalPayload,
   ContinuePayload,
   TriggerSetPayload,
+  EvolveDrivePayload,
 } from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
@@ -16,6 +17,7 @@ import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect, EffectHelper } from '@/database/effects';
+import { Evolve } from './class/card/Evolve';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -500,9 +502,10 @@ export class Core {
         }
         break;
       }
+      case 'EvolveDrive':
       case 'UnitDrive': {
         this.room.broadcastToAll(MessageHelper.freeze());
-        const payload: UnitDrivePayload = message.payload;
+        const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
         if (!card || !player) return;
@@ -519,11 +522,29 @@ export class Core {
         );
         const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
 
-        // フィールドのユニット数が規定未満
-        const isEnoughField = player.field.length < this.room.rule.player.max.field;
-
         // ユニットである
-        const isUnit = card instanceof Unit;
+        const isUnit = card instanceof Unit || card instanceof Evolve;
+
+        // 進化?
+        const isEvolve = message.payload.type === 'EvolveDrive' && 'source' in payload;
+
+        // フィールドのユニット数が規定未満
+        const isEnoughField = isEvolve
+          ? true
+          : player.field.length < this.room.rule.player.max.field;
+
+        if (isEvolve) {
+          const source = player.field.find(unit => unit.id === payload.source.id);
+          const notEvelvable = source?.delta.find(
+            delta => delta.effect.type === 'keyword' && delta.effect.name === '進化禁止'
+          );
+          if (notEvelvable) {
+            console.log('進化禁止効果が発動しているため、進化できません');
+            return;
+          }
+        }
+
+        console.log('召喚確定：%s', card.catalog.name);
 
         if (isEnoughCP && isEnoughField && isUnit) {
           const cost = card.catalog.cost;
@@ -531,18 +552,35 @@ export class Core {
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
           if (cost > 0 && mitigate) {
             player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
+            mitigate.lv = 1;
             player.trash.push(mitigate);
           }
 
           const actualCost = cost - (mitigate ? 1 : 0);
           player.cp.current -= actualCost;
           if (actualCost > 0) this.room.soundEffect('cp-consume');
-
           player.hand = player?.hand.filter(c => c.id !== card?.id);
-          player.field.push(card);
+
+          if (isEvolve) {
+            // 進化元が存在していたindexに進化先を配置する
+            const index = player.field.findIndex(unit => unit.id === payload.source.id);
+            if (index === -1) throw new Error('進化元が見つかりませんでした');
+
+            // 進化元をトラッシュに移動
+            const source = player.field[index];
+            if (!source) throw new Error('進化元が見つかりませんでした');
+            player.trash.push(source);
+
+            // 進化元の行動権を継承
+            card.active = source.active;
+            player.field[index] = card;
+          } else {
+            player.field.push(card);
+          }
+
           card.initBP();
+          this.room.soundEffect(isEvolve ? 'evolve' : 'drive');
           this.room.sync();
-          this.room.soundEffect('drive');
 
           // 召喚時点でのLv
           const lv = card.lv;

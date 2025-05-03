@@ -235,6 +235,7 @@ export class Stack implements IStack {
       target.bp.damage = 0;
       target.bp.diff = 0;
       target.overclocked = false;
+      target.delta = [];
 
       if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
         owner.trash.push(target);
@@ -266,6 +267,14 @@ export class Stack implements IStack {
       const isEnoughCP = card.catalog.cost <= player.cp.current;
 
       this.processing = card;
+
+      console.log(
+        '[%s] checked %s: <%s>',
+        this.type,
+        card.catalog.name,
+        typeof catalog[checkerName] === 'function' && catalog[checkerName](this)
+      );
+
       return (
         isOnFieldSameColor &&
         isEnoughCP &&
@@ -278,6 +287,11 @@ export class Stack implements IStack {
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
+    console.log(
+      '[%s] 使用可能: %s',
+      this.type,
+      targets.map(card => card.catalog.name)
+    );
     const [selected] = await System.prompt(this, player.id, {
       title: '入力受付中',
       type: 'intercept',
