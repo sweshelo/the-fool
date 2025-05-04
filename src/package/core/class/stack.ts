@@ -101,7 +101,9 @@ export class Stack implements IStack {
     // 対象のイベントが発生した時点でフィールドに存在していなかったユニットは除外する
     const field = {
       turnPlayer: [...turnPlayer.field.filter(u => u.id !== this.source.id)],
-      nonTurnPlayer: nonTurnPlayer ? [...nonTurnPlayer.field] : [],
+      nonTurnPlayer: nonTurnPlayer
+        ? [...nonTurnPlayer.field.filter(u => u.id !== this.source.id)]
+        : [],
     };
 
     if (this.type === 'overclock' && this.target instanceof Unit) {

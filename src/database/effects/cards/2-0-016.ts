@@ -46,7 +46,7 @@ export const effects: CardEffects = {
       };
 
       const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-      const unit = stack.processing.owner.field.find(card => card.id === unitId);
+      const unit = targets.find(card => card.id === unitId);
       if (!unit || !(unit instanceof Unit)) throw new Error('正しいカードが選択されませんでした');
 
       Effect.break(stack, stack.processing, unit, 'effect');
