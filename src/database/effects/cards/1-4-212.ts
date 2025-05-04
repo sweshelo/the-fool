@@ -3,7 +3,8 @@ import { EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  await System.show(stack, '武身', '武身 メイン効果');
+  await System.show(stack, '雷鎚の祝福', 'トリガーカードを1枚引く');
+  EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['trigger'] });
 };
 
 export const effects: CardEffects = {

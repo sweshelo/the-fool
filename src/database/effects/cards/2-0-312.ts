@@ -1,9 +1,14 @@
 import { Unit } from '@/package/core/class/card';
-import { EffectTemplate, System } from '..';
+import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  await System.show(stack, '武身', '武身 メイン効果');
+  const targets = stack.processing.owner.opponent.field.filter(unit => unit.catalog.cost <= 3);
+
+  if (targets.length > 0) {
+    await System.show(stack, '聖剣の粛清', '敵全体のコスト3以下を消滅');
+    targets.forEach(unit => Effect.delete(stack, stack.processing, unit));
+  }
 };
 
 export const effects: CardEffects = {

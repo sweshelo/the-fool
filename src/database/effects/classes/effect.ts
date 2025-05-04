@@ -512,5 +512,6 @@ export class Effect {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     Effect.summon(stack, source, unit, true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 }

@@ -1,7 +1,6 @@
 import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
-import master from '@/submodule/suit/catalog/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
@@ -11,6 +10,7 @@ import { Unit } from '@/package/core/class/card';
 interface ReinforcementMatcher {
   color?: number;
   species?: string;
+  type?: ('unit' | 'advanced_unit' | 'intercept' | 'trigger')[];
 }
 
 export class EffectTemplate {
@@ -70,14 +70,14 @@ export class EffectTemplate {
 
     // 召喚者のデッキから条件に合致するカードを探す
     const target = player.deck.find(c => {
-      const catalog = master.get(c.catalogId);
-      if (!catalog || (catalog.type !== 'unit' && catalog.type !== 'advanced_unit')) return false;
-
       // 色の一致
-      const colorMatch = match.color ? catalog.color === match.color : true;
+      const colorMatch = match.color ? c.catalog.color === match.color : true;
       // 種族の一致
-      const speciesMatch = match.species ? catalog.species?.includes(match.species) : true;
-      return colorMatch && speciesMatch;
+      const speciesMatch = match.species ? c.catalog.species?.includes(match.species) : true;
+      // タイプの一致
+      const typeMatch = match.type ? match.type.includes(c.catalog.type) : true;
+
+      return colorMatch && speciesMatch && typeMatch;
     });
 
     // targetを引き抜き、手札に加える
