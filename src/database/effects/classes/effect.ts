@@ -279,7 +279,7 @@ export class Effect {
         break;
     }
 
-    target.lv = 1;
+    target.reset();
 
     // Add card to destination location
     switch (location) {
@@ -303,7 +303,11 @@ export class Effect {
         owner.delete.push(target);
     }
 
-    stack.addChildStack('move', source, target);
+    if (origin === 'trigger' && location === 'trash') {
+      stack.addChildStack('lost', source, target);
+    } else {
+      stack.addChildStack('move', source, target);
+    }
   }
 
   static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {

@@ -487,6 +487,8 @@ export class Core {
         if (isOnHand && isSameCard && isUnderLv3) {
           player.hand = player?.hand.filter(card => card.id !== target.card?.id);
           parent.card.lv++;
+
+          target.card.reset();
           player.trash.push(target.card);
           [...Array(this.room.rule.system.draw.override)].forEach(() => {
             if (player.hand.length < this.room.rule.player.max.hand) {
@@ -567,12 +569,17 @@ export class Core {
             // 進化元をトラッシュに移動
             const source = player.field[index];
             if (!source) throw new Error('進化元が見つかりませんでした');
-            player.trash.push(source);
 
             // 進化元の行動権を継承
             card.active = source.active;
             player.field[index] = card;
+
+            if (!source.isCopy) {
+              player.trash.push(source);
+              source.reset();
+            }
           } else {
+            card.active = true;
             player.field.push(card);
           }
 

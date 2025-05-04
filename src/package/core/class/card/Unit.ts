@@ -13,7 +13,6 @@ export class Unit extends Card implements IUnit {
   active: boolean;
   destination?: string;
   overclocked?: boolean;
-  delta: Delta[];
   isCopy: boolean;
 
   constructor(owner: Player, catalogId: string) {
@@ -45,12 +44,12 @@ export class Unit extends Card implements IUnit {
 
   hasKeyword(keyword: KeywordEffect) {
     // 沈黙を発動していない
-    const hasNoSilent = !this.delta.some(
+    const hasNoSilent = !this.delta?.some(
       buff => buff.effect.type === 'keyword' && buff.effect.name === '沈黙'
     );
 
     // 対象を発動中
-    const hasTarget = this.delta.some(
+    const hasTarget = this.delta?.some(
       buff => buff.effect.type === 'keyword' && buff.effect.name === keyword
     );
 
@@ -67,13 +66,25 @@ export class Unit extends Card implements IUnit {
       damage: 0,
     };
     unit.isCopy = true;
-    unit.delta = this.delta.map<Delta>(buff => ({
+    unit.delta = this.delta?.map<Delta>(buff => ({
       ...buff,
       checkExpire: buff.checkExpire.bind(unit),
       event: undefined,
     }));
 
     return unit;
+  }
+
+  reset() {
+    super.reset();
+    this.bp = {
+      base: 0,
+      diff: 0,
+      damage: 0,
+    };
+    this.active = false;
+    this.overclocked = undefined;
+    this.destination = undefined;
   }
 }
 

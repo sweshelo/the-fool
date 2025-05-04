@@ -261,12 +261,7 @@ export class Stack implements IStack {
       console.log('%s を %s に移動', target.catalog.name, destination);
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
-      target.lv = 1;
-      target.destination = undefined;
-      target.bp.damage = 0;
-      target.bp.diff = 0;
-      target.overclocked = false;
-      target.delta = [];
+      target.reset();
 
       // コピーまたはウィルスは移動させない (ゲームから除外)
       if (target.isCopy || target.catalog.species?.includes('ウィルス')) return;
