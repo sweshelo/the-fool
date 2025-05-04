@@ -367,7 +367,13 @@ export class Effect {
     }
   }
 
-  static clock(stack: Stack, source: Card, target: Unit, value: number): void {
+  static clock(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    value: number,
+    withoutOverClock: boolean = false
+  ): void {
     const before = target.lv;
 
     target.lv += value;
@@ -396,7 +402,7 @@ export class Effect {
 
       if (target.currentBP() <= 0) {
         Effect.break(stack, target, target, 'system');
-      } else if (target.lv === 3) {
+      } else if (target.lv === 3 && !withoutOverClock) {
         stack.addChildStack('overclock', source, target);
       }
     }
