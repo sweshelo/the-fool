@@ -16,7 +16,7 @@ import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
-import { Effect, EffectHelper } from '@/database/effects';
+import { Effect } from '@/database/effects';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -214,7 +214,7 @@ export class Core {
    */
   async block(attacker: Unit): Promise<Unit | undefined> {
     // プレイヤーを特定
-    const attackerOwner = EffectHelper.owner(this, attacker);
+    const attackerOwner = attacker.owner;
     const blockerOwner = this.players.find(player => player.id !== attackerOwner.id);
 
     if (!blockerOwner || !attackerOwner)
@@ -226,10 +226,8 @@ export class Core {
       return unit.active;
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const forceBlock = blockable.filter((unit: Unit) => {
-      // TODO: ここで強制防御を持つユニットをフィルタする
-      return false;
+      return unit.hasKeyword('強制防御');
     });
 
     // 強制防御を持つユニットがいない場合はそのまま素のcandidateを返却する
@@ -346,7 +344,7 @@ export class Core {
       !isWinnerBreaked &&
       isLoserBreaked &&
       winner.lv < 3 &&
-      EffectHelper.owner(this, winner).field.find(unit => unit.id === winner.id)
+      winner.owner.field.find(unit => unit.id === winner.id)
     ) {
       const winnerStack = new Stack({
         type: '_postBattle',
