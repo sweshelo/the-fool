@@ -127,12 +127,14 @@ export class Stack implements IStack {
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
-    if (nonTurnPlayer)
+    if (nonTurnPlayer) {
       for (const unit of field.nonTurnPlayer) {
         await this.processCardEffect(unit, core);
         await this.resolveChild(core);
       }
+    }
 
+    /*
     // ターンプレイヤーの手札上のカードを処理
     for (const card of turnPlayer.hand) {
       await this.processCardEffect(card, core, 'InHand');
@@ -140,24 +142,29 @@ export class Stack implements IStack {
     }
 
     // 非ターンプレイヤーの手札上のカードを処理
-    if (nonTurnPlayer)
+    if (nonTurnPlayer) {
       for (const card of nonTurnPlayer.hand) {
         await this.processCardEffect(card, core, 'InHand');
         await this.resolveChild(core);
       }
-
-    // ターンプレイヤーの捨札のカードを処理
-    for (const card of turnPlayer.trash) {
-      await this.processCardEffect(card, core, 'InTrash');
-      await this.resolveChild(core);
     }
+    */
 
-    // 非ターンプレイヤーの捨札のカードを処理
-    if (nonTurnPlayer)
-      for (const card of nonTurnPlayer.trash) {
+    // NOTE: 現在のところ 捨札中で効果が発動するカードは turnStart と turnEnd のみ
+    if (this.type === 'turnStart' || this.type === 'turnEnd') {
+      // ターンプレイヤーの捨札のカードを処理
+      for (const card of turnPlayer.trash) {
         await this.processCardEffect(card, core, 'InTrash');
         await this.resolveChild(core);
       }
+
+      // 非ターンプレイヤーの捨札のカードを処理
+      if (nonTurnPlayer)
+        for (const card of nonTurnPlayer.trash) {
+          await this.processCardEffect(card, core, 'InTrash');
+          await this.resolveChild(core);
+        }
+    }
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
@@ -287,7 +294,6 @@ export class Stack implements IStack {
       const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
-      console.log(catalog.name, checkerName);
 
       // 使用者のフィールドに該当色のユニットが存在するか
       const isOnFieldSameColor =
@@ -298,13 +304,6 @@ export class Stack implements IStack {
       const isEnoughCP = card.catalog.cost <= player.cp.current;
 
       this.processing = card;
-
-      console.log(
-        '[%s] checked %s: <%s>',
-        this.type,
-        card.catalog.name,
-        typeof catalog[checkerName] === 'function' && catalog[checkerName](this)
-      );
 
       return (
         isOnFieldSameColor &&
@@ -318,11 +317,6 @@ export class Stack implements IStack {
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
-    console.log(
-      '[%s] 使用可能: %s',
-      this.type,
-      targets.map(card => card.catalog.name)
-    );
     const [selected] = await System.prompt(this, player.id, {
       title: '入力受付中',
       type: 'intercept',
