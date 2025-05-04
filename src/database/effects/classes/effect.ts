@@ -1,8 +1,8 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import { Evolve, type Card, type Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 import { Delta } from '@/package/core/class/delta';
-import type { KeywordEffect } from '@/submodule/suit/types';
+import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 
 interface KeywordOptionParams {
   event?: string;
@@ -235,7 +235,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Card,
-    location: 'hand' | 'trigger' | 'deck' | 'trash'
+    location: 'hand' | 'trigger' | 'deck' | 'trash' | 'delete'
   ): void {
     const owner = target.owner;
     const cardFind = owner.find(target);
@@ -247,7 +247,7 @@ export class Effect {
     const origin = cardFind.place.name;
 
     // Type guard to check if the origin is a valid card location
-    if (!['hand', 'trigger', 'deck', 'trash', 'field'].includes(origin)) {
+    if (!['hand', 'trigger', 'deck', 'trash', 'field', 'deck', 'delete'].includes(origin)) {
       throw new Error('無効な移動元です');
     }
 
@@ -273,6 +273,10 @@ export class Effect {
         break;
       case 'deck':
         owner.deck = owner.deck.filter(c => c.id !== target.id);
+        break;
+      case 'delete':
+        owner.delete = owner.delete.filter(c => c.id !== target.id);
+        break;
     }
 
     target.lv = 1;
@@ -294,6 +298,9 @@ export class Effect {
         if (origin === 'hand') stack.core.room.soundEffect('destruction');
         owner.trash.push(target);
         break;
+      case 'delete':
+        if (origin === 'hand') stack.core.room.soundEffect('destruction');
+        owner.delete.push(target);
     }
 
     stack.addChildStack('move', source, target);
@@ -440,5 +447,66 @@ export class Effect {
         stack.core.room.soundEffect('silent');
         break;
     }
+  }
+
+  /**
+   * 特殊召喚を実行する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のユニット
+   * @param isCopy <COPY>フラグ
+   * @returns 特殊召喚に成功するとUnitを、失敗するとundefinedを返す
+   */
+  static summon(stack: Stack, source: Card, target: Unit, isCopy?: boolean): Unit | undefined {
+    // フィールドに空きがあるか
+    const isEnoughField = target.owner.field.length < stack.core.room.rule.player.max.field;
+
+    // 対象が進化でない
+    const isNotEvolve = !(target instanceof Evolve);
+
+    if (isEnoughField && isNotEvolve) {
+      target.owner.field.push(target);
+      target.initBP();
+      stack.core.room.soundEffect(isCopy ? 'copied' : 'drive');
+
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'drive',
+              image: `https://coj.sega.jp/player/img/${target.catalog.img}`,
+              player: target.owner.id,
+              type: 'UNIT',
+            },
+          },
+        })
+      );
+
+      // ユニットが別の領域に存在する場合はそれを削除
+      // (複製、デッキ外からの特殊召喚などは必ずしも別の領域に存在するとは限らないので例外はスローしない)
+      const exist = target.owner.find(target);
+      if (exist.result && exist.place && exist.place?.name !== 'field') {
+        target.owner[exist.place.name] = target.owner[exist.place.name].filter(
+          c => c.id !== target.id
+        );
+      }
+
+      stack.addChildStack('extraSummon', source, target);
+      stack.core.room.sync();
+      return target;
+    }
+  }
+
+  static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
+    const unit = target.clone(owner);
+    stack.core.room.soundEffect('copying');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    Effect.summon(stack, source, unit, true);
   }
 }

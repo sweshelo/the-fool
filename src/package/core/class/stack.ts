@@ -98,28 +98,62 @@ export class Stack implements IStack {
     const turnPlayer = core.getTurnPlayer();
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayer.id);
 
+    // 対象のイベントが発生した時点でフィールドに存在していなかったユニットは除外する
+    const field = {
+      turnPlayer: [...turnPlayer.field.filter(u => u.id !== this.source.id)],
+      nonTurnPlayer: nonTurnPlayer ? [...nonTurnPlayer.field] : [],
+    };
+
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
+      this.target.active = true;
       core.room.soundEffect('clock-up-field');
+      core.room.soundEffect('reboot');
     }
 
     // まず source カードの効果を処理
     if (this.target instanceof Card) {
       console.log('checking %s <%s> ...', this.target.catalog.name, this.type);
-      await this.processCardEffect(this.target, core, true);
+      await this.processCardEffect(this.target, core, 'Self');
       await this.resolveChild(core);
     }
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
-    for (const unit of turnPlayer.field.filter(u => u.id !== this.source.id)) {
-      await this.processCardEffect(unit, core, false);
+    for (const unit of field.turnPlayer) {
+      await this.processCardEffect(unit, core);
       await this.resolveChild(core);
     }
 
     // 非ターンプレイヤーのフィールド上のカードを処理
     if (nonTurnPlayer)
-      for (const unit of nonTurnPlayer.field) {
-        await this.processCardEffect(unit, core, false);
+      for (const unit of field.nonTurnPlayer) {
+        await this.processCardEffect(unit, core);
+        await this.resolveChild(core);
+      }
+
+    // ターンプレイヤーの手札上のカードを処理
+    for (const card of turnPlayer.hand) {
+      await this.processCardEffect(card, core, 'InHand');
+      await this.resolveChild(core);
+    }
+
+    // 非ターンプレイヤーの手札上のカードを処理
+    if (nonTurnPlayer)
+      for (const card of nonTurnPlayer.hand) {
+        await this.processCardEffect(card, core, 'InHand');
+        await this.resolveChild(core);
+      }
+
+    // ターンプレイヤーの捨札のカードを処理
+    for (const card of turnPlayer.trash) {
+      await this.processCardEffect(card, core, 'InTrash');
+      await this.resolveChild(core);
+    }
+
+    // 非ターンプレイヤーの捨札のカードを処理
+    if (nonTurnPlayer)
+      for (const card of nonTurnPlayer.trash) {
+        await this.processCardEffect(card, core, 'InTrash');
         await this.resolveChild(core);
       }
 
@@ -233,6 +267,9 @@ export class Stack implements IStack {
       target.bp.diff = 0;
       target.overclocked = false;
       target.delta = [];
+
+      // コピーまたはウィルスは移動させない (ゲームから除外)
+      if (target.isCopy || target.catalog.species?.includes('ウィルス')) return;
 
       if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
         owner.trash.push(target);
@@ -354,7 +391,7 @@ export class Stack implements IStack {
    * @param card 処理対象のカード
    * @param core ゲームのコアインスタンス
    */
-  private async processCardEffect(card: Card, core: Core, self: boolean): Promise<void> {
+  private async processCardEffect(card: Card, core: Core, suffix: string = ''): Promise<void> {
     // IAtomはcatalogIdを持っていない可能性があるのでチェック
     const catalogId = card.catalogId;
     if (!catalogId) return;
@@ -365,7 +402,7 @@ export class Stack implements IStack {
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
-    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + (self ? 'Self' : '')}`;
+    const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + suffix}`;
 
     // カタログからハンドラー関数を取得
     const effectHandler = cardCatalog[handlerName];
