@@ -3,7 +3,6 @@ import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
-import { EffectHelper } from '@/database/effects/classes/helper';
 import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
@@ -178,7 +177,7 @@ export class Stack implements IStack {
     const player: Player[] = [turnPlayer, nonTurnPlayer].filter(p => p !== undefined);
     index = 0;
     do {
-      if (await this.processUserInterceptInteract(core, player[index % 2]!)) {
+      if (await this.processUserInterceptInteract(core, player[index % player.length]!)) {
         canceled += 1;
       } else {
         canceled = 0;
@@ -324,7 +323,7 @@ export class Stack implements IStack {
               body: {
                 effect: 'drive',
                 image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                player: EffectHelper.owner(core, card).id,
+                player: card.owner.id,
                 type: 'INTERCEPT',
               },
             },
@@ -477,7 +476,7 @@ export class Stack implements IStack {
         // 効果を呼び出せる状況であれば呼び出す
         if (check) {
           // トリガーゾーンからカードを取り除く
-          const owner = EffectHelper.owner(core, card);
+          const owner = card.owner;
           owner.trigger = owner.trigger.filter(c => c.id !== card.id);
           owner.called.push(card);
           core.room.sync();
@@ -494,7 +493,7 @@ export class Stack implements IStack {
                 body: {
                   effect: 'drive',
                   image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                  player: EffectHelper.owner(core, card).id,
+                  player: owner.id,
                   type: 'TRIGGER',
                 },
               },
