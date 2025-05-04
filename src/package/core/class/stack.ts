@@ -3,7 +3,6 @@ import { Player } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
-import { EffectHelper } from '@/database/effects/classes/helper';
 import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
@@ -22,11 +21,11 @@ interface IStack {
    */
   type: string;
   /**
-   * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚されたUnitがここに指定される。
+   * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚したPlayerが指定される。破壊効果の場合は、その効果を発動したUnitが指定される。
    */
   source: Card | Player;
   /**
-   * @param target そのStackによって影響を受ける対象を示す。例えば破壊効果の場合、破壊されたUnitがここに指定される。
+   * @param target そのStackによって影響を受ける対象を示す。例えば召喚操作の場合、召喚されたUnitが指定される。破壊効果の場合は、破壊されたUnitが指定される。
    */
   target?: Card | Player;
   /**
@@ -96,12 +95,8 @@ export class Stack implements IStack {
    */
   async resolve(core: Core): Promise<void> {
     // ターンプレイヤーを取得
-    const turnPlayerId = core.getTurnPlayerId();
-    if (!turnPlayerId) return;
-
-    const turnPlayer = core.players.find(p => p.id === turnPlayerId);
-    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayerId);
-    if (!turnPlayer) return;
+    const turnPlayer = core.getTurnPlayer();
+    const nonTurnPlayer = core.players.find(p => p.id !== turnPlayer.id);
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
@@ -109,8 +104,9 @@ export class Stack implements IStack {
     }
 
     // まず source カードの効果を処理
-    if (this.source instanceof Card) {
-      await this.processCardEffect(this.source, core, true);
+    if (this.target instanceof Card) {
+      console.log('checking %s <%s> ...', this.target.catalog.name, this.type);
+      await this.processCardEffect(this.target, core, true);
       await this.resolveChild(core);
     }
 
@@ -177,20 +173,22 @@ export class Stack implements IStack {
       }
 
     // トリガーゾーン上のインターセプトカードを処理
+    let canceled = 0;
+    const player: Player[] = [turnPlayer, nonTurnPlayer].filter(p => p !== undefined);
     index = 0;
     do {
-      index += (await this.processUserInterceptInteract(core, turnPlayer)) ? 1 : 0;
+      if (await this.processUserInterceptInteract(core, player[index % player.length]!)) {
+        canceled += 1;
+      } else {
+        canceled = 0;
+      }
       await this.resolveChild(core);
-
-      index +=
-        !nonTurnPlayer || (await this.processUserInterceptInteract(core, nonTurnPlayer)) ? 1 : 0;
-      await this.resolveChild(core);
-    } while (index < 2);
+      index++;
+    } while (canceled < player.length);
   }
 
   private async resolveChild(core: Core): Promise<void> {
     for (const child of this.children) {
-      console.log('子スタック解決!');
       await child.resolve(core);
     }
 
@@ -201,6 +199,9 @@ export class Stack implements IStack {
       switch (stack.type) {
         case 'break':
           this.moveUnit(target, 'trash');
+          return true;
+        case 'delete':
+          this.moveUnit(target, 'delete', 'deleted');
           return true;
         case 'bounce':
           if (stack.option?.type === 'bounce') {
@@ -217,7 +218,7 @@ export class Stack implements IStack {
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
-    const owner = EffectHelper.owner(this.core, target);
+    const owner = target.owner;
     // ターゲットがフィールドに残留しているかチェック
     const isOnField = owner.field.some(unit => unit.id === target.id);
 
@@ -231,6 +232,7 @@ export class Stack implements IStack {
       target.bp.damage = 0;
       target.bp.diff = 0;
       target.overclocked = false;
+      target.delta = [];
 
       if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
         owner.trash.push(target);
@@ -258,9 +260,21 @@ export class Stack implements IStack {
         card.catalog.color === Color.NONE ||
         player.field.some(u => u.catalog.color === card.catalog.color);
 
+      // CPが足りているか
+      const isEnoughCP = card.catalog.cost <= player.cp.current;
+
       this.processing = card;
+
+      console.log(
+        '[%s] checked %s: <%s>',
+        this.type,
+        card.catalog.name,
+        typeof catalog[checkerName] === 'function' && catalog[checkerName](this)
+      );
+
       return (
         isOnFieldSameColor &&
+        isEnoughCP &&
         (typeof catalog[checkerName] === 'function'
           ? catalog.type === 'intercept' && catalog[checkerName](this)
           : false)
@@ -270,6 +284,11 @@ export class Stack implements IStack {
     if (targets.length === 0) return true;
 
     // クライアントに送信して返事を待つ
+    console.log(
+      '[%s] 使用可能: %s',
+      this.type,
+      targets.map(card => card.catalog.name)
+    );
     const [selected] = await System.prompt(this, player.id, {
       title: '入力受付中',
       type: 'intercept',
@@ -304,7 +323,7 @@ export class Stack implements IStack {
               body: {
                 effect: 'drive',
                 image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                player: EffectHelper.owner(core, card).id,
+                player: card.owner.id,
                 type: 'INTERCEPT',
               },
             },
@@ -322,7 +341,7 @@ export class Stack implements IStack {
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
-        this.addChildStack('intercept', card);
+        this.addChildStack('intercept', player, card);
         return false;
       }
     }
@@ -457,7 +476,7 @@ export class Stack implements IStack {
         // 効果を呼び出せる状況であれば呼び出す
         if (check) {
           // トリガーゾーンからカードを取り除く
-          const owner = EffectHelper.owner(core, card);
+          const owner = card.owner;
           owner.trigger = owner.trigger.filter(c => c.id !== card.id);
           owner.called.push(card);
           core.room.sync();
@@ -474,7 +493,7 @@ export class Stack implements IStack {
                 body: {
                   effect: 'drive',
                   image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                  player: EffectHelper.owner(core, card).id,
+                  player: owner.id,
                   type: 'TRIGGER',
                 },
               },
@@ -492,7 +511,7 @@ export class Stack implements IStack {
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
-          this.addChildStack('trigger', card);
+          this.addChildStack('trigger', owner, card);
         }
 
         return check;
@@ -514,7 +533,12 @@ export class Stack implements IStack {
    * @param target 効果の対象
    * @returns 作成されたスタック
    */
-  addChildStack(type: string, source: Card, target?: Card | Player, option?: StackOption): Stack {
+  addChildStack(
+    type: string,
+    source: Card | Player,
+    target?: Card | Player,
+    option?: StackOption
+  ): Stack {
     const childStack = new Stack({
       type,
       source,

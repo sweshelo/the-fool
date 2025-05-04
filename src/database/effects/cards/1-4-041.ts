@@ -1,15 +1,15 @@
-import type { Stack } from '@/package/core/class/stack';
-import { EffectTemplate, System, EffectHelper } from '..';
+import { EffectTemplate, System } from '..';
 import master from '@/database/catalog';
+import type { StackWithCard } from '../classes/types';
+import { Card } from '@/package/core/class/card';
 
 export const effects = {
-  checkDrive: (stack: Stack): boolean => {
-    // Make sure processing is defined
-    if (!stack.processing) throw new Error('Stack processing is undefined');
+  checkDrive: (stack: StackWithCard): boolean => {
+    if (!(stack.target instanceof Card)) return false;
 
     // 召喚者とこのカードの所有者が一致しているか確認する
-    const driver = EffectHelper.owner(stack.core, stack.source);
-    const player = EffectHelper.owner(stack.core, stack.processing);
+    const driver = stack.target.owner;
+    const player = stack.processing.owner;
     const isSamePlayer = driver.id === player.id;
 
     // 召喚者のフィールドに4属性揃っているか確認する
@@ -19,11 +19,8 @@ export const effects = {
     return isSamePlayer && isGreaterThan4Colors;
   },
 
-  onDrive: async (stack: Stack) => {
-    // Make sure processing is defined
-    if (!stack.processing) throw new Error('Stack processing is undefined');
-
-    const player = EffectHelper.owner(stack.core, stack.processing);
+  onDrive: async (stack: StackWithCard) => {
+    const player = stack.processing.owner;
     await System.show(stack, 'フラワーアレンジメント', 'カードを2枚引く');
     [...Array(2)].forEach(() => EffectTemplate.draw(player, stack.core));
   },

@@ -5,7 +5,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+    const opponent = stack.processing.owner.opponent;
 
     if (opponent.field.length === 0) {
       return;
@@ -21,13 +21,12 @@ export const effects: CardEffects = {
   },
 
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+    const owner = stack.processing.owner;
+    const opponent = owner.opponent;
 
     // 昆虫ユニットがいるか
     const incectsFilter = (unit: Unit) =>
-      unit.catalog.species!.includes('昆虫') &&
-      EffectHelper.owner(stack.core, unit).id === owner.id; // Unitは必ずspeciesを持つ
+      unit.catalog.species!.includes('昆虫') && unit.owner.id === owner.id; // Unitは必ずspeciesを持つ
     const isIncectsUnitsOnOwnersField = owner.field.some(incectsFilter);
 
     // 相手フィールドにユニットがいるか
@@ -44,33 +43,22 @@ export const effects: CardEffects = {
     Effect.modifyBP(stack, stack.processing, stack.processing as Unit, numberDaemons * 2000);
 
     if (isIncectsUnitsOnOwnersField) {
-      const [breakUnitId] = await System.prompt(
-        stack,
-        EffectHelper.owner(stack.core, stack.processing).id,
-        {
-          type: 'unit',
-          title: '破壊する【昆虫】ユニットを選択',
-          items: EffectHelper.candidate(stack.core, incectsFilter),
-        }
-      );
+      const [breakUnitId] = await System.prompt(stack, owner.id, {
+        type: 'unit',
+        title: '破壊する【昆虫】ユニットを選択',
+        items: EffectHelper.candidate(stack.core, incectsFilter),
+      });
       const breakUnit = owner.field.find(unit => unit.id === breakUnitId);
       if (!breakUnit) throw new Error('対象のユニットが見つかりませんでした');
 
       Effect.break(stack, stack.processing, breakUnit, 'effect');
 
       if (isUnitsOnOpponentField) {
-        const [damageUnitId] = await System.prompt(
-          stack,
-          EffectHelper.owner(stack.core, stack.processing).id,
-          {
-            type: 'unit',
-            title: 'ダメージを与えるユニットを選択',
-            items: EffectHelper.candidate(
-              stack.core,
-              (unit: Unit) => EffectHelper.owner(stack.core, unit).id !== owner.id
-            ),
-          }
-        );
+        const [damageUnitId] = await System.prompt(stack, owner.id, {
+          type: 'unit',
+          title: 'ダメージを与えるユニットを選択',
+          items: EffectHelper.candidate(stack.core, (unit: Unit) => unit.owner.id !== owner.id),
+        });
         const damageUnit = opponent.field.find(unit => unit.id === damageUnitId);
         if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
 

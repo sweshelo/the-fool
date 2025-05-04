@@ -6,7 +6,7 @@ import type { Player } from '@/package/core/class/Player';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkTurnStart: (stack: StackWithCard): boolean => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const opponent = stack.source as Player;
 
     const isOpponentTurn = owner.id !== stack.source.id;
@@ -24,9 +24,7 @@ export const effects: CardEffects = {
     await System.show(stack, '人身御供', `味方全体を消滅\n敵${maxCount}体を選び消滅`);
     const units = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) =>
-        EffectHelper.owner(stack.core, unit).id !==
-        EffectHelper.owner(stack.core, stack.processing).id
+      (unit: Unit) => unit.owner.id !== stack.processing.owner.id
     );
 
     // ユニットの選択を実施する
@@ -34,20 +32,14 @@ export const effects: CardEffects = {
     const selection: string[] = [];
 
     for (let i = 0; i < count; i++) {
-      const [unit] = await System.prompt(
-        stack,
-        EffectHelper.owner(stack.core, stack.processing).id,
-        {
-          type: 'unit',
-          title: '消滅させるユニットを選択',
-          items: units.filter(unit => !selection.includes(unit.id)),
-        }
-      );
+      const [unit] = await System.prompt(stack, stack.processing.owner.id, {
+        type: 'unit',
+        title: '消滅させるユニットを選択',
+        items: units.filter(unit => !selection.includes(unit.id)),
+      });
 
       if (unit) selection.push(unit);
     }
-
-    console.log(selection);
 
     // 対戦相手のフィールドから対象のユニットを特定
     const opponentUnits = stack.core.players
@@ -57,8 +49,8 @@ export const effects: CardEffects = {
     if (!opponentUnits || opponentUnits.length === 0)
       throw new Error('選択された対象ユニットが見つかりませんでした');
 
-    [...EffectHelper.owner(stack.core, stack.processing).field, ...opponentUnits].forEach(unit =>
-      Effect.break(stack, stack.processing, unit, 'effect')
-    ); // FIXME: 現在は消滅の代わりに破壊している
+    [...stack.processing.owner.field, ...opponentUnits].forEach(unit =>
+      Effect.delete(stack, stack.processing, unit)
+    );
   },
 };

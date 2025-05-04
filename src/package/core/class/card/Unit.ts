@@ -1,7 +1,8 @@
-import type { IUnit } from '@/submodule/suit/types/game/card';
+import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
 import master from '@/database/catalog';
 import type { Player } from '../Player';
+import type { Delta } from '../delta';
 
 export class Unit extends Card implements IUnit {
   bp: {
@@ -12,6 +13,7 @@ export class Unit extends Card implements IUnit {
   active: boolean;
   destination?: string;
   overclocked?: boolean;
+  delta: Delta[];
 
   constructor(owner: Player, catalogId: string) {
     super(owner, catalogId);
@@ -23,6 +25,7 @@ export class Unit extends Card implements IUnit {
     };
     this.active = true;
     this.destination = undefined;
+    this.delta = [];
   }
 
   initBP() {
@@ -36,5 +39,19 @@ export class Unit extends Card implements IUnit {
 
   currentBP() {
     return this.bp.base + this.bp.diff - this.bp.damage;
+  }
+
+  hasKeyword(keyword: KeywordEffect) {
+    // 沈黙を発動していない
+    const hasNoSilent = !this.delta.some(
+      buff => buff.effect.type === 'keyword' && buff.effect.name === '沈黙'
+    );
+
+    // 対象を発動中
+    const hasTarget = this.delta.some(
+      buff => buff.effect.type === 'keyword' && buff.effect.name === keyword
+    );
+
+    return hasNoSilent && hasTarget;
   }
 }

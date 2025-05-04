@@ -1,14 +1,11 @@
-import type { Stack } from '@/package/core/class/stack';
 import type { Unit } from '@/package/core/class/card';
 import { EffectHelper, System, Effect } from '..';
+import type { StackWithCard } from '../classes/types';
 
 export const effects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: Stack) => {
-    // Make sure processing is defined
-    if (!stack.processing) throw new Error('Stack processing is undefined');
-
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+  onDriveSelf: async (stack: StackWithCard) => {
+    const opponent = stack.processing.owner.opponent;
     if (opponent.field.length <= 0) return;
     const damage = opponent.field.length * 1000;
     await System.show(stack, '破界炎舞・絶華繚乱', '相手フィールドのユニット数×1000ダメージ');
@@ -19,11 +16,8 @@ export const effects = {
 
   // 自身以外が召喚された時に発動する効果を記述
   // 味方ユニットであるかの判定などを忘れない
-  onOverclockSelf: async (stack: Stack) => {
-    // Make sure processing is defined
-    if (!stack.processing) throw new Error('Stack processing is undefined');
-
-    const opponent = EffectHelper.opponent(stack.core, stack.processing);
+  onOverclockSelf: async (stack: StackWithCard) => {
+    const opponent = stack.processing.owner;
     const filter = (unit: Unit) => {
       return opponent.field.some(u => u.id === unit.id);
     };
@@ -31,7 +25,7 @@ export const effects = {
 
     if (Array.isArray(units) && units.length > 0) {
       await System.show(stack, '破界炎舞・絶華繚乱', '10000ダメージ');
-      const owner = EffectHelper.owner(stack.core, stack.processing);
+      const owner = stack.processing.owner;
       const [target] = await System.prompt(stack, owner.id, {
         title: 'ダメージを与えるユニットを選択',
         type: 'unit',

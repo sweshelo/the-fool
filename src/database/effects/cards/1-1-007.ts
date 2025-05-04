@@ -1,12 +1,11 @@
-import type { Stack } from '@/package/core/class/stack';
-import { EffectHelper, EffectTemplate, System } from '..';
+import { EffectTemplate, System } from '..';
 import { Color } from '@/submodule/suit/constant/color';
+import type { StackWithCard } from '../classes/types';
 
 export const effects = {
-  onDriveSelf: async (stack: Stack) => {
+  onDriveSelf: async (stack: StackWithCard) => {
     await System.show(stack, '援軍／黄', '黄属性ユニットを1枚引く');
-    const owner = EffectHelper.owner(stack.core, stack.processing);
-    EffectTemplate.reinforcements(stack, owner, {
+    EffectTemplate.reinforcements(stack, stack.processing.owner, {
       color: Color.YELLOW,
     });
   },

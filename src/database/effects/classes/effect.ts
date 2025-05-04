@@ -1,7 +1,13 @@
 import type { Stack } from '@/package/core/class/stack';
-import { EffectHelper } from './helper';
 import type { Card, Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
+import { Delta } from '@/package/core/class/delta';
+import type { KeywordEffect } from '@/submodule/suit/types';
+
+interface KeywordOptionParams {
+  event?: string;
+  count?: number;
+}
 
 export class Effect {
   /**
@@ -21,7 +27,7 @@ export class Effect {
     type: 'effect' | 'battle' = 'effect'
   ): boolean | undefined {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
@@ -33,15 +39,30 @@ export class Effect {
         value,
       });
       return false;
-    } else {
-      // TODO: 耐性持ちのチェックをここでやる
-      target.bp.damage += value;
-      stack.addChildStack('damage', source, target, {
-        type: 'damage',
-        cause: type,
-        value,
-      });
     }
+
+    // 実際のダメージ量を計算
+    const damage = type === 'effect' && target.hasKeyword('オーバーヒート') ? value * 2 : value;
+
+    // 耐性チェック
+    // 【不滅】: ダメージを受けない
+    const hasImmotal = target.hasKeyword('不滅');
+    // 【秩序の盾】: 対戦相手の効果によるダメージを受けない
+    const hasOrderShield =
+      target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
+    // 【王の治癒力】: 自身のBP未満のダメージを受けない
+    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > damage;
+    if (hasImmotal || hasOrderShield || hasKingsHealing) {
+      stack.core.room.soundEffect('block');
+      return false;
+    }
+
+    target.bp.damage += damage;
+    stack.addChildStack('damage', source, target, {
+      type: 'damage',
+      cause: type,
+      value: damage,
+    });
 
     if (type !== 'battle') {
       stack.core.room.soundEffect('damage');
@@ -66,7 +87,7 @@ export class Effect {
    */
   static modifyBP(stack: Stack, source: Card, target: Unit, value: number) {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
@@ -94,18 +115,51 @@ export class Effect {
     cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField =
       exists.result && exists.place?.name === 'field' && target.destination !== 'trash';
 
     if (!isOnField) return;
 
-    // TODO: 耐性持ちのチェックをここでやる
+    // 【破壊効果耐性】: 対戦相手の効果によって破壊されない
+    if (
+      cause === 'effect' &&
+      target.hasKeyword('破壊効果耐性') &&
+      source.owner.id !== target.owner.id
+    ) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
     stack.addChildStack('break', source, target, {
       type: 'break',
       cause,
     });
     target.destination = 'trash';
+    stack.core.room.soundEffect('bang');
+  }
+
+  /**
+   * 対象を消滅させる
+   * @param source 効果の発動元
+   * @param target 消滅の対象
+   */
+  static delete(stack: Stack, source: Card, target: Unit): void {
+    // 対象がフィールド上に存在するか確認
+    const exists = target.owner.find(target);
+    const isOnField =
+      exists.result && exists.place?.name === 'field' && target.destination !== 'delete';
+
+    if (!isOnField) return;
+
+    // 【消滅効果耐性】: 対戦相手の効果によって消滅しない
+    if (target.hasKeyword('消滅効果耐性') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
+    stack.addChildStack('delete', source, target);
+    target.destination = 'delete';
     stack.core.room.soundEffect('bang');
   }
 
@@ -121,7 +175,7 @@ export class Effect {
     location: 'hand' | 'deck' | 'trigger' = 'hand'
   ): void {
     // 対象がフィールド上に存在するか確認
-    const exists = EffectHelper.owner(stack.core, target).find(target);
+    const exists = target.owner.find(target);
     const isOnField =
       exists.result && exists.place?.name === 'field' && target.destination !== location;
 
@@ -135,7 +189,12 @@ export class Effect {
       location
     );
 
-    // TODO: 耐性持ちのチェックをここでやる
+    // 【固着】: 対戦相手の効果によって手札に戻らない
+    if (location === 'hand' && target.hasKeyword('固着') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+      return;
+    }
+
     stack.addChildStack('bounce', source, target, {
       type: 'bounce',
       location,
@@ -150,10 +209,11 @@ export class Effect {
    * @param target 破壊する手札
    */
   static handes(stack: Stack, source: Card, target: Card): void {
-    const owner = EffectHelper.owner(stack.core, target);
+    const owner = target.owner;
     const card = owner.find(target);
 
     if (card.place?.name === 'hand') {
+      target.lv = 1;
       owner.hand = owner.hand.filter(c => c.id !== target.id);
       owner.trash.push(target);
       stack.core.room.sync();
@@ -177,7 +237,7 @@ export class Effect {
     target: Card,
     location: 'hand' | 'trigger' | 'deck' | 'trash'
   ): void {
-    const owner = EffectHelper.owner(stack.core, target);
+    const owner = target.owner;
     const cardFind = owner.find(target);
 
     if (!cardFind.result || !cardFind.place) {
@@ -215,6 +275,8 @@ export class Effect {
         owner.deck = owner.deck.filter(c => c.id !== target.id);
     }
 
+    target.lv = 1;
+
     // Add card to destination location
     switch (location) {
       case 'hand':
@@ -240,13 +302,17 @@ export class Effect {
   static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {
     if (value === 0) return;
 
-    const updatedCP = Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil);
+    const updatedCP = Math.max(
+      Math.min(target.cp.current + value, stack.core.room.rule.system.cp.ceil),
+      0
+    );
+    const actualDiff = updatedCP - target.cp.current;
     target.cp.current = updatedCP;
 
     if (value > 0) {
-      stack.core.room.soundEffect('cp-increase');
+      if (actualDiff > 0) stack.core.room.soundEffect('cp-increase');
     } else {
-      stack.core.room.soundEffect('cp-consume');
+      if (actualDiff < 0) stack.core.room.soundEffect('cp-consume');
     }
 
     stack.addChildStack('modifyCP', source, target, {
@@ -320,8 +386,59 @@ export class Effect {
       if (target.currentBP() <= 0) {
         Effect.break(stack, target, target, 'system');
       } else if (target.lv === 3) {
-        stack.addChildStack('overclock', target);
+        stack.addChildStack('overclock', source, target);
       }
+    }
+  }
+
+  /**
+   * ユニットにキーワード能力を付与する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のユニット
+   * @param delta { keyword: '<対象のキーワード>', event: '<キーワード能力の剥奪が行われるイベント>', count: '<キーワード能力の剥奪までのイベント発生回数>'}
+   * @example
+   * // 次のターン終了を迎えるまで【貫通】を得る
+   * Effect.keyword(stack, source, target, { keyword: '貫通', event: 'turnEnd', count: 1 })
+   * // 無期限に【秩序の盾】を得る
+   * Effect.keyword(stack, source, target, { keyword: '秩序の盾' })
+   */
+  static keyword(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    keyword: KeywordEffect,
+    option?: KeywordOptionParams
+  ) {
+    if (target.hasKeyword('沈黙効果耐性') && source.owner.id !== target.owner.id) {
+      stack.core.room.soundEffect('block');
+    }
+
+    const delta = new Delta({ type: 'keyword', name: keyword }, option?.event, option?.count);
+    target.delta.push(delta);
+
+    switch (keyword) {
+      case '秩序の盾':
+      case '不滅':
+      case '加護':
+      case '王の治癒力':
+      case '固着':
+      case '破壊効果耐性':
+      case '無我の境地':
+        stack.core.room.soundEffect('guard');
+        break;
+      case '貫通':
+        stack.core.room.soundEffect('penetrate');
+        break;
+      case '呪縛':
+        stack.core.room.soundEffect('bind');
+        break;
+      case '不屈':
+        // stack.core.room.soundEffect('');
+        break;
+      case '沈黙':
+        stack.core.room.soundEffect('silent');
+        break;
     }
   }
 }
