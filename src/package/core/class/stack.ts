@@ -345,25 +345,6 @@ export class Stack implements IStack {
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
 
-        // 効果実行前に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'effect',
-              handler: 'client',
-            },
-            payload: {
-              type: 'VisualEffect',
-              body: {
-                effect: 'drive',
-                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                player: card.owner.id,
-                type: 'INTERCEPT',
-              },
-            },
-          })
-        );
-
         this.processing = card;
         await catalog[effectHandler](this);
         this.processing = undefined;
@@ -406,54 +387,14 @@ export class Stack implements IStack {
 
     if (typeof effectHandler === 'function') {
       try {
-        // 効果実行前に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'debug',
-              handler: 'client',
-            },
-            payload: {
-              type: 'DebugPrint',
-              message: {
-                stackId: this.id,
-                card: master.get(card.catalogId)?.name,
-                effectType: this.type,
-                state: 'start',
-              },
-            },
-          })
-        );
-
         // 効果を実行
         await new Promise(resolve => setTimeout(resolve, 500));
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
-
-        // 効果実行後に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'debug',
-              handler: 'client',
-            },
-            payload: {
-              type: 'DebugPrint',
-              message: {
-                stackId: this.id,
-                card: master.get(card.catalogId)?.name,
-                effectType: this.type,
-                state: 'end',
-              },
-            },
-          })
-        );
+        core.room.sync();
       } catch (error) {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
-      } finally {
-        // 処理が終わったら状態を同期
-        core.room.sync();
       }
     }
   }
@@ -547,13 +488,10 @@ export class Stack implements IStack {
           // トリガーカード発動スタックを積む
           this.addChildStack('trigger', owner, card);
         }
-
+        core.room.sync();
         return check;
       } catch (error) {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
-      } finally {
-        // 処理が終わったら状態を同期
-        core.room.sync();
       }
     }
 

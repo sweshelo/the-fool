@@ -6,6 +6,7 @@ import { System } from './system';
 import { EffectHelper } from './helper';
 import { Effect } from './effect';
 import { Unit } from '@/package/core/class/card';
+import type { StackWithCard } from './types';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -27,9 +28,9 @@ export class EffectTemplate {
    * [リバイブ]効果
    * @param count 回収する枚数
    */
-  static async revive(stack: Stack, count: number = 1): Promise<void> {
+  static async revive(stack: StackWithCard, count: number = 1): Promise<void> {
     // 召喚者特定
-    const driver = EffectHelper.owner(stack.core, stack.processing);
+    const driver = stack.processing.owner;
 
     if (!driver) return;
 
