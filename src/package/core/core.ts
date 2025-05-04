@@ -205,6 +205,7 @@ export class Core {
       await this.postBattle(attacker, blocker);
     }
 
+    attacker.active = false;
     this.room.sync();
   }
 

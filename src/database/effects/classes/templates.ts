@@ -6,6 +6,7 @@ import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
 import { Effect } from './effect';
+import { Unit } from '@/package/core/class/card';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -85,5 +86,28 @@ export class EffectTemplate {
     }
 
     return;
+  }
+
+  static async reincarnate(stack: Stack, unit: Unit) {
+    const isEnoughField = unit.owner.field.length <= 4;
+    const targets = unit.owner.deck.filter(card => {
+      return (
+        card.catalog.species?.includes('武身') &&
+        card.catalog.cost >= unit.catalog.cost &&
+        card.catalog.cost <= unit.catalog.cost + 1
+      );
+    });
+    const [target] = EffectHelper.random(targets);
+
+    if (isEnoughField && targets.length > 0 && target instanceof Unit) {
+      await System.show(
+        stack,
+        '武身転生',
+        `コスト${unit.catalog.cost}以上${unit.catalog.cost + 1}以下の【武身】を【特殊召喚】\n自身をデッキに戻す`
+      );
+      Effect.summon(stack, unit, target);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      Effect.bounce(stack, unit, unit, 'deck');
+    }
   }
 }
