@@ -5,9 +5,9 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     const isOwnUnit = stack.source.id === stack.processing.owner.id;
-    const hasMoreThan2Hand = stack.processing.owner.hand.length > 2;
+    const hasAtLeast2Hand = stack.processing.owner.hand.length >= 2;
 
-    return isOwnUnit && hasMoreThan2Hand;
+    return isOwnUnit && hasAtLeast2Hand;
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {

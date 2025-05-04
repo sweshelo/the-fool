@@ -17,7 +17,6 @@ import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect, EffectHelper } from '@/database/effects';
-import { Evolve } from './class/card/Evolve';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -523,7 +522,7 @@ export class Core {
         const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
 
         // ユニットである
-        const isUnit = card instanceof Unit || card instanceof Evolve;
+        const isUnit = card instanceof Unit;
 
         // 進化?
         const isEvolve = message.payload.type === 'EvolveDrive' && 'source' in payload;
@@ -557,7 +556,7 @@ export class Core {
           }
 
           const actualCost = cost - (mitigate ? 1 : 0);
-          player.cp.current -= actualCost;
+          player.cp.current -= Math.min(Math.max(actualCost, 0), player.cp.current);
           if (actualCost > 0) this.room.soundEffect('cp-consume');
           player.hand = player?.hand.filter(c => c.id !== card?.id);
 

@@ -98,7 +98,6 @@ export class Stack implements IStack {
     // ターンプレイヤーを取得
     const turnPlayer = core.getTurnPlayer();
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayer.id);
-    if (!turnPlayer) return;
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
@@ -191,7 +190,6 @@ export class Stack implements IStack {
 
   private async resolveChild(core: Core): Promise<void> {
     for (const child of this.children) {
-      console.log('子スタック解決!');
       await child.resolve(core);
     }
 
@@ -221,7 +219,7 @@ export class Stack implements IStack {
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
-    const owner = EffectHelper.owner(this.core, target);
+    const owner = target.owner;
     // ターゲットがフィールドに残留しているかチェック
     const isOnField = owner.field.some(unit => unit.id === target.id);
 

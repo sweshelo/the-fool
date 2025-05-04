@@ -1,5 +1,5 @@
 import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, EffectHelper, System } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -8,12 +8,10 @@ export const effects: CardEffects = {
     // Make sure processing is defined
     if (!stack.processing) throw new Error('Stack processing is undefined');
 
-    const isOpponentUnit =
-      EffectHelper.owner(stack.core, stack.target).id ===
-      EffectHelper.owner(stack.core, stack.processing).id;
-    const hasHand = EffectHelper.owner(stack.core, stack.processing).hand.length > 0;
-    const isRemainDeck = EffectHelper.owner(stack.core, stack.processing).deck.length > 0;
-    return isOpponentUnit && hasHand && isRemainDeck;
+    const isOwnUnit = stack.source.id === stack.processing.owner.id;
+    const hasHand = stack.processing.owner.hand.length > 0;
+    const isRemainDeck = stack.processing.owner.deck.length > 0;
+    return isOwnUnit && hasHand && isRemainDeck;
   },
 
   // 実際の効果本体
@@ -22,7 +20,7 @@ export const effects: CardEffects = {
     // Make sure processing is defined
     if (!stack.processing) throw new Error('Stack processing is undefined');
 
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
 
     if (stack.processing.lv <= 2) {
       await System.show(stack, '無限の魔法石', '手札を1枚選んで捨てる\nデッキから1枚選んで引く');

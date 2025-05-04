@@ -37,7 +37,7 @@ export const effects: CardEffects = {
   // 自身以外が召喚された時に発動する効果を記述
   // 味方ユニットであるかの判定などを忘れない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    // stack.source が自ユニットでない or stack.sourceがコスト2以上のユニットでない or 比較対象が自分自身の場合は中断
+    // stack.target が自ユニットでない or stack.targetがコスト2以上のユニットでない or 比較対象が自分自身の場合は中断
     if (
       !(stack.target instanceof Unit) ||
       stack.target.catalog.cost < 2 ||
@@ -61,15 +61,11 @@ export const effects: CardEffects = {
       return;
 
     await System.show(stack, '風のおしおき', 'お互いにBPダメージ');
-    const [damageUnitId] = await System.prompt(
-      stack,
-      EffectHelper.owner(stack.core, stack.processing).id,
-      {
-        type: 'unit',
-        title: 'ダメージを与えるユニットを選択',
-        items: candidate,
-      }
-    );
+    const [damageUnitId] = await System.prompt(stack, stack.processing.owner.id, {
+      type: 'unit',
+      title: 'ダメージを与えるユニットを選択',
+      items: candidate,
+    });
     const damageUnit = candidate.find(unit => unit.id === damageUnitId);
     if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
 
