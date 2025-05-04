@@ -32,10 +32,10 @@ export const effects = {
         `トリガーゾーンを1枚破壊${opponents.length > 0 ? '\n3000ダメージ' : ''}`
       );
 
-      EffectHelper.random(stack.processing.owner.trigger, 2).forEach(card =>
+      EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
         Effect.move(stack, stack.processing, card, 'trash')
       );
-      EffectHelper.random(stack.processing.owner.opponent.trigger, 2).forEach(card =>
+      EffectHelper.random(stack.processing.owner.opponent.trigger, 1).forEach(card =>
         Effect.move(stack, stack.processing, card, 'trash')
       );
 
