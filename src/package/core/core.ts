@@ -94,12 +94,13 @@ export class Core {
 
       // ターン開始処理
       this.turn++;
-      this.round = Math.floor(this.turn / 2);
+      this.round = Math.floor((this.turn + 1) / 2);
     }
 
     // CP初期化
     const turnPlayer = this.getTurnPlayer();
     if (turnPlayer) {
+      console.log('ROUND: %s / Turn: %s', this.round, this.turn);
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -262,8 +263,8 @@ export class Core {
     const [blockerId] =
       candidate.length > 0
         ? await new Promise<string[]>(resolve => {
-            this.setEffectDisplayHandler(promptId, (choice: string[]) => {
-              resolve(choice);
+            this.setEffectDisplayHandler(promptId, (choice: string[] | undefined) => {
+              resolve(choice ?? []);
             });
           })
         : [];
