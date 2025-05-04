@@ -152,7 +152,7 @@ export class Player implements IPlayer {
         card: onDelete,
         place: {
           name: 'delete',
-          ref: this.called,
+          ref: this.delete,
         },
       };
 
