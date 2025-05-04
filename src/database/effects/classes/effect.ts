@@ -475,6 +475,15 @@ export class Effect {
     const isNotEvolve = !(target instanceof Evolve);
 
     if (isEnoughField && isNotEvolve) {
+      // ユニットが別の領域に存在する場合はそれを削除
+      // (複製、デッキ外からの特殊召喚などは必ずしも別の領域に存在するとは限らないので例外はスローしない)
+      const exist = target.owner.find(target);
+      if (exist.result && exist.place && exist.place?.name !== 'field') {
+        target.owner[exist.place.name] = target.owner[exist.place.name].filter(
+          c => c.id !== target.id
+        );
+      }
+
       target.owner.field.push(target);
       target.initBP();
       stack.core.room.soundEffect(isCopy ? 'copied' : 'drive');
@@ -496,15 +505,6 @@ export class Effect {
           },
         })
       );
-
-      // ユニットが別の領域に存在する場合はそれを削除
-      // (複製、デッキ外からの特殊召喚などは必ずしも別の領域に存在するとは限らないので例外はスローしない)
-      const exist = target.owner.find(target);
-      if (exist.result && exist.place && exist.place?.name !== 'field') {
-        target.owner[exist.place.name] = target.owner[exist.place.name].filter(
-          c => c.id !== target.id
-        );
-      }
 
       stack.addChildStack('extraSummon', source, target);
       stack.core.room.sync();
