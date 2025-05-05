@@ -174,15 +174,30 @@ export class Core {
     ];
     await this.resolveStack();
 
-    // TODO: この時点でattackerが生存しているか確認する
+    // アタッカー生存チェック
+    if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
 
     const blocker = await this.block(attacker);
 
-    // TODO: この時点でattackerとblocker(非undefinedの場合)が生存しているか確認する (blockerのブロックとそれに伴う効果解決が行われる)
+    // アタッカー/ブロッカー生存チェック
+    if (
+      !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+      (blocker && !blocker.owner.field.find(unit => unit.id === blocker.id))
+    ) {
+      attacker.active = false;
+      return;
+    }
 
     if (blocker) {
       await this.preBattle(attacker, blocker);
-      // TODO: この時点でattackerとblockerが生存しているか確認する (両者の戦闘に伴う効果解決が行われる)
+      // アタッカー/ブロッカー生存チェック
+      if (
+        !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+        !blocker.owner.field.find(unit => unit.id === blocker.id)
+      ) {
+        attacker.active = false;
+        return;
+      }
     }
 
     // NOTE: 生存確認処理を行い、attacker/blocker(非undefinedの場合)の両者が生存していれば以下が実行される
@@ -203,12 +218,25 @@ export class Core {
       })
     );
 
-    if (blocker) {
-      await this.postBattle(attacker, blocker);
-    }
-
     attacker.active = false;
     this.room.sync();
+
+    if (blocker) {
+      await this.postBattle(attacker, blocker);
+    } else {
+      attacker.owner.opponent.damage();
+
+      // プレイヤーアタックに成功
+      this.stack = [
+        new Stack({
+          type: 'playerAttack',
+          target: attacker.owner.opponent,
+          source: attacker,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
+    }
   }
 
   /**

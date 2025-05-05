@@ -584,4 +584,12 @@ export class Effect {
     );
     stack.core.room.soundEffect('speedmove');
   }
+
+  static activate(stack: Stack, source: Card, target: Unit, activate: boolean) {
+    if (!activate && target.hasKeyword('無我の境地') && target.owner.id !== source.owner.id) {
+      stack.core.room.soundEffect('block');
+    }
+
+    target.active = activate;
+  }
 }
