@@ -1,19 +1,11 @@
 import { createMessage } from '@/submodule/suit/types';
-import { Player } from './Player';
+import { Player, type CardArrayKeys } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
-
-// PlayerのうちCard[]型であるプロパティ名から"called"を除外
-type CardArrayKeys = Exclude<
-  {
-    [K in keyof Player]: Player[K] extends Card[] ? K : never;
-  }[keyof Player],
-  'called'
->;
 
 interface IStack {
   /**

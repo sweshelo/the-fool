@@ -24,6 +24,14 @@ export interface FindResult {
   };
 }
 
+// PlayerのうちCard[]型であるプロパティ名から"called"を除外
+export type CardArrayKeys = Exclude<
+  {
+    [K in keyof Player]: Player[K] extends Card[] ? K : never;
+  }[keyof Player],
+  'called'
+>;
+
 export class Player implements IPlayer {
   id: string;
   name: string;
