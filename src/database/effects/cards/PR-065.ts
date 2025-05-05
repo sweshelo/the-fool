@@ -1,0 +1,40 @@
+import { Unit } from '@/package/core/class/card';
+import { Effect, EffectHelper, System } from '..';
+import type { CardEffects, StackWithCard } from '../classes/types';
+
+export const effects: CardEffects = {
+  // 自身が召喚された時に発動する効果を記述
+  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+    const targets = stack.processing.owner.delete.filter(
+      card => card.catalog.type === 'unit'
+    ) as Unit[];
+    if (targets.length > 0) {
+      await System.show(stack, '禁呪の代償', '消滅から特殊召喚');
+      EffectHelper.random(targets).forEach(unit => Effect.summon(stack, stack.processing, unit));
+    }
+  },
+
+  onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+    if (stack.processing.owner.delete.length > 0 && stack.processing.owner.id === stack.source.id) {
+      await System.show(stack, '禁忌の霊符', '消滅カードを3枚まで捨札に送る');
+      const targets = EffectHelper.random(stack.processing.owner.delete, 3);
+      console.log(targets);
+      targets.forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
+    }
+  },
+
+  onBreakSelf: async (stack: StackWithCard): Promise<void> => {
+    const targets = stack.processing.owner.trash.filter(
+      card => card.catalog.type === 'unit' && card.catalog.cost <= 2
+    ) as Unit[];
+    if (
+      stack.option?.type === 'break' &&
+      stack.option.cause !== 'battle' &&
+      stack.option.cause !== 'system' &&
+      targets.length > 0
+    ) {
+      await System.show(stack, '闇の陰陽師', 'コスト2以下を【特殊召喚】');
+      EffectHelper.random(targets).forEach(unit => Effect.summon(stack, stack.processing, unit));
+    }
+  },
+};

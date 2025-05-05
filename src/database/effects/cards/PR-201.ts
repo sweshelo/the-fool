@@ -9,24 +9,14 @@ export const effects: CardEffects = {
     if (!(stack.processing instanceof Unit)) throw new Error('不正なタイプが指定されました');
 
     if (stack.processing.owner.field.length <= 4) {
-      await System.show(stack, 'ドッペルバース＆攻撃禁止', '自身を複製\nアタックできない');
-      Effect.keyword(stack, stack.processing, stack.processing, '攻撃禁止');
-      await Effect.clone(stack, stack.processing, stack.processing, stack.processing.owner);
-    } else {
-      await System.show(stack, '攻撃禁止', 'アタックできない');
-      Effect.keyword(stack, stack.processing, stack.processing, '攻撃禁止');
-    }
-  },
+      await System.show(stack, '冥界ランデブー', 'ユニットを【複製】し破壊');
 
-  onBreakSelf: async (stack: StackWithCard): Promise<void> => {
-    const targets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
-    );
-    if (targets.length > 0) {
-      await System.show(stack, 'ビートルクラッシュ', '1000ダメージ');
+      const targets = EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id === stack.processing.owner.id
+      );
       const choices: Choices = {
-        title: 'ダメージを与えるユニットを選択してください',
+        title: '【複製】し破壊するユニットを選択してください',
         type: 'unit',
         items: targets,
       };
@@ -36,7 +26,18 @@ export const effects: CardEffects = {
       if (!unit || !(unit instanceof Unit))
         throw new Error('正しいカードが選択されませんでした', unit);
 
-      Effect.damage(stack, stack.processing, unit, 1000, 'effect');
+      await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
+      Effect.break(stack, stack.processing, unit, 'effect');
+    }
+  },
+
+  onTurnStartInTrash: async (stack: StackWithCard): Promise<void> => {
+    if (!(stack.processing instanceof Unit))
+      throw new Error('Unitではないオブジェクトが指定されました');
+
+    if (stack.processing.owner.field.length === 0) {
+      await System.show(stack, '蘇る爛漫少女', '【特殊召喚】');
+      Effect.summon(stack, stack.processing, stack.processing);
     }
   },
 };
