@@ -47,7 +47,7 @@ export class Room {
         this.core.entry(player);
         this.players.set(player.id, player);
       }
-      this.sync();
+      this.sync(true);
       return true;
     } else {
       return false;
@@ -104,7 +104,7 @@ export class Room {
   }
 
   // 現在のステータスを全て送信
-  sync = () => {
+  sync = (force: boolean = false) => {
     // Colorマッピング
     const colorMap: { [key: number]: 'red' | 'yellow' | 'blue' | 'green' | 'purple' | 'none' } = {
       1: 'red',
@@ -153,7 +153,7 @@ export class Room {
 
     const currentHash = simpleHash(syncState);
 
-    if (this.cache === currentHash) {
+    if (this.cache === currentHash && !force) {
       // 状態が変わっていなければ通信をスキップ
       console.log('sync skipped (no state change)');
       return;
