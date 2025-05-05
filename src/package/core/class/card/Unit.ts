@@ -71,6 +71,7 @@ export class Unit extends Card implements IUnit {
       checkExpire: buff.checkExpire.bind(unit),
       event: undefined,
     }));
+    unit.active = this.active;
 
     return unit;
   }
