@@ -2,11 +2,10 @@ import type { IAtom, IPlayer, PlayerEntryPayload } from '@/submodule/suit/types'
 import { config } from '../../../config';
 import type { Action } from './action';
 import { Card } from './card/Card';
-import { Unit } from './card/Unit';
+import { Unit, Evolve } from './card/Unit';
 import master from '@/database/catalog';
 import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
-import { Evolve } from './card/Evolve';
 import type { Core } from '../core';
 
 export interface PlayerAction {
@@ -18,10 +17,20 @@ export interface FindResult {
   result: boolean;
   card?: Card;
   place?: {
-    name: string;
+    name: {
+      [K in keyof Player]: Player[K] extends Card[] ? K : never;
+    }[keyof Player];
     ref: Array<Card>;
   };
 }
+
+// PlayerのうちCard[]型であるプロパティ名から"called"を除外
+export type CardArrayKeys = Exclude<
+  {
+    [K in keyof Player]: Player[K] extends Card[] ? K : never;
+  }[keyof Player],
+  'called'
+>;
 
 export class Player implements IPlayer {
   id: string;
@@ -141,6 +150,17 @@ export class Player implements IPlayer {
         place: {
           name: 'called',
           ref: this.called,
+        },
+      };
+
+    const onDelete = this.delete.find(({ id }) => id === target.id);
+    if (onDelete)
+      return {
+        result: true,
+        card: onDelete,
+        place: {
+          name: 'delete',
+          ref: this.delete,
         },
       };
 

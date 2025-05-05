@@ -1,15 +1,17 @@
 import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core/core';
-import master from '@/submodule/suit/catalog/catalog';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
 import { Effect } from './effect';
+import { Unit } from '@/package/core/class/card';
+import type { StackWithCard } from './types';
 
 interface ReinforcementMatcher {
   color?: number;
   species?: string;
+  type?: ('unit' | 'advanced_unit' | 'intercept' | 'trigger')[];
 }
 
 export class EffectTemplate {
@@ -26,9 +28,9 @@ export class EffectTemplate {
    * [リバイブ]効果
    * @param count 回収する枚数
    */
-  static async revive(stack: Stack, count: number = 1): Promise<void> {
+  static async revive(stack: StackWithCard, count: number = 1): Promise<void> {
     // 召喚者特定
-    const driver = EffectHelper.owner(stack.core, stack.processing);
+    const driver = stack.processing.owner;
 
     if (!driver) return;
 
@@ -69,14 +71,14 @@ export class EffectTemplate {
 
     // 召喚者のデッキから条件に合致するカードを探す
     const target = player.deck.find(c => {
-      const catalog = master.get(c.catalogId);
-      if (!catalog || (catalog.type !== 'unit' && catalog.type !== 'advanced_unit')) return false;
-
       // 色の一致
-      const colorMatch = match.color ? catalog.color === match.color : true;
+      const colorMatch = match.color ? c.catalog.color === match.color : true;
       // 種族の一致
-      const speciesMatch = match.species ? catalog.species?.includes(match.species) : true;
-      return colorMatch && speciesMatch;
+      const speciesMatch = match.species ? c.catalog.species?.includes(match.species) : true;
+      // タイプの一致
+      const typeMatch = match.type ? match.type.includes(c.catalog.type) : true;
+
+      return colorMatch && speciesMatch && typeMatch;
     });
 
     // targetを引き抜き、手札に加える
@@ -85,5 +87,28 @@ export class EffectTemplate {
     }
 
     return;
+  }
+
+  static async reincarnate(stack: Stack, unit: Unit) {
+    const hasFieldSpace = unit.owner.field.length <= 4;
+    const targets = unit.owner.deck.filter(card => {
+      return (
+        card.catalog.species?.includes('武身') &&
+        card.catalog.cost >= unit.catalog.cost &&
+        card.catalog.cost <= unit.catalog.cost + 1
+      );
+    });
+    const [target] = EffectHelper.random(targets);
+
+    if (hasFieldSpace && targets.length > 0 && target instanceof Unit) {
+      await System.show(
+        stack,
+        '武身転生',
+        `コスト${unit.catalog.cost}以上${unit.catalog.cost + 1}以下の【武身】を【特殊召喚】\n自身をデッキに戻す`
+      );
+      Effect.summon(stack, unit, target);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      Effect.bounce(stack, unit, unit, 'deck');
+    }
   }
 }

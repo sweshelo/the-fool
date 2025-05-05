@@ -16,7 +16,7 @@ import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
-import { Effect, EffectHelper } from '@/database/effects';
+import { Effect } from '@/database/effects';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -94,12 +94,13 @@ export class Core {
 
       // ターン開始処理
       this.turn++;
-      this.round = Math.floor(this.turn / 2);
+      this.round = Math.floor((this.turn + 1) / 2);
     }
 
     // CP初期化
     const turnPlayer = this.getTurnPlayer();
     if (turnPlayer) {
+      console.log('ROUND: %s / Turn: %s', this.round, this.turn);
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -205,6 +206,7 @@ export class Core {
       await this.postBattle(attacker, blocker);
     }
 
+    attacker.active = false;
     this.room.sync();
   }
 
@@ -214,7 +216,7 @@ export class Core {
    */
   async block(attacker: Unit): Promise<Unit | undefined> {
     // プレイヤーを特定
-    const attackerOwner = EffectHelper.owner(this, attacker);
+    const attackerOwner = attacker.owner;
     const blockerOwner = this.players.find(player => player.id !== attackerOwner.id);
 
     if (!blockerOwner || !attackerOwner)
@@ -226,10 +228,8 @@ export class Core {
       return unit.active;
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const forceBlock = blockable.filter((unit: Unit) => {
-      // TODO: ここで強制防御を持つユニットをフィルタする
-      return false;
+      return unit.hasKeyword('強制防御');
     });
 
     // 強制防御を持つユニットがいない場合はそのまま素のcandidateを返却する
@@ -263,8 +263,8 @@ export class Core {
     const [blockerId] =
       candidate.length > 0
         ? await new Promise<string[]>(resolve => {
-            this.setEffectDisplayHandler(promptId, (choice: string[]) => {
-              resolve(choice);
+            this.setEffectDisplayHandler(promptId, (choice: string[] | undefined) => {
+              resolve(choice ?? []);
             });
           })
         : [];
@@ -346,7 +346,7 @@ export class Core {
       !isWinnerBreaked &&
       isLoserBreaked &&
       winner.lv < 3 &&
-      EffectHelper.owner(this, winner).field.find(unit => unit.id === winner.id)
+      winner.owner.field.find(unit => unit.id === winner.id)
     ) {
       const winnerStack = new Stack({
         type: '_postBattle',
@@ -488,6 +488,8 @@ export class Core {
         if (isOnHand && isSameCard && isUnderLv3) {
           player.hand = player?.hand.filter(card => card.id !== target.card?.id);
           parent.card.lv++;
+
+          target.card.reset();
           player.trash.push(target.card);
           [...Array(this.room.rule.system.draw.override)].forEach(() => {
             if (player.hand.length < this.room.rule.player.max.hand) {
@@ -528,7 +530,7 @@ export class Core {
         const isEvolve = message.payload.type === 'EvolveDrive' && 'source' in payload;
 
         // フィールドのユニット数が規定未満
-        const isEnoughField = isEvolve
+        const hasFieldSpace = isEvolve
           ? true
           : player.field.length < this.room.rule.player.max.field;
 
@@ -545,7 +547,7 @@ export class Core {
 
         console.log('召喚確定：%s', card.catalog.name);
 
-        if (isEnoughCP && isEnoughField && isUnit) {
+        if (isEnoughCP && hasFieldSpace && isUnit) {
           const cost = card.catalog.cost;
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
@@ -568,12 +570,17 @@ export class Core {
             // 進化元をトラッシュに移動
             const source = player.field[index];
             if (!source) throw new Error('進化元が見つかりませんでした');
-            player.trash.push(source);
 
             // 進化元の行動権を継承
             card.active = source.active;
             player.field[index] = card;
+
+            if (!source.isCopy) {
+              player.trash.push(source);
+              source.reset();
+            }
           } else {
+            card.active = true;
             player.field.push(card);
           }
 

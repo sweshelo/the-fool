@@ -17,7 +17,7 @@ export const effects = {
   // 自身以外が召喚された時に発動する効果を記述
   // 味方ユニットであるかの判定などを忘れない
   onOverclockSelf: async (stack: StackWithCard) => {
-    const opponent = stack.processing.owner;
+    const opponent = stack.processing.owner.opponent;
     const filter = (unit: Unit) => {
       return opponent.field.some(u => u.id === unit.id);
     };

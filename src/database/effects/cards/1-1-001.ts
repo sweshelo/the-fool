@@ -7,6 +7,7 @@ export const effects = {
     await System.show(stack, '孤独との別れ', '赤属性ユニットを1枚引く');
     EffectTemplate.reinforcements(stack, stack.processing.owner, {
       color: Color.RED,
+      type: ['unit', 'advanced_unit'],
     });
   },
 };
