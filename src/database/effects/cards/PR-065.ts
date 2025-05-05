@@ -17,9 +17,9 @@ export const effects: CardEffects = {
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.delete.length > 0 && stack.processing.owner.id === stack.source.id) {
       await System.show(stack, '禁忌の霊符', '消滅カードを3枚まで捨札に送る');
-      const targets = EffectHelper.random(stack.processing.owner.delete, 3);
-      console.log(targets);
-      targets.forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
+      EffectHelper.random(stack.processing.owner.delete, 3).forEach(card =>
+        Effect.move(stack, stack.processing, card, 'trash')
+      );
     }
   },
 
