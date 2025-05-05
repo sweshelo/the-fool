@@ -117,6 +117,7 @@ export class Stack implements IStack {
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of field.turnPlayer) {
+      if (!turnPlayer.field.find(u => u.id === unit.id)) return;
       await this.processCardEffect(unit, core);
       await this.resolveChild(core);
     }
@@ -124,6 +125,7 @@ export class Stack implements IStack {
     // 非ターンプレイヤーのフィールド上のカードを処理
     if (nonTurnPlayer) {
       for (const unit of field.nonTurnPlayer) {
+        if (!nonTurnPlayer.field.find(u => u.id === unit.id)) return;
         await this.processCardEffect(unit, core);
         await this.resolveChild(core);
       }
