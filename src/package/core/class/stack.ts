@@ -264,9 +264,10 @@ export class Stack implements IStack {
     });
 
     this.children = [];
-    this.core.room.sync();
-
-    if (isProcessed.includes(true)) await new Promise(resolve => setTimeout(resolve, 1000));
+    if (isProcessed.includes(true)) {
+      this.core.room.sync();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
