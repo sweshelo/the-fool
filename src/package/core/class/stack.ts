@@ -111,16 +111,17 @@ export class Stack implements IStack {
 
     // まず source カードの効果を処理
     if (this.target instanceof Card) {
-      console.log('checking %s <%s> ...', this.target.catalog.name, this.type);
-      await this.processCardEffect(this.target, core, 'Self');
-      await this.resolveChild(core);
+      if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
+        await this.processCardEffect(this.target, core, 'Self');
+        await this.resolveChild(core);
+      }
     }
 
     this.processFieldEffect();
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of field.turnPlayer) {
-      if (!turnPlayer.field.find(u => u.id === unit.id)) continue;
+      if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
       await this.processCardEffect(unit, core);
       await this.resolveChild(core);
     }
@@ -128,7 +129,7 @@ export class Stack implements IStack {
     // 非ターンプレイヤーのフィールド上のカードを処理
     if (nonTurnPlayer) {
       for (const unit of field.nonTurnPlayer) {
-        if (!nonTurnPlayer.field.find(u => u.id === unit.id)) continue;
+        if (!nonTurnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
         await this.processCardEffect(unit, core);
         await this.resolveChild(core);
       }

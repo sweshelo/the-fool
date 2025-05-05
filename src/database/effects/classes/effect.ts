@@ -577,4 +577,11 @@ export class Effect {
     Effect.summon(stack, source, unit, true);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
+
+  static speedMove(stack: Stack, target: Unit) {
+    target.delta = target.delta.filter(
+      delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+    );
+    stack.core.room.soundEffect('speedmove');
+  }
 }

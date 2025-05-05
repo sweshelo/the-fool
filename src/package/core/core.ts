@@ -678,8 +678,17 @@ export class Core {
           player.trash.push(target);
           target.reset();
           this.fieldEffectUnmount(target);
-          this.room.sync();
           this.room.soundEffect('withdrawal');
+          this.room.sync();
+
+          // フィールド効果呼び出し
+          const stack = new Stack({
+            type: '_withdraw',
+            core: this,
+            source: target,
+          });
+          this.stack = [stack];
+          await this.resolveStack();
         }
         break;
       }

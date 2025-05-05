@@ -53,7 +53,15 @@ export class Unit extends Card implements IUnit {
       buff => buff.effect.type === 'keyword' && buff.effect.name === keyword
     );
 
-    return hasNoSilent && hasTarget;
+    switch (keyword) {
+      case '沈黙':
+        return !hasNoSilent;
+      case '行動制限':
+      case '起動':
+        return hasTarget;
+      default:
+        return hasNoSilent && hasTarget;
+    }
   }
 
   // 自身をコピーしたユニットを生成する
