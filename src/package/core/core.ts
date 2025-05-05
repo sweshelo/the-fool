@@ -530,7 +530,7 @@ export class Core {
         const isEvolve = message.payload.type === 'EvolveDrive' && 'source' in payload;
 
         // フィールドのユニット数が規定未満
-        const isEnoughField = isEvolve
+        const hasFieldSpace = isEvolve
           ? true
           : player.field.length < this.room.rule.player.max.field;
 
@@ -547,7 +547,7 @@ export class Core {
 
         console.log('召喚確定：%s', card.catalog.name);
 
-        if (isEnoughCP && isEnoughField && isUnit) {
+        if (isEnoughCP && hasFieldSpace && isUnit) {
           const cost = card.catalog.cost;
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる

@@ -90,7 +90,7 @@ export class EffectTemplate {
   }
 
   static async reincarnate(stack: Stack, unit: Unit) {
-    const isEnoughField = unit.owner.field.length <= 4;
+    const hasFieldSpace = unit.owner.field.length <= 4;
     const targets = unit.owner.deck.filter(card => {
       return (
         card.catalog.species?.includes('武身') &&
@@ -100,7 +100,7 @@ export class EffectTemplate {
     });
     const [target] = EffectHelper.random(targets);
 
-    if (isEnoughField && targets.length > 0 && target instanceof Unit) {
+    if (hasFieldSpace && targets.length > 0 && target instanceof Unit) {
       await System.show(
         stack,
         '武身転生',

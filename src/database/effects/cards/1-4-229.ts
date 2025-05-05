@@ -4,12 +4,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const isEnoughField = stack.processing.owner.field.length <= 4;
+  const hasFieldSpace = stack.processing.owner.field.length <= 4;
   const targets = stack.processing.owner.deck.filter(
     card => card.catalog.species?.includes('武身') && card.catalog.cost <= 2
   );
 
-  if (isEnoughField && targets.length > 0) {
+  if (hasFieldSpace && targets.length > 0) {
     await System.show(stack, '叢雲の覇気', 'コスト2以下の【武身】を【特殊召喚】');
     const choices: Choices = {
       title: '【特殊召喚】するユニットを選択してください',

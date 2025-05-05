@@ -1,6 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import { Evolve, type Card, type Unit } from '@/package/core/class/card';
-import type { Player } from '@/package/core/class/Player';
+import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 
@@ -231,12 +231,7 @@ export class Effect {
    * @param location 移動先
    * @returns void
    */
-  static move(
-    stack: Stack,
-    source: Card,
-    target: Card,
-    location: 'hand' | 'trigger' | 'deck' | 'trash' | 'delete'
-  ): void {
+  static move(stack: Stack, source: Card, target: Card, location: CardArrayKeys): void {
     const owner = target.owner;
     const cardFind = owner.find(target);
 
@@ -247,7 +242,7 @@ export class Effect {
     const origin = cardFind.place.name;
 
     // Type guard to check if the origin is a valid card location
-    if (!['hand', 'trigger', 'deck', 'trash', 'field', 'deck', 'delete'].includes(origin)) {
+    if (!['hand', 'trigger', 'deck', 'trash', 'field', 'delete'].includes(origin)) {
       throw new Error('無効な移動元です');
     }
 
@@ -307,6 +302,7 @@ export class Effect {
     }
 
     if (origin === 'trigger' && location === 'trash') {
+      stack.core.room.soundEffect('destruction');
       stack.addChildStack('lost', source, target);
     } else {
       stack.addChildStack('move', source, target);
@@ -472,12 +468,12 @@ export class Effect {
    */
   static summon(stack: Stack, source: Card, target: Unit, isCopy?: boolean): Unit | undefined {
     // フィールドに空きがあるか
-    const isEnoughField = target.owner.field.length < stack.core.room.rule.player.max.field;
+    const hasFieldSpace = target.owner.field.length < stack.core.room.rule.player.max.field;
 
     // 対象が進化でない
     const isNotEvolve = !(target instanceof Evolve);
 
-    if (isEnoughField && isNotEvolve) {
+    if (hasFieldSpace && isNotEvolve) {
       // ユニットが別の領域に存在する場合はそれを削除
       // (複製、デッキ外からの特殊召喚などは必ずしも別の領域に存在するとは限らないので例外はスローしない)
       const exist = target.owner.find(target);
