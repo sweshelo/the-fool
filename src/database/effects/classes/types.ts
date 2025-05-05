@@ -26,4 +26,5 @@ export type CheckEffectMethod = (stack: StackWithCard) => Promise<boolean> | boo
 export interface CardEffects {
   [key: `on${string}`]: OnEffectMethod;
   [key: `check${string}`]: CheckEffectMethod;
+  fieldEffect?: (stack: StackWithCard) => void;
 }

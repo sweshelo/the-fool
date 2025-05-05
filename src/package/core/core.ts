@@ -224,8 +224,25 @@ export class Core {
 
     // ブロック側ユニットのブロック可能ユニットを列挙
     const blockable = blockerOwner.field.filter((unit: Unit) => {
-      // TODO: 次元干渉系のチェックを行う
-      return unit.active;
+      // 次元干渉を発動している場合、指定コスト以上のユニットはブロックできない
+      const blockableCost = attacker.hasKeyword('次元干渉')
+        ? Math.min(
+            ...attacker.delta
+              .map(delta =>
+                delta.effect.type === 'keyword' && delta.effect.name === '次元干渉'
+                  ? delta.effect.cost
+                  : undefined
+              )
+              .filter(v => v !== undefined)
+          )
+        : undefined;
+      const isNumber = blockableCost !== undefined && Number.isInteger(blockableCost);
+
+      return (
+        unit.active &&
+        !unit.hasKeyword('防御禁止') &&
+        (isNumber ? unit.catalog.cost < blockableCost : true)
+      );
     });
 
     const forceBlock = blockable.filter((unit: Unit) => {
@@ -567,13 +584,13 @@ export class Core {
             const index = player.field.findIndex(unit => unit.id === payload.source.id);
             if (index === -1) throw new Error('進化元が見つかりませんでした');
 
-            // 進化元をトラッシュに移動
             const source = player.field[index];
             if (!source) throw new Error('進化元が見つかりませんでした');
 
             // 進化元の行動権を継承
             card.active = source.active;
             player.field[index] = card;
+            this.fieldEffectUnmount(source);
 
             if (!source.isCopy) {
               player.trash.push(source);
@@ -647,13 +664,13 @@ export class Core {
       case 'Withdrawal': {
         const payload: WithdrawalPayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
-        const target = player?.find(payload.target);
-        const isOnField = target?.place?.name === 'field';
+        const target = player?.field.find(unit => unit.id === payload.target.id);
 
-        if (target && target.card && player && isOnField) {
-          player.field = player.field.filter(u => u.id !== target.card?.id);
-          player.trash.push(target.card);
-          target.card.lv = 1;
+        if (target && player) {
+          player.field = player.field.filter(u => u.id !== target.id);
+          player.trash.push(target);
+          target.reset();
+          this.fieldEffectUnmount(target);
           this.room.sync();
           this.room.soundEffect('withdrawal');
         }
@@ -712,5 +729,17 @@ export class Core {
         break;
       }
     }
+  }
+
+  // フィールド効果を掃除する
+  // フィールドを離れるカードに起因する効果を取り除く
+  fieldEffectUnmount(target: Unit) {
+    [
+      ...this.players.flatMap(player => player.field),
+      ...this.players.flatMap(player => player.hand),
+      ...this.players.flatMap(player => player.trigger),
+    ].forEach(card => {
+      card.delta = card.delta.filter(delta => delta.source?.unit !== target.id);
+    });
   }
 }

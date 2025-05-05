@@ -1,9 +1,17 @@
 import { Unit } from '@/package/core/class/card';
-import { EffectTemplate, System } from '..';
+import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import type { KeywordEffect } from '@/submodule/suit/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  await System.show(stack, '武身', '武身 メイン効果');
+  await System.show(
+    stack,
+    '護剣の戦舞',
+    '味方全体の基本BP+2000\n【武身】に【不屈】と【貫通】を与える'
+  );
+  stack.processing.owner.field.forEach(unit =>
+    Effect.modifyBP(stack, stack.processing, unit, 2000, true)
+  );
 };
 
 export const effects: CardEffects = {
@@ -28,5 +36,22 @@ export const effects: CardEffects = {
     )
       return;
     await EffectTemplate.reincarnate(stack, stack.processing);
+  },
+
+  fieldEffect: (stack: StackWithCard) => {
+    stack.processing.owner.field
+      .filter(unit => unit.catalog.species?.includes('武身'))
+      .forEach(unit => {
+        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
+          console.log('%s に対してアロンダイトのフィールド効果が発動', unit.catalog.name);
+          (['不屈', '貫通'] satisfies KeywordEffect[]).forEach(keyword =>
+            Effect.keyword(stack, stack.processing, unit, keyword, {
+              source: {
+                unit: stack.processing.id,
+              },
+            })
+          );
+        }
+      });
   },
 };

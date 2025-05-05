@@ -73,4 +73,28 @@ export const effects: CardEffects = {
     Effect.damage(stack, stack.processing, damageUnit, damageA, 'effect');
     Effect.damage(stack, stack.processing, stack.target, damageB, 'effect');
   },
+
+  fieldEffect: (stack: StackWithCard) => {
+    // 自身に秩序の盾を与える効果が発動しておらず、フィールドにユニットが２体以下の場合
+    if (
+      stack.processing.owner.field.length <= 2 &&
+      !stack.processing.delta.some(delta => delta.source?.unit === stack.processing.id)
+    ) {
+      Effect.keyword(stack, stack.processing, stack.processing as Unit, '秩序の盾', {
+        source: {
+          unit: stack.processing.id,
+        },
+      });
+    }
+
+    // 自身に秩序の盾を与える効果が発動しており、フィールドにユニットが２体より多い場合
+    if (
+      stack.processing.owner.field.length > 2 &&
+      stack.processing.delta.some(delta => delta.source?.unit === stack.processing.id)
+    ) {
+      stack.processing.delta = stack.processing.delta.filter(
+        delta => delta.source?.unit !== stack.processing.id
+      );
+    }
+  },
 };
