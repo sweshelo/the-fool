@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    await System.show(stack, 'ヒートストーム', "【ドラゴン】を1枚引く'【ドラゴン】のレベル+1");
+    await System.show(stack, 'ヒートストーム', '【ドラゴン】を1枚引く\n【ドラゴン】のレベル+1');
     const candidate = EffectHelper.candidate(
       stack.core,
       unit =>

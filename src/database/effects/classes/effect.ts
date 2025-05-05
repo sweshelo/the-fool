@@ -434,7 +434,7 @@ export class Effect {
    * // 無期限に【秩序の盾】を得る
    * Effect.keyword(stack, source, target, '秩序の盾')
    * // 次のターン終了を迎えるまで【貫通】を得る
-   * Effect.keyword(stack, source, target, '貫通', { event: 'TurnEnd', count: 1 })
+   * Effect.keyword(stack, source, target, '貫通', { event: 'turnEnd', count: 1 })
    */
   static keyword(
     stack: Stack,
@@ -555,6 +555,13 @@ export class Effect {
           },
         })
       );
+
+      // 行動制限を付与
+      Effect.keyword(stack, target, target, '行動制限', {
+        event: 'turnStart',
+        count: 1,
+        onlyForOwnersTurn: true,
+      });
 
       stack.addChildStack('extraSummon', source, target);
       stack.core.room.sync();

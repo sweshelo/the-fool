@@ -102,6 +102,9 @@ export class Stack implements IStack {
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
       this.target.active = true;
+      this.target.delta = this.target.delta.filter(
+        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+      );
       core.room.soundEffect('clock-up-field');
       core.room.soundEffect('reboot');
     }

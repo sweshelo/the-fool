@@ -17,6 +17,7 @@ import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
+import { Delta } from './class/delta';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -553,11 +554,13 @@ export class Core {
 
         if (isEvolve) {
           const source = player.field.find(unit => unit.id === payload.source.id);
-          const notEvelvable = source?.delta.find(
-            delta => delta.effect.type === 'keyword' && delta.effect.name === '進化禁止'
+          const notEvolvable = source?.delta.some(
+            delta =>
+              (delta.effect.type === 'keyword' && delta.effect.name === '進化禁止') ||
+              source.catalog.species?.includes('ウィルス')
           );
-          if (notEvelvable) {
-            console.log('進化禁止効果が発動しているため、進化できません');
+          if (notEvolvable) {
+            console.log('進化できないユニットが進化元に指定されました');
             return;
           }
         }
@@ -599,6 +602,7 @@ export class Core {
           } else {
             card.active = true;
             player.field.push(card);
+            card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
           }
 
           card.initBP();
@@ -666,6 +670,9 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const target = player?.field.find(unit => unit.id === payload.target.id);
 
+        if (target?.hasKeyword('撤退禁止') || target?.catalog.species?.includes('ウィルス'))
+          throw new Error('撤退できないユニットが指定されました');
+
         if (target && player) {
           player.field = player.field.filter(u => u.id !== target.id);
           player.trash.push(target);
@@ -706,6 +713,9 @@ export class Core {
           .find(player => player.id === payload.player)
           ?.field.find(unit => unit.id === payload.target.id);
         if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
+        if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止'))
+          throw new Error('攻撃できないユニットがアタッカーとして指定されました');
+
         this.attack(attacker);
         break;
       }

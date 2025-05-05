@@ -66,12 +66,15 @@ export class Unit extends Card implements IUnit {
       damage: 0,
     };
     unit.isCopy = true;
-    unit.delta = this.delta?.map<Delta>(buff => ({
-      ...buff,
-      checkExpire: buff.checkExpire.bind(unit),
-      event: undefined,
-    }));
+    unit.delta = this.delta
+      ?.map<Delta>(buff => ({
+        ...buff,
+        checkExpire: buff.checkExpire.bind(unit),
+        event: undefined,
+      }))
+      .filter(delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限'));
     unit.active = this.active;
+    unit.lv = this.lv;
 
     return unit;
   }
