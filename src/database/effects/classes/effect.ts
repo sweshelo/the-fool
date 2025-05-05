@@ -256,7 +256,10 @@ export class Effect {
       throw new Error('無効な移動先です');
     }
 
+    // 枚数上限付き領域には上限チェックを実施
     if (location === 'hand' && owner.hand.length >= stack.core.room.rule.player.max.hand) return;
+    if (location === 'trigger' && owner.trigger.length >= stack.core.room.rule.player.max.trigger)
+      return;
 
     switch (origin) {
       case 'hand':
@@ -485,7 +488,11 @@ export class Effect {
       }
 
       target.owner.field.push(target);
-      target.initBP();
+
+      if (!isCopy) {
+        target.initBP();
+        target.active = true;
+      }
       stack.core.room.soundEffect(isCopy ? 'copied' : 'drive');
 
       stack.core.room.broadcastToAll(
