@@ -19,8 +19,9 @@ export const effects: CardEffects = {
     const isOpponentTurn = stack.processing.owner.id !== stack.core.getTurnPlayer().id;
     const isAtLeast25BlueCardsInTrash =
       stack.processing.owner.trash.filter(card => card.catalog.color === Color.BLUE).length >= 25;
+    const hasFieldSpace = stack.processing.owner.field.length <= 4;
 
-    if (isOpponentTurn && isAtLeast25BlueCardsInTrash) {
+    if (isOpponentTurn && isAtLeast25BlueCardsInTrash && hasFieldSpace) {
       await System.show(stack, '永久凍土', '【特殊召喚】');
       Effect.summon(stack, stack.processing, stack.processing);
     }

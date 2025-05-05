@@ -18,8 +18,9 @@ export const effects: CardEffects = {
     const isOpponentTurn = stack.processing.owner.id !== stack.core.getTurnPlayer().id;
     const isAtLeast15BlueCardsInTrash =
       stack.processing.owner.trash.filter(card => card.catalog.color === Color.BLUE).length >= 15;
+    const hasFieldSpace = stack.processing.owner.field.length <= 4;
 
-    if (isOpponentTurn && isAtLeast15BlueCardsInTrash) {
+    if (isOpponentTurn && isAtLeast15BlueCardsInTrash && hasFieldSpace) {
       await System.show(stack, 'ミーナ頑張る！', '【特殊召喚】');
       Effect.summon(stack, stack.processing, stack.processing);
     }
