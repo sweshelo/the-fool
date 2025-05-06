@@ -583,11 +583,9 @@ export class Core {
 
         if (isEvolve) {
           const source = player.field.find(unit => unit.id === payload.source.id);
-          const notEvolvable = source?.delta.some(
-            delta =>
-              (delta.effect.type === 'keyword' && delta.effect.name === '進化禁止') ||
-              source.catalog.species?.includes('ウィルス')
-          );
+          const notEvolvable =
+            source?.catalog.species?.includes('ウィルス') || source?.hasKeyword('進化禁止');
+
           if (notEvolvable) {
             console.log('進化できないユニットが進化元に指定されました');
             return;
