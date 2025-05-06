@@ -225,6 +225,7 @@ export class Core {
       await this.postBattle(attacker, blocker);
     } else {
       attacker.owner.opponent.damage();
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // プレイヤーアタックに成功
       this.stack = [

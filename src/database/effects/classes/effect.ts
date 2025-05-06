@@ -485,7 +485,7 @@ export class Effect {
         stack.core.room.soundEffect('bind');
         break;
       case '不屈':
-        // stack.core.room.soundEffect('');
+        stack.core.room.soundEffect('fortitude');
         break;
       case '沈黙':
         stack.core.room.soundEffect('silent');

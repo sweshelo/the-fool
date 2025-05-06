@@ -107,6 +107,7 @@ export class Stack implements IStack {
       );
       core.room.soundEffect('clock-up-field');
       core.room.soundEffect('reboot');
+      core.room.sync();
     }
 
     // まず source カードの効果を処理
@@ -118,6 +119,7 @@ export class Stack implements IStack {
     }
 
     this.processFieldEffect();
+    core.room.sync();
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of field.turnPlayer) {
