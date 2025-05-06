@@ -18,6 +18,7 @@ import { Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
 import { Delta } from './class/delta';
+import { Parry } from './class/parry';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -189,26 +190,34 @@ export class Core {
     // アタッカー生存チェック
     if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
 
-    const blocker = await this.block(attacker);
+    let blocker: Unit | undefined = undefined;
 
-    // アタッカー/ブロッカー生存チェック
-    if (
-      !attacker.owner.field.find(unit => unit.id === attacker.id) ||
-      (blocker && !blocker.owner.field.find(unit => unit.id === blocker.id))
-    ) {
-      attacker.active = false;
-      return;
-    }
+    try {
+      blocker = await this.block(attacker);
 
-    if (blocker) {
-      await this.preBattle(attacker, blocker);
       // アタッカー/ブロッカー生存チェック
       if (
         !attacker.owner.field.find(unit => unit.id === attacker.id) ||
-        !blocker.owner.field.find(unit => unit.id === blocker.id)
+        (blocker && !blocker.owner.field.find(unit => unit.id === blocker?.id))
       ) {
         attacker.active = false;
         return;
+      }
+
+      if (blocker) {
+        await this.preBattle(attacker, blocker);
+        // アタッカー/ブロッカー生存チェック
+        if (
+          !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+          !blocker.owner.field.find(unit => unit.id === blocker?.id)
+        ) {
+          attacker.active = false;
+          return;
+        }
+      }
+    } catch (e) {
+      if (e instanceof Parry) {
+        console.log(`${e.card.catalog.name} によるパリィが行われました`);
       }
     }
 
@@ -363,6 +372,7 @@ export class Core {
         core: this,
       }),
     ];
+    console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
     await this.resolveStack();
   }
 
@@ -407,18 +417,26 @@ export class Core {
       winner.lv < 3 &&
       winner.owner.field.find(unit => unit.id === winner.id)
     ) {
-      const winnerStack = new Stack({
-        type: '_postBattle',
-        source: blocker,
-        target: attacker,
+      // 戦闘勝利後のクロックアップ処理
+      const systemStack = new Stack({
+        type: '_postBattleClockUp',
+        source: loser,
+        target: winner,
         core: this,
       });
-      Effect.clock(winnerStack, loser, winner, 1);
-      this.stack = [winnerStack];
+      Effect.clock(systemStack, loser, winner, 1);
+
+      // 戦闘勝利スタック
+      const winnerStack = new Stack({
+        type: 'win',
+        source: loser,
+        target: winner,
+        core: this,
+      });
+
+      this.stack = [systemStack, winnerStack];
       await this.resolveStack();
     }
-
-    // TODO:「戦闘に勝利したとき」のスタック解決を行う
 
     this.room.sync();
     return;
@@ -467,6 +485,7 @@ export class Core {
         // 処理完了後、スタックをクリア
         this.stack = undefined;
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error('Error resolving stack:', error);
         this.stack = undefined;
       }

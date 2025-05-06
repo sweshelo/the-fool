@@ -7,6 +7,7 @@ import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/database/effects/classes/types';
+import { Parry } from './parry';
 
 interface IStack {
   /**
@@ -110,11 +111,36 @@ export class Stack implements IStack {
       core.room.sync();
     }
 
-    // まず source カードの効果を処理
-    if (this.target instanceof Card) {
-      if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
-        await this.processCardEffect(this.target, core, 'Self');
-        await this.resolveChild(core);
+    // まず イベントに起因するカードの効果を処理
+    switch (this.type) {
+      // 効果を発生させた側のチェックをする場合
+      case 'playerAttack': {
+        if (this.source instanceof Unit && !this.source.hasKeyword('沈黙')) {
+          await this.processCardEffect(this.source, core, 'Self');
+          await this.resolveChild(core);
+        }
+        break;
+      }
+
+      // 両方のチェックをする場合
+      case 'battle': {
+        const targets = [this.source, this.target];
+        for (const target of targets) {
+          if (target instanceof Unit && !target.hasKeyword('沈黙')) {
+            await this.processCardEffect(target, core, 'Self');
+            await this.resolveChild(core);
+          }
+        }
+        break;
+      }
+
+      // 効果の影響を受けた側のチェックをする場合
+      default: {
+        if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
+          await this.processCardEffect(this.target, core, 'Self');
+          await this.resolveChild(core);
+        }
+        break;
       }
     }
 
@@ -142,7 +168,7 @@ export class Stack implements IStack {
       await this.processCardEffect(card, core, 'InHand');
       await this.resolveChild(core);
     }
-
+    
     // 非ターンプレイヤーの手札上のカードを処理
     if (nonTurnPlayer) {
       for (const card of nonTurnPlayer.hand) {
@@ -407,6 +433,7 @@ export class Stack implements IStack {
         this.processFieldEffect();
         core.room.sync();
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
@@ -507,6 +534,7 @@ export class Stack implements IStack {
         core.room.sync();
         return check;
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
