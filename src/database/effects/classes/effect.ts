@@ -382,6 +382,14 @@ export class Effect {
     }
   }
 
+  /**
+   * クロックレベルを操作する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 効果の対象
+   * @param value 操作量
+   * @param withoutOverClock オーバークロック時の効果を発動させない
+   */
   static clock(
     stack: Stack,
     source: Card,
@@ -402,6 +410,8 @@ export class Effect {
         target.bp.damage = 0;
         stack.core.room.soundEffect('clock-up');
         stack.core.room.soundEffect('clock-up-field');
+      } else {
+        stack.core.room.soundEffect('damage');
       }
 
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
@@ -410,7 +420,7 @@ export class Effect {
       const diff = afterBBP - beforeBBP;
       target.bp.base += diff;
 
-      stack.addChildStack('clock', source, target, {
+      stack.addChildStack(`clock${target.lv > before ? 'up' : 'down'}`, source, target, {
         type: 'lv',
         value: target.lv - before,
       });
@@ -443,8 +453,13 @@ export class Effect {
     keyword: KeywordEffect,
     option?: KeywordOptionParams
   ) {
-    if (target.hasKeyword('沈黙効果耐性') && source.owner.id !== target.owner.id) {
+    if (
+      keyword === '沈黙' &&
+      target.hasKeyword('沈黙効果耐性') &&
+      source.owner.id !== target.owner.id
+    ) {
       stack.core.room.soundEffect('block');
+      return;
     }
 
     const delta =
@@ -487,9 +502,6 @@ export class Effect {
       case '不屈':
         stack.core.room.soundEffect('fortitude');
         break;
-      case '沈黙':
-        stack.core.room.soundEffect('silent');
-        break;
       case '強制防御':
       case '撤退禁止':
       case '攻撃禁止':
@@ -502,6 +514,11 @@ export class Effect {
         break;
       case '次元干渉':
         stack.core.room.soundEffect('unblockable');
+        break;
+      case '沈黙':
+        stack.core.room.soundEffect('silent');
+        stack.core.fieldEffectUnmount(target); // 沈黙付与先がフィールド効果を発動している場合 フィールド効果を unmount する
+        break;
     }
   }
 
@@ -569,6 +586,13 @@ export class Effect {
     }
   }
 
+  /**
+   * 複製する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 複製対象
+   * @param owner 複製先のフィールド(プレイヤー)
+   */
   static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
     const unit = target.clone(owner);
     stack.core.room.soundEffect('copying');
@@ -578,16 +602,33 @@ export class Effect {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
+  /**
+   * 【スピードムーブ】を付与する
+   * ゲーム的にはキーワード能力付与だが、実際の処理はキーワード除去なので別メソッド化
+   * @param stack
+   * @param target 対象
+   */
   static speedMove(stack: Stack, target: Unit) {
-    target.delta = target.delta.filter(
-      delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-    );
-    stack.core.room.soundEffect('speedmove');
+    if (target.hasKeyword('行動制限')) {
+      target.delta = target.delta.filter(
+        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+      );
+      stack.core.room.soundEffect('speedmove');
+    }
   }
 
+  /**
+   * 行動権を操作する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 効果の対象
+   * @param activate 操作値 指定された値に変化する
+   */
   static activate(stack: Stack, source: Card, target: Unit, activate: boolean) {
+    // 【無我の境地】: 対戦相手の効果によって行動権を消費しない
     if (!activate && target.hasKeyword('無我の境地') && target.owner.id !== source.owner.id) {
       stack.core.room.soundEffect('block');
+      return;
     }
 
     target.active = activate;

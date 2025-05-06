@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onClock: async (stack: StackWithCard): Promise<void> => {
+  onClockup: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id
@@ -34,13 +34,13 @@ export const effects: CardEffects = {
     }
   },
 
-  onClockSelf: async (stack: StackWithCard): Promise<void> => {
+  onClockupSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = stack.processing.owner.opponent.field.filter(unit => unit.lv === 3);
     if (targets.length > 0) {
       await System.show(stack, '紅蓮のグロウバーン', '敵全体のレベル3以上のユニットに5000ダメージ');
       targets.forEach(unit => Effect.damage(stack, stack.processing, unit, 5000, 'effect'));
     }
 
-    await effects.onClock?.(stack);
+    await effects.onClockup?.(stack);
   },
 };

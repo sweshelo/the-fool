@@ -30,7 +30,7 @@ export const effects: CardEffects = {
   onBlockSelf: async (stack: StackWithCard): Promise<void> => await onBattle(stack),
   onBreakSelf: async (stack: StackWithCard): Promise<void> => await onBattle(stack),
 
-  onClockSelf: async (stack: StackWithCard): Promise<void> => {
+  onClockupSelf: async (stack: StackWithCard): Promise<void> => {
     const isClockUpToLv3 = stack.processing.lv === 3;
     const targets = stack.processing.owner.opponent.field;
 

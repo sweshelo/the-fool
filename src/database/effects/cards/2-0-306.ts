@@ -53,7 +53,7 @@ export const effects = {
     }
   },
 
-  onClockSelf: async (stack: StackWithCard) => {
+  upSelf: async (stack: StackWithCard) => {
     if (stack.processing.owner.deck.length > 0) {
       await System.show(stack, '篝夜に咲く花', 'トリガーゾーンにセット');
       EffectHelper.random(stack.processing.owner.deck).forEach(card =>

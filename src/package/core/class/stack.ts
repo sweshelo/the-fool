@@ -550,7 +550,11 @@ export class Stack implements IStack {
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {
-        if ('fieldEffect' in unit.catalog && typeof unit.catalog.fieldEffect === 'function') {
+        if (
+          'fieldEffect' in unit.catalog &&
+          typeof unit.catalog.fieldEffect === 'function' &&
+          !unit.hasKeyword('沈黙')
+        ) {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
