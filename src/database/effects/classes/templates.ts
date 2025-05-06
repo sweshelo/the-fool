@@ -111,4 +111,26 @@ export class EffectTemplate {
       Effect.bounce(stack, unit, unit, 'deck');
     }
   }
+
+  static virusInjectable(player: Player) {
+    return player.field.filter(unit => !unit.catalog.species?.includes('ウィルス')).length < 5;
+  }
+
+  static async virusInject(stack: StackWithCard, player: Player, virus: string) {
+    // ウィルスを除くユニット数が5体未満
+    if (EffectTemplate.virusInjectable(player)) {
+      // ウィルスを除外する
+      if (player.field.some(unit => unit.catalog.species?.includes('ウィルス'))) {
+        player.field = player.field.filter(unit => !unit.catalog.species?.includes('ウィルス'));
+        stack.core.room.soundEffect('leave');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // ウィルスを生成して特殊召喚
+      const virusUnit = new Unit(player, virus);
+      Effect.summon(stack, stack.processing, virusUnit);
+      Effect.keyword(stack, virusUnit, virusUnit, '攻撃禁止');
+      Effect.keyword(stack, virusUnit, virusUnit, '防御禁止');
+    }
+  }
 }

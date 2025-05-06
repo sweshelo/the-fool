@@ -1,7 +1,6 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core/core';
-import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
@@ -13,10 +12,12 @@ export class Room {
   players: Map<string, Player> = new Map<string, Player>();
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
+  cache: string | undefined;
 
   constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
     this.name = name;
+    this.cache = undefined;
     if (rule) this.rule = rule;
   }
 
@@ -46,7 +47,7 @@ export class Room {
         this.core.entry(player);
         this.players.set(player.id, player);
       }
-      this.sync();
+      this.sync(true);
       return true;
     } else {
       return false;
@@ -103,17 +104,85 @@ export class Room {
   }
 
   // 現在のステータスを全て送信
-  sync = () => {
-    console.log('syncing');
-    const players: { [key: string]: Player } = this.core.players.reduce(
-      (acc, player) => {
-        acc[player.id] = player;
-        return acc;
-      },
-      {} as { [key: string]: Player }
-    );
+  sync = (force: boolean = false) => {
+    // Colorマッピング
+    const colorMap: { [key: number]: 'red' | 'yellow' | 'blue' | 'green' | 'purple' | 'none' } = {
+      1: 'red',
+      2: 'yellow',
+      3: 'blue',
+      4: 'green',
+      5: 'purple',
+      6: 'none',
+    };
 
-    this.clients.forEach(client => {
+    // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
+    const playersState: { [key: string]: Player | object } = {};
+    this.core.players.forEach(player => {
+      playersState[player.id] = {
+        ...player,
+        deck: player.deck.map(card => ({ id: card.id })),
+        hand: player.hand.map(card => ({ id: card.id })),
+        trigger: player.trigger.map(card => ({
+          id: card.id,
+          color: colorMap[card.catalog.color as number] ?? 'none',
+        })),
+      };
+    });
+    const syncState = JSON.stringify({
+      rule: this.rule,
+      game: {
+        round: this.core.round,
+        turn: this.core.turn,
+      },
+      players: playersState,
+    });
+
+    // 簡易ハッシュ関数
+    function simpleHash(str: string): string {
+      let hash = 0,
+        i,
+        chr;
+      if (str.length === 0) return hash.toString();
+      for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return hash.toString();
+    }
+
+    const currentHash = simpleHash(syncState);
+
+    if (this.cache === currentHash && !force) {
+      // 状態が変わっていなければ通信をスキップ
+      console.log('sync skipped (no state change)');
+      return;
+    }
+
+    // 状態が変わった場合のみ通信
+    this.clients.forEach((client, playerId) => {
+      const players = this.core.players.reduce(
+        (acc: { [key: string]: Player | object }, player) => {
+          if (player.id === playerId) {
+            // 自分: 全情報
+            acc[player.id] = player;
+          } else {
+            // 相手: デッキ・手札はIDのみ、トリガーはID+color
+            acc[player.id] = {
+              ...player,
+              deck: player.deck.map(card => ({ id: card.id })),
+              hand: player.hand.map(card => ({ id: card.id })),
+              trigger: player.trigger.map(card => ({
+                id: card.id,
+                color: colorMap[card.catalog.color as number] ?? 'none',
+              })),
+            };
+          }
+          return acc;
+        },
+        {}
+      );
+
       const data = JSON.stringify({
         action: {
           type: 'sync',
@@ -130,8 +199,11 @@ export class Room {
             players,
           },
         },
-      } satisfies Message<SyncPayload>);
+      });
       client.send(data);
     });
+
+    // 通信した場合はキャッシュを更新
+    this.cache = currentHash;
   };
 }

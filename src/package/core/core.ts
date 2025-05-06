@@ -17,6 +17,7 @@ import { Stack } from './class/stack';
 import { Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
+import { Delta } from './class/delta';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -173,15 +174,30 @@ export class Core {
     ];
     await this.resolveStack();
 
-    // TODO: この時点でattackerが生存しているか確認する
+    // アタッカー生存チェック
+    if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
 
     const blocker = await this.block(attacker);
 
-    // TODO: この時点でattackerとblocker(非undefinedの場合)が生存しているか確認する (blockerのブロックとそれに伴う効果解決が行われる)
+    // アタッカー/ブロッカー生存チェック
+    if (
+      !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+      (blocker && !blocker.owner.field.find(unit => unit.id === blocker.id))
+    ) {
+      attacker.active = false;
+      return;
+    }
 
     if (blocker) {
       await this.preBattle(attacker, blocker);
-      // TODO: この時点でattackerとblockerが生存しているか確認する (両者の戦闘に伴う効果解決が行われる)
+      // アタッカー/ブロッカー生存チェック
+      if (
+        !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+        !blocker.owner.field.find(unit => unit.id === blocker.id)
+      ) {
+        attacker.active = false;
+        return;
+      }
     }
 
     // NOTE: 生存確認処理を行い、attacker/blocker(非undefinedの場合)の両者が生存していれば以下が実行される
@@ -202,12 +218,26 @@ export class Core {
       })
     );
 
-    if (blocker) {
-      await this.postBattle(attacker, blocker);
-    }
-
     attacker.active = false;
     this.room.sync();
+
+    if (blocker) {
+      await this.postBattle(attacker, blocker);
+    } else {
+      attacker.owner.opponent.damage();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // プレイヤーアタックに成功
+      this.stack = [
+        new Stack({
+          type: 'playerAttack',
+          target: attacker.owner.opponent,
+          source: attacker,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
+    }
   }
 
   /**
@@ -224,8 +254,25 @@ export class Core {
 
     // ブロック側ユニットのブロック可能ユニットを列挙
     const blockable = blockerOwner.field.filter((unit: Unit) => {
-      // TODO: 次元干渉系のチェックを行う
-      return unit.active;
+      // 次元干渉を発動している場合、指定コスト以上のユニットはブロックできない
+      const blockableCost = attacker.hasKeyword('次元干渉')
+        ? Math.min(
+            ...attacker.delta
+              .map(delta =>
+                delta.effect.type === 'keyword' && delta.effect.name === '次元干渉'
+                  ? delta.effect.cost
+                  : undefined
+              )
+              .filter(v => v !== undefined)
+          )
+        : undefined;
+      const isNumber = blockableCost !== undefined && Number.isInteger(blockableCost);
+
+      return (
+        unit.active &&
+        !unit.hasKeyword('防御禁止') &&
+        (isNumber ? unit.catalog.cost < blockableCost : true)
+      );
     });
 
     const forceBlock = blockable.filter((unit: Unit) => {
@@ -536,11 +583,11 @@ export class Core {
 
         if (isEvolve) {
           const source = player.field.find(unit => unit.id === payload.source.id);
-          const notEvelvable = source?.delta.find(
-            delta => delta.effect.type === 'keyword' && delta.effect.name === '進化禁止'
-          );
-          if (notEvelvable) {
-            console.log('進化禁止効果が発動しているため、進化できません');
+          const notEvolvable =
+            source?.catalog.species?.includes('ウィルス') || source?.hasKeyword('進化禁止');
+
+          if (notEvolvable) {
+            console.log('進化できないユニットが進化元に指定されました');
             return;
           }
         }
@@ -567,13 +614,13 @@ export class Core {
             const index = player.field.findIndex(unit => unit.id === payload.source.id);
             if (index === -1) throw new Error('進化元が見つかりませんでした');
 
-            // 進化元をトラッシュに移動
             const source = player.field[index];
             if (!source) throw new Error('進化元が見つかりませんでした');
 
             // 進化元の行動権を継承
             card.active = source.active;
             player.field[index] = card;
+            this.fieldEffectUnmount(source);
 
             if (!source.isCopy) {
               player.trash.push(source);
@@ -582,6 +629,7 @@ export class Core {
           } else {
             card.active = true;
             player.field.push(card);
+            card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
           }
 
           card.initBP();
@@ -647,15 +695,27 @@ export class Core {
       case 'Withdrawal': {
         const payload: WithdrawalPayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
-        const target = player?.find(payload.target);
-        const isOnField = target?.place?.name === 'field';
+        const target = player?.field.find(unit => unit.id === payload.target.id);
 
-        if (target && target.card && player && isOnField) {
-          player.field = player.field.filter(u => u.id !== target.card?.id);
-          player.trash.push(target.card);
-          target.card.lv = 1;
-          this.room.sync();
+        if (target?.hasKeyword('撤退禁止') || target?.catalog.species?.includes('ウィルス'))
+          throw new Error('撤退できないユニットが指定されました');
+
+        if (target && player) {
+          player.field = player.field.filter(u => u.id !== target.id);
+          player.trash.push(target);
+          target.reset();
+          this.fieldEffectUnmount(target);
           this.room.soundEffect('withdrawal');
+          this.room.sync();
+
+          // フィールド効果呼び出し
+          const stack = new Stack({
+            type: '_withdraw',
+            core: this,
+            source: target,
+          });
+          this.stack = [stack];
+          await this.resolveStack();
         }
         break;
       }
@@ -689,6 +749,9 @@ export class Core {
           .find(player => player.id === payload.player)
           ?.field.find(unit => unit.id === payload.target.id);
         if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
+        if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止'))
+          throw new Error('攻撃できないユニットがアタッカーとして指定されました');
+
         this.attack(attacker);
         break;
       }
@@ -712,5 +775,17 @@ export class Core {
         break;
       }
     }
+  }
+
+  // フィールド効果を掃除する
+  // フィールドを離れるカードに起因する効果を取り除く
+  fieldEffectUnmount(target: Unit) {
+    [
+      ...this.players.flatMap(player => player.field),
+      ...this.players.flatMap(player => player.hand),
+      ...this.players.flatMap(player => player.trigger),
+    ].forEach(card => {
+      card.delta = card.delta.filter(delta => delta.source?.unit !== target.id);
+    });
   }
 }

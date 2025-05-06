@@ -43,6 +43,7 @@ export class Player implements IPlayer {
   field: Unit[];
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
+  joker: number;
 
   #core: Core;
 
@@ -72,6 +73,8 @@ export class Player implements IPlayer {
     // ライブラリからデッキを生成する
     this.library = [...deck];
     this.deck = this.initDeck();
+
+    this.joker = 0;
   }
 
   initDeck() {
@@ -230,5 +233,12 @@ export class Player implements IPlayer {
     } else {
       return result;
     }
+  }
+
+  damage(self: boolean = false) {
+    this.life.current--;
+    if (!self) this.joker += 10;
+
+    if (this.life.current <= 0) return true;
   }
 }

@@ -1,9 +1,2 @@
-import type { Stack } from '@/package/core/class/stack';
-import { EffectTemplate, System } from '..';
-
-export const effects = {
-  onOverclockSelf: async (stack: Stack) => {
-    await System.show(stack, 'リバイブ', '捨札から1枚選んで回収');
-    await EffectTemplate.revive(stack, 1);
-  },
-};
+import { effects } from './1-0-031';
+export { effects };

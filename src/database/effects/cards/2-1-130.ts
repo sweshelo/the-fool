@@ -46,6 +46,8 @@ export const effects: CardEffects = {
         '加護',
         '沈黙効果耐性',
       ] satisfies KeywordEffect[]
-    ).forEach(keyword => Effect.keyword(stack, stack.processing, unit, keyword));
+    ).forEach(keyword =>
+      Effect.keyword(stack, stack.processing, unit, keyword, { event: 'turnEnd', count: 1 })
+    );
   },
 };

@@ -6,6 +6,7 @@ import master from '@/database/catalog';
 import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
+import type { StackWithCard } from '@/database/effects/classes/types';
 
 interface IStack {
   /**
@@ -101,19 +102,28 @@ export class Stack implements IStack {
     if (this.type === 'overclock' && this.target instanceof Unit) {
       this.target.overclocked = true;
       this.target.active = true;
+      this.target.delta = this.target.delta.filter(
+        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+      );
       core.room.soundEffect('clock-up-field');
       core.room.soundEffect('reboot');
+      core.room.sync();
     }
 
     // まず source カードの効果を処理
     if (this.target instanceof Card) {
-      console.log('checking %s <%s> ...', this.target.catalog.name, this.type);
-      await this.processCardEffect(this.target, core, 'Self');
-      await this.resolveChild(core);
+      if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
+        await this.processCardEffect(this.target, core, 'Self');
+        await this.resolveChild(core);
+      }
     }
+
+    this.processFieldEffect();
+    core.room.sync();
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of field.turnPlayer) {
+      if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
       await this.processCardEffect(unit, core);
       await this.resolveChild(core);
     }
@@ -121,6 +131,7 @@ export class Stack implements IStack {
     // 非ターンプレイヤーのフィールド上のカードを処理
     if (nonTurnPlayer) {
       for (const unit of field.nonTurnPlayer) {
+        if (!nonTurnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
         await this.processCardEffect(unit, core);
         await this.resolveChild(core);
       }
@@ -220,6 +231,18 @@ export class Stack implements IStack {
       await this.resolveChild(core);
       index++;
     } while (canceled < player.length);
+
+    // deltaを更新
+    [
+      ...turnPlayer.field,
+      ...turnPlayer.hand,
+      ...(nonTurnPlayer?.field ?? []),
+      ...(nonTurnPlayer?.hand ?? []),
+    ].forEach(card => {
+      this.processing = card;
+      card.delta = card.delta.filter(delta => !delta.checkExpire(this as StackWithCard));
+      this.processing = undefined;
+    });
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -231,6 +254,8 @@ export class Stack implements IStack {
     if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
     const isProcessed = this.children.map(stack => {
       const target = stack.target as Unit;
+      this.core.fieldEffectUnmount(target);
+
       switch (stack.type) {
         case 'break':
           this.moveUnit(target, 'trash');
@@ -247,9 +272,10 @@ export class Stack implements IStack {
     });
 
     this.children = [];
-    this.core.room.sync();
-
-    if (isProcessed.includes(true)) await new Promise(resolve => setTimeout(resolve, 1000));
+    if (isProcessed.includes(true)) {
+      this.core.room.sync();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
@@ -339,6 +365,7 @@ export class Stack implements IStack {
         card.lv = 1;
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.push(card);
+        this.processFieldEffect();
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
@@ -378,6 +405,7 @@ export class Stack implements IStack {
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
+        this.processFieldEffect();
         core.room.sync();
       } catch (error) {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
@@ -474,6 +502,7 @@ export class Stack implements IStack {
           // トリガーカード発動スタックを積む
           this.addChildStack('trigger', owner, card);
         }
+        this.processFieldEffect();
         core.room.sync();
         return check;
       } catch (error) {
@@ -515,5 +544,21 @@ export class Stack implements IStack {
    */
   get id(): string {
     return `${this.source.id}_${this.type}_${Date.now()}`;
+  }
+
+  private processFieldEffect() {
+    this.core.players
+      .flatMap(player => player.field)
+      .forEach(unit => {
+        if (
+          'fieldEffect' in unit.catalog &&
+          typeof unit.catalog.fieldEffect === 'function' &&
+          !unit.hasKeyword('沈黙')
+        ) {
+          this.processing = unit;
+          unit.catalog.fieldEffect(this);
+          this.processing = undefined;
+        }
+      });
   }
 }
