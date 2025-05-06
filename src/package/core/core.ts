@@ -140,6 +140,17 @@ export class Core {
     ];
     await this.resolveStack();
 
+    // 狂戦士 アタックさせる
+    for (const unit of this.getTurnPlayer().field.filter(
+      unit =>
+        unit.hasKeyword('狂戦士') &&
+        !unit.hasKeyword('攻撃禁止') &&
+        !unit.hasKeyword('行動制限') &&
+        unit.active
+    )) {
+      await this.attack(unit);
+    }
+
     // defrost
     this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
   }
