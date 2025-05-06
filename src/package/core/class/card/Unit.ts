@@ -30,7 +30,11 @@ export class Unit extends Card implements IUnit {
     return (
       this.bp +
       this.delta
-        .map(delta => (delta.effect.type === 'bp' ? delta.effect.diff : 0))
+        .map(delta => {
+          if (delta.effect.type === 'bp') return delta.effect.diff;
+          if (delta.effect.type === 'damage') return -delta.effect.value;
+          return 0;
+        })
         .reduce((acc, current) => acc + current, 0)
     );
   }
@@ -70,7 +74,12 @@ export class Unit extends Card implements IUnit {
         event: undefined,
         source: undefined,
       }))
-      .filter(delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限'));
+      .filter(
+        delta =>
+          !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限') &&
+          !(delta.effect.type === 'bp') &&
+          !(delta.effect.type === 'damage')
+      );
     unit.active = this.active;
     unit.lv = this.lv;
 
