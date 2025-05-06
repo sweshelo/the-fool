@@ -6,12 +6,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.opponent.field.length > 0) {
       await System.show(stack, '物言わぬ式具', '【沈黙】を与える');
-      const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP()));
-      const candidate = stack.processing.owner.opponent.field.filter(
-        unit => unit.currentBP() === max
-      );
-
-      EffectHelper.random(candidate).forEach(unit =>
+      EffectHelper.random(stack.processing.owner.opponent.field).forEach(unit =>
         Effect.keyword(stack, stack.processing, unit, '沈黙')
       );
     }

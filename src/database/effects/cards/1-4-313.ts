@@ -1,17 +1,19 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { KeywordEffect } from '@/submodule/suit/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  await System.show(
-    stack,
-    '護剣の戦舞',
-    '味方全体の基本BP+2000\n【武身】に【不屈】と【貫通】を与える'
-  );
-  stack.processing.owner.field.forEach(unit =>
-    Effect.modifyBP(stack, stack.processing, unit, 2000, true)
-  );
+  if (stack.processing.owner.opponent.field.length > 0) {
+    await System.show(stack, '妖刀の真価', '【沈黙】を与える');
+    const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP()));
+    const candidate = stack.processing.owner.opponent.field.filter(
+      unit => unit.currentBP() === max
+    );
+
+    EffectHelper.random(candidate).forEach(unit =>
+      Effect.keyword(stack, stack.processing, unit, '沈黙')
+    );
+  }
 };
 
 export const effects: CardEffects = {
@@ -36,21 +38,5 @@ export const effects: CardEffects = {
     )
       return;
     await EffectTemplate.reincarnate(stack, stack.processing);
-  },
-
-  fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.field
-      .filter(unit => unit.catalog.species?.includes('武身'))
-      .forEach(unit => {
-        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-          (['不屈', '貫通'] satisfies KeywordEffect[]).forEach(keyword =>
-            Effect.keyword(stack, stack.processing, unit, keyword, {
-              source: {
-                unit: stack.processing.id,
-              },
-            })
-          );
-        }
-      });
   },
 };
