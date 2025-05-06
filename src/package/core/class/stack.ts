@@ -119,7 +119,6 @@ export class Stack implements IStack {
     }
 
     this.processFieldEffect();
-    core.room.sync();
 
     // ターンプレイヤーのフィールド上のカードを処理 (source以外)
     for (const unit of field.turnPlayer) {
@@ -411,6 +410,8 @@ export class Stack implements IStack {
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
+
+    this.processFieldEffect();
   }
 
   /**
@@ -560,5 +561,6 @@ export class Stack implements IStack {
           this.processing = undefined;
         }
       });
+    this.core.room.sync();
   }
 }
