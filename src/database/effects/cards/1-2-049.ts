@@ -1,3 +1,4 @@
+import { Delta } from '@/package/core/class/delta';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
@@ -33,9 +34,16 @@ export const effects: CardEffects = {
         }
       }
 
-      // 豊穣の女神
-      if (unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        if (unit.lv !== 3)
+      // 豊穣の女神_Lv3
+      if (
+        unit.delta.some(
+          delta =>
+            delta.source?.unit === stack.processing.id &&
+            delta.source.effectCode === '豊穣の女神_Lv3'
+        )
+      ) {
+        // 発動中で条件外ならば取り除く
+        if (unit.lv < 3) {
           unit.delta.filter(
             delta =>
               !(
@@ -43,11 +51,38 @@ export const effects: CardEffects = {
                 delta.source.effectCode === '豊穣の女神_Lv3'
               )
           );
+        }
       } else {
-        if (unit.lv === 3)
+        // 非発動中で条件内ならば付与する
+        if (unit.lv >= 3)
           Effect.keyword(stack, stack.processing, unit, '不屈', {
             source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv3' },
           });
+      }
+
+      if (
+        unit.delta.some(
+          delta =>
+            delta.source?.unit === stack.processing.id &&
+            delta.source.effectCode === '豊穣の女神_Lv2'
+        )
+      ) {
+        if (unit.lv < 2)
+          unit.delta.filter(
+            delta =>
+              !(
+                delta.source?.unit === stack.processing.id &&
+                delta.source.effectCode === '豊穣の女神_Lv2'
+              )
+          );
+      } else {
+        if (unit.lv >= 2)
+          unit.delta.push(
+            new Delta({ type: 'bp', diff: 2000 }, undefined, undefined, undefined, {
+              unit: stack.processing.id,
+              effectCode: '豊穣の女神_Lv2',
+            })
+          );
       }
     });
   },
