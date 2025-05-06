@@ -50,9 +50,8 @@ export const effects: CardEffects = {
   fieldEffect: (stack: StackWithCard) => {
     stack.processing.owner.opponent.field.forEach(unit => {
       if (
-        !unit.delta.some(
-          delta => delta.source?.unit === stack.processing.id && unit.catalog.cost <= 3
-        )
+        !unit.delta.some(delta => delta.source?.unit === stack.processing.id) &&
+        unit.catalog.cost <= 3
       )
         Effect.keyword(stack, stack.processing, unit, '狂戦士', {
           source: { unit: stack.processing.id },

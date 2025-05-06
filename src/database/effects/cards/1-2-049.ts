@@ -12,6 +12,7 @@ export const effects: CardEffects = {
     );
   },
 
+  // FIXME: クロックアップの直後？など、効果が一時的に無効になる事がある
   fieldEffect: (stack: StackWithCard) => {
     stack.processing.owner.field.forEach(unit => {
       // 大地の掟
@@ -44,7 +45,7 @@ export const effects: CardEffects = {
       ) {
         // 発動中で条件外ならば取り除く
         if (unit.lv < 3) {
-          unit.delta.filter(
+          unit.delta = unit.delta.filter(
             delta =>
               !(
                 delta.source?.unit === stack.processing.id &&
@@ -68,7 +69,7 @@ export const effects: CardEffects = {
         )
       ) {
         if (unit.lv < 2)
-          unit.delta.filter(
+          unit.delta = unit.delta.filter(
             delta =>
               !(
                 delta.source?.unit === stack.processing.id &&

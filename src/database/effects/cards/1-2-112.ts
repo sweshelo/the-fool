@@ -46,7 +46,7 @@ export const effects: CardEffects = {
       if (stack.processing.lv === 1 && stack.processing instanceof Unit) {
         Effect.keyword(stack, stack.processing, stack.processing, '次元干渉', {
           cost: 0,
-          source: { unit: stack.processing.id, effectCode: '次元干渉' },
+          source: { unit: stack.processing.id, effectCode: '神速の一閃' },
         });
       }
     }
