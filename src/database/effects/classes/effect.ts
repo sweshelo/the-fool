@@ -12,6 +12,15 @@ interface KeywordOptionParams {
   source?: DeltaSource;
 }
 
+type ModifyBPOption =
+  | {
+      isBaseBP: true;
+    }
+  | {
+      event: Delta['event'];
+      count: Delta['count'];
+    };
+
 export class Effect {
   /**
    * 対象にダメージを与える
@@ -54,13 +63,13 @@ export class Effect {
     const hasOrderShield =
       target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
     // 【王の治癒力】: 自身のBP未満のダメージを受けない
-    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > damage;
+    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP > damage;
     if (hasImmotal || hasOrderShield || hasKingsHealing) {
       stack.core.room.soundEffect('block');
       return false;
     }
 
-    target.bp.damage += damage;
+    target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
@@ -72,7 +81,7 @@ export class Effect {
     }
 
     // 破壊された?
-    if (target.currentBP() <= 0) {
+    if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'damage');
       return true;
     }
@@ -88,13 +97,7 @@ export class Effect {
    * @param value 操作量
    * @returns この効果で相手を破壊した時は true を返す
    */
-  static modifyBP(
-    stack: Stack,
-    source: Card,
-    target: Unit,
-    value: number,
-    isBaseBP: boolean = false
-  ) {
+  static modifyBP(stack: Stack, source: Card, target: Unit, value: number, option: ModifyBPOption) {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
@@ -103,15 +106,15 @@ export class Effect {
     // 既に破壊されているユニットのBPは変動させない
     if (target.destination !== undefined) return false;
 
-    if (isBaseBP) {
-      target.bp.base += value;
+    if ('isBaseBP' in option) {
+      target.bp += value;
     } else {
-      target.bp.diff += value;
+      target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
     }
 
     stack.core.room.soundEffect(value >= 0 ? 'graw' : 'damage');
 
-    if (target.currentBP() <= 0) {
+    if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'effect');
       return true;
     }
@@ -407,7 +410,7 @@ export class Effect {
     if (target.lv !== before) {
       // Lv上昇の場合はダメージをリセットする
       if (value > 0) {
-        target.bp.damage = 0;
+        target.delta = target.delta.filter(delta => delta.effect.type !== 'damage');
         stack.core.room.soundEffect('clock-up');
         stack.core.room.soundEffect('clock-up-field');
       } else {
@@ -418,14 +421,14 @@ export class Effect {
       const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
       const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;
       const diff = afterBBP - beforeBBP;
-      target.bp.base += diff;
+      target.bp += diff;
 
       stack.addChildStack(`clock${target.lv > before ? 'up' : 'down'}`, source, target, {
         type: 'lv',
         value: target.lv - before,
       });
 
-      if (target.currentBP() <= 0) {
+      if (target.currentBP <= 0) {
         Effect.break(stack, target, target, 'system');
       } else if (target.lv === 3 && !withoutOverClock) {
         stack.addChildStack('overclock', source, target);

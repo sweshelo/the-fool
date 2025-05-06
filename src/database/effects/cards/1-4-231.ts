@@ -10,7 +10,7 @@ const ability = async (stack: StackWithCard): Promise<void> => {
     '味方全体の基本BP+2000\n【武身】に【不屈】と【貫通】を与える'
   );
   stack.processing.owner.field.forEach(unit =>
-    Effect.modifyBP(stack, stack.processing, unit, 2000, true)
+    Effect.modifyBP(stack, stack.processing, unit, 2000, { isBaseBP: true })
   );
 };
 

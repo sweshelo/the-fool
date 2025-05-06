@@ -22,7 +22,7 @@ export const effects: CardEffects = {
             await System.show(stack, '勇敢な鷲の意志', '基本BP-1000\n【沈黙】を与える');
             EffectHelper.random(stack.processing.owner.opponent.field, 3).forEach(unit => {
               Effect.keyword(stack, stack.processing, unit, '沈黙');
-              Effect.modifyBP(stack, stack.processing, unit, -1000, true);
+              Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
             });
           }
           break;

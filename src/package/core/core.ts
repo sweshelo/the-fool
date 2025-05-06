@@ -90,7 +90,6 @@ export class Core {
           this.room.soundEffect('reboot');
         }
       });
-      this.players.flatMap(player => player.field).forEach(unit => (unit.bp.damage = 0));
       this.room.sync();
 
       // ターン開始処理
@@ -364,7 +363,7 @@ export class Core {
     // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
     // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
     // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
-    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP() - a.currentBP());
+    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP - a.currentBP);
 
     if (!winner || !loser) {
       throw new Error('ユニットの勝敗判定に失敗しました');
@@ -379,7 +378,7 @@ export class Core {
     });
 
     // 「戦闘によって破壊されたとき」のスタック解決が行われる
-    const [loserDamage, winnedDamage] = [winner.currentBP(), loser.currentBP()];
+    const [loserDamage, winnedDamage] = [winner.currentBP, loser.currentBP];
     const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
     const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
     await new Promise(resolve => setTimeout(resolve, 1000));

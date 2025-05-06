@@ -69,7 +69,7 @@ export const effects: CardEffects = {
     const damageUnit = candidate.find(unit => unit.id === damageUnitId);
     if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
 
-    const [damageA, damageB] = [stack.target.currentBP(), damageUnit.currentBP()];
+    const [damageA, damageB] = [stack.target.currentBP, damageUnit.currentBP];
     Effect.damage(stack, stack.processing, damageUnit, damageA, 'effect');
     Effect.damage(stack, stack.processing, stack.target, damageB, 'effect');
   },

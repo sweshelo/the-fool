@@ -41,7 +41,7 @@ export const effects: CardEffects = {
               case '牽牛星アルタイル':
               case '織女星ベガ':
                 Effect.keyword(stack, stack.processing, unit, '秩序の盾');
-                Effect.modifyBP(stack, stack.processing, unit, 1000, true);
+                Effect.modifyBP(stack, stack.processing, unit, 1000, { isBaseBP: true });
             }
           });
           break;

@@ -5,10 +5,8 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 const ability = async (stack: StackWithCard): Promise<void> => {
   if (stack.processing.owner.opponent.field.length > 0) {
     await System.show(stack, '妖刀の真価', '【沈黙】を与える');
-    const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP()));
-    const candidate = stack.processing.owner.opponent.field.filter(
-      unit => unit.currentBP() === max
-    );
+    const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP));
+    const candidate = stack.processing.owner.opponent.field.filter(unit => unit.currentBP === max);
 
     EffectHelper.random(candidate).forEach(unit =>
       Effect.keyword(stack, stack.processing, unit, '沈黙')

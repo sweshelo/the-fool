@@ -24,9 +24,9 @@ export const effects: CardEffects = {
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.opponent.field.length > 0) {
       await System.show(stack, '裁きの光翼', '最高BPユニットを消滅');
-      const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP()));
+      const max = Math.max(...stack.processing.owner.opponent.field.map(unit => unit.currentBP));
       const candidate = stack.processing.owner.opponent.field.filter(
-        unit => unit.currentBP() === max
+        unit => unit.currentBP === max
       );
 
       EffectHelper.random(candidate).forEach(unit => Effect.delete(stack, stack.processing, unit));
