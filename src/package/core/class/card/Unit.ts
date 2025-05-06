@@ -79,6 +79,7 @@ export class Unit extends Card implements IUnit {
         ...buff,
         checkExpire: buff.checkExpire.bind(unit),
         event: undefined,
+        source: undefined,
       }))
       .filter(delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限'));
     unit.active = this.active;
