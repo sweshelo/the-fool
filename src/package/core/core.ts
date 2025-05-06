@@ -157,6 +157,8 @@ export class Core {
 
   // アタック
   async attack(attacker: Unit) {
+    if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
+
     this.room.broadcastToAll(
       createMessage({
         action: {

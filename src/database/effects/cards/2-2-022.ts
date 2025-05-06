@@ -35,7 +35,7 @@ export const effects: CardEffects = {
           break;
         case '織女星ベガ':
           await System.show(stack, '美しき白鳥の輝き', '基本BP+1000\n【秩序の盾】を与える');
-          stack.processing.owner.field.filter(unit => {
+          stack.processing.owner.field.forEach(unit => {
             switch (unit.catalog.name) {
               case '天川星デネブ':
               case '牽牛星アルタイル':

@@ -19,7 +19,7 @@ export const effects: CardEffects = {
           break;
         case '牽牛星アルタイル':
           await System.show(stack, '神秘な琴の音色', '基本BP+1000\n【次元干渉/コスト3】を与える');
-          stack.processing.owner.field.filter(unit => {
+          stack.processing.owner.field.forEach(unit => {
             switch (unit.catalog.name) {
               case '天川星デネブ':
               case '牽牛星アルタイル':

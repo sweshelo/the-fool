@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id && !unit.active
     );
     const life = stack.processing.owner.life.current;
 
@@ -18,7 +18,7 @@ export const effects: CardEffects = {
         `ユニットを【複製】する${life <= 6 ? '\n手札に作成する' : ''}${life <= 4 ? '\n消滅させる' : ''}`
       );
       const choices: Choices = {
-        title: 'ダメージを与えるユニットを選択してください',
+        title: '対象のユニットを選択してください',
         type: 'unit',
         items: candidate,
       };

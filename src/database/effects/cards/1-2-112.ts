@@ -3,6 +3,10 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
+  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+    await System.show(stack, '神速の一閃', 'レベル1の時ブロックされない');
+  },
+
   onPlayerAttackSelf: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '無我夢中の鍛錬', 'レベル+1');
     Effect.clock(stack, stack.processing, stack.processing as Unit, 1);
@@ -40,7 +44,9 @@ export const effects: CardEffects = {
       if (stack.processing.lv !== 1)
         stack.processing.delta = stack.processing.delta.filter(
           delta =>
-            delta.source?.unit === stack.processing.id && delta.source.effectCode === '神速の一閃'
+            !(
+              delta.source?.unit === stack.processing.id && delta.source.effectCode === '神速の一閃'
+            )
         );
     } else {
       if (stack.processing.lv === 1 && stack.processing instanceof Unit) {

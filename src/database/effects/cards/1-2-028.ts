@@ -13,7 +13,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '断罪の大鎌',
-        `自身以外の全てのユニットを消滅\'${damage}ライフダメージ`
+        `自身以外の全てのユニットを消滅\n${damage}ライフダメージ`
       );
       EffectHelper.exceptSelf(stack.core, stack.processing as Unit, unit =>
         Effect.delete(stack, stack.processing, unit)
