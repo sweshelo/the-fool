@@ -19,6 +19,9 @@ type ModifyBPOption =
   | {
       event: Delta['event'];
       count: Delta['count'];
+    }
+  | {
+      source: Delta['source'];
     };
 
 export class Effect {
@@ -69,6 +72,16 @@ export class Effect {
       return false;
     }
 
+    if (
+      !target.hasKeyword('沈黙') &&
+      target.catalog.name === '戦女神ジャンヌダルク' &&
+      type === 'effect'
+    ) {
+      stack.core.room.soundEffect('block');
+      target.bp += damage;
+      return false;
+    }
+
     target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
@@ -108,6 +121,10 @@ export class Effect {
 
     if ('isBaseBP' in option) {
       target.bp += value;
+    } else if ('source' in option) {
+      target.delta.push(
+        new Delta({ type: 'bp', diff: value }, undefined, undefined, undefined, option.source)
+      );
     } else {
       target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
     }

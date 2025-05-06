@@ -155,7 +155,6 @@ export class Room {
 
     if (this.cache === currentHash && !force) {
       // 状態が変わっていなければ通信をスキップ
-      console.log('sync skipped (no state change)');
       return;
     }
 

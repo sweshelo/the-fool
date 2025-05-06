@@ -1,4 +1,3 @@
-import { Delta } from '@/package/core/class/delta';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
@@ -78,12 +77,9 @@ export const effects: CardEffects = {
           );
       } else {
         if (unit.lv >= 2)
-          unit.delta.push(
-            new Delta({ type: 'bp', diff: 2000 }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: '豊穣の女神_Lv2',
-            })
-          );
+          Effect.modifyBP(stack, stack.processing, unit, 2000, {
+            source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv2' },
+          });
       }
     });
   },

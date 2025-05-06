@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing as Unit, '固着');
   },
 
-  onWin: async (stack: StackWithCard): Promise<void> => {
+  onWinSelf: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id
@@ -33,16 +33,20 @@ export const effects: CardEffects = {
   onClockup: async (stack: StackWithCard): Promise<void> => {
     const targets = stack.processing.owner.opponent.field;
 
-    if (targets.length > 0 && stack.processing.lv === 3) {
-      await System.show(stack, '剪定', '敵全体に[対戦相手の手札×2000]ダメージ');
-      targets.forEach(unit =>
-        Effect.damage(
-          stack,
-          stack.processing,
-          unit,
-          stack.processing.owner.opponent.hand.length * 2000
-        )
-      );
+    if (stack.processing.lv === 3) {
+      if (targets.length > 0) {
+        await System.show(stack, '剪定', '敵全体に[対戦相手の手札×2000]ダメージ\n自身のレベル-2');
+        targets.forEach(unit =>
+          Effect.damage(
+            stack,
+            stack.processing,
+            unit,
+            stack.processing.owner.opponent.hand.length * 2000
+          )
+        );
+      } else {
+        await System.show(stack, '剪定', '自身のレベル-2');
+      }
       Effect.clock(stack, stack.processing, stack.processing as Unit, -2);
     }
   },
