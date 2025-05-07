@@ -39,9 +39,10 @@ export const effects: CardEffects = {
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.opponent.field.length > 0) {
       await System.show(stack, 'オルレアンの一撃', '敵全体の基本BP-3000\n【攻撃禁止】を与える');
-      stack.processing.owner.opponent.field.forEach(unit =>
-        Effect.modifyBP(stack, stack.processing, unit, -3000, { isBaseBP: true })
-      );
+      stack.processing.owner.opponent.field.forEach(unit => {
+        Effect.modifyBP(stack, stack.processing, unit, -3000, { isBaseBP: true });
+        Effect.keyword(stack, stack.processing, unit, '攻撃禁止');
+      });
     }
   },
 };

@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       .filter(unit => unit.catalog.cost >= 3)
       .forEach(unit => Effect.keyword(stack, stack.processing, unit, '狂戦士'));
     Effect.keyword(stack, stack.processing, stack.processing as Unit, '強制防御');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, 'オーバーヒート');
+    Effect.keyword(stack, stack.processing, stack.processing as Unit, '無我の境地');
   },
 
   onBattleSelf: async (stack: StackWithCard): Promise<void> => {

@@ -14,7 +14,8 @@ export const effects: CardEffects = {
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.target.catalog.cost >= 2 &&
-      stack.target.catalog.species?.includes('英雄')
+      stack.target.catalog.species?.includes('英雄') &&
+      stack.target !== stack.processing
     ) {
       await System.show(stack, '勇者への祈り', '【撤退禁止】を与える\nCP+1');
       Effect.keyword(stack, stack.processing, stack.target, '撤退禁止', {
