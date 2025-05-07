@@ -14,7 +14,7 @@ import type {
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
-import { Unit } from './class/card';
+import { Card, Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
 import { Delta } from './class/delta';
@@ -23,6 +23,11 @@ import { Parry } from './class/parry';
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
 
+interface History {
+  card: Card;
+  action: 'drive' | 'boot';
+}
+
 export class Core {
   id: string;
   players: Player[];
@@ -30,6 +35,7 @@ export class Core {
   turn: number = 1;
   room: Room;
   stack: Stack[] | undefined = undefined;
+  histories: History[];
 
   /**
    * 効果の応答ハンドラを保存するマップ
@@ -41,6 +47,7 @@ export class Core {
     this.id = crypto.randomUUID();
     this.players = [];
     this.room = room;
+    this.histories = [];
   }
 
   entry(player: Player) {
@@ -132,6 +139,7 @@ export class Core {
     });
 
     // ターン開始スタックを積み、解決する
+    this.histories = [];
     this.stack = [
       new Stack({
         type: 'turnStart',
@@ -473,6 +481,7 @@ export class Core {
       try {
         while (this.stack.length > 0) {
           const stackItem = this.stack.shift();
+          if (stackItem?.type.includes('_')) console.log(stackItem.type);
           await stackItem?.resolve(this);
           this.room.sync();
 
@@ -483,11 +492,11 @@ export class Core {
         }
 
         // 処理完了後、スタックをクリア
-        this.stack = undefined;
+        this.stack = [];
       } catch (error) {
         if (error instanceof Parry) throw error;
         console.error('Error resolving stack:', error);
-        this.stack = undefined;
+        this.stack = [];
       }
     }
   }
@@ -599,7 +608,13 @@ export class Core {
             c.catalog.color === card.catalog.color &&
             (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
         );
-        const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
+        const isEnoughCP =
+          cardCatalog.cost -
+            (mitigate ? 1 : 0) +
+            card.delta
+              .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+              .reduce((acc, cur) => acc + cur, 0) <=
+          player.cp.current;
 
         // ユニットである
         const isUnit = card instanceof Unit;
@@ -623,10 +638,12 @@ export class Core {
           }
         }
 
-        console.log('召喚確定：%s', card.catalog.name);
-
         if (isEnoughCP && hasFieldSpace && isUnit) {
-          const cost = card.catalog.cost;
+          const cost =
+            card.catalog.cost +
+            card.delta
+              .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+              .reduce((acc, cur) => acc + cur, 0);
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
           if (cost > 0 && mitigate) {
@@ -670,7 +687,15 @@ export class Core {
           // 召喚時点でのLv
           const lv = card.lv;
 
+          // 起動アイコン
+          if (typeof card.catalog.onBootSelf === 'function')
+            card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
+
           // Stack追加
+          this.histories.push({
+            card: card,
+            action: 'drive',
+          });
           this.stack = [
             new Stack({
               type: 'drive',
@@ -788,6 +813,32 @@ export class Core {
       }
 
       case 'Boot': {
+        const payload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.field.find(unit => unit.id === payload.target.id);
+
+        if (
+          !player ||
+          !target ||
+          !target.catalog.isBootable ||
+          typeof target.catalog.isBootable !== 'function'
+        )
+          return;
+        if (
+          target.catalog.isBootable(this, target) &&
+          !this.histories.some(
+            history => history.action === 'boot' && history.card.id === target.id
+          )
+        ) {
+          this.histories.push({
+            card: target,
+            action: 'boot',
+          });
+          this.room.soundEffect('recover');
+          await new Promise(resolve => setTimeout(resolve, 900));
+          this.stack = [new Stack({ type: 'boot', target, core: this, source: player })];
+          await this.resolveStack();
+        }
         break;
       }
 
@@ -806,6 +857,11 @@ export class Core {
         break;
       }
     }
+
+    this.stack = [
+      new Stack({ type: '_messageRecieved', source: this.getTurnPlayer(), core: this }),
+    ];
+    await this.resolveStack();
   }
 
   // フィールド効果を掃除する

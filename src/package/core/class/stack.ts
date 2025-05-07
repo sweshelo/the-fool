@@ -94,10 +94,8 @@ export class Stack implements IStack {
 
     // 対象のイベントが発生した時点でフィールドに存在していなかったユニットは除外する
     const field = {
-      turnPlayer: [...turnPlayer.field.filter(u => u.id !== this.source.id)],
-      nonTurnPlayer: nonTurnPlayer
-        ? [...nonTurnPlayer.field.filter(u => u.id !== this.source.id)]
-        : [],
+      turnPlayer: [...turnPlayer.field],
+      nonTurnPlayer: [...(nonTurnPlayer?.field ?? [])],
     };
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
@@ -124,12 +122,16 @@ export class Stack implements IStack {
 
       // 両方のチェックをする場合
       case 'battle': {
-        const targets = [this.source, this.target];
-        for (const target of targets) {
-          if (target instanceof Unit && !target.hasKeyword('沈黙')) {
-            await this.processCardEffect(target, core, 'Self');
-            await this.resolveChild(core);
+        if (this.source instanceof Unit && this.target instanceof Unit) {
+          const targets = [this.source, this.target];
+          for (const target of targets) {
+            if (target instanceof Unit && !target.hasKeyword('沈黙')) {
+              await this.processCardEffect(target, core, 'Self');
+              await this.resolveChild(core);
+            }
           }
+        } else {
+          throw new Error('ユニット同士でないものが戦闘しています');
         }
         break;
       }
@@ -587,6 +589,14 @@ export class Stack implements IStack {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
+        }
+      });
+
+    this.core.players
+      .flatMap(player => [...player.hand, ...player.trigger])
+      .forEach(card => {
+        if ('handEffect' in card.catalog && typeof card.catalog.handEffect === 'function') {
+          card.catalog.handEffect(this.core, card);
         }
       });
     this.core.room.sync();

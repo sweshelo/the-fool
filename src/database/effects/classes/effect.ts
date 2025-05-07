@@ -600,6 +600,10 @@ export class Effect {
         onlyForOwnersTurn: true,
       });
 
+      // 起動アイコン
+      if (typeof target.catalog.onBootSelf === 'function')
+        target.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
+
       stack.addChildStack('extraSummon', source, target);
       stack.core.room.sync();
       return target;

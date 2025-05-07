@@ -1,5 +1,7 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card/Card';
+import type { Unit } from '@/package/core/class/card';
+import type { Core } from '@/package/core/core';
 
 /**
  * A Stack with a guaranteed Card in the processing property
@@ -27,4 +29,6 @@ export interface CardEffects {
   [key: `on${string}`]: OnEffectMethod;
   [key: `check${string}`]: CheckEffectMethod;
   fieldEffect?: (stack: StackWithCard) => void;
+  isBootable?: (core: Core, self: Unit) => boolean;
+  handEffect?: ((core: Core, self: Card) => void) | ((core: Core, self: Unit) => void);
 }
