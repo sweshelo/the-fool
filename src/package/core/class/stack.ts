@@ -148,7 +148,7 @@ export class Stack implements IStack {
 
     this.processFieldEffect();
 
-    // ターンプレイヤーのフィールド上のカードを処理 (source以外)
+    // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
       if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
       await this.processCardEffect(unit, core);
