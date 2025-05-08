@@ -425,17 +425,19 @@ export class Core {
     if (
       !isWinnerBreaked &&
       isLoserBreaked &&
-      winner.lv < 3 &&
       winner.owner.field.find(unit => unit.id === winner.id)
     ) {
       // 戦闘勝利後のクロックアップ処理
-      const systemStack = new Stack({
-        type: '_postBattleClockUp',
-        source: loser,
-        target: winner,
-        core: this,
-      });
-      Effect.clock(systemStack, loser, winner, 1);
+      const systemStack =
+        winner.lv < 3
+          ? new Stack({
+              type: '_postBattleClockUp',
+              source: loser,
+              target: winner,
+              core: this,
+            })
+          : undefined;
+      if (systemStack) Effect.clock(systemStack, loser, winner, 1);
 
       // 戦闘勝利スタック
       const winnerStack = new Stack({
@@ -445,7 +447,7 @@ export class Core {
         core: this,
       });
 
-      this.stack = [systemStack, winnerStack];
+      this.stack = [systemStack, winnerStack].filter(stack => stack !== undefined);
       await this.resolveStack();
     }
 
@@ -484,7 +486,6 @@ export class Core {
       try {
         while (this.stack.length > 0) {
           const stackItem = this.stack.shift();
-          if (stackItem?.type.includes('_')) console.log(stackItem.type);
           await stackItem?.resolve(this);
           this.room.sync();
 
