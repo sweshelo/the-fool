@@ -25,7 +25,7 @@ export const effects: CardEffects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
-    if (stack.processing.owner.hand.length > 0) {
+    if (stack.processing.owner.opponent.hand.length > 0) {
       await System.show(stack, '雪解けの一閃', '手札を公開する\n1枚選び破壊');
       const choices: Choices = {
         title: '破壊するカードを選択してください',
