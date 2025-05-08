@@ -37,7 +37,7 @@ export const effects: CardEffects = {
 
     if (stack.processing.owner.field.length === 0) {
       await System.show(stack, '蘇る爛漫少女', '【特殊召喚】');
-      Effect.summon(stack, stack.processing, stack.processing);
+      await Effect.summon(stack, stack.processing, stack.processing);
     }
   },
 };

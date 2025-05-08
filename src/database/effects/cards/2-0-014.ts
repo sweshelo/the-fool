@@ -22,7 +22,7 @@ export const effects: CardEffects = {
 
     if (isOpponentTurn && isAtLeast15BlueCardsInTrash && hasFieldSpace) {
       await System.show(stack, 'ミーナ頑張る！', '【特殊召喚】');
-      Effect.summon(stack, stack.processing, stack.processing);
+      await Effect.summon(stack, stack.processing, stack.processing);
     }
   },
 

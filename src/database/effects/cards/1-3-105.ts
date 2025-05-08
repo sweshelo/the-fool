@@ -17,8 +17,10 @@ export const effects: CardEffects = {
       stack.processing.owner.field.length <= 4
     ) {
       await System.show(stack, '魔軍召喚', '【悪魔】ユニットを【特殊召喚】');
-      EffectHelper.random(candidate, 1).forEach(unit =>
-        Effect.summon(stack, stack.processing, unit as Unit)
+      await Promise.all(
+        EffectHelper.random(candidate, 1).map(unit =>
+          Effect.summon(stack, stack.processing, unit as Unit)
+        )
       );
     }
   },

@@ -106,7 +106,7 @@ export class EffectTemplate {
         '武身転生',
         `コスト${unit.catalog.cost}以上${unit.catalog.cost + 1}以下の【武身】を【特殊召喚】\n自身をデッキに戻す`
       );
-      Effect.summon(stack, unit, target);
+      await Effect.summon(stack, unit, target);
       await new Promise(resolve => setTimeout(resolve, 500));
       Effect.bounce(stack, unit, unit, 'deck');
     }
@@ -128,7 +128,7 @@ export class EffectTemplate {
 
       // ウィルスを生成して特殊召喚
       const virusUnit = new Unit(player, virus);
-      Effect.summon(stack, stack.processing, virusUnit);
+      await Effect.summon(stack, stack.processing, virusUnit);
       Effect.keyword(stack, virusUnit, virusUnit, '攻撃禁止');
       Effect.keyword(stack, virusUnit, virusUnit, '防御禁止');
     }

@@ -27,7 +27,7 @@ export const effects: CardEffects = {
       const unit = candidate.find(card => card.id === unitId);
       if (!(unit instanceof Unit)) throw new Error('ユニットでないオブジェクトが選択されました');
 
-      if (life <= 8) Effect.clone(stack, stack.processing, unit, stack.processing.owner);
+      if (life <= 8) await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
       // if (life <= 6) Effect.make(stack, stack.processing, unit, stack.processing.owner) // TODO: make未実装
       if (life <= 4) Effect.delete(stack, stack.processing, unit);
     }

@@ -23,7 +23,7 @@ export const effects: CardEffects = {
 
       const target = candidate.find(card => card.id === response);
       if (target) {
-        Effect.summon(stack, stack.processing, target as Unit);
+        await Effect.summon(stack, stack.processing, target as Unit);
       }
     }
   },

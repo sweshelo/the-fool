@@ -22,7 +22,7 @@ export const effects: CardEffects = {
 
     if (isOpponentTurn && isAtLeast20BlueCardsInTrash && hasFieldSpace) {
       await System.show(stack, 'オーシャンヒロイン', '【特殊召喚】');
-      Effect.summon(stack, stack.processing, stack.processing);
+      await Effect.summon(stack, stack.processing, stack.processing);
     }
   },
 

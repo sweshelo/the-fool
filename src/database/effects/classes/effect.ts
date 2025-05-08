@@ -550,7 +550,12 @@ export class Effect {
    * @param isCopy <COPY>フラグ
    * @returns 特殊召喚に成功するとUnitを、失敗するとundefinedを返す
    */
-  static summon(stack: Stack, source: Card, target: Unit, isCopy?: boolean): Unit | undefined {
+  static async summon(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    isCopy?: boolean
+  ): Promise<Unit | undefined> {
     // フィールドに空きがあるか
     const hasFieldSpace = target.owner.field.length < stack.core.room.rule.player.max.field;
 
@@ -606,7 +611,8 @@ export class Effect {
 
       stack.addChildStack('extraSummon', source, target);
       stack.core.room.sync();
-      return target;
+
+      return new Promise(resolve => setTimeout(() => resolve(target), 1200));
     }
   }
 
@@ -622,8 +628,7 @@ export class Effect {
     stack.core.room.soundEffect('copying');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    Effect.summon(stack, source, unit, true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await Effect.summon(stack, source, unit, true);
   }
 
   /**

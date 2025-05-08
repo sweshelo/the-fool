@@ -10,7 +10,9 @@ export const effects: CardEffects = {
     ) as Unit[];
     if (targets.length > 0) {
       await System.show(stack, '禁呪の代償', '消滅から特殊召喚');
-      EffectHelper.random(targets).forEach(unit => Effect.summon(stack, stack.processing, unit));
+      await Promise.all(
+        EffectHelper.random(targets).map(unit => Effect.summon(stack, stack.processing, unit))
+      );
     }
   },
 
@@ -34,7 +36,9 @@ export const effects: CardEffects = {
       targets.length > 0
     ) {
       await System.show(stack, '闇の陰陽師', 'コスト2以下を【特殊召喚】');
-      EffectHelper.random(targets).forEach(unit => Effect.summon(stack, stack.processing, unit));
+      await Promise.all(
+        EffectHelper.random(targets).map(unit => Effect.summon(stack, stack.processing, unit))
+      );
     }
   },
 };

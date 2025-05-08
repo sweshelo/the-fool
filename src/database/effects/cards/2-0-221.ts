@@ -31,8 +31,10 @@ export const effects: CardEffects = {
       'ディメンションゲート',
       'フィールドに出たユニットを破壊\n同じコストのユニットを【特殊召喚】'
     );
-    EffectHelper.random(candidate, 1).forEach(unit =>
-      Effect.summon(stack, stack.processing, unit as Unit)
+    await Promise.all(
+      EffectHelper.random(candidate, 1).map(unit =>
+        Effect.summon(stack, stack.processing, unit as Unit)
+      )
     );
     Effect.break(stack, stack.processing, target, 'effect');
   },
