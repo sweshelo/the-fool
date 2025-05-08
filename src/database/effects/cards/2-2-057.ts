@@ -22,7 +22,7 @@ export const effects: CardEffects = {
 
     if (!(target instanceof Unit)) throw new Error('ユニットでないターゲットが渡されました');
 
-    Effect.modifyBP(stack, stack.processing, target, 2000);
+    Effect.modifyBP(stack, stack.processing, target, 2000, { isBaseBP: true });
     Effect.modifyCP(stack, stack.processing, owner, 1);
     Effect.modifyPurple(stack, stack.processing, owner, 1);
   },

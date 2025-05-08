@@ -11,6 +11,7 @@ export const effects: CardEffects = {
     );
   },
 
+  // FIXME: クロックアップの直後？など、効果が一時的に無効になる事がある
   fieldEffect: (stack: StackWithCard) => {
     stack.processing.owner.field.forEach(unit => {
       // 大地の掟
@@ -33,20 +34,51 @@ export const effects: CardEffects = {
         }
       }
 
-      // 豊穣の女神
-      if (unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        if (unit.lv !== 3)
-          unit.delta.filter(
+      // 豊穣の女神_Lv3
+      if (
+        unit.delta.some(
+          delta =>
+            delta.source?.unit === stack.processing.id &&
+            delta.source.effectCode === '豊穣の女神_Lv3'
+        )
+      ) {
+        // 発動中で条件外ならば取り除く
+        if (unit.lv < 3) {
+          unit.delta = unit.delta.filter(
             delta =>
               !(
                 delta.source?.unit === stack.processing.id &&
                 delta.source.effectCode === '豊穣の女神_Lv3'
               )
           );
+        }
       } else {
-        if (unit.lv === 3)
+        // 非発動中で条件内ならば付与する
+        if (unit.lv >= 3)
           Effect.keyword(stack, stack.processing, unit, '不屈', {
             source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv3' },
+          });
+      }
+
+      if (
+        unit.delta.some(
+          delta =>
+            delta.source?.unit === stack.processing.id &&
+            delta.source.effectCode === '豊穣の女神_Lv2'
+        )
+      ) {
+        if (unit.lv < 2)
+          unit.delta = unit.delta.filter(
+            delta =>
+              !(
+                delta.source?.unit === stack.processing.id &&
+                delta.source.effectCode === '豊穣の女神_Lv2'
+              )
+          );
+      } else {
+        if (unit.lv >= 2)
+          Effect.modifyBP(stack, stack.processing, unit, 2000, {
+            source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv2' },
           });
       }
     });

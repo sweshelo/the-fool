@@ -23,7 +23,7 @@ export const effects: CardEffects = {
 
     if (isOpponentTurn && isAtLeast25BlueCardsInTrash && hasFieldSpace) {
       await System.show(stack, '永久凍土', '【特殊召喚】');
-      Effect.summon(stack, stack.processing, stack.processing);
+      await Effect.summon(stack, stack.processing, stack.processing);
     }
   },
 

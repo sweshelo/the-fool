@@ -7,6 +7,7 @@ import { Card, Unit } from './card';
 import { System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/database/effects/classes/types';
+import { Parry } from './parry';
 
 interface IStack {
   /**
@@ -93,10 +94,8 @@ export class Stack implements IStack {
 
     // 対象のイベントが発生した時点でフィールドに存在していなかったユニットは除外する
     const field = {
-      turnPlayer: [...turnPlayer.field.filter(u => u.id !== this.source.id)],
-      nonTurnPlayer: nonTurnPlayer
-        ? [...nonTurnPlayer.field.filter(u => u.id !== this.source.id)]
-        : [],
+      turnPlayer: [...turnPlayer.field],
+      nonTurnPlayer: [...(nonTurnPlayer?.field ?? [])],
     };
 
     if (this.type === 'overclock' && this.target instanceof Unit) {
@@ -110,18 +109,44 @@ export class Stack implements IStack {
       core.room.sync();
     }
 
-    // まず source カードの効果を処理
-    if (this.target instanceof Card) {
-      if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
-        await this.processCardEffect(this.target, core, 'Self');
-        await this.resolveChild(core);
+    // まず イベントに起因するカードの効果を処理
+    switch (this.type) {
+      // 効果を発生させた側のチェックをする場合
+      case 'playerAttack': {
+        if (this.source instanceof Unit && !this.source.hasKeyword('沈黙')) {
+          await this.processCardEffect(this.source, core, 'Self');
+          await this.resolveChild(core);
+        }
+        break;
+      }
+
+      // 両方のチェックをする場合
+      case 'battle': {
+        if (this.source instanceof Unit && this.target instanceof Unit) {
+          const targets = [this.source, this.target];
+          for (const target of targets) {
+            if (target instanceof Unit && !target.hasKeyword('沈黙')) {
+              await this.processCardEffect(target, core, 'Self');
+              await this.resolveChild(core);
+            }
+          }
+        } else {
+          throw new Error('ユニット同士でないものが戦闘しています');
+        }
+        break;
+      }
+
+      // 効果の影響を受けた側のチェックをする場合
+      default: {
+        if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
+          await this.processCardEffect(this.target, core, 'Self');
+          await this.resolveChild(core);
+        }
+        break;
       }
     }
 
-    this.processFieldEffect();
-    core.room.sync();
-
-    // ターンプレイヤーのフィールド上のカードを処理 (source以外)
+    // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
       if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
       await this.processCardEffect(unit, core);
@@ -143,7 +168,7 @@ export class Stack implements IStack {
       await this.processCardEffect(card, core, 'InHand');
       await this.resolveChild(core);
     }
-
+    
     // 非ターンプレイヤーの手札上のカードを処理
     if (nonTurnPlayer) {
       for (const card of nonTurnPlayer.hand) {
@@ -243,6 +268,9 @@ export class Stack implements IStack {
       card.delta = card.delta.filter(delta => !delta.checkExpire(this as StackWithCard));
       this.processing = undefined;
     });
+
+    // フィールド効果
+    this.processFieldEffect();
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -349,6 +377,25 @@ export class Stack implements IStack {
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
       if (typeof catalog[effectHandler] === 'function') {
+        // 効果実行前に通知
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'drive',
+                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+                player: card.owner.id,
+                type: 'INTERCEPT',
+              },
+            },
+          })
+        );
+
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
 
@@ -365,7 +412,6 @@ export class Stack implements IStack {
         card.lv = 1;
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.push(card);
-        this.processFieldEffect();
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
@@ -405,9 +451,9 @@ export class Stack implements IStack {
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
-        this.processFieldEffect();
         core.room.sync();
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
@@ -502,10 +548,10 @@ export class Stack implements IStack {
           // トリガーカード発動スタックを積む
           this.addChildStack('trigger', owner, card);
         }
-        this.processFieldEffect();
         core.room.sync();
         return check;
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
@@ -547,6 +593,7 @@ export class Stack implements IStack {
   }
 
   private processFieldEffect() {
+    console.log('フィールド効果/手札効果呼び出し中');
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {
@@ -560,5 +607,14 @@ export class Stack implements IStack {
           this.processing = undefined;
         }
       });
+
+    this.core.players
+      .flatMap(player => [...player.hand, ...player.trigger])
+      .forEach(card => {
+        if ('handEffect' in card.catalog && typeof card.catalog.handEffect === 'function') {
+          card.catalog.handEffect(this.core, card);
+        }
+      });
+    this.core.room.sync();
   }
 }

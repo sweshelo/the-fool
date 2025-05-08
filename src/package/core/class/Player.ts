@@ -196,6 +196,7 @@ export class Player implements IPlayer {
       };
     } else {
       this.trash = [];
+      this.delete = [];
       this.deck = this.initDeck();
       const source = this.deck.shift() as Card;
       this.hand.push(source!);

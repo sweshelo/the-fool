@@ -26,4 +26,6 @@ export abstract class Card extends Atom implements ICard {
     this.delta = [];
     this.lv = 1;
   }
+
+  abstract clone(owner: Player): Card;
 }

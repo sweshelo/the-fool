@@ -12,6 +12,18 @@ interface KeywordOptionParams {
   source?: DeltaSource;
 }
 
+type ModifyBPOption =
+  | {
+      isBaseBP: true;
+    }
+  | {
+      event: Delta['event'];
+      count: Delta['count'];
+    }
+  | {
+      source: Delta['source'];
+    };
+
 export class Effect {
   /**
    * 対象にダメージを与える
@@ -54,13 +66,23 @@ export class Effect {
     const hasOrderShield =
       target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
     // 【王の治癒力】: 自身のBP未満のダメージを受けない
-    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP() > damage;
+    const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP > damage;
     if (hasImmotal || hasOrderShield || hasKingsHealing) {
       stack.core.room.soundEffect('block');
       return false;
     }
 
-    target.bp.damage += damage;
+    if (
+      !target.hasKeyword('沈黙') &&
+      target.catalog.name === '戦女神ジャンヌダルク' &&
+      type === 'effect'
+    ) {
+      stack.core.room.soundEffect('block');
+      target.bp += damage;
+      return false;
+    }
+
+    target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
@@ -72,7 +94,7 @@ export class Effect {
     }
 
     // 破壊された?
-    if (target.currentBP() <= 0) {
+    if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'damage');
       return true;
     }
@@ -88,13 +110,7 @@ export class Effect {
    * @param value 操作量
    * @returns この効果で相手を破壊した時は true を返す
    */
-  static modifyBP(
-    stack: Stack,
-    source: Card,
-    target: Unit,
-    value: number,
-    isBaseBP: boolean = false
-  ) {
+  static modifyBP(stack: Stack, source: Card, target: Unit, value: number, option: ModifyBPOption) {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
@@ -103,15 +119,19 @@ export class Effect {
     // 既に破壊されているユニットのBPは変動させない
     if (target.destination !== undefined) return false;
 
-    if (isBaseBP) {
-      target.bp.base += value;
+    if ('isBaseBP' in option) {
+      target.bp += value;
+    } else if ('source' in option) {
+      target.delta.push(
+        new Delta({ type: 'bp', diff: value }, undefined, undefined, undefined, option.source)
+      );
     } else {
-      target.bp.diff += value;
+      target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
     }
 
     stack.core.room.soundEffect(value >= 0 ? 'graw' : 'damage');
 
-    if (target.currentBP() <= 0) {
+    if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'effect');
       return true;
     }
@@ -407,7 +427,7 @@ export class Effect {
     if (target.lv !== before) {
       // Lv上昇の場合はダメージをリセットする
       if (value > 0) {
-        target.bp.damage = 0;
+        target.delta = target.delta.filter(delta => delta.effect.type !== 'damage');
         stack.core.room.soundEffect('clock-up');
         stack.core.room.soundEffect('clock-up-field');
       } else {
@@ -418,14 +438,14 @@ export class Effect {
       const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
       const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;
       const diff = afterBBP - beforeBBP;
-      target.bp.base += diff;
+      target.bp += diff;
 
       stack.addChildStack(`clock${target.lv > before ? 'up' : 'down'}`, source, target, {
         type: 'lv',
         value: target.lv - before,
       });
 
-      if (target.currentBP() <= 0) {
+      if (target.currentBP <= 0) {
         Effect.break(stack, target, target, 'system');
       } else if (target.lv === 3 && !withoutOverClock) {
         stack.addChildStack('overclock', source, target);
@@ -530,7 +550,12 @@ export class Effect {
    * @param isCopy <COPY>フラグ
    * @returns 特殊召喚に成功するとUnitを、失敗するとundefinedを返す
    */
-  static summon(stack: Stack, source: Card, target: Unit, isCopy?: boolean): Unit | undefined {
+  static async summon(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    isCopy?: boolean
+  ): Promise<Unit | undefined> {
     // フィールドに空きがあるか
     const hasFieldSpace = target.owner.field.length < stack.core.room.rule.player.max.field;
 
@@ -580,9 +605,14 @@ export class Effect {
         onlyForOwnersTurn: true,
       });
 
+      // 起動アイコン
+      if (typeof target.catalog.onBootSelf === 'function')
+        target.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
+
       stack.addChildStack('extraSummon', source, target);
       stack.core.room.sync();
-      return target;
+
+      return new Promise(resolve => setTimeout(() => resolve(target), 1200));
     }
   }
 
@@ -598,8 +628,7 @@ export class Effect {
     stack.core.room.soundEffect('copying');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    Effect.summon(stack, source, unit, true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await Effect.summon(stack, source, unit, true);
   }
 
   /**

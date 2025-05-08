@@ -1,8 +1,9 @@
+import type { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
     const isOnField = opponent.field.length > 0;

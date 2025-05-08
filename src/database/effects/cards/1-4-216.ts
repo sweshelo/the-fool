@@ -26,7 +26,7 @@ export const effects: CardEffects = {
       if (!unit || !(unit instanceof Unit))
         throw new Error('正しいカードが選択されませんでした', { cause: unit });
 
-      Effect.clone(stack, stack.processing, unit, stack.processing.owner);
+      await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
     }
   },
 

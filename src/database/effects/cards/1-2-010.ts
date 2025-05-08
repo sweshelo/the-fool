@@ -40,7 +40,10 @@ export const effects: CardEffects = {
 
     // BP増加
     const numberDaemons = owner.field.filter(unit => unit.catalog.species?.includes('悪魔')).length;
-    Effect.modifyBP(stack, stack.processing, stack.processing as Unit, numberDaemons * 2000);
+    Effect.modifyBP(stack, stack.processing, stack.processing as Unit, numberDaemons * 2000, {
+      event: 'turnEnd',
+      count: 1,
+    });
 
     if (isIncectsUnitsOnOwnersField) {
       const [breakUnitId] = await System.prompt(stack, owner.id, {

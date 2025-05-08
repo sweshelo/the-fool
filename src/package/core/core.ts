@@ -14,13 +14,19 @@ import type {
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
-import { Unit } from './class/card';
+import { Card, Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
 import { Delta } from './class/delta';
+import { Parry } from './class/parry';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
+
+interface History {
+  card: Card;
+  action: 'drive' | 'boot';
+}
 
 export class Core {
   id: string;
@@ -29,6 +35,7 @@ export class Core {
   turn: number = 1;
   room: Room;
   stack: Stack[] | undefined = undefined;
+  histories: History[];
 
   /**
    * 効果の応答ハンドラを保存するマップ
@@ -40,6 +47,7 @@ export class Core {
     this.id = crypto.randomUUID();
     this.players = [];
     this.room = room;
+    this.histories = [];
   }
 
   entry(player: Player) {
@@ -90,7 +98,6 @@ export class Core {
           this.room.soundEffect('reboot');
         }
       });
-      this.players.flatMap(player => player.field).forEach(unit => (unit.bp.damage = 0));
       this.room.sync();
 
       // ターン開始処理
@@ -106,6 +113,7 @@ export class Core {
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
         (this.room.rule.system.handicap.cp && this.round === 1 && this.turn === 2 ? 1 : 0);
+
       turnPlayer.cp = {
         current: Math.min(
           max + (this.room.rule.system.cp.carryover ? turnPlayer.cp.current : 0),
@@ -114,24 +122,26 @@ export class Core {
         ),
         max: Math.min(max, this.room.rule.system.cp.ceil, this.room.rule.system.cp.max),
       };
-    }
-    this.room.soundEffect('cp-increase');
+      this.room.soundEffect('cp-increase');
 
-    // ドロー
-    [...Array(this.room.rule.system.draw.top)].forEach(() => {
-      if (turnPlayer?.hand.length && turnPlayer?.hand.length < this.room.rule.player.max.hand)
-        turnPlayer?.draw();
-    });
-    this.room.soundEffect('draw');
-
-    turnPlayer.field.forEach(unit => {
-      if (!unit.hasKeyword('呪縛') && !unit.active) {
-        unit.active = true;
-        this.room.soundEffect('reboot');
+      // ドロー
+      if (!(this.turn === 1 && this.room.rule.system.handicap.draw)) {
+        [...Array(this.room.rule.system.draw.top)].forEach(() => {
+          if (turnPlayer.hand.length < this.room.rule.player.max.hand) turnPlayer.draw();
+        });
+        this.room.soundEffect('draw');
       }
-    });
+
+      turnPlayer.field.forEach(unit => {
+        if (!unit.hasKeyword('呪縛') && !unit.active) {
+          unit.active = true;
+          this.room.soundEffect('reboot');
+        }
+      });
+    }
 
     // ターン開始スタックを積み、解決する
+    this.histories = [];
     this.stack = [
       new Stack({
         type: 'turnStart',
@@ -141,12 +151,25 @@ export class Core {
     ];
     await this.resolveStack();
 
+    // 狂戦士 アタックさせる
+    for (const unit of this.getTurnPlayer().field.filter(
+      unit =>
+        unit.hasKeyword('狂戦士') &&
+        !unit.hasKeyword('攻撃禁止') &&
+        !unit.hasKeyword('行動制限') &&
+        unit.active
+    )) {
+      await this.attack(unit);
+    }
+
     // defrost
     this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
   }
 
   // アタック
   async attack(attacker: Unit) {
+    if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
+
     this.room.broadcastToAll(
       createMessage({
         action: {
@@ -177,26 +200,34 @@ export class Core {
     // アタッカー生存チェック
     if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
 
-    const blocker = await this.block(attacker);
+    let blocker: Unit | undefined = undefined;
 
-    // アタッカー/ブロッカー生存チェック
-    if (
-      !attacker.owner.field.find(unit => unit.id === attacker.id) ||
-      (blocker && !blocker.owner.field.find(unit => unit.id === blocker.id))
-    ) {
-      attacker.active = false;
-      return;
-    }
+    try {
+      blocker = await this.block(attacker);
 
-    if (blocker) {
-      await this.preBattle(attacker, blocker);
       // アタッカー/ブロッカー生存チェック
       if (
         !attacker.owner.field.find(unit => unit.id === attacker.id) ||
-        !blocker.owner.field.find(unit => unit.id === blocker.id)
+        (blocker && !blocker.owner.field.find(unit => unit.id === blocker?.id))
       ) {
         attacker.active = false;
         return;
+      }
+
+      if (blocker) {
+        await this.preBattle(attacker, blocker);
+        // アタッカー/ブロッカー生存チェック
+        if (
+          !attacker.owner.field.find(unit => unit.id === attacker.id) ||
+          !blocker.owner.field.find(unit => unit.id === blocker?.id)
+        ) {
+          attacker.active = false;
+          return;
+        }
+      }
+    } catch (e) {
+      if (e instanceof Parry) {
+        console.log(`${e.card.catalog.name} によるパリィが行われました`);
       }
     }
 
@@ -300,6 +331,7 @@ export class Core {
               title: 'ブロックするユニットを選択してください',
               type: 'block',
               items: candidate,
+              isCancelable: forceBlock.length === 0,
             },
           },
         })
@@ -351,6 +383,7 @@ export class Core {
         core: this,
       }),
     ];
+    console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
     await this.resolveStack();
   }
 
@@ -364,7 +397,7 @@ export class Core {
     // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
     // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
     // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
-    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP() - a.currentBP());
+    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP - a.currentBP);
 
     if (!winner || !loser) {
       throw new Error('ユニットの勝敗判定に失敗しました');
@@ -379,7 +412,7 @@ export class Core {
     });
 
     // 「戦闘によって破壊されたとき」のスタック解決が行われる
-    const [loserDamage, winnedDamage] = [winner.currentBP(), loser.currentBP()];
+    const [loserDamage, winnedDamage] = [winner.currentBP, loser.currentBP];
     const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
     const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -395,18 +428,26 @@ export class Core {
       winner.lv < 3 &&
       winner.owner.field.find(unit => unit.id === winner.id)
     ) {
-      const winnerStack = new Stack({
-        type: '_postBattle',
-        source: blocker,
-        target: attacker,
+      // 戦闘勝利後のクロックアップ処理
+      const systemStack = new Stack({
+        type: '_postBattleClockUp',
+        source: loser,
+        target: winner,
         core: this,
       });
-      Effect.clock(winnerStack, loser, winner, 1);
-      this.stack = [winnerStack];
+      Effect.clock(systemStack, loser, winner, 1);
+
+      // 戦闘勝利スタック
+      const winnerStack = new Stack({
+        type: 'win',
+        source: loser,
+        target: winner,
+        core: this,
+      });
+
+      this.stack = [systemStack, winnerStack];
       await this.resolveStack();
     }
-
-    // TODO:「戦闘に勝利したとき」のスタック解決を行う
 
     this.room.sync();
     return;
@@ -443,6 +484,7 @@ export class Core {
       try {
         while (this.stack.length > 0) {
           const stackItem = this.stack.shift();
+          if (stackItem?.type.includes('_')) console.log(stackItem.type);
           await stackItem?.resolve(this);
           this.room.sync();
 
@@ -453,10 +495,11 @@ export class Core {
         }
 
         // 処理完了後、スタックをクリア
-        this.stack = undefined;
+        this.stack = [];
       } catch (error) {
+        if (error instanceof Parry) throw error;
         console.error('Error resolving stack:', error);
-        this.stack = undefined;
+        this.stack = [];
       }
     }
   }
@@ -568,7 +611,13 @@ export class Core {
             c.catalog.color === card.catalog.color &&
             (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
         );
-        const isEnoughCP = cardCatalog.cost - (mitigate ? 1 : 0) <= player.cp.current; // debug用
+        const isEnoughCP =
+          cardCatalog.cost -
+            (mitigate ? 1 : 0) +
+            card.delta
+              .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+              .reduce((acc, cur) => acc + cur, 0) <=
+          player.cp.current;
 
         // ユニットである
         const isUnit = card instanceof Unit;
@@ -592,10 +641,12 @@ export class Core {
           }
         }
 
-        console.log('召喚確定：%s', card.catalog.name);
-
         if (isEnoughCP && hasFieldSpace && isUnit) {
-          const cost = card.catalog.cost;
+          const cost =
+            card.catalog.cost +
+            card.delta
+              .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+              .reduce((acc, cur) => acc + cur, 0);
 
           // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
           if (cost > 0 && mitigate) {
@@ -639,7 +690,15 @@ export class Core {
           // 召喚時点でのLv
           const lv = card.lv;
 
+          // 起動アイコン
+          if (typeof card.catalog.onBootSelf === 'function')
+            card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
+
           // Stack追加
+          this.histories.push({
+            card: card,
+            action: 'drive',
+          });
           this.stack = [
             new Stack({
               type: 'drive',
@@ -668,7 +727,7 @@ export class Core {
           );
 
           // wait
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1500));
 
           // スタックの解決処理を開始
           await this.resolveStack();
@@ -757,6 +816,32 @@ export class Core {
       }
 
       case 'Boot': {
+        const payload = message.payload;
+        const player = this.players.find(p => p.id === payload.player);
+        const target = player?.field.find(unit => unit.id === payload.target.id);
+
+        if (
+          !player ||
+          !target ||
+          !target.catalog.isBootable ||
+          typeof target.catalog.isBootable !== 'function'
+        )
+          return;
+        if (
+          target.catalog.isBootable(this, target) &&
+          !this.histories.some(
+            history => history.action === 'boot' && history.card.id === target.id
+          )
+        ) {
+          this.histories.push({
+            card: target,
+            action: 'boot',
+          });
+          this.room.soundEffect('recover');
+          await new Promise(resolve => setTimeout(resolve, 900));
+          this.stack = [new Stack({ type: 'boot', target, core: this, source: player })];
+          await this.resolveStack();
+        }
         break;
       }
 
@@ -775,6 +860,11 @@ export class Core {
         break;
       }
     }
+
+    this.stack = [
+      new Stack({ type: '_messageRecieved', source: this.getTurnPlayer(), core: this }),
+    ];
+    await this.resolveStack();
   }
 
   // フィールド効果を掃除する

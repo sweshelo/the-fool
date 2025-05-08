@@ -22,7 +22,7 @@ const ability = async (stack: StackWithCard): Promise<void> => {
     const unit = stack.processing.owner.deck.find(card => card.id === unitId);
     if (!unit || !(unit instanceof Unit)) throw new Error('正しいカードが選択されませんでした');
 
-    Effect.summon(stack, stack.processing, unit);
+    await Effect.summon(stack, stack.processing, unit);
   }
 };
 
