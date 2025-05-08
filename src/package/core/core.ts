@@ -331,6 +331,7 @@ export class Core {
               title: 'ブロックするユニットを選択してください',
               type: 'block',
               items: candidate,
+              isCancelable: forceBlock.length === 0,
             },
           },
         })
