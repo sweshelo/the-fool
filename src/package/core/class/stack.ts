@@ -146,8 +146,6 @@ export class Stack implements IStack {
       }
     }
 
-    this.processFieldEffect();
-
     // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
       if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
@@ -270,6 +268,9 @@ export class Stack implements IStack {
       card.delta = card.delta.filter(delta => !delta.checkExpire(this as StackWithCard));
       this.processing = undefined;
     });
+
+    // フィールド効果
+    this.processFieldEffect();
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -376,6 +377,25 @@ export class Stack implements IStack {
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
       if (typeof catalog[effectHandler] === 'function') {
+        // 効果実行前に通知
+        core.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'drive',
+                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+                player: card.owner.id,
+                type: 'INTERCEPT',
+              },
+            },
+          })
+        );
+
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
 
@@ -392,7 +412,6 @@ export class Stack implements IStack {
         card.lv = 1;
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.push(card);
-        this.processFieldEffect();
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
@@ -432,15 +451,12 @@ export class Stack implements IStack {
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
-        this.processFieldEffect();
         core.room.sync();
       } catch (error) {
         if (error instanceof Parry) throw error;
         console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
-
-    this.processFieldEffect();
   }
 
   /**
@@ -532,7 +548,6 @@ export class Stack implements IStack {
           // トリガーカード発動スタックを積む
           this.addChildStack('trigger', owner, card);
         }
-        this.processFieldEffect();
         core.room.sync();
         return check;
       } catch (error) {
@@ -578,6 +593,7 @@ export class Stack implements IStack {
   }
 
   private processFieldEffect() {
+    console.log('フィールド効果/手札効果呼び出し中');
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {

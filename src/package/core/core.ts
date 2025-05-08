@@ -113,6 +113,7 @@ export class Core {
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
         (this.room.rule.system.handicap.cp && this.round === 1 && this.turn === 2 ? 1 : 0);
+
       turnPlayer.cp = {
         current: Math.min(
           max + (this.room.rule.system.cp.carryover ? turnPlayer.cp.current : 0),
@@ -121,22 +122,23 @@ export class Core {
         ),
         max: Math.min(max, this.room.rule.system.cp.ceil, this.room.rule.system.cp.max),
       };
-    }
-    this.room.soundEffect('cp-increase');
+      this.room.soundEffect('cp-increase');
 
-    // ドロー
-    [...Array(this.room.rule.system.draw.top)].forEach(() => {
-      if (turnPlayer?.hand.length && turnPlayer?.hand.length < this.room.rule.player.max.hand)
-        turnPlayer?.draw();
-    });
-    this.room.soundEffect('draw');
-
-    turnPlayer.field.forEach(unit => {
-      if (!unit.hasKeyword('呪縛') && !unit.active) {
-        unit.active = true;
-        this.room.soundEffect('reboot');
+      // ドロー
+      if (!(this.turn === 1 && this.room.rule.system.handicap.draw)) {
+        [...Array(this.room.rule.system.draw.top)].forEach(() => {
+          if (turnPlayer.hand.length < this.room.rule.player.max.hand) turnPlayer.draw();
+        });
+        this.room.soundEffect('draw');
       }
-    });
+
+      turnPlayer.field.forEach(unit => {
+        if (!unit.hasKeyword('呪縛') && !unit.active) {
+          unit.active = true;
+          this.room.soundEffect('reboot');
+        }
+      });
+    }
 
     // ターン開始スタックを積み、解決する
     this.histories = [];
@@ -724,7 +726,7 @@ export class Core {
           );
 
           // wait
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1500));
 
           // スタックの解決処理を開始
           await this.resolveStack();

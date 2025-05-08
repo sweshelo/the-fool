@@ -163,18 +163,33 @@ export class Room {
       const players = this.core.players.reduce(
         (acc: { [key: string]: Player | object }, player) => {
           if (player.id === playerId) {
-            // 自分: 全情報
-            acc[player.id] = player;
+            // 自分: デッキはIDのみ
+            acc[player.id] = {
+              ...player,
+              deck:
+                this.rule.debug?.enable && this.rule.debug.reveal.self.deck
+                  ? player.deck
+                  : player.deck.map(card => ({ id: card.id })),
+            };
           } else {
             // 相手: デッキ・手札はIDのみ、トリガーはID+color
             acc[player.id] = {
               ...player,
-              deck: player.deck.map(card => ({ id: card.id })),
-              hand: player.hand.map(card => ({ id: card.id })),
-              trigger: player.trigger.map(card => ({
-                id: card.id,
-                color: colorMap[card.catalog.color as number] ?? 'none',
-              })),
+              deck:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.deck
+                  ? player.deck
+                  : player.deck.map(card => ({ id: card.id })),
+              hand:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.hand
+                  ? player.hand
+                  : player.hand.map(card => ({ id: card.id })),
+              trigger:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.trigger
+                  ? player.trigger
+                  : player.trigger.map(card => ({
+                      id: card.id,
+                      color: colorMap[card.catalog.color as number] ?? 'none',
+                    })),
             };
           }
           return acc;
