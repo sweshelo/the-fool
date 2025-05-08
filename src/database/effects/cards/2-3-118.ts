@@ -8,23 +8,18 @@ import { System } from '../classes/system';
 export const effects: CardEffects = {
   handEffect: (_core: Core, self: Card) => {
     const targetDelta = self.delta.find(delta => delta.source?.unit === self.id);
+    const silencedUnits = [...self.owner.opponent.field, ...self.owner.field].filter(unit =>
+      unit.hasKeyword('沈黙')
+    ).length;
+
     if (targetDelta && targetDelta.effect.type === 'cost') {
-      targetDelta.effect.value = Math.max(
-        -[...self.owner.opponent.field, ...self.owner.field].filter(unit => unit.hasKeyword('沈黙'))
-          .length,
-        -4
-      );
+      targetDelta.effect.value = Math.max(-silencedUnits, -4);
     } else {
       self.delta.push(
         new Delta(
           {
             type: 'cost',
-            value: Math.max(
-              -[...self.owner.opponent.field, ...self.owner.field].filter(unit =>
-                unit.hasKeyword('沈黙')
-              ).length,
-              -16
-            ),
+            value: Math.max(-silencedUnits, -4),
           },
           undefined,
           undefined,
