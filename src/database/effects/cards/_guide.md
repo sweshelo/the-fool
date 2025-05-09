@@ -128,3 +128,22 @@ fieldEffect(stack){
 捨札から【特殊召喚】
 レベル+2
 ```
+
+## 特殊な効果とHistory
+
+効果の中には、ターン中の行動に依存するものがある。〈連撃〉などがそれにあたる。
+
+```
+このユニットがフィールドに出た時、このターンにあなたがこのユニット以外のコスト2以上の緑属性のカードを使用している場合、対戦相手のユニットを1体選ぶ。それの基本BPを-5000する。
+```
+
+このような効果は、`stack.core.histories` を参照する。historyには次のようなオブジェクトがターン毎に格納される。
+
+```ts
+interface History {
+  card: Card;
+  action: 'drive' | 'boot';
+}
+```
+
+`stack.core.histories.some(history => history.card.catalog.color === Color.GREEN && history.card.catalog.cost >= 2)` というような具合に条件を構築し、判定する。

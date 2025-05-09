@@ -21,9 +21,6 @@ export const effects: CardEffects = {
           'ランダムな【侍】を捨てる\nデッキから【侍】を選んで引く'
         );
 
-        // Discard the selected card
-        Effect.handes(stack, stack.processing, discardTarget);
-
         // Find Samurai units in deck for search
         const samuraiUnitsInDeck = owner.deck.filter(
           card => card instanceof Unit && card.catalog.species?.includes('侍')
@@ -44,6 +41,8 @@ export const effects: CardEffects = {
 
             // Add selected card to hand
             Effect.move(stack, stack.processing, selectedCard, 'hand');
+            // Discard the selected card
+            Effect.handes(stack, stack.processing, discardTarget);
           } catch (error) {
             // Failed to select a card, do nothing
             console.error('Failed to select a card:', error);
