@@ -10,15 +10,19 @@ import type {
   ContinuePayload,
   TriggerSetPayload,
   EvolveDrivePayload,
+  DebugMakePayload,
+  DebugDrivePayload,
 } from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
 import catalog from '@/database/catalog';
 import { Stack } from './class/stack';
-import { Card, Unit } from './class/card';
+import { Card, Evolve, Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
 import { Delta } from './class/delta';
 import { Parry } from './class/parry';
+import { Intercept } from './class/card/Intercept';
+import { Trigger } from './class/card/Trigger';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -425,17 +429,19 @@ export class Core {
     if (
       !isWinnerBreaked &&
       isLoserBreaked &&
-      winner.lv < 3 &&
       winner.owner.field.find(unit => unit.id === winner.id)
     ) {
       // 戦闘勝利後のクロックアップ処理
-      const systemStack = new Stack({
-        type: '_postBattleClockUp',
-        source: loser,
-        target: winner,
-        core: this,
-      });
-      Effect.clock(systemStack, loser, winner, 1);
+      const systemStack =
+        winner.lv < 3
+          ? new Stack({
+              type: '_postBattleClockUp',
+              source: loser,
+              target: winner,
+              core: this,
+            })
+          : undefined;
+      if (systemStack) Effect.clock(systemStack, loser, winner, 1);
 
       // 戦闘勝利スタック
       const winnerStack = new Stack({
@@ -445,7 +451,7 @@ export class Core {
         core: this,
       });
 
-      this.stack = [systemStack, winnerStack];
+      this.stack = [systemStack, winnerStack].filter(stack => stack !== undefined);
       await this.resolveStack();
     }
 
@@ -484,7 +490,6 @@ export class Core {
       try {
         while (this.stack.length > 0) {
           const stackItem = this.stack.shift();
-          if (stackItem?.type.includes('_')) console.log(stackItem.type);
           await stackItem?.resolve(this);
           this.room.sync();
 
@@ -533,6 +538,97 @@ export class Core {
     }
   }
 
+  /**
+   * ユニットを召喚する
+   * @param player 召喚するフィールドを持つプレイヤー
+   * @param card 対象のカード
+   * @param source (進化の場合)進化元
+   */
+  async drive(player: Player, card: Unit, source: Unit | undefined = undefined) {
+    if (source !== undefined) {
+      // 進化元が存在していたindexに進化先を配置する
+      const index = player.field.findIndex(unit => unit.id === source?.id);
+      if (index === -1) throw new Error('進化元が見つかりませんでした');
+
+      // 進化元の行動権を継承
+      card.active = source.active;
+      player.field[index] = card;
+      this.fieldEffectUnmount(source);
+
+      if (!source.isCopy) {
+        player.trash.push(source);
+        source.reset();
+      }
+    } else {
+      card.active = true;
+      player.field.push(card);
+      card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
+    }
+
+    card.initBP();
+    this.room.soundEffect(source !== undefined ? 'evolve' : 'drive');
+    this.room.sync();
+
+    // 召喚時点でのLv
+    const lv = card.lv;
+
+    // 起動アイコン
+    if (typeof card.catalog.onBootSelf === 'function')
+      card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
+
+    // Stack追加
+    this.histories.push({
+      card: card,
+      action: 'drive',
+    });
+    this.stack = [
+      new Stack({
+        type: 'drive',
+        source: player,
+        target: card,
+        core: this,
+      }),
+    ];
+
+    this.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'drive',
+            image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+            player: player.id,
+            type: card.catalog.type === 'unit' ? 'UNIT' : 'EVOLVE',
+          },
+        },
+      })
+    );
+
+    // wait
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // スタックの解決処理を開始
+    await this.resolveStack();
+
+    // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
+    if (lv === 3 && card.lv === 3 && !card.overclocked) {
+      // && player.field.find(unit => unit.id === card.id)) {
+      this.stack = [
+        new Stack({
+          type: 'overclock',
+          source: card,
+          target: card,
+          core: this,
+        }),
+      ];
+      await this.resolveStack();
+    }
+  }
+
   async handleMessage(message: Message) {
     console.log('passed message to Core : type<%s>', message.action.type);
     switch (message.payload.type) {
@@ -544,15 +640,6 @@ export class Core {
       case 'Continue': {
         const payload: ContinuePayload = message.payload;
         this.handleContinue(payload.promptId);
-        break;
-      }
-      case 'DebugDraw': {
-        const payload: DebugDrawPayload = message.payload;
-        const target = this.players.find(player => player.id === payload.player);
-        if (target) {
-          target.draw();
-          this.room.sync();
-        }
         break;
       }
       case 'Override': {
@@ -630,14 +717,20 @@ export class Core {
           ? true
           : player.field.length < this.room.rule.player.max.field;
 
+        const source = isEvolve
+          ? player.field.find(unit => unit.id === payload.source.id)
+          : undefined;
         if (isEvolve) {
-          const source = player.field.find(unit => unit.id === payload.source.id);
           const notEvolvable =
             source?.catalog.species?.includes('ウィルス') || source?.hasKeyword('進化禁止');
 
           if (notEvolvable) {
-            console.log('進化できないユニットが進化元に指定されました');
+            console.error('進化できないユニットが進化元に指定されました');
             return;
+          }
+
+          if (!source) {
+            console.error('進化ユニットが召喚されようとしましたが source が不正でした');
           }
         }
 
@@ -660,91 +753,7 @@ export class Core {
           if (actualCost > 0) this.room.soundEffect('cp-consume');
           player.hand = player?.hand.filter(c => c.id !== card?.id);
 
-          if (isEvolve) {
-            // 進化元が存在していたindexに進化先を配置する
-            const index = player.field.findIndex(unit => unit.id === payload.source.id);
-            if (index === -1) throw new Error('進化元が見つかりませんでした');
-
-            const source = player.field[index];
-            if (!source) throw new Error('進化元が見つかりませんでした');
-
-            // 進化元の行動権を継承
-            card.active = source.active;
-            player.field[index] = card;
-            this.fieldEffectUnmount(source);
-
-            if (!source.isCopy) {
-              player.trash.push(source);
-              source.reset();
-            }
-          } else {
-            card.active = true;
-            player.field.push(card);
-            card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
-          }
-
-          card.initBP();
-          this.room.soundEffect(isEvolve ? 'evolve' : 'drive');
-          this.room.sync();
-
-          // 召喚時点でのLv
-          const lv = card.lv;
-
-          // 起動アイコン
-          if (typeof card.catalog.onBootSelf === 'function')
-            card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
-
-          // Stack追加
-          this.histories.push({
-            card: card,
-            action: 'drive',
-          });
-          this.stack = [
-            new Stack({
-              type: 'drive',
-              source: player,
-              target: card,
-              core: this,
-            }),
-          ];
-
-          this.room.broadcastToAll(
-            createMessage({
-              action: {
-                type: 'effect',
-                handler: 'client',
-              },
-              payload: {
-                type: 'VisualEffect',
-                body: {
-                  effect: 'drive',
-                  image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                  player: player.id,
-                  type: card.catalog.type === 'unit' ? 'UNIT' : 'EVOLVE',
-                },
-              },
-            })
-          );
-
-          // wait
-          await new Promise(resolve => setTimeout(resolve, 1500));
-
-          // スタックの解決処理を開始
-          await this.resolveStack();
-
-          // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
-          if (lv === 3 && card.lv === 3 && !card.overclocked) {
-            // && player.field.find(unit => unit.id === card.id)) {
-            this.stack = [
-              new Stack({
-                type: 'overclock',
-                source: card,
-                target: card,
-                core: this,
-              }),
-            ];
-            await this.resolveStack();
-          }
+          await this.drive(player, card, source);
         }
 
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
@@ -858,6 +867,53 @@ export class Core {
           this.room.soundEffect('trash');
         }
         break;
+      }
+
+      case 'DebugDraw': {
+        const payload: DebugDrawPayload = message.payload;
+        const target = this.players.find(player => player.id === payload.player);
+        if (target) {
+          target.draw();
+          this.room.sync();
+        }
+        break;
+      }
+      case 'DebugMake': {
+        const payload: DebugMakePayload = message.payload;
+        const target = this.players.find(player => player.id === payload.player);
+        const master = catalog.get(payload.catalogId);
+        if (target && master) {
+          switch (master.type) {
+            case 'unit':
+              target.hand.push(new Unit(target, master.id));
+              break;
+            case 'advanced_unit':
+              target.hand.push(new Evolve(target, master.id));
+              break;
+            case 'intercept':
+              target.hand.push(new Intercept(target, master.id));
+              break;
+            case 'trigger':
+              target.hand.push(new Trigger(target, master.id));
+              break;
+          }
+          break;
+        }
+        break;
+      }
+      case 'DebugDrive': {
+        const payload: DebugDrivePayload = message.payload;
+        const target = this.players.find(player => player.id === payload.player);
+        const master = catalog.get(payload.catalogId);
+        if (target && master) {
+          switch (master.type) {
+            case 'unit':
+              await this.drive(target, new Unit(target, master.id));
+              break;
+            default:
+              throw new Error('召喚できないカードが指定されました');
+          }
+        }
       }
     }
 

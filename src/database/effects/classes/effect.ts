@@ -129,7 +129,7 @@ export class Effect {
       target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
     }
 
-    stack.core.room.soundEffect(value >= 0 ? 'graw' : 'damage');
+    stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
     if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'effect');

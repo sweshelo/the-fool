@@ -7,7 +7,7 @@ import type { Core } from '@/package/core/core';
  * A Stack with a guaranteed Card in the processing property
  * Used for card effect methods where we can guarantee processing is a Card
  */
-export type StackWithCard<T = Card> = Stack & { processing: T };
+export type StackWithCard<T extends Card = Card> = Stack & { processing: T };
 
 /**
  * Type for card effect methods starting with "on"
