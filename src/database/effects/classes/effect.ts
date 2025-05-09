@@ -143,6 +143,7 @@ export class Effect {
    * 対象を破壊する
    * @param source 効果の発動元
    * @param target 破壊の対象
+   * @param cause その破壊の原因 (カードテキストの実装にあたっては基本的にeffect以外使用してはいけない)
    */
   static break(
     stack: Stack,

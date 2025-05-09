@@ -30,7 +30,7 @@ export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean>
 export interface CardEffects {
   [key: `on${string}`]: OnEffectMethod;
   [key: `check${string}`]: CheckEffectMethod;
-  fieldEffect?: (stack: StackWithCard) => void;
+  fieldEffect?: (stack: StackWithCard<Unit>) => void;
   isBootable?: (core: Core, self: Unit) => boolean;
   handEffect?: ((core: Core, self: Card) => void) | ((core: Core, self: Unit) => void);
 }
