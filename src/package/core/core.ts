@@ -110,6 +110,7 @@ export class Core {
           Effect.break(deathCounterCheckStack, unit, unit, 'death');
         }
       });
+      this.stack = [deathCounterCheckStack];
       await this.resolveStack();
 
       // ウィルス除外
