@@ -13,8 +13,10 @@ export const effects: CardEffects = {
 
   isBootable: (core: Core, self: Unit) => {
     return (
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.id).length > 0 &&
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.opponent.id).length > 0
+      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.id, self.owner).length >
+        0 &&
+      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.opponent.id, self.owner)
+        .length > 0
     );
   },
 
@@ -23,8 +25,16 @@ export const effects: CardEffects = {
     const targets: Unit[] = [];
 
     for (const candidate of [
-      EffectHelper.candidate(stack.core, unit => unit.owner.id === stack.processing.owner.id),
-      EffectHelper.candidate(stack.core, unit => unit.owner.id !== stack.processing.owner.id),
+      EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id === stack.processing.owner.id,
+        stack.processing.owner
+      ),
+      EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id !== stack.processing.owner.id,
+        stack.processing.owner
+      ),
     ]) {
       const choices: Choices = {
         title: '消滅させるユニットを選択してください',

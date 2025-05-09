@@ -2,6 +2,7 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Choices } from '@/submodule/suit/types/game/system';
+import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -10,8 +11,11 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing, '不滅');
   },
 
-  isBootable: (_core: unknown, self: Unit) => {
-    return self.owner.trash.length > 3;
+  isBootable: (core: Core, self: Unit) => {
+    return (
+      self.owner.trash.length > 3 &&
+      EffectHelper.candidate(core, unit => unit.owner.id !== self.owner.id, self.owner).length > 0
+    );
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -22,7 +26,8 @@ export const effects: CardEffects = {
     );
     const targets: Unit[] = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
     const choices: Choices = {
       title: '破壊するユニットを選択してください',
