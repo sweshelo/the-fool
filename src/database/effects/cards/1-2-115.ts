@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     // 自身のレベルに応じて処理を分岐
     switch (stack.processing.lv) {
       case 3: {
-        const opponent = stack.processing.owner;
+        const opponent = stack.processing.owner.opponent;
         const candidate = EffectHelper.candidate(
           stack.core,
           (unit: Unit) => opponent.field.includes(unit),

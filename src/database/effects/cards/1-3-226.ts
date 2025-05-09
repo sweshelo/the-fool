@@ -17,7 +17,7 @@ export const effects: CardEffects = {
     ) {
       await System.show(stack, '建国の礎', '[フォースフラワー]を【特殊召喚】');
       const unit = new Unit(stack.processing.owner, '1-3-226');
-      Effect.summon(stack, stack.processing, unit);
+      await Effect.summon(stack, stack.processing, unit);
     }
 
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
