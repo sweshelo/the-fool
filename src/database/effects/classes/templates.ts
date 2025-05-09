@@ -7,6 +7,7 @@ import { EffectHelper } from './helper';
 import { Effect } from './effect';
 import { Unit } from '@/package/core/class/card';
 import type { StackWithCard } from './types';
+import { Delta } from '@/package/core/class/delta';
 
 interface ReinforcementMatcher {
   color?: number;
@@ -129,6 +130,7 @@ export class EffectTemplate {
       // ウィルスを生成して特殊召喚
       const virusUnit = new Unit(player, virus);
       await Effect.summon(stack, stack.processing, virusUnit);
+      virusUnit.delta.push(new Delta({ type: 'life' }, 'turnEnd', 2, true));
       Effect.keyword(stack, virusUnit, virusUnit, '攻撃禁止');
       Effect.keyword(stack, virusUnit, virusUnit, '防御禁止');
     }

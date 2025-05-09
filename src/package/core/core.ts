@@ -96,12 +96,30 @@ export class Core {
       await this.resolveStack();
 
       // ターン終了処理
+      const deathCounterCheckStack = new Stack({
+        type: '_deathCounterCheckStack',
+        source: this.getTurnPlayer(),
+        core: this,
+      });
       this.getTurnPlayer().field.forEach(unit => {
         if (unit.hasKeyword('不屈') && !unit.active) {
           unit.active = true;
           this.room.soundEffect('reboot');
         }
+        if (unit.delta.some(delta => delta.effect.type === 'death' && delta.count <= 0)) {
+          Effect.break(deathCounterCheckStack, unit, unit, 'death');
+        }
       });
+      await this.resolveStack();
+
+      // ウィルス除外
+      const afterField = this.getTurnPlayer().field.filter(
+        unit => !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
+      );
+      if (afterField.length !== this.getTurnPlayer().field.length) {
+        this.getTurnPlayer().field = afterField;
+        this.room.soundEffect('leave');
+      }
       this.room.sync();
 
       // ターン開始処理
@@ -494,7 +512,7 @@ export class Core {
           this.room.sync();
 
           // 後続のStackがある場合は待たせる
-          if (this.stack.length > 1) {
+          if (this.stack.length > 0) {
             await new Promise(resolve => setTimeout(resolve, 750));
           }
         }
@@ -615,8 +633,12 @@ export class Core {
     await this.resolveStack();
 
     // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
-    if (lv === 3 && card.lv === 3 && !card.overclocked) {
-      // && player.field.find(unit => unit.id === card.id)) {
+    if (
+      lv === 3 &&
+      card.lv === 3 &&
+      !card.overclocked &&
+      player.field.find(unit => unit.id === card.id)
+    ) {
       this.stack = [
         new Stack({
           type: 'overclock',

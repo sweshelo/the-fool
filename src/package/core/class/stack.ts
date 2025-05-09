@@ -262,6 +262,7 @@ export class Stack implements IStack {
     } while (canceled < player.length);
 
     // deltaを更新
+    // 寿命カウンタ系は core 側でチェックされる
     [
       ...turnPlayer.field,
       ...turnPlayer.hand,
@@ -269,7 +270,12 @@ export class Stack implements IStack {
       ...(nonTurnPlayer?.hand ?? []),
     ].forEach(card => {
       this.processing = card;
-      card.delta = card.delta.filter(delta => !delta.checkExpire(this as StackWithCard));
+      card.delta = card.delta.filter(
+        delta =>
+          !delta.checkExpire(this as StackWithCard) ||
+          delta.effect.type === 'death' ||
+          delta.effect.type === 'life'
+      );
       this.processing = undefined;
     });
 
@@ -623,7 +629,7 @@ export class Stack implements IStack {
         }
       });
 
-    this.core.room.sync();
+    this.core.room.sync(true);
   }
 
   private breakCheck(effector: Unit) {
