@@ -21,7 +21,8 @@ export const effects: CardEffects = {
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
     if (targets.length > 0) {
       await System.show(stack, 'ビートルクラッシュ', '1000ダメージ');

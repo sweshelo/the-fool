@@ -8,7 +8,8 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
     if (targets.length > 0) {
       await System.show(stack, '焦熱の煌星', '[対戦相手のフィールド×2000]ダメージ');

@@ -7,7 +7,8 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && !unit.active
+      unit => unit.owner.id !== stack.processing.owner.id && !unit.active,
+      stack.processing.owner
     );
     const life = stack.processing.owner.life.current;
 

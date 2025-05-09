@@ -21,7 +21,8 @@ export const effects: CardEffects = {
 
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
     if (candidate.length > 0) {
       const [unitId] = await System.prompt(stack, stack.processing.owner.id, {

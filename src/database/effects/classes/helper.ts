@@ -1,7 +1,9 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
 import type { IAtom } from '@/submodule/suit/types';
+import { System } from './system';
+import type { Stack } from '@/package/core/class/stack';
 
 export class EffectHelper {
   /**
@@ -43,13 +45,18 @@ export class EffectHelper {
     units.forEach(effect);
   }
 
-  static candidate(core: Core, filter: (unit: Unit) => boolean): Unit[] {
+  static candidate(core: Core, filter: (unit: Unit) => boolean, selector: Player): Unit[] {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
-    return core.players
+    const units = core.players
       .map(p => p.field)
       .flat()
       .filter(exceptBlessing)
       .filter(filter);
+
+    // セレクトハック持ちがいたらそれだけ返す
+    return units.some(unit => unit.hasKeyword('セレクトハック') && unit.owner.id !== selector.id)
+      ? units.filter(unit => unit.hasKeyword('セレクトハック'))
+      : units;
   }
 
   /**
@@ -77,5 +84,41 @@ export class EffectHelper {
     }
 
     return out.filter(e => e !== undefined);
+  }
+
+  static async selectUnit(
+    stack: Stack,
+    player: Player,
+    targets: Unit[],
+    title: string,
+    count: number = 1
+  ): Promise<[Unit, ...Unit[]]> {
+    const selected: Unit[] = [];
+    let candidate: Unit[] = EffectHelper.candidate(
+      stack.core,
+      unit => targets.map(unit => unit.id).includes(unit.id),
+      player
+    );
+
+    while (selected.length < count && candidate.length > 0) {
+      const [choiceId] = await System.prompt(stack, player.id, {
+        title,
+        type: 'unit',
+        items: candidate,
+      });
+
+      const chosen = targets.find(unit => unit.id === choiceId) ?? candidate[0];
+      if (!chosen) throw new Error('対象のユニットが存在しません');
+
+      selected.push(chosen);
+      candidate = EffectHelper.candidate(
+        stack.core,
+        unit => targets.some(t => t.id === unit.id) && !selected.some(s => s.id === unit.id),
+        player
+      );
+    }
+
+    if (selected.length > 0) return selected as [Unit, ...Unit[]];
+    throw new Error('選択すべきユニットが見つかりませんでした');
   }
 }

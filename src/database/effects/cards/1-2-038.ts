@@ -17,7 +17,8 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const candidate = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) => unit.owner.id !== owner.id
+      (unit: Unit) => unit.owner.id !== owner.id,
+      stack.processing.owner
     );
 
     await System.show(

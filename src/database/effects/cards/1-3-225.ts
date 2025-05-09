@@ -6,7 +6,8 @@ export const effects: CardEffects = {
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
 
     if (candidate.length > 0) {
@@ -19,7 +20,7 @@ export const effects: CardEffects = {
 
       const target = candidate.find(unit => unit.id === unitId);
       if (target) {
-        Effect.keyword(stack, stack.processing, target, '強制防御');
+        Effect.keyword(stack, stack.processing, target, '強制防御', { event: 'turnEnd', count: 1 });
       }
     }
   },

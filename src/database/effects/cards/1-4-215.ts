@@ -6,7 +6,7 @@ const ability = async (stack: StackWithCard): Promise<void> => {
   const filter = (unit: Unit) => {
     return stack.processing.owner.opponent.field.some(u => u.id === unit.id);
   };
-  const units = EffectHelper.candidate(stack.core, filter);
+  const units = EffectHelper.candidate(stack.core, filter, stack.processing.owner);
 
   if (Array.isArray(units) && units.length > 0) {
     await System.show(stack, '聖槍の瞬撃', '手札に戻す');

@@ -6,11 +6,15 @@ export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
     const isSelectable =
-      EffectHelper.candidate(stack.core, unit => unit.owner.id === stack.processing.owner.id)
-        .length > 0 &&
       EffectHelper.candidate(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.opponent.id
+        unit => unit.owner.id === stack.processing.owner.id,
+        stack.processing.owner
+      ).length > 0 &&
+      EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id === stack.processing.owner.opponent.id,
+        stack.processing.owner
       ).length > 0;
     const isOwnUnitDriven = stack.source.id === stack.processing.owner.id;
 
@@ -22,10 +26,15 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '終わらない戦い', '【狂戦士】と【強制防御】を与える');
     const candidatesSet = [
-      EffectHelper.candidate(stack.core, unit => unit.owner.id === stack.processing.owner.id),
       EffectHelper.candidate(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.opponent.id
+        unit => unit.owner.id === stack.processing.owner.id,
+        stack.processing.owner
+      ),
+      EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id === stack.processing.owner.opponent.id,
+        stack.processing.owner
       ),
     ];
 

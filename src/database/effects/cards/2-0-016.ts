@@ -35,7 +35,8 @@ export const effects: CardEffects = {
     const isClockUpToLv3 = stack.processing.lv === 3;
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2
+      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2,
+      stack.processing.owner
     );
 
     if (isClockUpToLv3 && targets.length > 0) {

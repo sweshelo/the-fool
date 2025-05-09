@@ -24,7 +24,8 @@ export const effects: CardEffects = {
     await System.show(stack, '人身御供', `味方全体を消滅\n敵${maxCount}体を選び消滅`);
     const units = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) => unit.owner.id !== stack.processing.owner.id
+      (unit: Unit) => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
 
     // ユニットの選択を実施する

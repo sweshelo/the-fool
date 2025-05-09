@@ -18,7 +18,8 @@ export const effects: CardEffects = {
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp
+      unit => unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp,
+      stack.processing.owner
     );
     if (candidate.length > 0) {
       await System.show(stack, '炎王獣の大咆哮', 'ユニットを破壊\n1ライフダメージ');

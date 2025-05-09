@@ -5,7 +5,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const owner = EffectHelper.owner(stack.core, stack.processing);
+    const owner = stack.processing.owner;
     const isBouncedMoreThan10Cards = owner.trash.length >= 10;
     await System.show(
       stack,
@@ -14,22 +14,19 @@ export const effects: CardEffects = {
     );
 
     // 天使を1体選ぶ
-    const candidate = EffectHelper.candidate(stack.core, (unit: Unit) => {
-      return (
-        unit.catalog.species!.includes('天使') &&
-        EffectHelper.owner(stack.core, unit).id === owner.id
-      );
-    });
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      (unit: Unit) => {
+        return unit.catalog.species!.includes('天使') && stack.processing.owner.id === owner.id;
+      },
+      stack.processing.owner
+    );
     if (candidate.length > 0) {
-      const [unitId] = await System.prompt(
-        stack,
-        EffectHelper.owner(stack.core, stack.processing).id,
-        {
-          type: 'unit',
-          title: '【秩序の盾】を与えるユニットを選択',
-          items: candidate,
-        }
-      );
+      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
+        type: 'unit',
+        title: '【秩序の盾】を与えるユニットを選択',
+        items: candidate,
+      });
 
       const unit = candidate.find(unit => unit.id === unitId);
       if (unit) Effect.keyword(stack, stack.processing, unit, '秩序の盾');
