@@ -19,6 +19,7 @@ import { Stack } from './class/stack';
 import { Card, Evolve, Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
+import { EffectHelper } from '@/database/effects/classes/helper';
 import { Delta } from './class/delta';
 import { Parry } from './class/parry';
 import { Intercept } from './class/card/Intercept';
@@ -79,6 +80,84 @@ export class Core {
     this.turnChange(true);
   }
 
+  /**
+   * マリガン処理の実際の動作部分（カードを引きなおす）
+   * @param player マリガンを行うプレイヤー
+   */
+  private performMulliganAction(player: Player): void {
+    // 手札をデッキに戻す
+    player.deck.push(...player.hand);
+    player.hand = [];
+
+    // デッキをシャッフル
+    player.deck = EffectHelper.shuffle(player.deck);
+
+    // 規定枚数カードを引く
+    [...Array(this.room.rule.system.draw.mulligan)].forEach(() => {
+      player.draw();
+    });
+
+    this.room.sync();
+    this.room.soundEffect('shuffle');
+    this.room.soundEffect('draw');
+  }
+
+  /**
+   * マリガン処理 - 手札を全てデッキに戻し、デッキをシャッフルして規定枚数カードを引く
+   * プレイヤーが満足するまで繰り返すことができる
+   * @param player マリガンを行うプレイヤー
+   * @returns Promise<void> プレイヤーがマリガンを終了したら解決される
+   */
+  async mulligan(player: Player): Promise<void> {
+    // 初回はカードを引く
+    if (player.hand.length === 0) {
+      [...Array(this.room.rule.system.draw.mulligan)].forEach(() => {
+        player.draw();
+      });
+      this.room.sync();
+    }
+
+    // マリガンループ
+    return new Promise<void>(resolve => {
+      const processMulligan = () => {
+        // 毎回ユニークなプロンプトIDを生成
+        const promptId = `mulligan_${player.id}_${Date.now()}`;
+
+        // マリガンの開始を通知
+        this.room.broadcastToPlayer(
+          player.id,
+          createMessage({
+            action: {
+              type: 'MulliganStart',
+              handler: 'client',
+            },
+            payload: {
+              type: 'MulliganStart',
+            },
+          })
+        );
+
+        // プレイヤーの選択を待つ
+        this.setEffectDisplayHandler(promptId, (choice: string[] | undefined) => {
+          const action = choice?.[0];
+
+          if (action === 'retry') {
+            // マリガン処理を実行
+            this.performMulliganAction(player);
+            // 次のマリガン判断へ
+            processMulligan();
+          } else {
+            // マリガン終了
+            resolve();
+          }
+        });
+      };
+
+      // マリガン処理を開始
+      processMulligan();
+    });
+  }
+
   // ターンチェンジ
   async turnChange(isFirstTurn: boolean = false) {
     // freeze
@@ -126,6 +205,8 @@ export class Core {
       // ターン開始処理
       this.turn++;
       this.round = Math.floor((this.turn + 1) / 2);
+    } else {
+      await Promise.all(this.players.map(player => this.mulligan(player)));
     }
 
     // CP初期化
@@ -890,6 +971,22 @@ export class Core {
           player.trash.push(target.card);
           this.room.sync();
           this.room.soundEffect('trash');
+        }
+        break;
+      }
+
+      case 'Mulligan': {
+        const payload = message.payload;
+        // Find the correct mulligan promptId from our map
+        // The promptId now contains a timestamp, so we need to find the one that starts with mulligan_${player.id}_
+        const mulliganPromptId = Array.from(this.effectResponses.keys()).find(id =>
+          id.startsWith(`mulligan_${payload.player}_`)
+        );
+
+        if (mulliganPromptId) {
+          this.handleEffectResponse(mulliganPromptId, [payload.action]);
+        } else {
+          console.warn(`No mulligan handler found for player ${payload.player}`);
         }
         break;
       }
