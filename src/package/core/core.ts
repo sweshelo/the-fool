@@ -470,7 +470,9 @@ export class Core {
         core: this,
       });
 
-      this.stack = [systemStack, winnerStack].filter(stack => stack !== undefined);
+      this.stack = [systemStack, winnerStack].filter(
+        (stack): stack is Stack => stack !== undefined
+      );
       await this.resolveStack();
     }
 

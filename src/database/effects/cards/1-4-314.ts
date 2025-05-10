@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   // このユニットがフィールドに出た時、このユニットを消滅させる。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '逃れられぬ運命', '自身を消滅');
-    Effect.delete(stack, stack.processing, stack.processing as Unit);
+    Effect.delete(stack, stack.processing, stack.processing);
   },
 
   // ■一滴の光

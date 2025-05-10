@@ -36,7 +36,7 @@ export const effects: CardEffects = {
 
     if (
       candidateCard.length > 0 &&
-      candidateUnit.length &&
+      candidateUnit.length > 0 &&
       stack.processing.owner.opponent.field.length < stack.core.room.rule.player.max.field
     ) {
       await System.show(
