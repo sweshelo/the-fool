@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     const destroyCount = unitsToDestroy.length;
 
     // 条件確認：捨札にカードがあり、フィールドにユニットが2体以上
-    if (owner.trash.length > 0 && owner.field.length >= 2) {
+    if (owner.trash.length > 0 && owner.field.length >= 2 && owner.deck.length > 10) {
       await System.show(
         stack,
         '魂沌遊戯',
@@ -18,13 +18,11 @@ export const effects: CardEffects = {
       );
 
       // デッキが10枚になるようにカードを捨てる
-      if (owner.deck.length > 10) {
-        const discardCount = owner.deck.length - 10;
-        const cardsToDiscard = owner.deck.slice(0, discardCount);
+      const discardCount = owner.deck.length - 10;
+      const cardsToDiscard = owner.deck.slice(0, discardCount);
 
-        for (const card of cardsToDiscard) {
-          Effect.move(stack, stack.processing, card, 'trash');
-        }
+      for (const card of cardsToDiscard) {
+        Effect.move(stack, stack.processing, card, 'trash');
       }
 
       for (const unit of unitsToDestroy) {

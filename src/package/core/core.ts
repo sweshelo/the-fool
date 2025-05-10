@@ -573,6 +573,7 @@ export class Core {
       card.active = source.active;
       player.field[index] = card;
       this.fieldEffectUnmount(source);
+      card.delta = [];
 
       if (!source.isCopy) {
         player.trash.push(source);
@@ -886,6 +887,7 @@ export class Core {
         if (target && target.card && player && isOnHand) {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);
           player.trash.push(target.card);
+          target.card.reset();
           this.room.sync();
           this.room.soundEffect('trash');
         }

@@ -12,13 +12,15 @@ export class Delta implements IDelta {
   effect: DeltaEffect;
   source?: DeltaSource;
   onlyForOwnersTurn: boolean; // このパラメータが true のとき、eventに合致するイベントが発生しても自分のターン中でない場合はcountを減算しない
+  permanent: boolean; // このパラメータが true のとき、unit.reset() しても残す (効果が永続するという意味ではない。その場合はeventにundefiendを設定する。)
 
   constructor(
     effect: DeltaEffect,
     event: string | undefined = undefined,
     count: number = 0,
     onlyForOwnersTurn = false,
-    source: DeltaSource | undefined = undefined
+    source: DeltaSource | undefined = undefined,
+    permanent: boolean = false
   ) {
     this.id = crypto.randomUUID();
     this.effect = effect;
@@ -26,6 +28,7 @@ export class Delta implements IDelta {
     this.count = count;
     this.onlyForOwnersTurn = onlyForOwnersTurn;
     this.source = source;
+    this.permanent = permanent;
   }
 
   /**
