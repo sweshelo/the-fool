@@ -9,6 +9,10 @@ export const effects: CardEffects = {
   // 属性の異なるカードを2枚までランダムで手札に加える。
 
   // ユニット召喚時
+  checkDrive: (stack: StackWithCard) => {
+    return stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id;
+  },
+
   onDrive: async (stack: StackWithCard): Promise<void> => {
     // 自分のユニットが召喚された時
     if (stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id) {
@@ -32,6 +36,10 @@ export const effects: CardEffects = {
   },
 
   // ユニット破壊時
+  checkBreak: (stack: StackWithCard) => {
+    return stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id;
+  },
+
   onBreak: async (stack: StackWithCard): Promise<void> => {
     // 自分の昆虫ユニットが破壊された時
     if (
@@ -54,16 +62,10 @@ export const effects: CardEffects = {
         await System.show(stack, '生産工場', '異なる属性の【昆虫】ユニットを2枚まで手札に加える');
 
         // ランダムで最大2枚選択
-        const selectedCards = EffectHelper.random(
+        EffectHelper.random(
           differentColorInsects,
           Math.min(2, differentColorInsects.length)
-        );
-
-        // 手札に加える
-        // TypeScriptのUndefined対策: 配列から直接要素にアクセスするのではなく、forループで処理
-        for (const card of selectedCards) {
-          Effect.move(stack, stack.processing, card, 'hand');
-        }
+        ).forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
       }
     }
   },

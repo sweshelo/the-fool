@@ -13,9 +13,6 @@ export const effects: CardEffects = {
 
   // 召喚時に加護を付与し、選略効果を発動
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // 加護を付与
-    Effect.keyword(stack, stack.processing, stack.processing, '加護');
-
     // 対戦相手のユニットが存在するかチェック
     const opponentUnits = EffectHelper.candidate(
       stack.core,
@@ -23,49 +20,87 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    if (opponentUnits.length === 0) return; // 対戦相手のユニットがなければ何もしない
+    // 選択肢1が可能か（対戦相手のユニットが存在するか）
+    const option1Available = opponentUnits.length > 0;
 
-    // 実装簡略化: 常に1つ目の選択肢（ユニットを手札に戻す）を選択する
-    // 実際の実装では選択UIが必要だが、型の問題のため簡略化
-    await System.show(
-      stack,
-      '選略・だいてんしのおともだち',
-      '対戦相手のユニットを2体まで手札に戻す'
-    );
+    // 選択肢2が可能か（CPが1以上あるか、かつ対戦相手のユニットが存在するか）
+    const option2Available = stack.processing.owner.cp.current >= 1 && opponentUnits.length > 0;
 
-    // ユニットを最大2体選択
-    const targetCount = Math.min(2, opponentUnits.length);
-    const targets = await EffectHelper.selectUnit(
-      stack,
-      stack.processing.owner,
-      opponentUnits,
-      '手札に戻すユニットを選択（最大2体）',
-      targetCount
-    );
+    // 両方の選択肢が不可能な場合、加護のみ付与して終了
+    if (option1Available || option2Available) {
+      // どちらか一方だけが可能な場合、自動的にその選択肢を実行
+      // 両方可能な場合のみプレイヤーに選択させる
+      let choice: string;
 
-    // 選択したユニットを手札に戻す
-    for (const target of targets) {
-      Effect.bounce(stack, stack.processing, target, 'hand');
-    }
+      if (option1Available && option2Available) {
+        const result = await System.prompt(stack, stack.processing.owner.id, {
+          type: 'option',
+          title: '選略・だいてんしのおともだち',
+          items: [
+            { id: '1', description: '対戦相手のユニットを2体まで選び手札に戻す' },
+            { id: '2', description: 'CP-1し、対戦相手のユニットをランダムで2体デッキに戻す' },
+          ],
+        });
+        choice = result[0] || '1'; // デフォルト値として'1'を設定
+      } else if (option1Available) {
+        choice = '1';
+      } else {
+        // option2Available が true
+        choice = '2';
+      }
 
-    // 注: 本来は選択肢を提示し、②を選んだ場合は以下のような処理を行うが、今回は省略
-    /* 
-    // CP-1して、ランダムで2体デッキに戻す
-    Effect.modifyCP(stack, stack.processing, stack.processing.owner, -1);
-    
-    if (stack.processing.owner.cp.current >= 0) { // CPが足りていれば効果発動
-      await System.show(stack, '選略・だいてんしのおともだち', 'CP-1\n対戦相手のユニットをランダムで2体デッキに戻す');
-      
-      // ランダムで最大2体選択
-      const targetCount = Math.min(2, opponentUnits.length);
-      const randomTargets = EffectHelper.random(opponentUnits, targetCount);
-      
-      // 選択したユニットをデッキに戻す
-      for (const target of randomTargets) {
-        Effect.bounce(stack, stack.processing, target, 'deck');
+      switch (choice) {
+        case '1': {
+          await System.show(
+            stack,
+            '選略・だいてんしのおともだち',
+            '対戦相手のユニットを2体まで手札に戻す'
+          );
+
+          // ユニットを最大2体選択
+          const targetCount = Math.min(2, opponentUnits.length);
+          const targets = await EffectHelper.selectUnit(
+            stack,
+            stack.processing.owner,
+            opponentUnits,
+            '手札に戻すユニットを選択（最大2体）',
+            targetCount
+          );
+
+          // 選択したユニットを手札に戻す
+          for (const target of targets) {
+            Effect.bounce(stack, stack.processing, target, 'hand');
+          }
+          break;
+        }
+
+        case '2': {
+          // CP-1する
+          Effect.modifyCP(stack, stack.processing, stack.processing.owner, -1);
+
+          // 効果を発動（CP-1後のチェックは不要、事前に確認済み）
+          await System.show(
+            stack,
+            '選略・だいてんしのおともだち',
+            'CP-1\n対戦相手のユニットをランダムで2体デッキに戻す'
+          );
+
+          // ランダムで最大2体選択
+          const targetCount = Math.min(2, opponentUnits.length);
+          const randomTargets = EffectHelper.random(opponentUnits, targetCount);
+
+          // 選択したユニットをデッキに戻す
+          for (const target of randomTargets) {
+            Effect.bounce(stack, stack.processing, target, 'deck');
+          }
+          break;
+        }
       }
     }
-    */
+
+    await System.show(stack, '加護', '効果に選ばれない');
+    // 加護を付与
+    Effect.keyword(stack, stack.processing, stack.processing, '加護');
   },
 
   // プレイヤーアタックを受けた時の効果

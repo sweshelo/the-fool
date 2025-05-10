@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // ■クロック・アップ
@@ -42,12 +41,12 @@ export const effects: CardEffects = {
         delta.effect.diff = 1000;
       } else {
         // 新しいDeltaを追加
-        unit.delta.push(
-          new Delta({ type: 'bp', diff: 1000 }, undefined, undefined, undefined, {
+        Effect.modifyBP(stack, stack.processing, unit, 1000, {
+          source: {
             unit: stack.processing.id,
             effectCode: '繁殖',
-          })
-        );
+          },
+        });
       }
     }
   },

@@ -26,7 +26,7 @@ export const effects: CardEffects = {
     } else {
       // 新しいDeltaを追加
       Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-        source: { unit: stack.processing.id },
+        source: { unit: stack.processing.id, effectCode: '増殖' },
       });
     }
   },

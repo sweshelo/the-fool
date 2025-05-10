@@ -27,6 +27,10 @@ export const effects: CardEffects = {
       for (const unit of level3PlusUnits) {
         Effect.break(stack, stack.processing, unit, 'effect');
       }
+
+      [...Array(level3PlusUnits.length >= 2 ? 2 : 1)].forEach(() =>
+        stack.processing.owner.opponent.damage()
+      );
     }
   },
 
