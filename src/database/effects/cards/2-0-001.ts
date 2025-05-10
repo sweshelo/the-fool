@@ -9,7 +9,8 @@ export const effects: CardEffects = {
       stack.core,
       unit =>
         unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('ドラゴン') ?? false)
+        (unit.catalog.species?.includes('ドラゴン') ?? false),
+      stack.processing.owner
     );
 
     const [unitId] = await System.prompt(stack, stack.processing.owner.id, {

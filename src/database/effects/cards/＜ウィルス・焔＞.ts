@@ -9,7 +9,8 @@ export const effects: CardEffects = {
         .length >= 5;
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.id
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner.opponent
     );
     const isOpponentUnitDriven = stack.source.id !== stack.processing.owner.id;
 

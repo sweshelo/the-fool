@@ -19,7 +19,8 @@ export const effects = {
   onAttackSelf: async (stack: StackWithCard) => {
     const opponents = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
     const isCardsInTrigger =
       stack.processing.owner.trigger.length > 0 ||

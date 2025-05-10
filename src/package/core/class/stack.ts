@@ -4,7 +4,7 @@ import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import { Card, Unit } from './card';
-import { System } from '@/database/effects';
+import { Effect, System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/database/effects/classes/types';
 import { Parry } from './parry';
@@ -146,6 +146,10 @@ export class Stack implements IStack {
       }
     }
 
+    // フィールド効果
+    this.processFieldEffect();
+    await this.resolveChild(this.core);
+
     // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
       if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
@@ -258,6 +262,7 @@ export class Stack implements IStack {
     } while (canceled < player.length);
 
     // deltaを更新
+    // 寿命カウンタ系は core 側でチェックされる
     [
       ...turnPlayer.field,
       ...turnPlayer.hand,
@@ -265,12 +270,18 @@ export class Stack implements IStack {
       ...(nonTurnPlayer?.hand ?? []),
     ].forEach(card => {
       this.processing = card;
-      card.delta = card.delta.filter(delta => !delta.checkExpire(this as StackWithCard));
+      card.delta = card.delta.filter(
+        delta =>
+          !delta.checkExpire(this as StackWithCard) ||
+          delta.effect.type === 'death' ||
+          delta.effect.type === 'life'
+      );
       this.processing = undefined;
     });
 
     // フィールド効果
     this.processFieldEffect();
+    await this.resolveChild(this.core);
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -593,7 +604,6 @@ export class Stack implements IStack {
   }
 
   private processFieldEffect() {
-    console.log('フィールド効果/手札効果呼び出し中');
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {
@@ -605,6 +615,9 @@ export class Stack implements IStack {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
+
+          // このフィールド効果による影響を確認
+          this.breakCheck(unit);
         }
       });
 
@@ -615,6 +628,16 @@ export class Stack implements IStack {
           card.catalog.handEffect(this.core, card);
         }
       });
-    this.core.room.sync();
+
+    this.core.room.sync(true);
+  }
+
+  private breakCheck(effector: Unit) {
+    this.core.players
+      .flatMap(player => player.field)
+      .forEach(unit => {
+        if (unit.currentBP <= 0 && unit.destination === undefined)
+          Effect.break(this, effector, unit, 'effect');
+      });
   }
 }

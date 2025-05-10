@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     const hasFieldSpace = stack.processing.owner.field.length <= 4;
 
     if (isOpponentTurn && isAtLeast25BlueCardsInTrash && hasFieldSpace) {
-      await System.show(stack, '永久凍土', '【特殊召喚】');
+      System.show(stack, '永久凍土', '【特殊召喚】');
       await Effect.summon(stack, stack.processing, stack.processing);
     }
   },
@@ -35,7 +35,8 @@ export const effects: CardEffects = {
     const isClockUpToLv3 = stack.processing.lv === 3;
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2
+      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2,
+      stack.processing.owner
     );
 
     if (isClockUpToLv3 && targets.length > 0) {

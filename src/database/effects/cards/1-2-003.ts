@@ -13,7 +13,8 @@ export const effects: CardEffects = {
   onClockup: async (stack: StackWithCard): Promise<void> => {
     const candidate = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
     );
 
     if (
@@ -34,7 +35,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onClockupSelf: async (stack: StackWithCard): Promise<void> => {
+  onClockupSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const targets = stack.processing.owner.opponent.field.filter(unit => unit.lv === 3);
     if (targets.length > 0) {
       await System.show(stack, '紅蓮のグロウバーン', '敵全体のレベル3以上のユニットに5000ダメージ');

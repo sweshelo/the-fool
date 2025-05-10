@@ -1,35 +1,11 @@
-import type { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
-import type { IAtom } from '@/submodule/suit/types';
+import { System } from './system';
+import type { Stack } from '@/package/core/class/stack';
+import type { Choices } from '@/submodule/suit/types/game/system';
 
 export class EffectHelper {
-  /**
-   * @deprecated Card.owner を使用して下さい
-   */
-  static owner(core: Core, card: IAtom | undefined): Player {
-    if (!card) throw new Error('所有者を特定したいカードが渡されませんでした');
-
-    const result = core.players.find(player => player.find(card).result);
-    if (result === undefined) throw new Error('存在しないカードが選択されました');
-
-    return result;
-  }
-
-  /**
-   * @deprecated Player.opponent を使用して下さい
-   */
-  static opponent(core: Core, card: IAtom): Player {
-    const owner = this.owner(core, card);
-    const opponent = core.players.find(p => p.id !== owner.id);
-
-    if (opponent) {
-      return opponent;
-    } else {
-      throw new Error('対戦相手が存在しません');
-    }
-  }
-
   /**
    * 『自身以外に』の効果を実行する
    * @param effect 実行する効果
@@ -43,13 +19,18 @@ export class EffectHelper {
     units.forEach(effect);
   }
 
-  static candidate(core: Core, filter: (unit: Unit) => boolean): Unit[] {
+  static candidate(core: Core, filter: (unit: Unit) => boolean, selector: Player): Unit[] {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
-    return core.players
+    const units = core.players
       .map(p => p.field)
       .flat()
       .filter(exceptBlessing)
       .filter(filter);
+
+    // セレクトハック持ちがいたらそれだけ返す
+    return units.some(unit => unit.hasKeyword('セレクトハック') && unit.owner.id !== selector.id)
+      ? units.filter(unit => unit.hasKeyword('セレクトハック'))
+      : units;
   }
 
   /**
@@ -77,5 +58,61 @@ export class EffectHelper {
     }
 
     return out.filter(e => e !== undefined);
+  }
+
+  static async selectUnit(
+    stack: Stack,
+    player: Player,
+    targets: Unit[],
+    title: string,
+    count: number = 1
+  ): Promise<[Unit, ...Unit[]]> {
+    const selected: Unit[] = [];
+    let candidate: Unit[] = EffectHelper.candidate(
+      stack.core,
+      unit => targets.map(unit => unit.id).includes(unit.id),
+      player
+    );
+
+    while (selected.length < count && candidate.length > 0) {
+      const [choiceId] = await System.prompt(stack, player.id, {
+        title,
+        type: 'unit',
+        items: candidate,
+      });
+
+      const chosen = targets.find(unit => unit.id === choiceId) ?? candidate[0];
+      if (!chosen) throw new Error('対象のユニットが存在しません');
+
+      selected.push(chosen);
+      candidate = EffectHelper.candidate(
+        stack.core,
+        unit => targets.some(t => t.id === unit.id) && !selected.some(s => s.id === unit.id),
+        player
+      );
+    }
+
+    if (selected.length > 0) return selected as [Unit, ...Unit[]];
+    throw new Error('選択すべきユニットが見つかりませんでした');
+  }
+
+  static async selectCard(
+    stack: Stack,
+    player: Player,
+    targets: Card[],
+    title: string,
+    count: number = 1
+  ): Promise<[Card, ...Card[]]> {
+    const choices: Choices = {
+      title,
+      type: 'card',
+      items: targets,
+      count,
+    };
+    const response = await System.prompt(stack, player.id, choices);
+    const result = targets.filter(card => response.includes(card.id));
+
+    if (result.length > 0) return result as [Card, ...Card[]];
+    throw new Error('選択すべきカードが見つかりませんでした');
   }
 }

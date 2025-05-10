@@ -1,7 +1,5 @@
-// FIXME: 何故か対戦相手のターン中に発動可能になるバグが有る
-
 import type { Card } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -28,12 +26,11 @@ export const effects: CardEffects = {
       case '1':
       default:
         await System.show(stack, '選略・魔導の心得', '紫ゲージ+１');
-        stack.core.room.soundEffect('purple-increase');
-        // TODO: 紫ゲージを実装する
+        await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
         break;
       case '2': {
         await System.show(stack, '選略・魔導の心得', 'デッキからインターセプトを1枚セット');
-        const owner = EffectHelper.owner(stack.core, stack.processing);
+        const owner = stack.processing.owner;
         const intercepts = owner.deck.filter(card => card.catalog.type === 'intercept');
         const target = intercepts[Math.ceil(Math.random() * intercepts.length - 1)];
 

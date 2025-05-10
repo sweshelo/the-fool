@@ -42,7 +42,8 @@ export const effects: CardEffects = {
       !(stack.target instanceof Unit) ||
       stack.target.catalog.cost < 2 ||
       stack.target.owner.id !== stack.processing.owner.id ||
-      stack.target.id === stack.processing.id
+      stack.target.id === stack.processing.id ||
+      !stack.processing.owner.field.find(unit => unit.id == stack.target?.id)
     )
       return;
 
@@ -50,7 +51,8 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const candidate = EffectHelper.candidate(
       stack.core,
-      (unit: Unit) => unit.owner.id !== owner.id
+      (unit: Unit) => unit.owner.id !== owner.id,
+      stack.processing.owner
     );
 
     // ユニットが生存していない場合は処理を中断する

@@ -9,7 +9,8 @@ export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard) => {
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.id
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
     );
     return targets.length > 0 && stack.processing.owner.id !== stack.core.getTurnPlayer().id;
   },
@@ -24,7 +25,8 @@ export const effects: CardEffects = {
     );
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.id
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
     );
     const choices: Choices = {
       title: '効果を与えるユニットを選択してください',

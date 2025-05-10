@@ -8,7 +8,8 @@ const ability = async (stack: StackWithCard): Promise<void> => {
     stack.core,
     unit =>
       unit.owner.id === stack.processing.owner.id &&
-      (unit.catalog.species?.includes('武身') ?? false)
+      (unit.catalog.species?.includes('武身') ?? false),
+    stack.processing.owner
   );
   if (targets.length > 0) {
     await System.show(stack, '鏡盾の守護', '【秩序の盾】を付与');

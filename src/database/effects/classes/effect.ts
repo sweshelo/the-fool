@@ -129,7 +129,7 @@ export class Effect {
       target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
     }
 
-    stack.core.room.soundEffect(value >= 0 ? 'graw' : 'damage');
+    stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
     if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'effect');
@@ -143,6 +143,7 @@ export class Effect {
    * 対象を破壊する
    * @param source 効果の発動元
    * @param target 破壊の対象
+   * @param cause その破壊の原因 (カードテキストの実装にあたっては基本的にeffect以外使用してはいけない)
    */
   static break(
     stack: Stack,
@@ -479,6 +480,7 @@ export class Effect {
       source.owner.id !== target.owner.id
     ) {
       stack.core.room.soundEffect('block');
+      stack.core.room.sync(true);
       return;
     }
 
@@ -661,5 +663,14 @@ export class Effect {
     }
 
     target.active = activate;
+  }
+
+  static death(_stack: Stack, _source: Card, target: Unit, count: number) {
+    const deathCounter = target.delta.find(delta => delta.effect.type === 'death');
+    if (deathCounter && count < deathCounter.count) {
+      deathCounter.count = count;
+    } else {
+      target.delta.push(new Delta({ type: 'death' }, 'turnEnd', count, true));
+    }
   }
 }

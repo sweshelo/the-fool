@@ -65,6 +65,7 @@ export class System {
     // クライアントからの応答を待つ
     const result: string[] = await new Promise(resolve => {
       stack.core.setEffectDisplayHandler(promptId, (choice: string[]) => {
+        if (choices.type === 'unit') stack.core.room.soundEffect('bang');
         resolve(choice);
       });
     });

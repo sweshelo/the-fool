@@ -8,7 +8,8 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3
+      unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3,
+      stack.processing.owner
     );
     if (
       targets.length > 0 &&

@@ -49,7 +49,7 @@ export const effects: CardEffects = {
       const [breakUnitId] = await System.prompt(stack, owner.id, {
         type: 'unit',
         title: '破壊する【昆虫】ユニットを選択',
-        items: EffectHelper.candidate(stack.core, incectsFilter),
+        items: EffectHelper.candidate(stack.core, incectsFilter, stack.processing.owner),
       });
       const breakUnit = owner.field.find(unit => unit.id === breakUnitId);
       if (!breakUnit) throw new Error('対象のユニットが見つかりませんでした');
@@ -60,7 +60,11 @@ export const effects: CardEffects = {
         const [damageUnitId] = await System.prompt(stack, owner.id, {
           type: 'unit',
           title: 'ダメージを与えるユニットを選択',
-          items: EffectHelper.candidate(stack.core, (unit: Unit) => unit.owner.id !== owner.id),
+          items: EffectHelper.candidate(
+            stack.core,
+            (unit: Unit) => unit.owner.id !== owner.id,
+            stack.processing.owner
+          ),
         });
         const damageUnit = opponent.field.find(unit => unit.id === damageUnitId);
         if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
