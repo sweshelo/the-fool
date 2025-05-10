@@ -60,6 +60,10 @@ type StackOption =
   | {
       type: 'lv';
       value: number;
+    }
+  | {
+      type: 'purple';
+      value: number;
     };
 
 export class Stack implements IStack {

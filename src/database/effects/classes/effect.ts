@@ -370,7 +370,6 @@ export class Effect {
 
   /**
    * 紫ゲージを操作する
-   * この関数は Promise を返すが、演出のための待機なので、呼び出し元で必ずしも await しなくても良い。
    * @param stack
    * @param source 効果の発動元
    * @param target 対象のプレイヤー
@@ -384,20 +383,23 @@ export class Effect {
   ): Promise<void> {
     if (value === 0) return;
 
-    // TODO: これを紫ゲージの増減操作に変える
-    // const updatedPurple = Math.max(Math.min(target.cp.current + value, 0), 5))
+    const updatedPurple = Math.max(Math.min(target.purple ?? 0 + value, 0), 5);
 
-    stack.addChildStack('modifyCP', source, target, {
-      type: 'cp',
+    stack.addChildStack('modifyPurple', source, target, {
+      type: 'purple',
       value,
     });
 
+    if (target.purple === undefined) target.purple = 0;
+
     // 演出
-    for (let i = 0; i < Math.abs(value); i++) {
+    for (let i = 0; i < Math.abs(updatedPurple - (target.purple ?? 0)); i++) {
       if (value > 0) {
         stack.core.room.soundEffect('purple-increase');
+        target.purple += 1;
       } else {
         stack.core.room.soundEffect('purple-consume');
+        target.purple -= 1;
       }
       await new Promise(resolve => setTimeout(resolve, 0.25));
     }
