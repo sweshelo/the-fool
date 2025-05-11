@@ -26,13 +26,13 @@ export const effects: CardEffects = {
 
   // ■龍機の覚醒め
   // 対戦相手のトリガーゾーンにあるカードを破壊した時、このユニットの行動権を回復する。
-  // 実装メモ：カードの破壊を move で実装しているため、onBreak ではなく onTriggerDestroy という専用のイベントを用意する
   onLost: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
     // 自分が破壊したカードである場合に発動
     if (
-      stack.source.id === owner.id &&
+      stack.source instanceof Card &&
+      stack.source.owner.id === owner.id &&
       stack.target instanceof Card &&
       stack.target.owner.id !== owner.id
     ) {

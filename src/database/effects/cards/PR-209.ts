@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   // このユニットがフィールドに出た時、このユニットのレベルを+1する。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '豪傑王の野心', 'レベル+1');
-    Effect.clock(stack, stack.processing, stack.processing, 1, true);
+    Effect.clock(stack, stack.processing, stack.processing, 1, false);
   },
 
   // ■ウルクの暴君

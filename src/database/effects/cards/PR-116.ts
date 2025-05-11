@@ -11,8 +11,8 @@ export const effects: CardEffects = {
 
     await System.show(
       stack,
-      '未来のために&消滅効果耐性',
-      '手札を全て捨てる\n対戦相手の効果によって消滅しない'
+      '未来のために',
+      '【消滅効果耐性】\n【スピードムーブ】\n手札を全て捨てる'
     );
     // 手札を全て捨てる
     for (const card of [...owner.hand]) {
@@ -21,37 +21,34 @@ export const effects: CardEffects = {
 
     // キーワード付与
     Effect.keyword(stack, self, self, '消滅効果耐性');
+    Effect.speedMove(stack, self);
   },
 
   // 手札のこのカードのコスト減少
   handEffect(_core: unknown, self: Unit) {
-    const delta = self.delta.find(
-      delta => delta.effect.type === 'cost' && delta.source?.unit === self.id
-    );
+    const delta = self.delta.find(delta => delta.source?.unit === self.id);
+    const reduce = Math.max(-self.owner.hand.length, -6);
+
     if (delta && delta.effect.type === 'cost') {
-      delta.effect.value = Math.min(-self.owner.hand.length, -6);
+      delta.effect.value = reduce;
     } else {
       self.delta.push(
-        new Delta(
-          { type: 'cost', value: -self.owner.hand.length },
-          undefined,
-          undefined,
-          undefined,
-          { unit: self.id }
-        )
+        new Delta({ type: 'cost', value: reduce }, undefined, undefined, undefined, {
+          unit: self.id,
+        })
       );
     }
   },
 
   // プレイヤーアタック成功時、選略
-  async onPlayerAttack(stack: StackWithCard<Unit>) {
+  async onPlayerAttackSelf(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
     // 選択肢
     const options = [
       { id: '1', description: 'お互いに1ライフダメージ' },
-      { id: '2', description: 'お互いに手札を全て捨て、カードを3枚引く' },
+      { id: '2', description: 'お互いに手札を全て捨てる\nカードを3枚引く' },
     ];
 
     let choice: string | undefined;
@@ -71,11 +68,13 @@ export const effects: CardEffects = {
       owner.damage();
       opponent.damage();
     } else if (choice === '2') {
-      await System.show(stack, '憂国の侵攻', 'お互い手札全捨て\n3枚引く');
+      await System.show(stack, '憂国の侵攻', '手札を全て捨てる\nカードを3枚引く');
       stack.core.players
         .flatMap(player => player.hand)
         .forEach(card => Effect.handes(stack, stack.processing, card));
-      stack.core.players.forEach(player => EffectTemplate.draw(player, stack.core));
+      stack.core.players.forEach(player =>
+        [...Array(3)].forEach(() => EffectTemplate.draw(player, stack.core))
+      );
     }
   },
 };

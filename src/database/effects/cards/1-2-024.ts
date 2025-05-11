@@ -30,7 +30,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onDriveself: async (stack: StackWithCard<Unit>) => {
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, '八咫鏡', 'レベル1の時【加護】を得る');
   },
 
@@ -40,14 +40,14 @@ export const effects: CardEffects = {
 
     // 自分がプレイヤーアタックを受けた時のみ発動
     if (
-      stack.target instanceof Unit &&
-      stack.target.owner.id === owner.opponent.id && // 相手のユニットがアタックしている
-      stack.source.id === owner.id // 自分がプレイヤーアタックを受けている
+      stack.source instanceof Unit &&
+      stack.source.owner.id === owner.opponent.id && // 相手のユニットがアタックしている
+      stack.target?.id === owner.id // 自分がプレイヤーアタックを受けている
     ) {
       await System.show(stack, '八咫鏡', 'ユニットを消滅\nレベル+1');
 
       // アタックしてきたユニットを消滅させる
-      Effect.delete(stack, stack.processing, stack.target);
+      Effect.delete(stack, stack.processing, stack.source);
 
       // 自身のレベルを+1する
       Effect.clock(stack, stack.processing, stack.processing, 1);
@@ -55,7 +55,7 @@ export const effects: CardEffects = {
   },
 
   // ターン終了時の効果
-  async onTurnEndSelf(stack: StackWithCard<Unit>) {
+  async onTurnEnd(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
     const turnPlayer = stack.core.getTurnPlayer();
 
@@ -74,28 +74,34 @@ export const effects: CardEffects = {
       );
 
       // お互いにユニットがいる場合のみ処理
-      if (ownUnits.length > 0 && opponentUnits.length > 0) {
+      if (ownUnits.length > 0 || opponentUnits.length > 0) {
         await System.show(stack, '八咫鏡', 'お互いのユニットを消滅');
+        const deleteTargets: Unit[] = [];
 
         // 自分のユニットを1体選択
-        const [ownTarget] = await EffectHelper.selectUnit(
-          stack,
-          owner,
-          ownUnits,
-          '消滅させる自分のユニットを選択'
-        );
+        if (ownUnits.length > 0) {
+          const [ownTarget] = await EffectHelper.selectUnit(
+            stack,
+            owner,
+            ownUnits,
+            '消滅させる自分のユニットを選択'
+          );
+          deleteTargets.push(ownTarget);
+        }
 
         // 相手のユニットを1体選択
-        const [opponentTarget] = await EffectHelper.selectUnit(
-          stack,
-          owner,
-          opponentUnits,
-          '消滅させる相手のユニットを選択'
-        );
+        if (opponentUnits.length > 0) {
+          const [opponentTarget] = await EffectHelper.selectUnit(
+            stack,
+            owner,
+            opponentUnits,
+            '消滅させる相手のユニットを選択'
+          );
+          deleteTargets.push(opponentTarget);
+        }
 
         // 選択したユニットを消滅させる
-        Effect.delete(stack, stack.processing, ownTarget);
-        Effect.delete(stack, stack.processing, opponentTarget);
+        deleteTargets.forEach(unit => Effect.delete(stack, stack.processing, unit));
       }
     }
   },

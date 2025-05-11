@@ -11,17 +11,17 @@ export const effects: CardEffects = {
 
   // 召喚時にスピードムーブを付与し、対戦相手のユニットに1000ダメージを与える
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // スピードムーブを付与
-    await System.show(stack, '紅蓮の弾舞', '【スピードムーブ】を付与');
-    Effect.speedMove(stack, stack.processing);
-
     const opponent = stack.processing.owner.opponent;
 
     // 対戦相手のユニットを取得
     const opponentUnits = opponent.field;
 
     if (opponentUnits.length > 0) {
-      await System.show(stack, '紅蓮の弾舞', '敵ユニット1体に1000ダメージ');
+      await System.show(
+        stack,
+        '紅蓮の弾舞＆スピードムーブ',
+        '敵ユニット1体に1000ダメージ\n行動制限の影響を受けない'
+      );
 
       // ユニットを1体選択
       const [target] = await EffectHelper.selectUnit(
@@ -35,7 +35,11 @@ export const effects: CardEffects = {
         // 1000ダメージを与える
         Effect.damage(stack, stack.processing, target, 1000);
       }
+    } else {
+      await System.show(stack, 'スピードムーブ', '行動制限の影響を受けない');
     }
+
+    Effect.speedMove(stack, stack.processing);
   },
 
   // アタック時、対戦相手のコスト2以下のユニットに防御禁止を与える
