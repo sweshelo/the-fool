@@ -1,9 +1,8 @@
+/*
 import master from '@/database/catalog';
 import { EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Evolve, Unit } from '@/package/core/class/card';
-import { Trigger } from '@/package/core/class/card/Trigger';
-import { Intercept } from '@/package/core/class/card/Intercept';
+import { Evolve, Unit, Trigger, Intercept } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
@@ -44,3 +43,4 @@ export const effects: CardEffects = {
     });
   },
 };
+*/

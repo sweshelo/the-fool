@@ -65,10 +65,10 @@ export class EffectTemplate {
    * @param match サーチする条件
    * @returns void
    */
-  static reinforcements(stack: Stack, player: Player, match: ReinforcementMatcher): void {
+  static reinforcements(stack: Stack, player: Player, match: ReinforcementMatcher): boolean {
     // 召喚者の手札が上限に達している場合は何もしない
     if (player.hand === undefined || player.hand.length >= stack.core.room.rule.player.max.hand)
-      return;
+      return false;
 
     // 召喚者のデッキから条件に合致するカードを探す
     const target = player.deck.find(c => {
@@ -85,9 +85,10 @@ export class EffectTemplate {
     // targetを引き抜き、手札に加える
     if (target && stack.processing) {
       Effect.move(stack, stack.processing, target, 'hand');
+      return true;
     }
 
-    return;
+    return false;
   }
 
   static async reincarnate(stack: Stack, unit: Unit) {

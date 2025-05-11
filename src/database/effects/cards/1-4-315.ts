@@ -8,15 +8,15 @@ export const effects: CardEffects = {
 
     if (opponent.hand.length === 0) return;
 
-    await System.show(stack, 'だてんしのいたずら', '相手は手札を2枚まで捨てる');
+    await System.show(stack, 'だてんしのいたずら', '手札を2枚まで捨てる');
 
     // 相手に手札を2枚まで選択させて捨てる
     const selectedCards = await EffectHelper.selectCard(
       stack,
       opponent,
       opponent.hand,
-      '捨てるカードを選択してください（最大2枚）',
-      Math.max(2, stack.processing.owner.opponent.hand.length)
+      '捨てるカードを選択してください',
+      Math.min(2, stack.processing.owner.opponent.hand.length)
     );
 
     for (const card of selectedCards) {
@@ -24,7 +24,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onOverclock: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
 
     if (opponent.trigger.length === 0) return;
@@ -35,7 +35,7 @@ export const effects: CardEffects = {
 
     const targetCard = targetCards[0];
 
-    await System.show(stack, 'えんじぇりっく・ろすと', '相手のトリガーを破壊');
+    await System.show(stack, 'えんじぇりっく・ろすと', 'トリガーゾーンを1枚破壊');
     Effect.break(stack, stack.processing, targetCard as Unit);
   },
 };

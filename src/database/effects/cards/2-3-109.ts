@@ -21,7 +21,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
     if (owner.hand.length > 0) {
-      await System.show(stack, '竜の一矢', '手札1枚消滅\nトリガーカード1枚引く');
+      await System.show(stack, '竜の一矢', '手札を1枚消滅\nトリガーカード1枚引く');
       // 手札選択
       const [card] = await EffectHelper.selectCard(
         stack,
