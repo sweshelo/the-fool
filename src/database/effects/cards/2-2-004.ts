@@ -33,7 +33,13 @@ export const effects: CardEffects = {
       owner.trigger.length < stack.core.room.rule.player.max.trigger
     ) {
       await System.show(stack, '炎式機工甲冑二式', 'デッキから1枚トリガーゾーンにセット');
-      const [card] = EffectHelper.random(owner.deck, 1);
+      const [card] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        stack.processing.owner.deck,
+        'トリガーゾーンにセットするカードを選んで下さい',
+        1
+      );
       if (card) {
         Effect.move(stack, stack.processing, card, 'trigger');
       }

@@ -6,13 +6,10 @@ export const effects: CardEffects = {
   // ■起動・一斉掃射
   // 対戦相手の全ての行動済ユニットに2000ダメージを与える。（この効果は1ターンに1度発動できる）
   isBootable: (core, self: Unit): boolean => {
-    // 1ターン1度の制限をチェック
-    const alreadyUsed = core.histories.some(
-      (history: { card: { id: string }; action: string }) =>
-        history.card.id === self.id && history.action === 'boot'
-    );
+    const opponentInactiveUnits = self.owner.opponent.field.filter(unit => !unit.active);
 
-    return !alreadyUsed;
+    if (opponentInactiveUnits.length > 0) return true;
+    return false;
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -38,19 +35,20 @@ export const effects: CardEffects = {
 
     if (hasFieldSpace) {
       // コスト3以下の機械ユニットを検索
-      const machineUnits = owner.hand.filter(
-        card =>
-          card instanceof Unit &&
-          card.catalog.cost <= 3 &&
-          Array.isArray(card.catalog.species) &&
-          card.catalog.species.includes('機械')
+      const machineUnits = EffectHelper.candidate(
+        stack.core,
+        unit =>
+          unit instanceof Unit &&
+          unit.catalog.cost <= 3 &&
+          (unit.catalog.species?.includes('機械') ?? false),
+        stack.processing.owner
       );
 
       if (machineUnits.length > 0) {
         await System.show(stack, '救援部隊投入', 'コスト3以下の【機械】を【複製】');
 
         // ユーザーに選択させる
-        const [choice] = await EffectHelper.selectCard(
+        const [choice] = await EffectHelper.selectUnit(
           stack,
           owner,
           machineUnits,
@@ -59,7 +57,7 @@ export const effects: CardEffects = {
 
         // 選択されたカードを複製する (特殊召喚で複製を実現)
         if (choice instanceof Unit) {
-          Effect.clone(stack, stack.processing, choice, stack.processing.owner);
+          await Effect.clone(stack, stack.processing, choice, stack.processing.owner);
         }
       }
     }

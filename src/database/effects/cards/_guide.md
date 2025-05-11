@@ -12,14 +12,15 @@
 
 イベント名の代表的なものを挙げる。
 
-| 識別子    | 内容                           | 例          |
-| --------- | ------------------------------ | ----------- |
-| drive     | 召喚された                     | onDrive     |
-| break     | 破壊された                     | onBreak     |
-| bounce    | 手札に戻す効果が発動した       | onBounce    |
-| damage    | ダメージを与える効果が発動した | onDamage    |
-| turnStart | ターン開始                     | onTurnStart |
-| overclock | オーバークロックした           | onOverclock |
+| 識別子       | 内容                           | 例             |
+| ------------ | ------------------------------ | -------------- |
+| drive        | 召喚された                     | onDrive        |
+| break        | 破壊された                     | onBreak        |
+| bounce       | 手札に戻す効果が発動した       | onBounce       |
+| damage       | ダメージを与える効果が発動した | onDamage       |
+| turnStart    | ターン開始                     | onTurnStart    |
+| overclock    | オーバークロックした           | onOverclock    |
+| playerAttack | プレイヤーアタックに成功した   | onPlayerAttack |
 
 関数名には、以下の Suffix が有効。
 
@@ -41,6 +42,15 @@
 ### カードの型
 
 `src/submodule/suit/types/game/card/index.ts`を参照。実装は`src/package/core/class/card/*.ts`を参照。
+
+### 共通ガイドライン
+
+- 発動タイミングについて言及されていないキーワード効果(【】で括られた能力)がテキストにある時、それは召喚時に付与されることを示している。onDriveSelfの処理に追加すること。
+- カードの移動は Effect.move を、BPの操作は Effect.modifyBP を使い、各オブジェクトの値を直接操作してはならない。
+- 「ブロックされない」効果は、 Effect.keyword() で '次元干渉' を付与し、そのコストに0を指定する。
+- ユニットを選ぶ効果は `EffectHelper.selectUnit()` を利用するが、この引数に渡す選択肢は予め `EffectHelper.candidate()` で選択可能であるかを検証しておかなければならない。
+- カードを選ぶ効果は `EffectHelper.selectCard()`を利用する。 selectUnit() と selectCard() の違いは、その選択対象がフィールドいるかいないかである。フィールド上のユニットを選ぶ場合は前者を、そうでない場合は後者を利用せよ。
+- エラーハンドリングはフレームワーク側が実施するので、例外を投げる可能性のある関数を呼び出す場合でも try-catch は必ずしも必要ではない。
 
 ### 通常関数
 
