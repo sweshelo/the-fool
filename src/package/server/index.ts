@@ -1,5 +1,6 @@
 import { Room } from './room/room';
 import { User } from './room/user';
+import { apiRouter } from './apiRouter';
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
 import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
@@ -40,7 +41,9 @@ export class Server {
               key: keyContent,
               cert: certContent,
             },
-            fetch(req, server) {
+            fetch: async (req, server) => {
+              const apiResponse = await apiRouter(req);
+              if (apiResponse) return apiResponse;
               if (server.upgrade(req)) return;
               return new Response('Upgrade failed', { status: 500 });
             },
@@ -59,7 +62,9 @@ export class Server {
       console.log('Running server without TLS (HTTP mode)');
       Bun.serve({
         port: serverPort,
-        fetch(req, server) {
+        fetch: async (req, server) => {
+          const apiResponse = await apiRouter(req);
+          if (apiResponse) return apiResponse;
           if (server.upgrade(req)) return;
           return new Response('Upgrade failed', { status: 500 });
         },
