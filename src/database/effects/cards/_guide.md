@@ -38,6 +38,10 @@
 
 ## 効果実装ガイド
 
+### カードの型
+
+`src/submodule/suit/types/game/card/index.ts`を参照。実装は`src/package/core/class/card/*.ts`を参照。
+
 ### 通常関数
 
 通常関数とは、効果が発動した際に呼び出される関数のことを指す。通常関数では、どのような効果を発動したかを表示する `System.show()` メソッドを呼ばなくてはならない。
@@ -113,6 +117,31 @@ fieldEffect(stack){
 ### System
 
 `effects/classes/system.ts` にあるこのクラスは、`Effect.show` を除いてはラッパーが用意されているため、あまり利用する必要がないが、 `Effect.prompt`は〈選略〉効果を実装する際に必要になる。
+
+#### 選略・選告
+
+「選略」及び「選告」は、プレイヤーに2つに1つの選択肢を提示して、そのどちらかを発動する効果。選択肢のうち、どちらか一方しか選択できない状況では、選択肢の提示は行われず発動可能であるほうが自動で発動する。コードは以下のようになる。
+
+```ts
+// プロンプトを表示して効果を選択
+// 選略[1]は、相手にLv3以上のユニットが存在しないと発動できない
+if (opponentUnits.length > 0) {
+  const [choice] =
+    opponentUnits.filter(unit => unit.lv >= 3).length > 0
+      ? await System.prompt(stack, stack.processing.owner.id, {
+          title: '選略・空間を統べる覇者',
+          type: 'option',
+          items: [
+            { id: '1', description: '敵全体のレベル3以上のユニットを破壊' },
+            { id: '2', description: '敵全体に【沈黙】を与える' },
+          ],
+        })
+      : ['2'];
+}
+```
+
+`System.prompt` の第2引数には、その選択肢を選ぶプレイヤーのIDを指定する。「選略」では `stack.processing.owner.id` に、「選告」では `stack.processing.owner.opponent.id`を指定する。
+選択肢を提示した時点で、どちらかの効果が発動することが確定する。**選択肢を提示したあとに、if文による条件分岐を行って効果を取り止めたりしてはならない。**
 
 ## テキスト
 
