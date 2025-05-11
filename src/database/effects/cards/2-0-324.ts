@@ -1,5 +1,5 @@
 import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Unit } from '@/package/core/class/card';
 
@@ -11,7 +11,11 @@ export const effects: CardEffects = {
     );
 
     if (candidate.length > 0 && stack.processing.owner.field.length <= 4) {
-      await System.show(stack, '私の救世主さま', '【不屈】\nコスト7以下を【特殊召喚】');
+      await System.show(
+        stack,
+        '私の救世主さま',
+        '【不屈】\nデッキからコスト7以下を1体選び【特殊召喚】'
+      );
       const choices: Choices = {
         title: '【特殊召喚】するユニットカードを選択してください',
         type: 'card',
@@ -25,6 +29,22 @@ export const effects: CardEffects = {
       if (target) {
         await Effect.summon(stack, stack.processing, target as Unit);
       }
+    }
+  },
+
+  onTurnStart: async (stack: StackWithCard<Unit>) => {
+    const targets = stack.processing.owner.deck.filter(
+      card => card.catalog.type === 'unit' && card.catalog.cost <= 3
+    );
+    if (
+      stack.processing.owner.id === stack.core.getTurnPlayer().id &&
+      targets.length > 0 &&
+      stack.processing.owner.field.length <= 4
+    ) {
+      await System.show(stack, '私の救世主さま', 'コスト3以下を【特殊召喚】');
+      EffectHelper.random(targets, 1).forEach(card =>
+        Effect.summon(stack, stack.processing, card as Unit)
+      );
     }
   },
 };
