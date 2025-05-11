@@ -43,7 +43,7 @@ export const effects: CardEffects = {
   // ■絶魔王の秘術
   // このユニットがプレイヤーアタックに成功した時、あなたの捨札に赤属性のカードが10枚以上ある場合、
   // このユニットの行動権を回復する。あなたの捨札にあるカードをランダムで10枚消滅させる。
-  onAttackPlayerSuccess: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
     // 捨札の赤属性カードの枚数を数える

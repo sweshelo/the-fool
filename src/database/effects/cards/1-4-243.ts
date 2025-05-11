@@ -5,12 +5,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkBattle: (stack: StackWithCard) => {
-    return stack.source instanceof Unit &&
+    return (
+      stack.source instanceof Unit &&
       stack.target instanceof Unit &&
-      stack.source.owner.field.find(unit => unit.id === stack.source.id) &&
-      stack.target.owner.field.find(unit => unit.id === stack.target?.id)
-      ? true
-      : false;
+      stack.source.owner.field.some(unit => unit.id === stack.source.id) &&
+      stack.target.owner.field.some(unit => unit.id === stack.target?.id)
+    );
   },
 
   // 実際の効果本体

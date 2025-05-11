@@ -7,7 +7,12 @@ export const effects: CardEffects = {
   // あなたのコスト2以上のユニットがフィールドに出た時、フィールドに出たユニットと同じ種族のユニットがあなたのフィールドに4体以上いる場合、
   // フィールドに出たユニットを破壊する。そうした場合、その種族のユニットカードをデッキから2枚までランダムで手札に加える。
   checkDrive: (stack: StackWithCard) => {
-    if (!(stack.target instanceof Unit)) return false;
+    if (
+      !(stack.target instanceof Unit) ||
+      stack.target.catalog.cost < 2 ||
+      stack.processing.owner.id !== stack.target.owner.id
+    )
+      return false;
 
     for (const species of stack.target.catalog.species ?? []) {
       // フィールド上の同じ種族のユニット数をカウント（今回召喚されたユニットを含む）
