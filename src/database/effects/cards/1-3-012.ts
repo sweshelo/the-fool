@@ -18,7 +18,7 @@ export const effects: CardEffects = {
     // 対戦相手のコスト2以下のユニットをフィルタリング
     const lowCostUnits = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.id && unit.catalog.cost <= 2,
+      unit => unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 2,
       stack.processing.owner
     );
 

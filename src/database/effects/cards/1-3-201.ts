@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     // 自分のユニットをフィルタリング
     const friendlyUnits = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      unit => unit.owner.id === stack.processing.owner.id,
       stack.processing.owner
     );
 

@@ -59,7 +59,7 @@ export const effects: CardEffects = {
 
         // 選択されたカードを複製する (特殊召喚で複製を実現)
         if (choice instanceof Unit) {
-          Effect.summon(stack, stack.processing, choice);
+          Effect.clone(stack, stack.processing, choice, stack.processing.owner);
         }
       }
     }
