@@ -7,10 +7,10 @@ export const effects: CardEffects = {
   onPlayerAttack: async (stack: StackWithCard<Card>): Promise<void> => {
     // プレイヤーアタックの発生元が対戦相手か確認
     const attacker = stack.source;
-    if ('owner' in attacker && attacker.owner.id === stack.processing.owner.opponent.id) {
+    if (attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id) {
       // 自分のライフが1以下かチェック
       if (stack.processing.owner.life.current <= 1) {
-        await System.show(stack, '忘却の遺跡', '対戦相手の手札を全て捨てる');
+        await System.show(stack, '忘却の遺跡', '手札を全て破壊');
 
         // 対戦相手の手札を全て捨てる
         const opponent = stack.processing.owner.opponent;
@@ -27,21 +27,16 @@ export const effects: CardEffects = {
   // ターン開始時の効果
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     // 自分のターン開始時かつライフが1以下の場合に発動
-    if (
-      stack.processing.owner.id === stack.core.getTurnPlayer().id &&
-      stack.processing.owner.life.current <= 1
-    ) {
-      await System.show(stack, '忘却の遺跡', 'トリガーゾーンのカードを全て破壊');
+    await System.show(stack, '忘却の遺跡', 'トリガーゾーンのカードを全て破壊');
 
-      // 対戦相手のトリガーゾーンにあるカードを全て破壊
-      const opponent = stack.processing.owner.opponent;
-      const triggerCards = [...opponent.trigger]; // 配列のコピーを作成
+    // 対戦相手のトリガーゾーンにあるカードを全て破壊
+    const opponent = stack.processing.owner.opponent;
+    const triggerCards = [...opponent.trigger]; // 配列のコピーを作成
 
-      // トリガーカードがある場合、全て破壊
-      triggerCards.forEach(card => {
-        Effect.move(stack, stack.processing, card, 'trash');
-      });
-    }
+    // トリガーカードがある場合、全て破壊
+    triggerCards.forEach(card => {
+      Effect.move(stack, stack.processing, card, 'trash');
+    });
   },
 
   // インターセプトカードの発動条件チェック
@@ -51,6 +46,13 @@ export const effects: CardEffects = {
       stack.processing.owner.life.current <= 1 &&
       stack.source instanceof Unit &&
       stack.source.owner.id !== stack.processing.owner.id
+    );
+  },
+
+  checkTurnStart: (stack: StackWithCard<Card>) => {
+    return (
+      stack.processing.owner.id === stack.core.getTurnPlayer().id &&
+      stack.processing.owner.life.current <= 1
     );
   },
 };
