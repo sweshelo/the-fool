@@ -245,6 +245,14 @@ export class Core {
       });
     }
 
+    // 行動制限を解除する
+    this.getTurnPlayer().field.forEach(
+      unit =>
+        (unit.delta = unit.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        ))
+    );
+
     // ターン開始スタックを積み、解決する
     this.histories = [];
     this.stack = [
@@ -666,12 +674,7 @@ export class Core {
     } else {
       card.active = true;
       player.field.push(card);
-      card.delta = [
-        new Delta(
-          { type: 'keyword', name: '行動制限' },
-          { event: 'turnStart', count: 1, onlyForOwnersTurn: true }
-        ),
-      ];
+      card.delta = [new Delta({ type: 'keyword', name: '行動制限' })];
     }
 
     card.initBP();

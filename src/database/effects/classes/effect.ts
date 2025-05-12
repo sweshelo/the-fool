@@ -589,11 +589,7 @@ export class Effect {
       );
 
       // 行動制限を付与
-      Effect.keyword(stack, target, target, '行動制限', {
-        event: 'turnStart',
-        count: 1,
-        onlyForOwnersTurn: true,
-      });
+      Effect.keyword(stack, target, target, '行動制限');
 
       // 起動アイコン
       if (typeof target.catalog.onBootSelf === 'function')
