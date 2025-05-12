@@ -98,15 +98,20 @@ export class Stack implements IStack {
       nonTurnPlayer: [...(nonTurnPlayer?.field ?? [])],
     };
 
-    if (this.type === 'overclock' && this.target instanceof Unit) {
-      this.target.overclocked = true;
-      this.target.active = true;
-      this.target.delta = this.target.delta.filter(
-        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-      );
-      core.room.soundEffect('clock-up-field');
-      core.room.soundEffect('reboot');
-      core.room.sync();
+    if (this.type === 'overclock') {
+      if (this.target instanceof Unit && this.target.lv === 3) {
+        this.target.overclocked = true;
+        this.target.active = true;
+        this.target.delta = this.target.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        );
+        core.room.soundEffect('clock-up-field');
+        core.room.soundEffect('reboot');
+        core.room.sync();
+      } else {
+        // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
+        return;
+      }
     }
 
     // まず イベントに起因するカードの効果を処理
