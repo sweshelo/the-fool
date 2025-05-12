@@ -9,16 +9,18 @@ export const effects: CardEffects = {
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    await System.show(stack, '生産工場', '【昆虫】を1枚引く');
-    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '昆虫' });
+    await System.show(stack, '魔道士の館', '【魔道士】を1枚引く');
+    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '魔道士' });
   },
 
-  checkWin: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.source.catalog.species?.includes('昆虫') === true;
+  checkBreak: (stack: StackWithCard) => {
+    return (
+      stack.target instanceof Unit && stack.target.catalog.species?.includes('魔道士') === true
+    );
   },
 
-  onWin: async (stack: StackWithCard) => {
-    await System.show(stack, '生産工場', '属性の異なる【昆虫】を2枚引く');
+  onBreak: async (stack: StackWithCard) => {
+    await System.show(stack, '魔道士の館', '属性の異なる【魔道士】を2枚引く');
     const colors = EffectHelper.shuffle([
       Color.RED,
       Color.YELLOW,
@@ -29,7 +31,7 @@ export const effects: CardEffects = {
     let count = 0;
     for (const color of colors) {
       count += EffectTemplate.reinforcements(stack, stack.processing.owner, {
-        species: '昆虫',
+        species: '魔道士',
         color,
       })
         ? 1
