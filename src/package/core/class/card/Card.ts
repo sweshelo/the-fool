@@ -23,7 +23,7 @@ export abstract class Card extends Atom implements ICard {
   }
 
   reset() {
-    this.delta = [];
+    this.delta = this.delta.filter(delta => delta.permanent);
     this.lv = 1;
   }
 

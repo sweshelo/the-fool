@@ -8,7 +8,6 @@ export const effects: CardEffects = {
     const opponentUnits = stack.processing.owner.opponent.field;
     if (opponentUnits.length === 0) return;
 
-    // プロンプトを表示して効果を選択
     const [choice] =
       opponentUnits.filter(unit => unit.lv >= 3).length > 0
         ? await System.prompt(stack, stack.processing.owner.id, {
@@ -25,17 +24,21 @@ export const effects: CardEffects = {
       // ①：対戦相手の全てのレベル3以上のユニットを破壊する
       const level3OrHigherUnits = opponentUnits.filter(unit => unit.lv >= 3);
 
-      await System.show(stack, '選略・空間を統べる覇者', '敵全体のLv3以上のユニットを破壊');
+      if (level3OrHigherUnits.length > 0) {
+        await System.show(stack, '選略・空間を統べる覇者', '敵全体のLv3以上のユニットを破壊');
 
-      for (const unit of level3OrHigherUnits) {
-        Effect.break(stack, stack.processing, unit);
+        for (const unit of level3OrHigherUnits) {
+          Effect.break(stack, stack.processing, unit);
+        }
       }
     } else if (choice === '2') {
       // ②：対戦相手の全てのユニットに【沈黙】を与える
-      await System.show(stack, '選略・空間を統べる覇者', '敵全体に【沈黙】を与える');
+      if (opponentUnits.length > 0) {
+        await System.show(stack, '選略・空間を統べる覇者', '敵全体に【沈黙】を与える');
 
-      for (const unit of opponentUnits) {
-        Effect.keyword(stack, stack.processing, unit, '沈黙');
+        for (const unit of opponentUnits) {
+          Effect.keyword(stack, stack.processing, unit, '沈黙');
+        }
       }
     }
   },

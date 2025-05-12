@@ -64,25 +64,13 @@ export const effects: CardEffects = {
     const targets = stack.processing.owner.trash.filter(
       card => card instanceof Unit && card.catalog.species?.includes('侍') && card.catalog.cost <= 4
     );
+    const [target] = EffectHelper.random(targets) as Unit[];
 
-    if (targets.length > 0) {
+    if (target) {
       await System.show(stack, '極中法度', 'コスト4以下の【侍】を【特殊召喚】\n自身を消滅');
-
-      // Select a unit to summon
-      const [target] = await EffectHelper.selectUnit(
-        stack,
-        stack.processing.owner,
-        targets as Unit[],
-        '特殊召喚する【侍】ユニットを選択'
-      );
-
       // Special summon it
-      const summoned = await Effect.summon(stack, stack.processing, target);
-
-      if (summoned) {
-        // Delete this unit
-        Effect.delete(stack, stack.processing, stack.processing);
-      }
+      await Effect.summon(stack, stack.processing, target);
+      Effect.delete(stack, stack.processing, stack.processing);
     }
   },
 };

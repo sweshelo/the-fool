@@ -74,7 +74,7 @@ export const effects: CardEffects = {
 
     // Reduce cost by 2
     stack.processing.delta.push(
-      new Delta({ type: 'cost', value: -2 }, undefined, undefined, undefined)
+      new Delta({ type: 'cost', value: -2 }, undefined, undefined, undefined, undefined, true)
     );
   },
 };
