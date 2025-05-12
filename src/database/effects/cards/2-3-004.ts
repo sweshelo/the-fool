@@ -57,10 +57,15 @@ export const effects: CardEffects = {
       } else if (costReduction < 0) {
         // 新しいDeltaを追加（コスト減少がある場合のみ）
         self.delta.push(
-          new Delta({ type: 'cost', value: costReduction }, undefined, undefined, undefined, {
-            unit: self.id,
-            effectCode: '忍び寄る羽音',
-          })
+          new Delta(
+            { type: 'cost', value: costReduction },
+            {
+              source: {
+                unit: self.id,
+                effectCode: '忍び寄る羽音',
+              },
+            }
+          )
         );
       }
     }

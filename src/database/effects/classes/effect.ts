@@ -82,7 +82,7 @@ export class Effect {
       return false;
     }
 
-    target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
+    target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
@@ -122,11 +122,11 @@ export class Effect {
     if ('isBaseBP' in option) {
       target.bp += value;
     } else if ('source' in option) {
-      target.delta.push(
-        new Delta({ type: 'bp', diff: value }, undefined, undefined, undefined, option.source)
-      );
+      target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
     } else {
-      target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
+      target.delta.push(
+        new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
+      );
     }
 
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
@@ -486,20 +486,8 @@ export class Effect {
 
     const delta =
       keyword === '次元干渉'
-        ? new Delta(
-            { type: 'keyword', name: keyword, cost: option?.cost ?? 0 },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          )
-        : new Delta(
-            { type: 'keyword', name: keyword },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          );
+        ? new Delta({ type: 'keyword', name: keyword, cost: option?.cost ?? 0 }, { ...option })
+        : new Delta({ type: 'keyword', name: keyword }, { ...option });
     target.delta.push(delta);
 
     switch (keyword) {
@@ -670,7 +658,9 @@ export class Effect {
     if (deathCounter && count < deathCounter.count) {
       deathCounter.count = count;
     } else {
-      target.delta.push(new Delta({ type: 'death' }, 'turnEnd', count, true));
+      target.delta.push(
+        new Delta({ type: 'death' }, { event: 'turnEnd', count, onlyForOwnersTurn: true })
+      );
     }
   }
 }

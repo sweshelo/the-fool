@@ -33,9 +33,14 @@ export const effects: CardEffects = {
       delta.effect.value = reduce;
     } else {
       self.delta.push(
-        new Delta({ type: 'cost', value: reduce }, undefined, undefined, undefined, {
-          unit: self.id,
-        })
+        new Delta(
+          { type: 'cost', value: reduce },
+          {
+            source: {
+              unit: self.id,
+            },
+          }
+        )
       );
     }
   },

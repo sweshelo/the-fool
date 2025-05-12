@@ -131,7 +131,9 @@ export class EffectTemplate {
       // ウィルスを生成して特殊召喚
       const virusUnit = new Unit(player, virus);
       await Effect.summon(stack, stack.processing, virusUnit);
-      virusUnit.delta.push(new Delta({ type: 'life' }, 'turnEnd', 2, true));
+      virusUnit.delta.push(
+        new Delta({ type: 'life' }, { event: 'turnEnd', count: 2, onlyForOwnersTurn: true })
+      );
       Effect.keyword(stack, virusUnit, virusUnit, '攻撃禁止');
       Effect.keyword(stack, virusUnit, virusUnit, '防御禁止');
     }

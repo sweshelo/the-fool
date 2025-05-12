@@ -31,10 +31,15 @@ export const effects: CardEffects = {
         } else {
           // 新しいDeltaを追加
           unit.delta.push(
-            new Delta({ type: 'bp', diff: 1000 }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: 'サポーター／昆虫',
-            })
+            new Delta(
+              { type: 'bp', diff: 1000 },
+              {
+                source: {
+                  unit: stack.processing.id,
+                  effectCode: 'サポーター／昆虫',
+                },
+              }
+            )
           );
         }
       }

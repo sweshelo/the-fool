@@ -36,10 +36,15 @@ export const effects: CardEffects = {
 
         if (!existingDelta) {
           card.delta.push(
-            new Delta({ type: 'cost', value: -1 }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: 'warrior_cost_reduction',
-            })
+            new Delta(
+              { type: 'cost', value: -1 },
+              {
+                source: {
+                  unit: stack.processing.id,
+                  effectCode: 'warrior_cost_reduction',
+                },
+              }
+            )
           );
         }
       }

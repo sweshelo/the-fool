@@ -42,9 +42,7 @@ export const effects = {
   handEffect: (core: unknown, self: Unit) => {
     if (!self.delta.some(delta => delta.source?.unit === self.id)) {
       if (self.owner.field.some(unit => unit.catalog.color === Color.RED))
-        self.delta.push(
-          new Delta({ type: 'cost', value: -1 }, undefined, undefined, undefined, { unit: self.id })
-        );
+        self.delta.push(new Delta({ type: 'cost', value: -1 }, { source: { unit: self.id } }));
     } else {
       if (!self.owner.field.some(unit => unit.catalog.color === Color.RED))
         self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);

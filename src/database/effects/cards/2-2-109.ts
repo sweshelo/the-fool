@@ -22,7 +22,7 @@ export const effects: CardEffects = {
         1
       );
       Effect.bounce(stack, stack.processing, target, 'hand');
-      target.delta.push(new Delta({ type: 'cost', value: -1 }));
+      target.delta.push(new Delta({ type: 'cost', value: -1 }, { permanent: true }));
     }
   },
 

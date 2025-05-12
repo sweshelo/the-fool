@@ -29,10 +29,15 @@ export const effects: CardEffects = {
     } else if (reduction > 0) {
       // 新しいdeltaを追加
       self.delta.push(
-        new Delta({ type: 'cost', value: -reduction }, undefined, undefined, undefined, {
-          unit: self.id,
-          effectCode: '血濡れの妃王',
-        })
+        new Delta(
+          { type: 'cost', value: -reduction },
+          {
+            source: {
+              unit: self.id,
+              effectCode: '血濡れの妃王',
+            },
+          }
+        )
       );
     }
   },

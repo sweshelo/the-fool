@@ -16,10 +16,9 @@ export const effects: CardEffects = {
             type: 'cost',
             value: Math.max(-self.owner.delete.length, -14),
           },
-          undefined,
-          undefined,
-          undefined,
-          { unit: self.id }
+          {
+            source: { unit: self.id },
+          }
         )
       );
     }
