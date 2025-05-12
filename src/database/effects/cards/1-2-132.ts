@@ -4,7 +4,13 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 伝説の奇術師：プレイヤーアタック関連の効果
-  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
+  checkPlayerAttack: (stack: StackWithCard) => {
+    return stack.source instanceof Unit && stack.processing.owner.id === stack.source.owner.id
+      ? stack.processing.owner.hand.length > 0
+      : true;
+  },
+
+  onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     // attacker（プレイヤーアタックを行ったユニット）のチェック
     const attacker = stack.source as Unit;
 
