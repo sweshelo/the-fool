@@ -30,6 +30,7 @@ type EffectResponseCallback = Function;
 
 interface History {
   card: Card;
+  generation: number;
   action: 'drive' | 'boot';
 }
 
@@ -688,7 +689,9 @@ export class Core {
     this.histories.push({
       card: card,
       action: 'drive',
+      generation: card.generation,
     });
+
     this.stack = [
       new Stack({
         type: 'drive',
@@ -951,12 +954,16 @@ export class Core {
         if (
           target.catalog.isBootable(this, target) &&
           !this.histories.some(
-            history => history.action === 'boot' && history.card.id === target.id
+            history =>
+              history.action === 'boot' &&
+              history.card.id === target.id &&
+              history.generation === target.generation
           )
         ) {
           this.histories.push({
             card: target,
             action: 'boot',
+            generation: target.generation,
           });
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
