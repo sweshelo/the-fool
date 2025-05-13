@@ -82,7 +82,7 @@ export class Effect {
       return false;
     }
 
-    target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
+    target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
@@ -122,11 +122,11 @@ export class Effect {
     if ('isBaseBP' in option) {
       target.bp += value;
     } else if ('source' in option) {
-      target.delta.push(
-        new Delta({ type: 'bp', diff: value }, undefined, undefined, undefined, option.source)
-      );
+      target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
     } else {
-      target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
+      target.delta.push(
+        new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
+      );
     }
 
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
@@ -140,7 +140,8 @@ export class Effect {
   }
 
   /**
-   * 対象を破壊する
+   * ユニットを破壊する
+   * ! フィールド上のユニット以外を破壊する場合はこのメソッドではなく Effect.handes() や Effect.move() で捨札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 破壊の対象
    * @param cause その破壊の原因 (カードテキストの実装にあたっては基本的にeffect以外使用してはいけない)
@@ -178,6 +179,7 @@ export class Effect {
 
   /**
    * 対象を消滅させる
+   * ! フィールド上のユニット以外を消滅させる場合はこのメソッドではなく Effect.move() で消滅札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 消滅の対象
    */
@@ -486,20 +488,8 @@ export class Effect {
 
     const delta =
       keyword === '次元干渉'
-        ? new Delta(
-            { type: 'keyword', name: keyword, cost: option?.cost ?? 0 },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          )
-        : new Delta(
-            { type: 'keyword', name: keyword },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          );
+        ? new Delta({ type: 'keyword', name: keyword, cost: option?.cost ?? 0 }, { ...option })
+        : new Delta({ type: 'keyword', name: keyword }, { ...option });
     target.delta.push(delta);
 
     switch (keyword) {
@@ -601,11 +591,7 @@ export class Effect {
       );
 
       // 行動制限を付与
-      Effect.keyword(stack, target, target, '行動制限', {
-        event: 'turnStart',
-        count: 1,
-        onlyForOwnersTurn: true,
-      });
+      Effect.keyword(stack, target, target, '行動制限');
 
       // 起動アイコン
       if (typeof target.catalog.onBootSelf === 'function')
@@ -670,7 +656,9 @@ export class Effect {
     if (deathCounter && count < deathCounter.count) {
       deathCounter.count = count;
     } else {
-      target.delta.push(new Delta({ type: 'death' }, 'turnEnd', count, true));
+      target.delta.push(
+        new Delta({ type: 'death' }, { event: 'turnEnd', count, onlyForOwnersTurn: true })
+      );
     }
   }
 }

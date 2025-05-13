@@ -30,6 +30,7 @@ type EffectResponseCallback = Function;
 
 interface History {
   card: Card;
+  generation: number;
   action: 'drive' | 'boot';
 }
 
@@ -243,6 +244,14 @@ export class Core {
         }
       });
     }
+
+    // 行動制限を解除する
+    this.getTurnPlayer().field.forEach(
+      unit =>
+        (unit.delta = unit.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        ))
+    );
 
     // ターン開始スタックを積み、解決する
     this.histories = [];
@@ -656,6 +665,7 @@ export class Core {
       card.active = source.active;
       player.field[index] = card;
       this.fieldEffectUnmount(source);
+      card.delta = [];
 
       if (!source.isCopy) {
         player.trash.push(source);
@@ -664,7 +674,7 @@ export class Core {
     } else {
       card.active = true;
       player.field.push(card);
-      card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
+      card.delta = [new Delta({ type: 'keyword', name: '行動制限' })];
     }
 
     card.initBP();
@@ -682,7 +692,9 @@ export class Core {
     this.histories.push({
       card: card,
       action: 'drive',
+      generation: card.generation,
     });
+
     this.stack = [
       new Stack({
         type: 'drive',
@@ -945,12 +957,16 @@ export class Core {
         if (
           target.catalog.isBootable(this, target) &&
           !this.histories.some(
-            history => history.action === 'boot' && history.card.id === target.id
+            history =>
+              history.action === 'boot' &&
+              history.card.id === target.id &&
+              history.generation === target.generation
           )
         ) {
           this.histories.push({
             card: target,
             action: 'boot',
+            generation: target.generation,
           });
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
@@ -969,6 +985,7 @@ export class Core {
         if (target && target.card && player && isOnHand) {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);
           player.trash.push(target.card);
+          target.card.reset();
           this.room.sync();
           this.room.soundEffect('trash');
         }

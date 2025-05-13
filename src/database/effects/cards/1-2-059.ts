@@ -1,72 +1,40 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
+import { EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
-  // ■生産工場
-  // あなたのユニットがフィールドに出た時、【昆虫】ユニットのカードを1枚ランダムで手札に加える。
-  // あなたの【昆虫】ユニットが破壊された時、あなたのデッキにある【昆虫】ユニットのカードのうち、
-  // 属性の異なるカードを2枚までランダムで手札に加える。
-
-  // ユニット召喚時
   checkDrive: (stack: StackWithCard) => {
     return stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id;
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    // 自分のユニットが召喚された時
-    if (stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id) {
-      // デッキから昆虫ユニットを検索
-      const insectUnits = stack.processing.owner.deck.filter(
-        card => card instanceof Unit && card.catalog.species?.includes('昆虫')
-      );
-
-      if (insectUnits.length > 0) {
-        await System.show(stack, '生産工場', '【昆虫】ユニットを1枚手札に加える');
-
-        // ランダムで1枚選択
-        const selectedUnits = EffectHelper.random(insectUnits, 1);
-        // TypeScriptのUndefined対策
-        for (const card of selectedUnits) {
-          Effect.move(stack, stack.processing, card, 'hand');
-          break; // 1枚だけ追加
-        }
-      }
-    }
+    await System.show(stack, '生産工場', '【昆虫】を1枚引く');
+    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '昆虫' });
   },
 
-  // ユニット破壊時
-  checkBreak: (stack: StackWithCard) => {
-    return stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id;
+  checkWin: (stack: StackWithCard) => {
+    return stack.source instanceof Unit && stack.source.catalog.species?.includes('昆虫') === true;
   },
 
-  onBreak: async (stack: StackWithCard): Promise<void> => {
-    // 自分の昆虫ユニットが破壊された時
-    if (
-      stack.target instanceof Unit &&
-      stack.target.owner.id === stack.processing.owner.id &&
-      stack.target.catalog.species?.includes('昆虫')
-    ) {
-      // 破壊されたユニットの色を保存
-      const destroyedColor = stack.target.catalog.color;
-
-      // デッキから異なる属性の昆虫ユニットを検索
-      const differentColorInsects = stack.processing.owner.deck.filter(
-        card =>
-          card instanceof Unit &&
-          card.catalog.species?.includes('昆虫') &&
-          card.catalog.color !== destroyedColor // 破壊されたユニットとは異なる色
-      );
-
-      if (differentColorInsects.length > 0) {
-        await System.show(stack, '生産工場', '異なる属性の【昆虫】ユニットを2枚まで手札に加える');
-
-        // ランダムで最大2枚選択
-        EffectHelper.random(
-          differentColorInsects,
-          Math.min(2, differentColorInsects.length)
-        ).forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
-      }
+  onWin: async (stack: StackWithCard) => {
+    await System.show(stack, '生産工場', '属性の異なる【昆虫】を2枚引く');
+    const colors = EffectHelper.shuffle([
+      Color.RED,
+      Color.YELLOW,
+      Color.BLUE,
+      Color.GREEN,
+      Color.PURPLE,
+    ]);
+    let count = 0;
+    for (const color of colors) {
+      count += EffectTemplate.reinforcements(stack, stack.processing.owner, {
+        species: '昆虫',
+        color,
+      })
+        ? 1
+        : 0;
+      if (count >= 2) break;
     }
   },
 };

@@ -18,7 +18,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         'びっくりさせちゃえ！',
-        "ユニットを1体消滅'同名カードを手札・捨札・デッキから消滅"
+        'ユニットを1体消滅\n同名カードを手札・捨札・デッキから消滅'
       );
 
       try {

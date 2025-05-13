@@ -38,7 +38,7 @@ async function getCardsHandler(req: Request): Promise<Response> {
   const cardIds = files
     .filter(f => f.endsWith('.ts'))
     .map(f => f.replace(/\.ts$/, ''))
-    .filter(id => /^[0-9]+-[0-9]+-[0-9]+$/.test(id));
+    .filter(id => /^[0-9]+-[0-9]+-[0-9]+$/.test(id) || /(PR|SP)-[0-9]{3}/.test(id));
   return new Response(JSON.stringify(cardIds), {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },

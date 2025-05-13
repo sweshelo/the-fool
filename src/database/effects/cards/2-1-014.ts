@@ -36,10 +36,15 @@ export const effects: CardEffects = {
         } else if (hasNotSummonedUnits) {
           // Add delta if condition is met
           card.delta.push(
-            new Delta({ type: 'cost', value: -1 }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: '視界良好',
-            })
+            new Delta(
+              { type: 'cost', value: -1 },
+              {
+                source: {
+                  unit: stack.processing.id,
+                  effectCode: '視界良好',
+                },
+              }
+            )
           );
         }
       }
@@ -59,7 +64,11 @@ export const effects: CardEffects = {
     );
 
     if (targets.length > 0) {
-      await System.show(stack, 'ブルベリフリーズ♪', `レベル${targetLevel}以上のユニットを破壊`);
+      await System.show(
+        stack,
+        '視界良好＆ブルベリフリーズ♪',
+        `手札の青属性のコスト-1\nレベル${targetLevel}以上のユニットを破壊`
+      );
 
       // Select target unit
       const [target] = await EffectHelper.selectUnit(
@@ -71,6 +80,8 @@ export const effects: CardEffects = {
 
       // Destroy it
       Effect.break(stack, stack.processing, target);
+    } else {
+      await System.show(stack, '視界良好', '手札の青属性のコスト-1');
     }
   },
 };

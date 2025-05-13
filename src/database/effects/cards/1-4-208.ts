@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // 【消滅効果耐性】
@@ -12,36 +11,46 @@ export const effects: CardEffects = {
 
   // 召喚時効果
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // 消滅効果耐性を付与
-    Effect.keyword(stack, stack.processing, stack.processing, '消滅効果耐性');
+    // 対象を1体選択
+    const fieldUnits = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
 
-    // デッキから悪魔ユニットを検索
-    const demonUnits = stack.processing.owner.deck.filter(
-      card => card instanceof Unit && card.catalog.species?.includes('悪魔')
+    await System.show(
+      stack,
+      '裂帛の威令',
+      `【消滅効果耐性】\n【悪魔】を1枚引く\nBP7000以上に【防御禁止】\nBP+3000`
+    );
+    const [target] = await EffectHelper.selectUnit(
+      stack,
+      stack.processing.owner,
+      fieldUnits,
+      'BPを+3000するユニットを選択'
     );
 
-    if (demonUnits.length > 0) {
-      await System.show(stack, '裂帛の威令', '【悪魔】ユニットを1枚手札に加える');
+    // BPを+3000（ターン終了時まで）
+    Effect.modifyBP(stack, stack.processing, target, 3000, {
+      source: { unit: stack.processing.id, effectCode: '裂帛の威令' },
+      event: 'turnEnd',
+      count: 1,
+    });
 
-      // ランダムで1枚選択
-      const selectedUnits = EffectHelper.random(demonUnits, 1);
-
-      // 手札に加える
-      for (const unit of selectedUnits) {
-        Effect.move(stack, stack.processing, unit, 'hand');
-      }
-    }
+    // 消滅効果耐性を付与
+    Effect.keyword(stack, stack.processing, stack.processing, '消滅効果耐性');
+    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '悪魔' });
   },
 
   // 自分のユニット召喚時効果
   onDrive: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 召喚されたユニットが自分のユニットか確認
-    if (stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id) {
+    if (
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.id &&
+      stack.processing.id !== stack.target.id
+    ) {
       // プレイヤーのフィールド上のユニットを全て取得
       const fieldUnits = stack.core.players.map(player => player.field).flat();
 
       if (fieldUnits.length > 0) {
-        await System.show(stack, '裂帛の威令', 'BP+3000（ターン終了時まで）');
+        await System.show(stack, '裂帛の威令', 'BP+3000');
 
         // 対象を1体選択
         const [target] = await EffectHelper.selectUnit(
@@ -69,32 +78,19 @@ export const effects: CardEffects = {
       if (unit.currentBP >= 7000) {
         // 既にこのユニットが発行したDeltaが存在するか確認
         const delta = unit.delta.find(
-          d =>
-            d.source?.unit === stack.processing.id &&
-            d.source?.effectCode === '裂帛の威令' &&
-            d.effect.type === 'keyword' &&
-            d.effect.name === '防御禁止'
+          d => d.source?.unit === stack.processing.id && d.source?.effectCode === '裂帛の威令'
         );
 
         // 既にDeltaが存在しない場合のみ防御禁止を付与
         if (!delta) {
-          unit.delta.push(
-            new Delta({ type: 'keyword', name: '防御禁止' }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: '裂帛の威令',
-            })
-          );
+          Effect.keyword(stack, stack.processing, unit, '防御禁止', {
+            source: { unit: stack.processing.id, effectCode: '裂帛の威令' },
+          });
         }
       } else {
         // BP7000未満になった場合、このユニットが付与した防御禁止を削除
         unit.delta = unit.delta.filter(
-          d =>
-            !(
-              d.source?.unit === stack.processing.id &&
-              d.source?.effectCode === '裂帛の威令' &&
-              d.effect.type === 'keyword' &&
-              d.effect.name === '防御禁止'
-            )
+          d => !(d.source?.unit === stack.processing.id && d.source?.effectCode === '裂帛の威令')
         );
       }
     });

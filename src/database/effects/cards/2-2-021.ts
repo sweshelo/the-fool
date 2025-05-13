@@ -11,7 +11,7 @@ export const effects: CardEffects = {
 
   // 召喚時に秩序の盾を付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    await System.show(stack, '秩序の盾', '【秩序の盾】を付与');
+    await System.show(stack, '秩序の盾', '対戦相手の効果によるダメージを受けない');
     Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾');
   },
 

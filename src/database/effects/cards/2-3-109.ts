@@ -1,4 +1,4 @@
-import { Effect, EffectHelper, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Unit } from '@/package/core/class/card';
 import type { Core } from '@/package/core/core';
@@ -21,7 +21,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
     if (owner.hand.length > 0) {
-      await System.show(stack, '竜の一矢', '手札1枚消滅\nトリガーカード1枚引く');
+      await System.show(stack, '竜の一矢', '手札を1枚消滅\nトリガーカード1枚引く');
       // 手札選択
       const [card] = await EffectHelper.selectCard(
         stack,
@@ -30,14 +30,7 @@ export const effects: CardEffects = {
         '消滅させるカードを選択'
       );
       Effect.move(stack, self, card, 'delete');
-      // トリガーカードを1枚引く
-      const triggers = owner.deck.filter(card => card.catalog.type === 'trigger');
-      if (triggers.length > 0 && owner.trigger.length < stack.core.room.rule.player.max.trigger) {
-        const [triggerCard] = EffectHelper.random(triggers, 1);
-        if (triggerCard) {
-          Effect.move(stack, self, triggerCard, 'trigger');
-        }
-      }
+      EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['trigger'] });
     }
   },
 };

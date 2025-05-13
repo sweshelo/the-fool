@@ -26,10 +26,7 @@ export const effects: CardEffects = {
               -16
             ),
           },
-          undefined,
-          undefined,
-          undefined,
-          { unit: self.id }
+          { source: { unit: self.id } }
         )
       );
     }

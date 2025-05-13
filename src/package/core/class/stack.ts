@@ -98,15 +98,20 @@ export class Stack implements IStack {
       nonTurnPlayer: [...(nonTurnPlayer?.field ?? [])],
     };
 
-    if (this.type === 'overclock' && this.target instanceof Unit) {
-      this.target.overclocked = true;
-      this.target.active = true;
-      this.target.delta = this.target.delta.filter(
-        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-      );
-      core.room.soundEffect('clock-up-field');
-      core.room.soundEffect('reboot');
-      core.room.sync();
+    if (this.type === 'overclock') {
+      if (this.target instanceof Unit && this.target.lv === 3) {
+        this.target.overclocked = true;
+        this.target.active = true;
+        this.target.delta = this.target.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        );
+        core.room.soundEffect('clock-up-field');
+        core.room.soundEffect('reboot');
+        core.room.sync();
+      } else {
+        // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
+        return;
+      }
     }
 
     // まず イベントに起因するカードの効果を処理
@@ -165,22 +170,6 @@ export class Stack implements IStack {
         await this.resolveChild(core);
       }
     }
-
-    /*
-    // ターンプレイヤーの手札上のカードを処理
-    for (const card of turnPlayer.hand) {
-      await this.processCardEffect(card, core, 'InHand');
-      await this.resolveChild(core);
-    }
-    
-    // 非ターンプレイヤーの手札上のカードを処理
-    if (nonTurnPlayer) {
-      for (const card of nonTurnPlayer.hand) {
-        await this.processCardEffect(card, core, 'InHand');
-        await this.resolveChild(core);
-      }
-    }
-    */
 
     // NOTE: 現在のところ 捨札中で効果が発動するカードは turnStart と turnEnd のみ
     if (this.type === 'turnStart' || this.type === 'turnEnd') {
@@ -278,10 +267,6 @@ export class Stack implements IStack {
       );
       this.processing = undefined;
     });
-
-    // フィールド効果
-    this.processFieldEffect();
-    await this.resolveChild(this.core);
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -332,11 +317,13 @@ export class Stack implements IStack {
       // コピーまたはウィルスは移動させない (ゲームから除外)
       if (target.isCopy || target.catalog.species?.includes('ウィルス')) return;
 
-      if (destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand) {
-        owner.trash.push(target);
-      } else {
-        owner[destination].push(target);
-      }
+      const actualDestination =
+        destination === 'hand' && owner.hand.length >= this.core.room.rule.player.max.hand
+          ? 'trash'
+          : destination;
+      if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
+
+      owner[actualDestination].push(target);
     }
   }
 
@@ -440,20 +427,12 @@ export class Stack implements IStack {
    * @param core ゲームのコアインスタンス
    */
   private async processCardEffect(card: Card, core: Core, suffix: string = ''): Promise<void> {
-    // IAtomはcatalogIdを持っていない可能性があるのでチェック
-    const catalogId = card.catalogId;
-    if (!catalogId) return;
-
-    // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
-    if (!cardCatalog) return;
-
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
     const handlerName = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1) + suffix}`;
 
     // カタログからハンドラー関数を取得
-    const effectHandler = cardCatalog[handlerName];
+    const effectHandler = card.catalog[handlerName];
 
     if (typeof effectHandler === 'function') {
       try {
@@ -604,6 +583,9 @@ export class Stack implements IStack {
   }
 
   private processFieldEffect() {
+    const target = this.target instanceof Card ? this.target.catalog.name : '?';
+    const source = this.source instanceof Card ? this.source.catalog.name : '?';
+    console.log('%s -> %s による %s の発生で、フィールド効果呼び出し', source, target, this.type);
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {

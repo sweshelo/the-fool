@@ -69,8 +69,7 @@ export const effects: CardEffects = {
       await System.show(stack, '隻眼の光刃', '捨札から【機械】を【特殊召喚】');
 
       // ランダムで1体選択
-      const selectedUnit = EffectHelper.random(eligibleUnits, 1)[0];
-
+      const [selectedUnit] = EffectHelper.random(eligibleUnits, 1);
       if (selectedUnit instanceof Unit) {
         // 特殊召喚
         await Effect.summon(stack, stack.processing, selectedUnit);

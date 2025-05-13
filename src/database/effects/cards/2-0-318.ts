@@ -47,7 +47,7 @@ export const effects: CardEffects = {
       const allUnits = [...owner.field, ...owner.opponent.field];
       allUnits.forEach(unit => {
         // Deltaで一時的BP増加（event: 'turnEnd', count: 1 でターン終了時まで）
-        unit.delta.push(new Delta({ type: 'bp', diff: 5000 }, 'turnEnd', 1));
+        unit.delta.push(new Delta({ type: 'bp', diff: 5000 }, { event: 'turnEnd', count: 1 }));
       });
       await System.show(stack, '選略・ジャッジガベル', 'BP+5000');
     } else if (choice === '2') {

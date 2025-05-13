@@ -10,45 +10,39 @@ export const effects: CardEffects = {
       card => card instanceof Unit && card.catalog.species?.includes('侍')
     );
 
-    if (samuraiUnitsInHand.length > 0) {
-      // Randomly select one Samurai unit to discard
-      const [discardTarget] = EffectHelper.random(samuraiUnitsInHand);
+    // Randomly select one Samurai unit to discard
+    const [discardTarget] = EffectHelper.random(samuraiUnitsInHand);
+    // Find Samurai units in deck for search
+    const samuraiUnitsInDeck = owner.deck.filter(
+      card => card instanceof Unit && card.catalog.species?.includes('侍')
+    );
 
-      if (discardTarget) {
-        await System.show(
+    if (discardTarget && samuraiUnitsInDeck.length > 0) {
+      await System.show(
+        stack,
+        '白拍子の舞子＆永久の待ち人',
+        '【侍】に【不屈】と【秩序の盾】を与える\n手札から【侍】を捨てる\nデッキから【侍】を選んで引く'
+      );
+
+      // Let player choose a Samurai unit from deck
+      try {
+        const [selectedCard] = await EffectHelper.selectCard(
           stack,
-          '永久の待ち人',
-          'ランダムな【侍】を捨てる\nデッキから【侍】を選んで引く'
+          owner,
+          samuraiUnitsInDeck,
+          '手札に加えるカードを選択して下さい'
         );
 
-        // Find Samurai units in deck for search
-        const samuraiUnitsInDeck = owner.deck.filter(
-          card => card instanceof Unit && card.catalog.species?.includes('侍')
-        );
-
-        if (
-          samuraiUnitsInDeck.length > 0 &&
-          owner.hand.length < stack.core.room.rule.player.max.hand
-        ) {
-          // Let player choose a Samurai unit from deck
-          try {
-            const [selectedCard] = await EffectHelper.selectCard(
-              stack,
-              owner,
-              samuraiUnitsInDeck,
-              '手札に加えるカードを選択して下さい'
-            );
-
-            // Add selected card to hand
-            Effect.move(stack, stack.processing, selectedCard, 'hand');
-            // Discard the selected card
-            Effect.handes(stack, stack.processing, discardTarget);
-          } catch (error) {
-            // Failed to select a card, do nothing
-            console.error('Failed to select a card:', error);
-          }
-        }
+        // Add selected card to hand
+        Effect.move(stack, stack.processing, selectedCard, 'hand');
+        // Discard the selected card
+        Effect.handes(stack, stack.processing, discardTarget);
+      } catch (error) {
+        // Failed to select a card, do nothing
+        console.error('Failed to select a card:', error);
       }
+    } else {
+      await System.show(stack, '白拍子の舞子', '【侍】に【不屈】と【秩序の盾】を与える');
     }
   },
 
