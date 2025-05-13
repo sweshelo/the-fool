@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   // 【スピードムーブ】
@@ -23,7 +24,7 @@ export const effects: CardEffects = {
     const redUnits = owner.field.filter(
       unit =>
         unit.id !== stack.processing.id && // 自分以外
-        unit.catalog.color === 0 // 赤属性 (色は数値で指定)
+        unit.catalog.color === Color.RED
     );
 
     if (redUnits.length > 0) {

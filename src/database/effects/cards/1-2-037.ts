@@ -35,10 +35,8 @@ export const effects: CardEffects = {
           Effect.move(stack, stack.processing, trigger, 'trash');
         });
 
-        if (randomTriggers.length > 0) {
-          // アタックしたユニットを破壊
-          Effect.break(stack, stack.processing, attacker);
-        }
+        // アタックしたユニットを破壊
+        Effect.break(stack, stack.processing, attacker);
       }
     }
   },

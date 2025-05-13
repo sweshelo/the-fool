@@ -30,12 +30,10 @@ export const effects: CardEffects = {
     if (opponent.trigger.length === 0) return;
 
     // トリガーゾーンからランダムで1枚選ぶ
-    const targetCards = EffectHelper.random(opponent.trigger, 1);
-    if (targetCards.length === 0) return;
-
-    const targetCard = targetCards[0];
+    const [target] = EffectHelper.random(opponent.trigger, 1);
+    if (!target) return;
 
     await System.show(stack, 'えんじぇりっく・ろすと', 'トリガーゾーンを1枚破壊');
-    Effect.break(stack, stack.processing, targetCard as Unit);
+    Effect.move(stack, stack.processing, target, 'trash');
   },
 };

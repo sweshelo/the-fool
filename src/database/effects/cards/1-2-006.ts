@@ -14,10 +14,8 @@ export const effects: CardEffects = {
     await System.show(stack, '伝説の大盗賊', '全ユニットをオーバークロック');
 
     // 全てのユニットをオーバークロック（レベル+2）
-    stack.core.players.forEach(player => {
-      player.field.forEach(unit => {
-        Effect.clock(stack, stack.processing, unit, 2);
-      });
-    });
+    stack.core.players
+      .flatMap(player => player.field)
+      .forEach(unit => Effect.clock(stack, stack.processing, unit, 2));
   },
 };

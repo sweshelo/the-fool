@@ -1,4 +1,4 @@
-import { Effect, System } from '..';
+import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -18,14 +18,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     await System.show(stack, '暗黒街の武器商人', 'カードを1枚引く\nCP+1');
-
-    // カードを1枚引く
-    if (owner.deck.length > 0 && owner.hand.length < stack.core.room.rule.player.max.hand) {
-      const cardToDraw = owner.deck[0];
-      if (cardToDraw) {
-        Effect.move(stack, stack.processing, cardToDraw, 'hand');
-      }
-    }
+    EffectTemplate.draw(stack.processing.owner, stack.core);
 
     // CPを+1する
     Effect.modifyCP(stack, stack.processing, owner, 1);

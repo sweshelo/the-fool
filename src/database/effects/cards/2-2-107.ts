@@ -8,8 +8,7 @@ export const effects: CardEffects = {
   isBootable: (core, self: Unit): boolean => {
     const opponentInactiveUnits = self.owner.opponent.field.filter(unit => !unit.active);
 
-    if (opponentInactiveUnits.length > 0) return true;
-    return false;
+    return opponentInactiveUnits.length > 0;
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -55,10 +54,7 @@ export const effects: CardEffects = {
           '【複製】する【機械】ユニットを選択'
         );
 
-        // 選択されたカードを複製する (特殊召喚で複製を実現)
-        if (choice instanceof Unit) {
-          await Effect.clone(stack, stack.processing, choice, stack.processing.owner);
-        }
+        await Effect.clone(stack, stack.processing, choice, stack.processing.owner);
       }
     }
   },

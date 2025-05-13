@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -35,6 +35,7 @@ export const effects: CardEffects = {
 
     // 消滅効果耐性を付与
     Effect.keyword(stack, stack.processing, stack.processing, '消滅効果耐性');
+    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '悪魔' });
   },
 
   // 自分のユニット召喚時効果

@@ -5,7 +5,7 @@ import { Effect } from '../classes/effect';
 
 export const effects: CardEffects = {
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // プレイヤーのフィールド上の昆虫ユニット数を数える
+    // プレイヤーのフィールド上の機械ユニット数を数える
     const insectCount = stack.processing.owner.field.filter(unit =>
       unit.catalog.species?.includes('機械')
     ).length;

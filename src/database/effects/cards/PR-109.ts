@@ -51,7 +51,7 @@ export const effects: CardEffects = {
         stack,
         stack.processing.owner,
         targets,
-        '手札に加えるカカードを選択して下さい',
+        '手札に加えるカードを選択して下さい',
         1
       );
 

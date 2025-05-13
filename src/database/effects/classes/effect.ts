@@ -140,7 +140,8 @@ export class Effect {
   }
 
   /**
-   * 対象を破壊する
+   * ユニットを破壊する
+   * ! フィールド上のユニット以外を破壊する場合はこのメソッドではなく Effect.handes() や Effect.move() で捨札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 破壊の対象
    * @param cause その破壊の原因 (カードテキストの実装にあたっては基本的にeffect以外使用してはいけない)
@@ -178,6 +179,7 @@ export class Effect {
 
   /**
    * 対象を消滅させる
+   * ! フィールド上のユニット以外を消滅させる場合はこのメソッドではなく Effect.move() で消滅札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 消滅の対象
    */

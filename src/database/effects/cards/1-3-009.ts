@@ -1,4 +1,4 @@
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -14,13 +14,9 @@ export const effects: CardEffects = {
 
     if (allUnits.length > 0) {
       await System.show(stack, '地母神の降臨', '全ユニットに7000ダメージ');
-
-      // 自身以外に7000ダメージを与える
-      for (const unit of allUnits) {
-        if (unit.id !== stack.processing.id) {
-          Effect.damage(stack, stack.processing, unit, 7000);
-        }
-      }
+      EffectHelper.exceptSelf(stack.core, stack.processing, unit =>
+        Effect.damage(stack, stack.processing, unit, 7000)
+      );
     }
   },
 

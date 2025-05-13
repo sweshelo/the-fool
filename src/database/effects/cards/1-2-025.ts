@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   // 幸運の風：自分のターン終了時、黄属性のユニットのレベルを-2する
@@ -10,7 +11,7 @@ export const effects: CardEffects = {
 
     if (isTurnPlayer) {
       const yellowUnits = stack.processing.owner.field.filter(
-        unit => unit.catalog.color === 2 // 黄属性は2
+        unit => unit.catalog.color === Color.YELLOW
       );
 
       if (yellowUnits.length > 0) {

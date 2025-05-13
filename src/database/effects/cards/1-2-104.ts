@@ -32,9 +32,9 @@ export const effects: CardEffects = {
     // 自分が破壊したカードである場合に発動
     if (
       stack.source instanceof Card &&
-      stack.source.owner.id === owner.id &&
+      stack.source.owner.id === owner.id && // 効果の発生源が自分である
       stack.target instanceof Card &&
-      stack.target.owner.id !== owner.id
+      stack.target.owner.id === owner.opponent.id // 破壊されたカードの所有者が対戦相手である
     ) {
       await System.show(stack, '龍機の覚醒め', '行動権を回復');
       Effect.activate(stack, stack.processing, stack.processing, true);

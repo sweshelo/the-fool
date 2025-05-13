@@ -14,7 +14,11 @@ export const effects: CardEffects = {
   },
 
   checkWin: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.source.catalog.species?.includes('戦士') === true;
+    return (
+      stack.source instanceof Unit &&
+      stack.source.catalog.species?.includes('戦士') === true &&
+      stack.source.owner.id === stack.processing.owner.id
+    );
   },
 
   onWin: async (stack: StackWithCard) => {

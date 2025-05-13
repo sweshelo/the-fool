@@ -17,7 +17,7 @@ export const effects: CardEffects = {
     // 自分のターン開始時のみ発動
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
       // フィールドにユニットが0体以下かチェック
-      if (stack.processing.owner.field.length <= 0) {
+      if (stack.processing.owner.field.length === 0) {
         await System.show(stack, '聖女の祈り', 'カードを1枚引く\nCP+1');
 
         // カードを1枚引く

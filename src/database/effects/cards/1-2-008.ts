@@ -25,11 +25,9 @@ export const effects: CardEffects = {
       await System.show(stack, '天地鳴動', '全ユニットに10000ダメージ');
 
       // 全てのユニットに10000ダメージを与える
-      stack.core.players.forEach(player => {
-        player.field.forEach(unit => {
-          Effect.damage(stack, stack.processing, unit, 10000);
-        });
-      });
+      stack.core.players
+        .flatMap(player => player.field)
+        .forEach(unit => Effect.damage(stack, stack.processing, unit, 10000, 'effect'));
     }
   },
 };

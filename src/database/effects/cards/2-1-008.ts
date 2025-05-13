@@ -10,7 +10,7 @@ export const effects: CardEffects = {
       unit => {
         return (
           unit.owner.id === stack.processing.owner.id &&
-          (unit.catalog.species?.includes('戦士') || false) &&
+          (unit.catalog.species?.includes('戦士') ?? false) &&
           unit.id !== stack.processing.id
         );
       },

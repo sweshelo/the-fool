@@ -23,13 +23,7 @@ export const effects: CardEffects = {
 
     if (allUnits.length > 0) {
       await System.show(stack, '闇夜の切り裂き魔', '自身以外に1000ダメージ');
-
-      // 自身以外に1000ダメージを与える
-      for (const unit of allUnits) {
-        if (unit.id !== stack.processing.id) {
-          Effect.damage(stack, stack.processing, unit, 1000);
-        }
-      }
+      allUnits.forEach(unit => Effect.damage(stack, stack.processing, unit, 1000));
     }
   },
 

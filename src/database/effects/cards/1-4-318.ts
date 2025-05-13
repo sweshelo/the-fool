@@ -19,11 +19,9 @@ export const effects: CardEffects = {
       await System.show(stack, '途切れぬ血統', 'デッキから【ドラゴン】を特殊召喚');
 
       // 条件に合うカードがある場合、ランダムで1枚選んで特殊召喚
-      if (dragonUnits.length > 0) {
-        const [randomDragon] = EffectHelper.random(dragonUnits, 1);
-        if (randomDragon instanceof Unit) {
-          await Effect.summon(stack, stack.processing, randomDragon);
-        }
+      const [randomDragon] = EffectHelper.random(dragonUnits, 1);
+      if (randomDragon instanceof Unit) {
+        await Effect.summon(stack, stack.processing, randomDragon);
       }
     }
   },
