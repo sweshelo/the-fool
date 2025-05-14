@@ -78,9 +78,45 @@ export class Effect {
       type === 'effect'
     ) {
       stack.core.room.soundEffect('block');
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'status',
+              type: 'base-bp',
+              value: damage,
+              unitId: target.id,
+            },
+          },
+        })
+      );
       target.bp += damage;
       return false;
     }
+
+    // エフェクトを発行
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'status',
+            type: 'damage',
+            value: damage,
+            unitId: target.id,
+          },
+        },
+      })
+    );
 
     target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
     stack.addChildStack('damage', source, target, {
@@ -128,6 +164,24 @@ export class Effect {
         new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
       );
     }
+
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'status',
+            type: 'isBaseBP' in option ? 'base-bp' : 'bp',
+            value,
+            unitId: target.id,
+          },
+        },
+      })
+    );
 
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
@@ -436,6 +490,25 @@ export class Effect {
       } else {
         stack.core.room.soundEffect('damage');
       }
+
+      // クロックレベル操作エフェクトを発行
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'status',
+              type: 'level',
+              value: target.lv,
+              unitId: target.id,
+            },
+          },
+        })
+      );
 
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
       const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
