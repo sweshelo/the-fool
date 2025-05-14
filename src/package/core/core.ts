@@ -509,8 +509,19 @@ export class Core {
     // BP順にソートして暫定的に勝敗を決める
     // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
     // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
-    // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
-    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP - a.currentBP);
+    const [winner, loser] = [attacker, blocker].sort((a, b) => {
+      // BPが異なる場合は大きい方を優先
+      if (b.currentBP !== a.currentBP) {
+        return b.currentBP - a.currentBP;
+      }
+      // BPが等しい場合、不滅キーワードを持っている方を優先
+      if (a.hasKeyword('不滅') && !b.hasKeyword('不滅')) {
+        return -1; // aを優先
+      } else if (!a.hasKeyword('不滅') && b.hasKeyword('不滅')) {
+        return 1; // bを優先
+      }
+      return 0; // どちらも不滅を持っているか、どちらも持っていない場合は等価
+    });
 
     if (!winner || !loser) {
       throw new Error('ユニットの勝敗判定に失敗しました');
@@ -524,10 +535,28 @@ export class Core {
       core: this,
     });
 
-    // 「戦闘によって破壊されたとき」のスタック解決が行われる
-    const [loserDamage, winnedDamage] = [winner.currentBP, loser.currentBP];
-    const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
-    const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
+    // ダメージ量を確定する
+    const [loserDamage, winnerDamage] = [winner.currentBP, loser.currentBP];
+
+    // ダメージを与えるのは次の場合:
+    // - 敗者が破壊されることが確定している: 敗者に【不滅】がない (-> 直接破壊する)
+    // - 勝者が破壊されることが確定している: 勝者と敗者のBPが等しく、勝者に【不滅】がない (-> 直接破壊する)
+    // - 勝者のレベルが 3 以上で、【不滅】または【王の治癒力】がない
+    const isLoserBreaked = loser.hasKeyword('不滅') ? false : true;
+    const isWinnerBreaked = winner.hasKeyword('不滅')
+      ? false
+      : winner.hasKeyword('王の治癒力') && winner.currentBP > winnerDamage
+        ? false
+        : winner.lv >= 3 || loser.hasKeyword('不滅')
+          ? Effect.damage(stack, loser, winner, winnerDamage, 'battle') // Lv3の場合、キーワード効果を持たない限り勝っても負けてもダメージを負う
+          : winnerDamage === loserDamage
+            ? true
+            : false;
+
+    // 破壊が決定したら破壊する
+    if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
+    if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
+
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     this.stack = [stack];

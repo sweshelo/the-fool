@@ -25,11 +25,11 @@ export const effects: CardEffects = {
   },
 
   // 戦闘で勝利した時のインターセプト効果
-  onWinSelf: async (stack: StackWithCard): Promise<void> => {
+  onWin: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
 
     // 自分のユニットが戦闘で勝利した時のみ発動
-    if (stack.source instanceof Unit && stack.source.owner.id === owner.id) {
+    if (stack.target instanceof Unit && stack.target.owner.id === owner.id) {
       await System.show(stack, '森の女神', 'カードを1枚引く\nCP+1');
 
       // カードを1枚引く
@@ -64,7 +64,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 自分のユニットが戦闘した時のみ発動可能
-    return stack.source instanceof Unit && stack.source.owner.id === owner.id;
+    return stack.target instanceof Unit && stack.target.owner.id === owner.id;
   },
 
   // インターセプトカード効果の発動チェック：戦闘勝利時
