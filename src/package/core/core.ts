@@ -324,6 +324,21 @@ export class Core {
         (blocker && !blocker.owner.field.find(unit => unit.id === blocker?.id))
       ) {
         attacker.active = false;
+        this.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'launch-cancel',
+                attackerId: attacker.id,
+              },
+            },
+          })
+        );
         return;
       }
 
@@ -335,6 +350,21 @@ export class Core {
           !blocker.owner.field.find(unit => unit.id === blocker?.id)
         ) {
           attacker.active = false;
+          this.room.broadcastToAll(
+            createMessage({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'VisualEffect',
+                body: {
+                  effect: 'launch-cancel',
+                  attackerId: attacker.id,
+                },
+              },
+            })
+          );
           return;
         }
       }
@@ -837,6 +867,9 @@ export class Core {
 
         const cardCatalog = catalog.get(card.catalogId);
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
+
+        // Bannedチェック
+        if (card.delta.some(delta => delta.effect.type === 'banned')) return;
 
         // CPが足りている
         // 軽減チェック
