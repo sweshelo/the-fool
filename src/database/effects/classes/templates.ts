@@ -5,7 +5,7 @@ import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
 import { Effect } from './effect';
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import type { StackWithCard } from './types';
 import { Delta } from '@/package/core/class/delta';
 
@@ -16,13 +16,13 @@ interface ReinforcementMatcher {
 }
 
 export class EffectTemplate {
-  static draw(player: Player, core: Core): void {
+  static draw(player: Player, core: Core): Card | void {
     // 手札が上限に達している場合は何もしない
     if (player.hand.length >= core.room.rule.player.max.hand) return;
 
-    player.draw();
+    const { action } = player.draw();
     core.room.soundEffect('draw');
-    return;
+    return action.source as Card;
   }
 
   /**
