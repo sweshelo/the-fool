@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // このユニットがフィールドに出た時、あなたはカードを1枚引き、コストを-2する。
@@ -12,10 +13,10 @@ export const effects: CardEffects = {
     );
 
     // カードを1枚引く
-    stack.processing.owner.draw();
-
-    // コストを-2する
-    Effect.modifyCP(stack, stack.processing, stack.processing.owner, -2);
+    const card = EffectTemplate.draw(stack.processing.owner, stack.core);
+    if (card) {
+      card.delta.push(new Delta({ type: 'cost', value: -2 }));
+    }
   },
 
   // あなたの【四聖獣】ユニットに【秩序の盾】を与える（フィールド効果）
@@ -46,13 +47,13 @@ export const effects: CardEffects = {
   },
 
   // あなたの【四聖獣】が戦闘で勝利した時、あなたのデッキからコスト4以下の【四聖獣】をランダムで1体【特殊召喚】する。
-  onWis: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onWin: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 戦闘で勝利した自分の【四聖獣】ユニットかどうか確認
     if (
-      stack.source &&
-      stack.source instanceof Unit &&
-      stack.source.owner.id === stack.processing.owner.id &&
-      stack.source.catalog.species?.includes('四聖獣') &&
+      stack.target &&
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.id &&
+      stack.target.catalog.species?.includes('四聖獣') &&
       stack.processing.owner.field.length < stack.core.room.rule.player.max.field
     ) {
       await System.show(stack, '翠檄黒叡智', 'デッキからコスト4以下の【四聖獣】を【特殊召喚】');
