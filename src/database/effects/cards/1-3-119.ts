@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Delta } from '@/package/core/class/delta';
 
@@ -35,19 +35,11 @@ export const effects: CardEffects = {
     }
 
     // コスト4のユニットカードをランダムで1枚手札に加える
-    const cost4Units = stack.processing.owner.deck.filter(
-      card => card instanceof Unit && card.catalog.cost === 4
+    const [card] = EffectHelper.random(
+      stack.processing.owner.deck.filter(card => card.catalog.cost === 4 && card instanceof Unit),
+      1
     );
-
-    if (cost4Units.length > 0) {
-      // ランダムに1枚選択
-      const randomIndex = Math.floor(Math.random() * cost4Units.length);
-      const randomUnit = cost4Units[randomIndex];
-      // randomUnitが確実に存在することを確認
-      if (randomUnit) {
-        Effect.move(stack, stack.processing, randomUnit, 'hand');
-      }
-    }
+    if (card) Effect.move(stack, stack.processing, card, 'hand');
   },
 
   // あなたの【四聖獣】ユニットに【不屈】を与える。（フィールド効果）

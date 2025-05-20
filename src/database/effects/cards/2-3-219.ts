@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Delta } from '@/package/core/class/delta';
 
@@ -66,8 +66,7 @@ export const effects: CardEffects = {
 
       if (fourGodUnits.length > 0 && stack.processing.owner.field.length < 5) {
         // ランダムで1体選択
-        const randomIndex = Math.floor(Math.random() * fourGodUnits.length);
-        const randomUnit = fourGodUnits[randomIndex];
+        const [randomUnit] = EffectHelper.random(fourGodUnits);
 
         // 特殊召喚
         if (randomUnit instanceof Unit) {
