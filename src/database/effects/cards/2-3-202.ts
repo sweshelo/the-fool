@@ -29,7 +29,7 @@ export const effects: CardEffects = {
       const fourGodCount = countFourGodUnits(stack);
       const damage = fourGodCount * 2000;
 
-      await System.show(stack, '朱天無双', `敵ユニットに${damage}ダメージ`);
+      await System.show(stack, '朱天無双', `敵ユニットに[四聖獣×2000]ダメージ`);
 
       // 対戦相手のユニットを1体選択
       const [target] = await EffectHelper.selectUnit(
