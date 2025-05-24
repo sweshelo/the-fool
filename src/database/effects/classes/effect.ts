@@ -155,6 +155,9 @@ export class Effect {
     // 既に破壊されているユニットのBPは変動させない
     if (target.destination !== undefined) return false;
 
+    // 変化量がなければ中断する
+    if (value === 0) return false;
+
     if ('isBaseBP' in option) {
       target.bp += value;
     } else if ('source' in option) {
@@ -336,12 +339,12 @@ export class Effect {
 
     // Type guard to check if the origin is a valid card location
     if (!['hand', 'trigger', 'deck', 'trash', 'field', 'delete'].includes(origin)) {
-      throw new Error('無効な移動元です');
+      throw new Error(`無効な移動元です: ${origin}`);
     }
 
     // Type guard to check if the location property exists on owner
     if (!(location in owner) || location === cardFind.place.name) {
-      throw new Error('無効な移動先です');
+      throw new Error(`無効な移動先です: ${location}`);
     }
 
     // 枚数上限付き領域には上限チェックを実施
