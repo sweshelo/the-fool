@@ -112,8 +112,8 @@ export const effects: CardEffects = {
       'トリガーゾーンにセットするカードを選択して下さい',
       1
     );
-    EffectHelper.random(stack.processing.owner.trigger).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+    EffectHelper.random(stack.processing.owner.trigger).forEach(
+      card => Effect.move(stack, stack.processing, card, 'trash') // フィールド以外の場所から『破壊』する場合は、Effect.breakではなくEffect.moveで宛先をtrashにする
     );
     Effect.move(stack, stack.processing, target, 'trigger');
   },

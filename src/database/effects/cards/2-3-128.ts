@@ -4,26 +4,19 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    if (!(stack.processing instanceof Unit)) return;
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(
       stack,
       '戦女神の誓い＆オルレアンの一撃',
       '【不屈】\n効果によるダメージを基本BPに+する\n基本BP+[ライフダメージ×1000]\n基本BP-[自身のBP]'
     );
-    Effect.modifyBP(
-      stack,
-      stack.processing,
-      stack.processing,
-      (stack.core.room.rule.player.max.life - stack.processing.owner.life.current) * 1000,
-      { isBaseBP: true }
-    );
-
     const candidate = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
+    const grow =
+      (stack.core.room.rule.player.max.life - stack.processing.owner.life.current) * 1000;
     if (candidate.length > 0) {
       const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
         type: 'unit',
@@ -32,9 +25,18 @@ export const effects: CardEffects = {
       });
       const unit = candidate.find(unit => unit.id === unitId);
       if (unit)
-        Effect.modifyBP(stack, stack.processing, unit, -stack.processing.bp, { isBaseBP: true });
-      Effect.keyword(stack, stack.processing, stack.processing, '不屈');
+        Effect.modifyBP(stack, stack.processing, unit, -stack.processing.bp - grow, {
+          isBaseBP: true,
+        });
     }
+    Effect.modifyBP(
+      stack,
+      stack.processing,
+      stack.processing,
+      (stack.core.room.rule.player.max.life - stack.processing.owner.life.current) * 1000,
+      { isBaseBP: true }
+    );
+    Effect.keyword(stack, stack.processing, stack.processing, '不屈');
   },
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {

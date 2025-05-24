@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     const deletedCards = stack.processing.owner.delete;
 
     if (deletedCards.length > 0) {
-      await System.show(stack, '転生の禁術', '消滅カードを1枚手札に加える');
+      await System.show(stack, '転生の禁術', '消滅から1枚回収');
 
       // プレイヤーに消滅したカードを選ばせる
       const [selectedCard] = await EffectHelper.selectCard(

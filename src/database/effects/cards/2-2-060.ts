@@ -1,5 +1,5 @@
 import type { Card } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -32,7 +32,7 @@ export const effects: CardEffects = {
         await System.show(stack, '選略・魔導の心得', 'デッキからインターセプトを1枚セット');
         const owner = stack.processing.owner;
         const intercepts = owner.deck.filter(card => card.catalog.type === 'intercept');
-        const target = intercepts[Math.ceil(Math.random() * intercepts.length - 1)];
+        const [target] = EffectHelper.random(intercepts);
 
         if (target) {
           Effect.move(stack, stack.processing, target, 'trigger');

@@ -4,9 +4,10 @@ import { Core } from '../../core/core';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
+import { nanoid } from 'nanoid';
 
 export class Room {
-  id = crypto.randomUUID();
+  id = nanoid(6);
   name: string;
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();

@@ -27,6 +27,7 @@
   },
   "private": true,
   "dependencies": {
+    "nanoid": "^5.1.5",
     "ws": "^8.18.1"
   },
   "scripts": {

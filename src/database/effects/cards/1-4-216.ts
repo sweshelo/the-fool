@@ -2,6 +2,7 @@ import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
+import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -15,7 +16,11 @@ export const effects: CardEffects = {
       targets.length > 0 &&
       stack.processing.owner.field.length < stack.core.room.rule.player.max.field
     ) {
-      await System.show(stack, '醒命の光矢', 'コスト3以下を【複製】');
+      await System.show(
+        stack,
+        '醒命の光矢&神制の耀矢',
+        'コスト3以下を【複製】\nコスト7以上をフィールドに出せない'
+      );
       const choices: Choices = {
         title: '【複製】するユニットを選択してください',
         type: 'unit',
@@ -28,6 +33,8 @@ export const effects: CardEffects = {
         throw new Error('正しいカードが選択されませんでした', { cause: unit });
 
       await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
+    } else {
+      await System.show(stack, '神制の耀矢', 'コスト7以上をフィールドに出せない');
     }
   },
 
@@ -59,5 +66,18 @@ export const effects: CardEffects = {
 
     if (!card) throw new Error('正しいカードが選択されませんでした');
     Effect.move(stack, stack.processing, card, 'hand');
+  },
+
+  fieldEffect: async (stack: StackWithCard): Promise<void> => {
+    stack.processing.owner.opponent.hand.forEach(card => {
+      if (
+        !card.delta.some(
+          delta => delta.effect.type === 'banned' && delta.source?.unit === stack.processing.id
+        ) &&
+        card.catalog.cost >= 7
+      ) {
+        card.delta.push(new Delta({ type: 'banned' }, { source: { unit: stack.processing.id } }));
+      }
+    });
   },
 };

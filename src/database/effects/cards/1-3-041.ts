@@ -15,9 +15,9 @@ export const effects: CardEffects = {
 
   checkWin: (stack: StackWithCard) => {
     return (
-      stack.source instanceof Unit &&
-      stack.source.catalog.species?.includes('戦士') === true &&
-      stack.source.owner.id === stack.processing.owner.id
+      stack.target instanceof Unit &&
+      stack.target.catalog.species?.includes('戦士') === true &&
+      stack.target.owner.id === stack.processing.owner.id
     );
   },
 
