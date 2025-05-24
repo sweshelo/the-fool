@@ -28,7 +28,7 @@ export const effects: CardEffects = {
       1
     );
     Effect.break(stack, stack.processing, target, 'effect');
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 2);
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -61,7 +61,8 @@ export const effects: CardEffects = {
         case '1': {
           await System.show(stack, '選略・狂い狂えどお戯れを', 'ランダムで2体作成し消滅');
           EffectHelper.random(stack.processing.owner.opponent.field, 2).forEach(unit => {
-            // TODO: 作成する
+            if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand)
+              stack.processing.owner.hand.push(unit.clone(stack.processing.owner, false));
             Effect.delete(stack, stack.processing, unit);
           });
           break;
@@ -80,8 +81,7 @@ export const effects: CardEffects = {
           break;
         }
       }
+      Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -4);
     }
-
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -4);
   },
 };
