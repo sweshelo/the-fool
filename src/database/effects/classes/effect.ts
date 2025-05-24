@@ -442,7 +442,7 @@ export class Effect {
   ): Promise<void> {
     if (value === 0) return;
 
-    const updatedPurple = Math.max(Math.min(target.purple ?? 0 + value, 0), 5);
+    const updatedPurple = Math.min(Math.max((target.purple ?? 0) + value, 0), 5);
 
     stack.addChildStack('modifyPurple', source, target, {
       type: 'purple',
@@ -452,7 +452,8 @@ export class Effect {
     if (target.purple === undefined) target.purple = 0;
 
     // 演出
-    for (let i = 0; i < Math.abs(updatedPurple - (target.purple ?? 0)); i++) {
+    const count = Math.abs(updatedPurple - (target.purple ?? 0));
+    for (let i = 0; i < count; i++) {
       if (value > 0) {
         stack.core.room.soundEffect('purple-increase');
         target.purple += 1;
@@ -460,7 +461,8 @@ export class Effect {
         stack.core.room.soundEffect('purple-consume');
         target.purple -= 1;
       }
-      await new Promise(resolve => setTimeout(resolve, 0.25));
+      stack.core.room.sync();
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
   }
 
