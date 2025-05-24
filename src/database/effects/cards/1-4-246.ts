@@ -36,5 +36,6 @@ export const effects = {
     const target = owner.hand.find(card => card.id === response);
     if (!target) throw new Error('正しいカードが選択されませんでした');
     Effect.handes(stack, stack.processing, target);
+    stack.processing.owner.damage(true);
   },
 };
