@@ -19,6 +19,7 @@ import { Stack } from './class/stack';
 import { Card, Evolve, Unit } from './class/card';
 import { MessageHelper } from './message';
 import { Effect } from '@/database/effects';
+import { EffectHelper } from '@/database/effects/classes/helper';
 import { Delta } from './class/delta';
 import { Parry } from './class/parry';
 import { Intercept } from './class/card/Intercept';
@@ -29,6 +30,7 @@ type EffectResponseCallback = Function;
 
 interface History {
   card: Card;
+  generation: number;
   action: 'drive' | 'boot';
 }
 
@@ -79,6 +81,84 @@ export class Core {
     this.turnChange(true);
   }
 
+  /**
+   * マリガン処理の実際の動作部分（カードを引きなおす）
+   * @param player マリガンを行うプレイヤー
+   */
+  private performMulliganAction(player: Player): void {
+    // 手札をデッキに戻す
+    player.deck.push(...player.hand);
+    player.hand = [];
+
+    // デッキをシャッフル
+    player.deck = EffectHelper.shuffle(player.deck);
+
+    // 規定枚数カードを引く
+    [...Array(this.room.rule.system.draw.mulligan)].forEach(() => {
+      player.draw();
+    });
+
+    this.room.sync();
+    this.room.soundEffect('shuffle');
+    this.room.soundEffect('draw');
+  }
+
+  /**
+   * マリガン処理 - 手札を全てデッキに戻し、デッキをシャッフルして規定枚数カードを引く
+   * プレイヤーが満足するまで繰り返すことができる
+   * @param player マリガンを行うプレイヤー
+   * @returns Promise<void> プレイヤーがマリガンを終了したら解決される
+   */
+  async mulligan(player: Player): Promise<void> {
+    // 初回はカードを引く
+    if (player.hand.length === 0) {
+      [...Array(this.room.rule.system.draw.mulligan)].forEach(() => {
+        player.draw();
+      });
+      this.room.sync();
+    }
+
+    // マリガンループ
+    return new Promise<void>(resolve => {
+      const processMulligan = () => {
+        // 毎回ユニークなプロンプトIDを生成
+        const promptId = `mulligan_${player.id}_${Date.now()}`;
+
+        // マリガンの開始を通知
+        this.room.broadcastToPlayer(
+          player.id,
+          createMessage({
+            action: {
+              type: 'MulliganStart',
+              handler: 'client',
+            },
+            payload: {
+              type: 'MulliganStart',
+            },
+          })
+        );
+
+        // プレイヤーの選択を待つ
+        this.setEffectDisplayHandler(promptId, (choice: string[] | undefined) => {
+          const action = choice?.[0];
+
+          if (action === 'retry') {
+            // マリガン処理を実行
+            this.performMulliganAction(player);
+            // 次のマリガン判断へ
+            processMulligan();
+          } else {
+            // マリガン終了
+            resolve();
+          }
+        });
+      };
+
+      // マリガン処理を開始
+      processMulligan();
+    });
+  }
+
   // ターンチェンジ
   async turnChange(isFirstTurn: boolean = false) {
     // freeze
@@ -126,6 +206,8 @@ export class Core {
       // ターン開始処理
       this.turn++;
       this.round = Math.floor((this.turn + 1) / 2);
+    } else {
+      await Promise.all(this.players.map(player => this.mulligan(player)));
     }
 
     // CP初期化
@@ -162,6 +244,14 @@ export class Core {
         }
       });
     }
+
+    // 行動制限を解除する
+    this.getTurnPlayer().field.forEach(
+      unit =>
+        (unit.delta = unit.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        ))
+    );
 
     // ターン開始スタックを積み、解決する
     this.histories = [];
@@ -234,6 +324,21 @@ export class Core {
         (blocker && !blocker.owner.field.find(unit => unit.id === blocker?.id))
       ) {
         attacker.active = false;
+        this.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'launch-cancel',
+                attackerId: attacker.id,
+              },
+            },
+          })
+        );
         return;
       }
 
@@ -245,6 +350,21 @@ export class Core {
           !blocker.owner.field.find(unit => unit.id === blocker?.id)
         ) {
           attacker.active = false;
+          this.room.broadcastToAll(
+            createMessage({
+              action: {
+                type: 'effect',
+                handler: 'client',
+              },
+              payload: {
+                type: 'VisualEffect',
+                body: {
+                  effect: 'launch-cancel',
+                  attackerId: attacker.id,
+                },
+              },
+            })
+          );
           return;
         }
       }
@@ -419,8 +539,19 @@ export class Core {
     // BP順にソートして暫定的に勝敗を決める
     // 実際の戦闘処理はこのあとのダメージを与え合う過程で行われ、
     // ダメージを与えあったあとの生存状況に応じて勝敗が確定する
-    // (その場合でもwinnerだけが死にloserだけが生き残るような逆転の勝敗は発生しないはず)
-    const [winner, loser] = [attacker, blocker].sort((a, b) => b.currentBP - a.currentBP);
+    const [winner, loser] = [attacker, blocker].sort((a, b) => {
+      // BPが異なる場合は大きい方を優先
+      if (b.currentBP !== a.currentBP) {
+        return b.currentBP - a.currentBP;
+      }
+      // BPが等しい場合、不滅キーワードを持っている方を優先
+      if (a.hasKeyword('不滅') && !b.hasKeyword('不滅')) {
+        return -1; // aを優先
+      } else if (!a.hasKeyword('不滅') && b.hasKeyword('不滅')) {
+        return 1; // bを優先
+      }
+      return 0; // どちらも不滅を持っているか、どちらも持っていない場合は等価
+    });
 
     if (!winner || !loser) {
       throw new Error('ユニットの勝敗判定に失敗しました');
@@ -434,10 +565,28 @@ export class Core {
       core: this,
     });
 
-    // 「戦闘によって破壊されたとき」のスタック解決が行われる
-    const [loserDamage, winnedDamage] = [winner.currentBP, loser.currentBP];
-    const isLoserBreaked = Effect.damage(stack, winner, loser, loserDamage, 'battle');
-    const isWinnerBreaked = Effect.damage(stack, loser, winner, winnedDamage, 'battle');
+    // ダメージ量を確定する
+    const [loserDamage, winnerDamage] = [winner.currentBP, loser.currentBP];
+
+    // ダメージを与えるのは次の場合:
+    // - 敗者が破壊されることが確定している: 敗者に【不滅】がない (-> 直接破壊する)
+    // - 勝者が破壊されることが確定している: 勝者と敗者のBPが等しく、勝者に【不滅】がない (-> 直接破壊する)
+    // - 勝者のレベルが 3 以上で、【不滅】または【王の治癒力】がない
+    const isLoserBreaked = loser.hasKeyword('不滅') ? false : true;
+    const isWinnerBreaked = winner.hasKeyword('不滅')
+      ? false
+      : winner.hasKeyword('王の治癒力') && winner.currentBP > winnerDamage
+        ? false
+        : winner.lv >= 3 || loser.hasKeyword('不滅')
+          ? Effect.damage(stack, loser, winner, winnerDamage, 'battle') // Lv3の場合、キーワード効果を持たない限り勝っても負けてもダメージを負う
+          : winnerDamage === loserDamage
+            ? true
+            : false;
+
+    // 破壊が決定したら破壊する
+    if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
+    if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
+
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     this.stack = [stack];
@@ -470,7 +619,9 @@ export class Core {
         core: this,
       });
 
-      this.stack = [systemStack, winnerStack].filter(stack => stack !== undefined);
+      this.stack = [systemStack, winnerStack].filter(
+        (stack): stack is Stack => stack !== undefined
+      );
       await this.resolveStack();
     }
 
@@ -582,7 +733,7 @@ export class Core {
     } else {
       card.active = true;
       player.field.push(card);
-      card.delta = [new Delta({ type: 'keyword', name: '行動制限' }, 'turnStart', 1, true)];
+      card.delta = [new Delta({ type: 'keyword', name: '行動制限' })];
     }
 
     card.initBP();
@@ -600,7 +751,9 @@ export class Core {
     this.histories.push({
       card: card,
       action: 'drive',
+      generation: card.generation,
     });
+
     this.stack = [
       new Stack({
         type: 'drive',
@@ -659,12 +812,12 @@ export class Core {
       case 'Choose': {
         const payload: ChoosePayload = message.payload;
         this.handleEffectResponse(payload.promptId, payload.choice);
-        break;
+        return; // Stackを生成させない
       }
       case 'Continue': {
         const payload: ContinuePayload = message.payload;
         this.handleContinue(payload.promptId);
-        break;
+        return; // Stackを生成させない
       }
       case 'Override': {
         const payload: OverridePayload = message.payload;
@@ -714,6 +867,9 @@ export class Core {
 
         const cardCatalog = catalog.get(card.catalogId);
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
+
+        // Bannedチェック
+        if (card.delta.some(delta => delta.effect.type === 'banned')) return;
 
         // CPが足りている
         // 軽減チェック
@@ -863,12 +1019,16 @@ export class Core {
         if (
           target.catalog.isBootable(this, target) &&
           !this.histories.some(
-            history => history.action === 'boot' && history.card.id === target.id
+            history =>
+              history.action === 'boot' &&
+              history.card.id === target.id &&
+              history.generation === target.generation
           )
         ) {
           this.histories.push({
             card: target,
             action: 'boot',
+            generation: target.generation,
           });
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
@@ -890,6 +1050,22 @@ export class Core {
           target.card.reset();
           this.room.sync();
           this.room.soundEffect('trash');
+        }
+        break;
+      }
+
+      case 'Mulligan': {
+        const payload = message.payload;
+        // Find the correct mulligan promptId from our map
+        // The promptId now contains a timestamp, so we need to find the one that starts with mulligan_${player.id}_
+        const mulliganPromptId = Array.from(this.effectResponses.keys()).find(id =>
+          id.startsWith(`mulligan_${payload.player}_`)
+        );
+
+        if (mulliganPromptId) {
+          this.handleEffectResponse(mulliganPromptId, [payload.action]);
+        } else {
+          console.warn(`No mulligan handler found for player ${payload.player}`);
         }
         break;
       }

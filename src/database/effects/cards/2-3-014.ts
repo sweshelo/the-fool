@@ -62,11 +62,15 @@ export const effects: CardEffects = {
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // Find cost 4 or lower samurai units in trash
     const targets = stack.processing.owner.trash.filter(
-      card => card instanceof Unit && card.catalog.species?.includes('侍') && card.catalog.cost <= 4
+      card =>
+        card instanceof Unit &&
+        card.catalog.type === 'unit' &&
+        card.catalog.species?.includes('侍') &&
+        card.catalog.cost <= 4
     );
-    const [target] = EffectHelper.random(targets) as Unit[];
+    const [target] = EffectHelper.random(targets);
 
-    if (target) {
+    if (target instanceof Unit) {
       await System.show(stack, '極中法度', 'コスト4以下の【侍】を【特殊召喚】\n自身を消滅');
       // Special summon it
       await Effect.summon(stack, stack.processing, target);

@@ -78,11 +78,47 @@ export class Effect {
       type === 'effect'
     ) {
       stack.core.room.soundEffect('block');
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'status',
+              type: 'base-bp',
+              value: damage,
+              unitId: target.id,
+            },
+          },
+        })
+      );
       target.bp += damage;
       return false;
     }
 
-    target.delta.push(new Delta({ type: 'damage', value: damage }, 'turnEnd', 1));
+    // エフェクトを発行
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'status',
+            type: 'damage',
+            value: damage,
+            unitId: target.id,
+          },
+        },
+      })
+    );
+
+    target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
@@ -119,15 +155,36 @@ export class Effect {
     // 既に破壊されているユニットのBPは変動させない
     if (target.destination !== undefined) return false;
 
+    // 変化量がなければ中断する
+    if (value === 0) return false;
+
     if ('isBaseBP' in option) {
       target.bp += value;
     } else if ('source' in option) {
-      target.delta.push(
-        new Delta({ type: 'bp', diff: value }, undefined, undefined, undefined, option.source)
-      );
+      target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
     } else {
-      target.delta.push(new Delta({ type: 'bp', diff: value }, option.event, option.count));
+      target.delta.push(
+        new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
+      );
     }
+
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'status',
+            type: 'isBaseBP' in option ? 'base-bp' : 'bp',
+            value,
+            unitId: target.id,
+          },
+        },
+      })
+    );
 
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
@@ -140,7 +197,8 @@ export class Effect {
   }
 
   /**
-   * 対象を破壊する
+   * ユニットを破壊する
+   * ! フィールド上のユニット以外を破壊する場合はこのメソッドではなく Effect.handes() や Effect.move() で捨札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 破壊の対象
    * @param cause その破壊の原因 (カードテキストの実装にあたっては基本的にeffect以外使用してはいけない)
@@ -178,6 +236,7 @@ export class Effect {
 
   /**
    * 対象を消滅させる
+   * ! フィールド上のユニット以外を消滅させる場合はこのメソッドではなく Effect.move() で消滅札に送る操作を実行します。
    * @param source 効果の発動元
    * @param target 消滅の対象
    */
@@ -280,12 +339,12 @@ export class Effect {
 
     // Type guard to check if the origin is a valid card location
     if (!['hand', 'trigger', 'deck', 'trash', 'field', 'delete'].includes(origin)) {
-      throw new Error('無効な移動元です');
+      throw new Error(`無効な移動元です: ${origin}`);
     }
 
     // Type guard to check if the location property exists on owner
     if (!(location in owner) || location === cardFind.place.name) {
-      throw new Error('無効な移動先です');
+      throw new Error(`無効な移動先です: ${location}`);
     }
 
     // 枚数上限付き領域には上限チェックを実施
@@ -437,6 +496,25 @@ export class Effect {
         stack.core.room.soundEffect('damage');
       }
 
+      // クロックレベル操作エフェクトを発行
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'status',
+              type: 'level',
+              value: target.lv,
+              unitId: target.id,
+            },
+          },
+        })
+      );
+
       // Lvの差による基本BPの差をカタログから算出し、基本BPに加算
       const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
       const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;
@@ -488,20 +566,8 @@ export class Effect {
 
     const delta =
       keyword === '次元干渉'
-        ? new Delta(
-            { type: 'keyword', name: keyword, cost: option?.cost ?? 0 },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          )
-        : new Delta(
-            { type: 'keyword', name: keyword },
-            option?.event,
-            option?.count,
-            option?.onlyForOwnersTurn,
-            option?.source
-          );
+        ? new Delta({ type: 'keyword', name: keyword, cost: option?.cost ?? 0 }, { ...option })
+        : new Delta({ type: 'keyword', name: keyword }, { ...option });
     target.delta.push(delta);
 
     switch (keyword) {
@@ -603,11 +669,7 @@ export class Effect {
       );
 
       // 行動制限を付与
-      Effect.keyword(stack, target, target, '行動制限', {
-        event: 'turnStart',
-        count: 1,
-        onlyForOwnersTurn: true,
-      });
+      Effect.keyword(stack, target, target, '行動制限');
 
       // 起動アイコン
       if (typeof target.catalog.onBootSelf === 'function')
@@ -672,7 +734,9 @@ export class Effect {
     if (deathCounter && count < deathCounter.count) {
       deathCounter.count = count;
     } else {
-      target.delta.push(new Delta({ type: 'death' }, 'turnEnd', count, true));
+      target.delta.push(
+        new Delta({ type: 'death' }, { event: 'turnEnd', count, onlyForOwnersTurn: true })
+      );
     }
   }
 }

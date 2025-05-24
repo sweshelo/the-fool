@@ -12,9 +12,14 @@ export const effects: CardEffects = {
       targetDelta.effect.value = core.round;
     } else {
       self.delta.push(
-        new Delta({ type: 'cost', value: core.round }, undefined, undefined, undefined, {
-          unit: self.id,
-        })
+        new Delta(
+          { type: 'cost', value: core.round },
+          {
+            source: {
+              unit: self.id,
+            },
+          }
+        )
       );
     }
   },

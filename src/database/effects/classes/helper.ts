@@ -19,6 +19,12 @@ export class EffectHelper {
     units.forEach(effect);
   }
 
+  /**
+   * 【セレクトハック】や【加護】を持つユニットを考慮して、プレイヤー向けにユニットの選択肢を生成する
+   * @param filter 独自のフィルタ関数
+   * @param selector 選択肢を提供するプレイヤー
+   * @returns 選択可能なユニット
+   */
   static candidate(core: Core, filter: (unit: Unit) => boolean, selector: Player): Unit[] {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
     const units = core.players

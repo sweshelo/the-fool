@@ -102,15 +102,20 @@ export class Stack implements IStack {
       nonTurnPlayer: [...(nonTurnPlayer?.field ?? [])],
     };
 
-    if (this.type === 'overclock' && this.target instanceof Unit) {
-      this.target.overclocked = true;
-      this.target.active = true;
-      this.target.delta = this.target.delta.filter(
-        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-      );
-      core.room.soundEffect('clock-up-field');
-      core.room.soundEffect('reboot');
-      core.room.sync();
+    if (this.type === 'overclock') {
+      if (this.target instanceof Unit && this.target.lv === 3) {
+        this.target.overclocked = true;
+        this.target.active = true;
+        this.target.delta = this.target.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        );
+        core.room.soundEffect('clock-up-field');
+        core.room.soundEffect('reboot');
+        core.room.sync();
+      } else {
+        // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
+        return;
+      }
     }
 
     // まず イベントに起因するカードの効果を処理
@@ -277,7 +282,6 @@ export class Stack implements IStack {
     if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
     const isProcessed = this.children.map(stack => {
       const target = stack.target as Unit;
-      this.core.fieldEffectUnmount(target);
 
       switch (stack.type) {
         case 'break':
@@ -321,7 +325,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-
+      this.core.fieldEffectUnmount(target);
       owner[actualDestination].push(target);
     }
   }
@@ -531,7 +535,7 @@ export class Stack implements IStack {
 
           // 発動したトリガーカードを捨札に送る
           card.lv = 1;
-          owner.called.filter(c => c.id !== card.id);
+          owner.called = owner.called.filter(c => c.id !== card.id);
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む

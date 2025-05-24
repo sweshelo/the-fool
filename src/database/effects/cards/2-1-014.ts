@@ -36,10 +36,15 @@ export const effects: CardEffects = {
         } else if (hasNotSummonedUnits) {
           // Add delta if condition is met
           card.delta.push(
-            new Delta({ type: 'cost', value: -1 }, undefined, undefined, undefined, {
-              unit: stack.processing.id,
-              effectCode: '視界良好',
-            })
+            new Delta(
+              { type: 'cost', value: -1 },
+              {
+                source: {
+                  unit: stack.processing.id,
+                  effectCode: '視界良好',
+                },
+              }
+            )
           );
         }
       }

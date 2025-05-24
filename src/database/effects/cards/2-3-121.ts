@@ -73,8 +73,6 @@ export const effects: CardEffects = {
     Effect.bounce(stack, stack.processing, stack.processing, 'hand');
 
     // Reduce cost by 2
-    stack.processing.delta.push(
-      new Delta({ type: 'cost', value: -2 }, undefined, undefined, undefined, undefined, true)
-    );
+    stack.processing.delta.push(new Delta({ type: 'cost', value: -2 }, { permanent: true }));
   },
 };

@@ -8,6 +8,7 @@ export abstract class Card extends Atom implements ICard {
   catalogId: string;
   lv: number = 1;
   delta: Delta[];
+  generation: number = 1;
 
   constructor(owner: Player, catalogId: string) {
     super(owner);
@@ -25,6 +26,7 @@ export abstract class Card extends Atom implements ICard {
   reset() {
     this.delta = this.delta.filter(delta => delta.permanent);
     this.lv = 1;
+    this.generation++;
   }
 
   abstract clone(owner: Player): Card;
