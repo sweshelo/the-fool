@@ -24,19 +24,19 @@ export const effects: CardEffects = {
     );
 
     if (hasUsedGreenCardThisTurn && opponentUnits.length > 0) {
-      await System.show(stack, '連撃・豪熱の息吹', 'BP-5000');
+      await System.show(stack, '連撃・豪熱の息吹', '基本BP-5000');
 
       // 対象を1体選択
       const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
         opponentUnits,
-        'BPを-5000するユニットを選択'
+        '基本BPを-5000するユニットを選択'
       );
 
       // BPを-5000
       Effect.modifyBP(stack, stack.processing, target, -5000, {
-        source: { unit: stack.processing.id },
+        isBaseBP: true,
       });
     }
   },
