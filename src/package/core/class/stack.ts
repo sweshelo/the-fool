@@ -278,7 +278,6 @@ export class Stack implements IStack {
     if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
     const isProcessed = this.children.map(stack => {
       const target = stack.target as Unit;
-      this.core.fieldEffectUnmount(target);
 
       switch (stack.type) {
         case 'break':
@@ -310,6 +309,7 @@ export class Stack implements IStack {
     // destinationに送る
     if (isOnField) {
       console.log('%s を %s に移動', target.catalog.name, destination);
+      this.core.fieldEffectUnmount(target);
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.reset();
