@@ -692,7 +692,7 @@ export class Effect {
    * @param owner 複製先のフィールド(プレイヤー)
    */
   static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
-    const unit = target.clone(owner);
+    const unit = target.clone(owner, true);
     stack.core.room.soundEffect('copying');
     await new Promise(resolve => setTimeout(resolve, 1000));
 

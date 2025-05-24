@@ -348,7 +348,12 @@ export class Stack implements IStack {
         player.field.some(u => u.catalog.color === card.catalog.color);
 
       // CPが足りているか
-      const isEnoughCP = card.catalog.cost <= player.cp.current;
+      const isEnoughCP =
+        card.catalog.cost -
+          card.delta
+            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+            .reduce((acc, cur) => acc + cur, 0) <=
+        player.cp.current;
 
       this.processing = card;
 
@@ -400,7 +405,11 @@ export class Stack implements IStack {
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
 
-        const cost = card.catalog.cost;
+        const cost =
+          card.catalog.cost -
+          card.delta
+            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+            .reduce((acc, cur) => acc + cur, 0);
         player.cp.current -= cost;
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();

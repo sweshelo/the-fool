@@ -65,10 +65,14 @@ export class Unit extends Card implements IUnit {
 
   // 自身をコピーしたユニットを生成する
   // BPやDeltaは恒久的なものとしてコピーする
-  clone(owner: Player): Unit {
+  /**
+   * @param owner コピーの所有者
+   * @param copy 【複製】かどうか
+   */
+  clone(owner: Player, copy: boolean = false): Unit {
     const unit = new Unit(owner, this.catalogId);
     unit.bp = this.currentBP;
-    unit.isCopy = true;
+    unit.isCopy = copy;
     unit.delta = this.delta
       ?.map<Delta>(buff => ({
         ...buff,
