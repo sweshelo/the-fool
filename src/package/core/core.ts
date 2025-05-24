@@ -812,12 +812,12 @@ export class Core {
       case 'Choose': {
         const payload: ChoosePayload = message.payload;
         this.handleEffectResponse(payload.promptId, payload.choice);
-        break;
+        return; // Stackを生成させない
       }
       case 'Continue': {
         const payload: ContinuePayload = message.payload;
         this.handleContinue(payload.promptId);
-        break;
+        return; // Stackを生成させない
       }
       case 'Override': {
         const payload: OverridePayload = message.payload;
