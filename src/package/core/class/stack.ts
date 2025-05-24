@@ -309,7 +309,6 @@ export class Stack implements IStack {
     // destinationに送る
     if (isOnField) {
       console.log('%s を %s に移動', target.catalog.name, destination);
-      this.core.fieldEffectUnmount(target);
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.reset();
@@ -322,7 +321,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-
+      this.core.fieldEffectUnmount(target);
       owner[actualDestination].push(target);
     }
   }
@@ -532,7 +531,7 @@ export class Stack implements IStack {
 
           // 発動したトリガーカードを捨札に送る
           card.lv = 1;
-          owner.called.filter(c => c.id !== card.id);
+          owner.called = owner.called.filter(c => c.id !== card.id);
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
