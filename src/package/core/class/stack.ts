@@ -349,7 +349,7 @@ export class Stack implements IStack {
 
       // CPが足りているか
       const isEnoughCP =
-        card.catalog.cost -
+        card.catalog.cost +
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0) <=
@@ -406,7 +406,7 @@ export class Stack implements IStack {
         player.called.push(card);
 
         const cost =
-          card.catalog.cost -
+          card.catalog.cost +
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0);
