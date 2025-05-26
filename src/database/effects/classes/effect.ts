@@ -442,14 +442,13 @@ export class Effect {
   ): Promise<void> {
     if (value === 0) return;
 
-    const updatedPurple = Math.min(Math.max((target.purple ?? 0) + value, 0), 5);
+    if (target.purple === undefined) target.purple = 0;
+    const updatedPurple = Math.min(Math.max(target.purple + value, 0), 5);
 
     stack.addChildStack('modifyPurple', source, target, {
       type: 'purple',
       value,
     });
-
-    if (target.purple === undefined) target.purple = 0;
 
     // 演出
     const count = Math.abs(updatedPurple - (target.purple ?? 0));
@@ -740,5 +739,11 @@ export class Effect {
         new Delta({ type: 'death' }, { event: 'turnEnd', count, onlyForOwnersTurn: true })
       );
     }
+  }
+
+  static modifyLife(stack: Stack, player: Player, value: number) {
+    player.life.current += value;
+    if (value > 0) stack.core.room.soundEffect('recover');
+    if (value < 0) stack.core.room.soundEffect('damage');
   }
 }
