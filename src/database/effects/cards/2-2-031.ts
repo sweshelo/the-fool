@@ -38,7 +38,7 @@ export const effects: CardEffects = {
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const breakCount = stack.processing.owner.opponent.field.filter(
-      unit => unit.currentBP - 3000 < 0
+      unit => unit.currentBP - 3000 <= 0
     ).length;
     await System.show(
       stack,
