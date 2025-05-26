@@ -5,7 +5,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.trigger.length > 0) {
       await System.show(stack, 'GO！GO！アルカナパレード♪　', '紫ゲージ+[トリガーゾーンの枚数×1]');
-      Effect.modifyPurple(
+      await Effect.modifyPurple(
         stack,
         stack.processing,
         stack.processing.owner,

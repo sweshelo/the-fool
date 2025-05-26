@@ -11,7 +11,7 @@ export const effects: CardEffects = {
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '起動・ハロウ・イブ', '基本BP-1000\n紫ゲージ+1');
     Effect.modifyBP(stack, stack.processing, stack.processing, -1000, { isBaseBP: true });
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {

@@ -12,7 +12,7 @@ export const effects: CardEffects = {
       );
       const [target] = EffectHelper.random(stack.processing.owner.trash, 1);
       if (target) Effect.move(stack, stack.processing, target, 'hand');
-      Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+      await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
     } else {
       await System.show(stack, '秩序の盾', '対戦相手の効果によってダメージを受けない');
     }

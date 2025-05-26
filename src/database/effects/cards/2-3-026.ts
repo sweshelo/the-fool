@@ -28,7 +28,7 @@ export const effects: CardEffects = {
       1
     );
     Effect.break(stack, stack.processing, target, 'effect');
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 2);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 2);
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -81,7 +81,7 @@ export const effects: CardEffects = {
           break;
         }
       }
-      Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -4);
+      await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -4);
     }
   },
 };
