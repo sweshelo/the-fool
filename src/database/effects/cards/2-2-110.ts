@@ -1,5 +1,5 @@
 import { Card, Unit } from '@/package/core/class/card';
-import { EffectHelper, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -20,6 +20,7 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・コズミックライトステージ', 'ライフ+1');
+        Effect.modifyLife(stack, stack.processing.owner, 1);
         break;
       }
 
@@ -33,7 +34,8 @@ export const effects: CardEffects = {
           '作成するカードを選択して下さい',
           1
         );
-        if (target instanceof Card) target.clone(stack.processing.owner);
+        if (target instanceof Card)
+          stack.processing.owner.hand.push(target.clone(stack.processing.owner));
         break;
       }
     }
