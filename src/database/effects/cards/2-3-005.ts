@@ -22,12 +22,13 @@ export const effects: CardEffects = {
       );
       const result1 = Effect.damage(stack, stack.processing, target1, 4000, 'effect');
 
-      if (result1 && candidate.filter(unit => unit.id !== target1.id)) {
+      const remainCandidate = candidate.filter(unit => unit.id !== target1.id);
+      if (result1 && remainCandidate.length > 0) {
         await System.show(stack, 'ヘスティアのハピネスクッキング♪', '3000ダメージ');
         const [target2] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          candidate,
+          remainCandidate,
           'ダメージを与えるユニットを選択して下さい',
           1
         );
