@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     const delta = stack.processing.delta.find(d => d.source?.unit === stack.processing.id);
 
     if (!stack.processing.owner.purple || stack.processing.owner.purple <= 0) {
-      // 天使が2体以上いて、まだ加護を持っていなければ付与
+      // 紫ゲージが0で、次元干渉を持っていなければ付与
       if (!delta) {
         Effect.keyword(stack, stack.processing, stack.processing, '次元干渉', {
           cost: 0,
@@ -28,7 +28,7 @@ export const effects: CardEffects = {
         });
       }
     } else {
-      // 天使が2体未満の場合、このユニットが付与した加護を削除
+      // 紫ゲージが0より大の場合、このユニットが付与した次元干渉を削除
       if (delta) {
         stack.processing.delta = stack.processing.delta.filter(
           d => !(d.source?.unit === stack.processing.id)
