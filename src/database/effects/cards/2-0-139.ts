@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Evolve } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
@@ -6,7 +6,7 @@ export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
     return (
-      stack.target instanceof Unit &&
+      stack.target instanceof Evolve &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.target.catalog.cost >= 2
     );
