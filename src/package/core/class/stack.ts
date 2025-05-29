@@ -419,13 +419,14 @@ export class Stack implements IStack {
         this.processing = undefined;
 
         // 発動したインターセプトカードを捨札に送る
-        card.lv = 1;
+        const lv = card.lv;
+        card.reset();
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.push(card);
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
-        this.addChildStack('intercept', player, card);
+        this.addChildStack('intercept', player, card, { type: 'lv', value: lv });
         return false;
       }
     }
