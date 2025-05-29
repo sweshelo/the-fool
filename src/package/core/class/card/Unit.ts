@@ -10,7 +10,8 @@ export class Unit extends Card implements IUnit {
   destination?: string;
   overclocked?: boolean;
   isCopy: boolean;
-  isBootable: undefined | boolean;
+  hasBootAbility: undefined | boolean;
+  isBooted: boolean = false;
 
   constructor(owner: Player, catalogId: string) {
     super(owner, catalogId);
@@ -20,7 +21,7 @@ export class Unit extends Card implements IUnit {
     this.destination = undefined;
     this.delta = [];
     this.isCopy = false;
-    this.isBootable = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
+    this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
   }
 
   initBP() {
@@ -88,7 +89,7 @@ export class Unit extends Card implements IUnit {
       );
     unit.active = this.active;
     unit.lv = this.lv;
-
+    unit.isBooted = this.isBooted;
     return unit;
   }
 
@@ -98,7 +99,8 @@ export class Unit extends Card implements IUnit {
     this.active = false;
     this.overclocked = undefined;
     this.destination = undefined;
-    this.isBootable = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
+    this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
+    this.isBooted = false;
   }
 }
 

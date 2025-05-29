@@ -201,6 +201,7 @@ export class Core {
         this.getTurnPlayer().field = afterField;
         this.room.soundEffect('leave');
       }
+      this.getTurnPlayer().joker += 10;
       this.room.sync();
 
       // ターン開始処理
@@ -242,6 +243,7 @@ export class Core {
           unit.active = true;
           this.room.soundEffect('reboot');
         }
+        unit.isBooted = false;
       });
     }
 
@@ -1013,7 +1015,8 @@ export class Core {
           !player ||
           !target ||
           !target.catalog.isBootable ||
-          typeof target.catalog.isBootable !== 'function'
+          typeof target.catalog.isBootable !== 'function' ||
+          target.isBooted
         )
           return;
         if (
@@ -1030,6 +1033,7 @@ export class Core {
             action: 'boot',
             generation: target.generation,
           });
+          target.isBooted = true;
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
           this.stack = [new Stack({ type: 'boot', target, core: this, source: player })];
