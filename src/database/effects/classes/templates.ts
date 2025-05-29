@@ -12,7 +12,7 @@ import { Delta } from '@/package/core/class/delta';
 interface ReinforcementMatcher {
   color?: number;
   species?: string;
-  type?: ('unit' | 'advanced_unit' | 'intercept' | 'trigger')[];
+  type?: ('unit' | 'advanced_unit' | 'intercept' | 'trigger' | 'virus')[];
 }
 
 export class EffectTemplate {
