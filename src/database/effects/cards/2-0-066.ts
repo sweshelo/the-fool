@@ -7,7 +7,9 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     // 相手のユニットが召喚された場合のみ発動可能
     return (
-      stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.opponent.id
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.opponent.id &&
+      stack.processing.owner.opponent.field.some(unit => unit.id === stack.target?.id)
     );
   },
 

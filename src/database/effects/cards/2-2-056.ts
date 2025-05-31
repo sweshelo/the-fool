@@ -5,11 +5,18 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+
     // あなたのユニットがフィールドに出た時、あなたのフィールドに青属性ユニットがいる場合
     return (
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
-      stack.processing.owner.field.some(unit => unit.catalog.color === Color.BLUE)
+      stack.processing.owner.field.some(unit => unit.catalog.color === Color.BLUE) &&
+      candidate.length > 0
     );
   },
 
