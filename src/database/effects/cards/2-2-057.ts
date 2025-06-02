@@ -24,6 +24,6 @@ export const effects: CardEffects = {
 
     Effect.modifyBP(stack, stack.processing, target, 2000, { isBaseBP: true });
     Effect.modifyCP(stack, stack.processing, owner, 1);
-    Effect.modifyPurple(stack, stack.processing, owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, owner, 1);
   },
 };

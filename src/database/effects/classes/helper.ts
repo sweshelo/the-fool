@@ -4,6 +4,7 @@ import type { Core } from '@/package/core/core';
 import { System } from './system';
 import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
+import { createMessage } from '@/submodule/suit/types';
 
 export class EffectHelper {
   /**
@@ -89,6 +90,23 @@ export class EffectHelper {
 
       const chosen = targets.find(unit => unit.id === choiceId) ?? candidate[0];
       if (!chosen) throw new Error('対象のユニットが存在しません');
+
+      // クライアントにエフェクトを送信
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'select',
+              unitId: chosen.id,
+            },
+          },
+        })
+      );
 
       selected.push(chosen);
       candidate = EffectHelper.candidate(

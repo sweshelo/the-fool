@@ -29,7 +29,8 @@ export const effects: CardEffects = {
       if (!(unit instanceof Unit)) throw new Error('ユニットでないオブジェクトが選択されました');
 
       if (life <= 8) await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
-      // if (life <= 6) Effect.make(stack, stack.processing, unit, stack.processing.owner) // TODO: make未実装
+      if (life <= 6 && stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand)
+        stack.processing.owner.hand.push(unit.clone(stack.processing.owner, false));
       if (life <= 4) Effect.delete(stack, stack.processing, unit);
     }
   },

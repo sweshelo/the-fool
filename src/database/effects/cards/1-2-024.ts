@@ -116,9 +116,7 @@ export const effects: CardEffects = {
 
       // 全ての味方ユニットに【加護】を与える
       for (const unit of owner.field) {
-        Effect.keyword(stack, stack.processing, unit, '加護', {
-          source: { unit: stack.processing.id, effectCode: 'level3_protection_all' },
-        });
+        Effect.keyword(stack, stack.processing, unit, '加護');
       }
 
       // ライフを+2する

@@ -4,6 +4,25 @@ import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 
+const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
+  // クライアントにエフェクトを送信
+  stack.core.room.broadcastToAll(
+    createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'VisualEffect',
+        body: {
+          effect: 'select',
+          unitId: target.id,
+        },
+      },
+    })
+  );
+};
+
 interface KeywordOptionParams {
   event?: string;
   count?: number;
@@ -232,6 +251,7 @@ export class Effect {
     });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -257,6 +277,7 @@ export class Effect {
     stack.addChildStack('delete', source, target);
     target.destination = 'delete';
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -297,6 +318,7 @@ export class Effect {
     });
     target.destination = location;
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -429,7 +451,6 @@ export class Effect {
 
   /**
    * 紫ゲージを操作する
-   * この関数は Promise を返すが、演出のための待機なので、呼び出し元で必ずしも await しなくても良い。
    * @param stack
    * @param source 効果の発動元
    * @param target 対象のプレイヤー
@@ -443,22 +464,26 @@ export class Effect {
   ): Promise<void> {
     if (value === 0) return;
 
-    // TODO: これを紫ゲージの増減操作に変える
-    // const updatedPurple = Math.max(Math.min(target.cp.current + value, 0), 5))
+    if (target.purple === undefined) target.purple = 0;
+    const updatedPurple = Math.min(Math.max(target.purple + value, 0), 5);
 
-    stack.addChildStack('modifyCP', source, target, {
-      type: 'cp',
+    stack.addChildStack('modifyPurple', source, target, {
+      type: 'purple',
       value,
     });
 
     // 演出
-    for (let i = 0; i < Math.abs(value); i++) {
+    const count = Math.abs(updatedPurple - (target.purple ?? 0));
+    for (let i = 0; i < count; i++) {
       if (value > 0) {
         stack.core.room.soundEffect('purple-increase');
+        target.purple += 1;
       } else {
         stack.core.room.soundEffect('purple-consume');
+        target.purple -= 1;
       }
-      await new Promise(resolve => setTimeout(resolve, 0.25));
+      stack.core.room.sync();
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
   }
 
@@ -688,8 +713,9 @@ export class Effect {
    * @param owner 複製先のフィールド(プレイヤー)
    */
   static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
-    const unit = target.clone(owner);
+    const unit = target.clone(owner, true);
     stack.core.room.soundEffect('copying');
+    sendSelectedVisualEffect(stack, target);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     await Effect.summon(stack, source, unit, true);
@@ -736,5 +762,11 @@ export class Effect {
         new Delta({ type: 'death' }, { event: 'turnEnd', count, onlyForOwnersTurn: true })
       );
     }
+  }
+
+  static modifyLife(stack: Stack, player: Player, value: number) {
+    player.life.current += value;
+    if (value > 0) stack.core.room.soundEffect('recover');
+    if (value < 0) stack.core.room.soundEffect('damage');
   }
 }

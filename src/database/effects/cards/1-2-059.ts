@@ -13,11 +13,15 @@ export const effects: CardEffects = {
     EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '昆虫' });
   },
 
-  checkWin: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.source.catalog.species?.includes('昆虫') === true;
+  checkBreak: (stack: StackWithCard) => {
+    return (
+      stack.target instanceof Unit &&
+      stack.target.catalog.species?.includes('昆虫') === true &&
+      stack.processing.owner.id === stack.target.owner.id
+    );
   },
 
-  onWin: async (stack: StackWithCard) => {
+  onBreak: async (stack: StackWithCard) => {
     await System.show(stack, '生産工場', '属性の異なる【昆虫】を2枚引く');
     const colors = EffectHelper.shuffle([
       Color.RED,

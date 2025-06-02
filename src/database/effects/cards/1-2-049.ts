@@ -11,29 +11,28 @@ export const effects: CardEffects = {
     );
   },
 
-  // FIXME: クロックアップの直後？など、効果が一時的に無効になる事がある
-  fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.field.forEach(unit => {
-      // 大地の掟
-      if (unit.id === stack.processing.id) {
-        if (
-          unit.delta.some(
-            delta => delta.source?.unit === unit.id && delta.source.effectCode === '大地の掟'
-          )
-        ) {
-          if (unit.lv !== 1)
-            unit.delta = unit.delta.filter(
-              delta => delta.source?.unit === unit.id && delta.source.effectCode === '大地の掟'
-            );
-        } else {
-          if (unit.lv === 1 && stack.processing instanceof Unit) {
-            Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾', {
-              source: { unit: stack.processing.id, effectCode: '大地の掟' },
-            });
-          }
-        }
+  fieldEffect: (stack: StackWithCard<Unit>) => {
+    // 大地の掟
+    if (
+      stack.processing.delta.some(
+        delta =>
+          delta.source?.unit === stack.processing.id && delta.source.effectCode === '大地の掟'
+      )
+    ) {
+      if (stack.processing.lv !== 1)
+        stack.processing.delta = stack.processing.delta.filter(
+          delta =>
+            !(delta.source?.unit === stack.processing.id && delta.source.effectCode === '大地の掟')
+        );
+    } else {
+      if (stack.processing.lv === 1) {
+        Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾', {
+          source: { unit: stack.processing.id, effectCode: '大地の掟' },
+        });
       }
+    }
 
+    stack.processing.owner.field.forEach(unit => {
       // 豊穣の女神_Lv3
       if (
         unit.delta.some(
