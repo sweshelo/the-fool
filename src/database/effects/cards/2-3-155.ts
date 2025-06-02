@@ -9,12 +9,24 @@ export const effects: CardEffects = {
 
   // インターセプトが発動可能かどうかをチェック
   checkDrive: (stack: StackWithCard): boolean => {
+    if (!(stack.target instanceof Unit)) return false;
+    const target: Unit = stack.target;
+
     // 自分の昆虫ユニットがフィールドに出た時に発動
+    const candidates = stack.processing.owner.deck.filter(
+      card =>
+        card instanceof Unit &&
+        !(card instanceof Evolve) && // 進化ユニット以外
+        card.catalog.species?.includes('昆虫') && // 昆虫ユニット
+        card.catalog.cost === target.catalog.cost // コストは(破壊したユニットのコスト+1)
+    ) as Unit[];
+
     if (
-      stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       stack.target.catalog.species?.includes('昆虫') &&
-      stack.type === 'drive'
+      stack.target.owner.field.some(unit => unit.id === stack.target?.id) &&
+      stack.target.owner.field.length <= 4 &&
+      candidates.length > 0
     ) {
       return true;
     }
@@ -36,25 +48,22 @@ export const effects: CardEffects = {
       );
       Effect.break(stack, stack.processing, stack.target, 'effect');
 
-      // フィールドのユニット数が4体以下なら特殊召喚を試みる
-      if (stack.processing.owner.field.length <= 4) {
-        // デッキから条件に合うユニットを検索
-        const targetCost = costOfDestroyed + 1;
-        const candidates = stack.processing.owner.deck.filter(
-          card =>
-            card instanceof Unit &&
-            !(card instanceof Evolve) && // 進化ユニット以外
-            card.catalog.species?.includes('昆虫') && // 昆虫ユニット
-            card.catalog.cost === targetCost // コストは(破壊したユニットのコスト+1)
-        ) as Unit[];
+      // デッキから条件に合うユニットを検索
+      const targetCost = costOfDestroyed + 1;
+      const candidates = stack.processing.owner.deck.filter(
+        card =>
+          card instanceof Unit &&
+          !(card instanceof Evolve) && // 進化ユニット以外
+          card.catalog.species?.includes('昆虫') && // 昆虫ユニット
+          card.catalog.cost === targetCost // コストは(破壊したユニットのコスト+1)
+      ) as Unit[];
 
-        if (candidates.length > 0) {
-          // ランダムで1体選んで特殊召喚
-          const selectedUnits = EffectHelper.random(candidates, 1);
-          if (selectedUnits.length > 0) {
-            const selectedUnit = selectedUnits[0] as Unit;
-            await Effect.summon(stack, stack.processing, selectedUnit);
-          }
+      if (candidates.length > 0) {
+        // ランダムで1体選んで特殊召喚
+        const selectedUnits = EffectHelper.random(candidates, 1);
+        if (selectedUnits.length > 0) {
+          const selectedUnit = selectedUnits[0] as Unit;
+          await Effect.summon(stack, stack.processing, selectedUnit);
         }
       }
     }
