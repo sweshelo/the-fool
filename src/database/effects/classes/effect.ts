@@ -4,6 +4,25 @@ import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 
+const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
+  // クライアントにエフェクトを送信
+  stack.core.room.broadcastToAll(
+    createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'VisualEffect',
+        body: {
+          effect: 'select',
+          unitId: target.id,
+        },
+      },
+    })
+  );
+};
+
 interface KeywordOptionParams {
   event?: string;
   count?: number;
@@ -232,6 +251,7 @@ export class Effect {
     });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -257,6 +277,7 @@ export class Effect {
     stack.addChildStack('delete', source, target);
     target.destination = 'delete';
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -297,6 +318,7 @@ export class Effect {
     });
     target.destination = location;
     stack.core.room.soundEffect('bang');
+    sendSelectedVisualEffect(stack, target);
   }
 
   /**
@@ -693,6 +715,7 @@ export class Effect {
   static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
     const unit = target.clone(owner, true);
     stack.core.room.soundEffect('copying');
+    sendSelectedVisualEffect(stack, target);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     await Effect.summon(stack, source, unit, true);
