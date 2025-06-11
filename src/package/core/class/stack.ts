@@ -355,11 +355,15 @@ export class Stack implements IStack {
             .reduce((acc, cur) => acc + cur, 0) <=
         player.cp.current;
 
+      // banned デルタがないか
+      const hasBanned = card.delta.some(delta => delta.effect.type === 'banned');
+
       this.processing = card;
 
       return (
         isOnFieldSameColor &&
         isEnoughCP &&
+        !hasBanned &&
         (typeof catalog[checkerName] === 'function'
           ? catalog.type === 'intercept' && catalog[checkerName](this)
           : false)
@@ -475,6 +479,9 @@ export class Stack implements IStack {
     // カードのカタログデータを取得
     const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return false;
+
+    // Banされていないか
+    if (card.delta.some(delta => delta.effect.type === 'banned')) return false;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'
