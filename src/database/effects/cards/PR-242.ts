@@ -19,14 +19,16 @@ export const effects: CardEffects = {
     );
     stack.processing.owner.opponent.hand
       .filter(card => card.catalog.cost >= 7)
-      .forEach(card => card.delta.push(new Delta({ type: 'banned' }, { event: 'turnEnd' })));
+      .forEach(card =>
+        card.delta.push(new Delta({ type: 'banned' }, { event: 'turnEnd', count: 1 }))
+      );
 
     if (intercepts.length > 0) {
       const [target] = await EffectHelper.selectCard(
         stack,
         stack.processing.owner,
         intercepts,
-        '手札に加えるかカードを選択して下さい',
+        '手札に加えるカードを選択して下さい',
         1
       );
       Effect.move(stack, stack.processing, target, 'hand');

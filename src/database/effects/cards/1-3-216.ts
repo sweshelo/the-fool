@@ -37,8 +37,8 @@ export const effects: CardEffects = {
           type: 'option',
           title: '選略・だいてんしのおともだち',
           items: [
-            { id: '1', description: '対戦相手のユニットを2体まで選び手札に戻す' },
-            { id: '2', description: 'CP-1し、対戦相手のユニットをランダムで2体デッキに戻す' },
+            { id: '1', description: '2体まで手札に戻す' },
+            { id: '2', description: 'CP-1\nランダムで2体デッキに戻す' },
           ],
         });
         choice = result[0] || '1'; // デフォルト値として'1'を設定
@@ -63,7 +63,7 @@ export const effects: CardEffects = {
             stack,
             stack.processing.owner,
             opponentUnits,
-            '手札に戻すユニットを選択（最大2体）',
+            '手札に戻すユニットを選択',
             targetCount
           );
 
