@@ -30,7 +30,6 @@ export const effects: CardEffects = {
   },
 
   onIntercept: async (stack: StackWithCard): Promise<void> => {
-    console.log('ガープ', stack.target);
     const candidate = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id,

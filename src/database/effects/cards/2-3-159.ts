@@ -26,14 +26,13 @@ export const effects: CardEffects = {
     trashCards.forEach(card => Effect.move(stack, stack.processing, card, 'deck'));
 
     // インターセプトカードを1枚引く
-    EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['intercept'] });
+    const drawnCard = EffectTemplate.reinforcements(stack, stack.processing.owner, {
+      type: ['intercept'],
+    });
 
     // 引いたカードのレベルを+2（手札の最後に追加されたカード）
-    if (stack.processing.owner.hand.length > 0) {
-      const drawnCard = stack.processing.owner.hand[stack.processing.owner.hand.length - 1];
-      if (drawnCard) {
-        drawnCard.lv = Math.min(drawnCard.lv + 2, 3);
-      }
+    if (stack.processing.owner.hand.length > 0 && drawnCard) {
+      drawnCard.lv = Math.min(drawnCard.lv + 2, 3);
     }
   },
 };

@@ -41,7 +41,7 @@ export const effects: CardEffects = {
         });
         break;
 
-      case 3:
+      case 3: {
         await System.show(
           stack,
           '魔導結界',
@@ -65,6 +65,7 @@ export const effects: CardEffects = {
           }
         }
         break;
+      }
     }
   },
 };
