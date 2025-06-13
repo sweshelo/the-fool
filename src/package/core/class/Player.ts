@@ -44,6 +44,7 @@ export class Player implements IPlayer {
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
   joker: number;
+  purple: number | undefined;
 
   #core: Core;
 

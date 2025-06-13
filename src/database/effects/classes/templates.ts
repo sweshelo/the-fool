@@ -8,11 +8,12 @@ import { Effect } from './effect';
 import { Card, Unit } from '@/package/core/class/card';
 import type { StackWithCard } from './types';
 import { Delta } from '@/package/core/class/delta';
+import type { Catalog } from '@/submodule/suit/types';
 
 interface ReinforcementMatcher {
   color?: number;
   species?: string;
-  type?: ('unit' | 'advanced_unit' | 'intercept' | 'trigger')[];
+  type?: Omit<Catalog['type'], 'joker'>[];
 }
 
 export class EffectTemplate {
@@ -65,10 +66,14 @@ export class EffectTemplate {
    * @param match サーチする条件
    * @returns void
    */
-  static reinforcements(stack: Stack, player: Player, match: ReinforcementMatcher): boolean {
+  static reinforcements(
+    stack: Stack,
+    player: Player,
+    match: ReinforcementMatcher
+  ): Card | undefined {
     // 召喚者の手札が上限に達している場合は何もしない
     if (player.hand === undefined || player.hand.length >= stack.core.room.rule.player.max.hand)
-      return false;
+      return undefined;
 
     // 召喚者のデッキから条件に合致するカードを探す
     const target = player.deck.find(c => {
@@ -85,10 +90,10 @@ export class EffectTemplate {
     // targetを引き抜き、手札に加える
     if (target && stack.processing) {
       Effect.move(stack, stack.processing, target, 'hand');
-      return true;
+      return target;
     }
 
-    return false;
+    return undefined;
   }
 
   static async reincarnate(stack: Stack, unit: Unit) {

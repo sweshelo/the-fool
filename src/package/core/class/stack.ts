@@ -60,6 +60,10 @@ type StackOption =
   | {
       type: 'lv';
       value: number;
+    }
+  | {
+      type: 'purple';
+      value: number;
     };
 
 export class Stack implements IStack {
@@ -344,13 +348,22 @@ export class Stack implements IStack {
         player.field.some(u => u.catalog.color === card.catalog.color);
 
       // CPが足りているか
-      const isEnoughCP = card.catalog.cost <= player.cp.current;
+      const isEnoughCP =
+        card.catalog.cost +
+          card.delta
+            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+            .reduce((acc, cur) => acc + cur, 0) <=
+        player.cp.current;
+
+      // banned デルタがないか
+      const hasBanned = card.delta.some(delta => delta.effect.type === 'banned');
 
       this.processing = card;
 
       return (
         isOnFieldSameColor &&
         isEnoughCP &&
+        !hasBanned &&
         (typeof catalog[checkerName] === 'function'
           ? catalog.type === 'intercept' && catalog[checkerName](this)
           : false)
@@ -396,7 +409,11 @@ export class Stack implements IStack {
         player.trigger = player.trigger.filter(c => c.id !== card.id);
         player.called.push(card);
 
-        const cost = card.catalog.cost;
+        const cost =
+          card.catalog.cost +
+          card.delta
+            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+            .reduce((acc, cur) => acc + cur, 0);
         player.cp.current -= cost;
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
@@ -406,13 +423,14 @@ export class Stack implements IStack {
         this.processing = undefined;
 
         // 発動したインターセプトカードを捨札に送る
-        card.lv = 1;
+        const lv = card.lv;
+        card.reset();
         player.called = player.called.filter(c => c.id !== card.id);
         player.trash.push(card);
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
-        this.addChildStack('intercept', player, card);
+        this.addChildStack('intercept', player, card, { type: 'lv', value: lv });
         return false;
       }
     }
@@ -461,6 +479,9 @@ export class Stack implements IStack {
     // カードのカタログデータを取得
     const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
     if (!cardCatalog) return false;
+
+    // Banされていないか
+    if (card.delta.some(delta => delta.effect.type === 'banned')) return false;
 
     // カタログからこのスタックタイプに対応する効果関数名を生成
     // 例: type='drive' の場合、'onDrive'

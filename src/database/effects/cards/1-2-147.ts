@@ -5,7 +5,11 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
-    return stack.processing.owner.id !== stack.source.id;
+    return (
+      stack.processing.owner.id !== stack.source.id &&
+      stack.target instanceof Unit &&
+      stack.target.owner.field.some(unit => unit.id === stack.target?.id)
+    );
   },
 
   // 実際の効果本体

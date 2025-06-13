@@ -77,9 +77,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のフィールド上の昆虫ユニット
     const insectUnits = stack.processing.owner.field.filter(
-      unit =>
-        unit.id !== stack.processing.id && // 自分以外
-        unit.catalog.species?.includes('昆虫') // 昆虫ユニット
+      unit => unit.catalog.species?.includes('昆虫') // 昆虫ユニット
     );
 
     if (insectUnits.length > 0) {
