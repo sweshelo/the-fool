@@ -11,6 +11,7 @@ export const effects: CardEffects = {
 
     // 対戦相手のフィールドにユニットが存在するか確認
     if (opponent.field.length === 0) return;
+    await System.show(stack, '封印の湖', '【呪縛】を付与');
 
     // 対戦相手のユニットを1体選ぶ
     const [target] = await EffectHelper.selectUnit(
@@ -21,8 +22,6 @@ export const effects: CardEffects = {
     );
 
     if (!target) return;
-
-    await System.show(stack, '封印の湖', '【呪縛】');
     Effect.keyword(stack, self, target, '呪縛');
   },
 };

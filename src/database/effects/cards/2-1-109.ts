@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { Effect } from '../classes/effect';
 import { System } from '../classes/system';
 import type { CardEffects, StackWithCard } from '../classes/types';
@@ -67,6 +67,8 @@ export const effects: CardEffects = {
   onTrigger: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing as Unit;
     const owner = self.owner;
+
+    if (stack.source instanceof Card && stack.source.owner.id !== owner.id) return;
 
     // 捨札にある消滅しているカードを探す
     const deletedCards = owner.trash.filter(card => owner.delete.includes(card));

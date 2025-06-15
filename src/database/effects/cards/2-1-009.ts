@@ -70,8 +70,7 @@ export const effects: CardEffects = {
         stack.processing.lv >= 2 ? 2 : 1
       );
 
-      // Destroy it
-      Effect.break(stack, stack.processing, target);
+      Effect.activate(stack, stack.processing, target, false);
     } else {
       await System.show(stack, 'ビタミン供給', '手札の黄属性のコスト-1');
     }

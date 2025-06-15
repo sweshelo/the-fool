@@ -41,7 +41,13 @@ export const effects: CardEffects = {
       items: choices,
     });
 
-    if (response) await applyEffect(stack, self, activeUnits, response as '1' | '2');
+    if (response)
+      await applyEffect(
+        stack,
+        self,
+        response === '1' ? activeUnits : usedUnits,
+        response as '1' | '2'
+      );
   },
 };
 

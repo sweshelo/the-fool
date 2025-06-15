@@ -42,8 +42,8 @@ export const effects: CardEffects = {
     if (activeUnits.length > 0) {
       const target = activeUnits[Math.floor(Math.random() * activeUnits.length)];
       if (target) {
-        Effect.damage(stack, self, target, 8000);
         await System.show(stack, 'ペイン・オブ・デッド', '8000ダメージ');
+        Effect.damage(stack, self, target, 8000);
       }
     }
   },
@@ -65,6 +65,6 @@ export const effects: CardEffects = {
     Effect.modifyBP(stack, self, self, -2000, { isBaseBP: true });
 
     // 行動権を回復
-    Effect.modifyLife(stack, owner, 1);
+    Effect.activate(stack, self, self, true);
   },
 };
