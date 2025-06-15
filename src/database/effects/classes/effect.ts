@@ -169,6 +169,7 @@ export class Effect {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
+    console.log(exists);
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
     // 既に破壊されているユニットのBPは変動させない
@@ -768,5 +769,48 @@ export class Effect {
     player.life.current += value;
     if (value > 0) stack.core.room.soundEffect('recover');
     if (value < 0) stack.core.room.soundEffect('damage');
+  }
+
+  /**
+   * ユニットからキーワード能力を除去する
+   * @param stack
+   * @param target 対象のユニット
+   * @param keyword 除去するキーワード
+   * @param option 除去条件（指定された場合、条件に一致するキーワードのみを除去）
+   * @example
+   * // 全ての【秩序の盾】を除去
+   * Effect.removeKeyword(stack, target, '秩序の盾')
+   * // 次のターン終了を迎えるまで付与された【貫通】のみを除去
+   * Effect.removeKeyword(stack, target, '貫通', { event: 'turnEnd', count: 1 })
+   */
+  static removeKeyword(
+    stack: Stack,
+    target: Unit,
+    keyword: KeywordEffect,
+    option?: KeywordOptionParams
+  ) {
+    if (option) {
+      // 条件が指定された場合、その条件に一致するキーワードのみを除去
+      target.delta = target.delta.filter(
+        delta =>
+          !(
+            delta.effect.type === 'keyword' &&
+            delta.effect.name === keyword &&
+            (!option.source || delta.source === option.source)
+          )
+      );
+    } else {
+      // 条件が指定されない場合、指定されたキーワードを全て除去
+      target.delta = target.delta.filter(
+        delta => !(delta.effect.type === 'keyword' && delta.effect.name === keyword)
+      );
+    }
+
+    // キーワード除去時の効果音
+    switch (keyword) {
+      case '沈黙':
+        stack.core.room.soundEffect('grow');
+        break;
+    }
   }
 }

@@ -50,7 +50,7 @@ export const effects: CardEffects = {
       stack.source.owner.id !== owner.id && // 相手のユニット
       stack.target?.id === owner.id // 自分がターゲット
     ) {
-      await System.show(stack, '森の女神', '敵ユニットの基本BPを-3000');
+      await System.show(stack, '森の女神', '基本BP-3000');
 
       // プレイヤーアタックしたユニットの基本BPを-3000する
       Effect.modifyBP(stack, stack.processing, stack.source, -3000, {

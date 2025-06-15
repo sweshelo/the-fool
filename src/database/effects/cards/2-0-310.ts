@@ -34,7 +34,7 @@ export const effects: CardEffects = {
         await System.show(stack, '選略・ジーニアスショー', 'CP-3\nランダムで2体デッキに戻す');
         Effect.modifyCP(stack, stack.processing, stack.processing.owner, -3);
         EffectHelper.random(stack.processing.owner.opponent.field, 2).forEach(unit =>
-          Effect.move(stack, stack.processing, unit, 'deck')
+          Effect.bounce(stack, stack.processing, unit, 'deck')
         );
         break;
       }

@@ -5,7 +5,10 @@ import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   onTurnEnd: async (stack: StackWithCard<Unit>) => {
-    if (stack.processing.owner.field.length <= 4) {
+    if (
+      stack.processing.owner.field.length <= 4 &&
+      stack.processing.owner.id === stack.core.getTurnPlayer().id
+    ) {
       await System.show(stack, 'ジゴック増殖大作戦', '自身を【複製】');
       await Effect.clone(stack, stack.processing, stack.processing, stack.processing.owner);
     }

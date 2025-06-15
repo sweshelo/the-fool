@@ -6,7 +6,7 @@ export const effects: CardEffects = {
   // プレイヤーアタック時効果
   onPlayerAttack: async (stack: StackWithCard<Unit>) => {
     const units = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
-    if (units.length === 0) return;
+    if (units.length === 0 || stack.processing.owner.id !== stack.target?.id) return;
     await System.show(stack, 'カウンター・クロック', 'レベル+1');
     const [target] = await EffectHelper.selectUnit(
       stack,
@@ -34,7 +34,7 @@ export const effects: CardEffects = {
 
   // 【戦士】ユニットがアタックした時効果
   onAttack: async (stack: StackWithCard<Unit>) => {
-    if (!stack.processing.catalog.species?.includes('戦士')) return;
+    if (!(stack.target instanceof Unit) || !stack.target.catalog.species?.includes('戦士')) return;
     const opponentUnits = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id,

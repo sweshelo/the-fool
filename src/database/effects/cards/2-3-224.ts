@@ -36,6 +36,9 @@ export const effects: CardEffects = {
             card.catalog.species?.includes('英雄')
         ) as Evolve;
         if (evolveUnit) {
+          stack.processing.owner.deck = stack.processing.owner.deck.filter(
+            card => card !== evolveUnit
+          );
           await stack.core.drive(stack.processing.owner, evolveUnit, stack.processing);
         }
         break;

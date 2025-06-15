@@ -60,6 +60,7 @@ export const effects: CardEffects = {
 
     switch (choice) {
       case '1': {
+        await System.show(stack, '選略・モノクローム', 'CP-1\n手札に戻す');
         const [target] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
@@ -72,6 +73,7 @@ export const effects: CardEffects = {
       }
 
       case '2': {
+        await System.show(stack, '選略・モノクローム', '【沈黙効果耐性】を与える');
         const [target] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,

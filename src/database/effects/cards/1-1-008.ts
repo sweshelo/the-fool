@@ -11,8 +11,8 @@ export const effects = {
   },
 
   onTurnEnd: async (stack: StackWithCard) => {
-    const target = EffectHelper.random(stack.processing.owner.opponent.field, 1);
-    if (target instanceof Unit) {
+    const [target] = EffectHelper.random(stack.processing.owner.opponent.field, 1);
+    if (target instanceof Unit && stack.processing.owner.id === stack.core.getTurnPlayer().id) {
       await System.show(stack, '平和の光', '【呪縛】を付与');
       Effect.keyword(stack, stack.processing, target, '呪縛');
     }
