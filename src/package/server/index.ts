@@ -17,7 +17,7 @@ export class Server {
     const serverPort = port || process.env.PORT;
     console.log(`PORT: ${serverPort}`);
 
-    if (process.env.USE_TLS) {
+    if (process.env.USE_TLS === 'true') {
       console.log('Running server with TLS enabled');
 
       // Use Bun's built-in file reading capability with full path from project root
