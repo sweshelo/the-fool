@@ -1,12 +1,12 @@
-import { Room } from "./room/room";
-import { User } from "./room/user";
-import { config } from "../../config";
-import type { Message } from "@/submodule/suit/types/message/message";
-import type { RequestPayload } from "@/submodule/suit/types/message/payload/base";
-import type { RoomOpenResponsePayload } from "@/submodule/suit/types/message/payload/server";
-import type { ServerWebSocket } from "bun";
+import { Room } from './room/room';
+import { User } from './room/user';
+import { apiRouter } from './apiRouter';
+import type { Message } from '@/submodule/suit/types/message/message';
+import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
+import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
+import type { ServerWebSocket } from 'bun';
 
-class ServerError extends Error { }
+class ServerError extends Error {}
 
 export class Server {
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
@@ -28,45 +28,51 @@ export class Server {
       console.log(`Key path: ${keyPath}`);
       console.log(`Cert path: ${certPath}`);
 
-      import('fs').then(fs => {
-        // Directly read the content of the files
-        const keyContent = fs.readFileSync(keyPath, 'utf8');
-        const certContent = fs.readFileSync(certPath, 'utf8');
+      import('fs')
+        .then(fs => {
+          // Directly read the content of the files
+          const keyContent = fs.readFileSync(keyPath, 'utf8');
+          const certContent = fs.readFileSync(certPath, 'utf8');
 
-        // Start server with TLS
-        Bun.serve({
-          port: serverPort,
-          tls: {
-            key: keyContent,
-            cert: certContent
-          },
-          fetch(req, server) {
-            if (server.upgrade(req)) return;
-            return new Response("Upgrade failed", { status: 500 })
-          },
-          websocket: {
-            open: this.onOpen.bind(this),
-            close: this.onClose.bind(this),
-            message: this.onMessage.bind(this),
-          }
+          // Start server with TLS
+          Bun.serve({
+            port: serverPort,
+            tls: {
+              key: keyContent,
+              cert: certContent,
+            },
+            fetch: async (req, server) => {
+              const apiResponse = await apiRouter(req);
+              if (apiResponse) return apiResponse;
+              if (server.upgrade(req)) return;
+              return new Response('Upgrade failed', { status: 500 });
+            },
+            websocket: {
+              open: this.onOpen.bind(this),
+              close: this.onClose.bind(this),
+              message: this.onMessage.bind(this),
+            },
+          });
+        })
+        .catch(err => {
+          console.error('Failed to read certificate files:', err);
+          throw new Error('Unable to start TLS server due to certificate error');
         });
-      }).catch(err => {
-        console.error('Failed to read certificate files:', err);
-        throw new Error('Unable to start TLS server due to certificate error');
-      });
     } else {
       console.log('Running server without TLS (HTTP mode)');
       Bun.serve({
         port: serverPort,
-        fetch(req, server) {
+        fetch: async (req, server) => {
+          const apiResponse = await apiRouter(req);
+          if (apiResponse) return apiResponse;
           if (server.upgrade(req)) return;
-          return new Response("Upgrade failed", { status: 500 })
+          return new Response('Upgrade failed', { status: 500 });
         },
         websocket: {
           open: this.onOpen.bind(this),
           close: this.onClose.bind(this),
           message: this.onMessage.bind(this),
-        }
+        },
       });
     }
   }
@@ -103,13 +109,17 @@ export class Server {
     const roomId = this.clientRooms.get(client);
     if (!roomId) throw new ServerError('参加していないルームに対する操作が試みられました。');
 
-    const room = this.rooms.get(roomId)
+    const room = this.rooms.get(roomId);
     if (!room) throw new ServerError('ルームが見つかりませんでした。');
 
-    return roomId ? this.rooms.get(roomId) : undefined
+    return roomId ? this.rooms.get(roomId) : undefined;
   }
 
-  public responseJustBoolean<T extends RequestPayload>(client: ServerWebSocket, message: Message<T>, result: boolean) {
+  public responseJustBoolean<T extends RequestPayload>(
+    client: ServerWebSocket,
+    message: Message<T>,
+    result: boolean
+  ) {
     const response = {
       action: {
         type: 'response',
@@ -118,9 +128,9 @@ export class Server {
       payload: {
         requestId: message.payload.requestId,
         result,
-      }
-    }
-    client.send(JSON.stringify(response))
+      },
+    };
+    client.send(JSON.stringify(response));
   }
 
   private handleMessage(client: ServerWebSocket, message: Message) {
@@ -128,18 +138,19 @@ export class Server {
       const { payload } = message;
       switch (message.action.handler) {
         case 'room':
-          if ('roomId' in payload && typeof payload.roomId === 'string') { // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
-            const room = this.rooms.get(payload.roomId)
-            if (!room) throw new Error('ルームが見つかりませんでした')
+          if ('roomId' in payload && typeof payload.roomId === 'string') {
+            // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
+            const room = this.rooms.get(payload.roomId);
+            if (!room) throw new Error('ルームが見つかりませんでした');
 
             // 参加処理だけServer側で登録処理を走らせる
             if (message.payload.type === 'PlayerEntry') {
-              const result = room.join(client, message)
+              const result = room.join(client, message);
               if (result) {
-                this.clientRooms.delete(client)
-                this.clientRooms.set(client, room.id)
+                this.clientRooms.delete(client);
+                this.clientRooms.set(client, room.id);
               } else {
-                throw new Error('ルームの参加に失敗しました')
+                throw new Error('ルームの参加に失敗しました');
               }
             } else {
               room.handleMessage(client, message);
@@ -155,25 +166,29 @@ export class Server {
       }
     } catch (e) {
       if (e instanceof Error) {
-        console.error(e)
-        client.send(JSON.stringify({
-          action: {
-            type: 'error',
-          },
-          payload: {
-            error: e.message
-          }
-        }))
+        console.error(e);
+        client.send(
+          JSON.stringify({
+            action: {
+              type: 'error',
+            },
+            payload: {
+              error: e.message,
+            },
+          })
+        );
       } else {
-        client.send(JSON.stringify({
-          action: {
-            type: 'error',
-          },
-          payload: {
-            error: '想定外の事象が発生しました。',
-            body: e
-          }
-        }))
+        client.send(
+          JSON.stringify({
+            action: {
+              type: 'error',
+            },
+            payload: {
+              error: '想定外の事象が発生しました。',
+              body: e,
+            },
+          })
+        );
       }
     }
   }
@@ -181,29 +196,28 @@ export class Server {
   private handleMessageForServer(client: ServerWebSocket, message: Message) {
     const { payload } = message;
     switch (message.action.type) {
-      case 'open':
-        {
-          if (payload.type === 'RoomOpenRequest') {
-            const room = new Room(payload.name);
-            this.rooms.set(room.id, room);
-            this.clientRooms.set(client, room.id);
+      case 'open': {
+        if (payload.type === 'RoomOpenRequest') {
+          const room = new Room(payload.name, payload.rule);
+          this.rooms.set(room.id, room);
+          this.clientRooms.set(client, room.id);
 
-            const response = {
-              action: {
-                type: 'response',
-                handler: 'client',
-              },
-              payload: {
-                type: 'RoomOpenResponse',
-                requestId: payload.requestId,
-                roomId: room.id,
-                result: true,
-              }
-            } satisfies Message<RoomOpenResponsePayload>
-            client.send(JSON.stringify(response))
-          }
-          break;
+          const response = {
+            action: {
+              type: 'response',
+              handler: 'client',
+            },
+            payload: {
+              type: 'RoomOpenResponse',
+              requestId: payload.requestId,
+              roomId: room.id,
+              result: true,
+            },
+          } satisfies Message<RoomOpenResponsePayload>;
+          client.send(JSON.stringify(response));
         }
+        break;
+      }
       case 'list':
     }
   }

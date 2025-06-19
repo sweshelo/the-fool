@@ -1,56 +1,57 @@
-import type { Message } from "@/submodule/suit/types/message/message";
-import { Player } from "../../core/class/Player";
-import { Core } from "../../core/core";
-import type { SyncPayload } from "@/submodule/suit/types/message/payload/client";
-import type { ServerWebSocket } from "bun";
-import type { Rule } from "@/submodule/suit/types";
-import { config } from "@/config";
-
+import { createMessage, type Message } from '@/submodule/suit/types/message/message';
+import { Player } from '../../core/class/Player';
+import { Core } from '../../core/core';
+import type { ServerWebSocket } from 'bun';
+import type { Rule } from '@/submodule/suit/types';
+import { config } from '@/config';
+import { nanoid } from 'nanoid';
 
 export class Room {
-  id = crypto.randomUUID();
+  id = nanoid(6);
   name: string;
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
-  rule: Rule = { ...config.game } // デフォルトのルールをコピー
+  rule: Rule = { ...config.game }; // デフォルトのルールをコピー
+  cache: string | undefined;
 
-  constructor(name: string) {
+  constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
     this.name = name;
+    this.cache = undefined;
+    if (rule) this.rule = rule;
   }
 
   // メッセージを処理
   handleMessage(socket: ServerWebSocket, message: Message) {
-    console.log('handling message on Room: %s', message.action.type)
+    console.log('handling message on Room: %s', message.action.type);
     switch (message.action.type) {
       case 'join':
-        this.join(socket, message)
+        this.join(socket, message);
     }
   }
 
   // プレイヤー参加処理
   join(socket: ServerWebSocket, message: Message) {
-    if (this.core.players.length < 2 && message.payload.type === 'PlayerEntry') {
+    if (message.payload.type === 'PlayerEntry') {
       // 再接続チェック
-      const exists = this.players.get(message.payload.player.id)
+      const exists = this.players.get(message.payload.player.id);
 
       if (exists) {
         // clients再登録
-        this.clients.delete(exists.id)
+        this.clients.delete(exists.id);
         this.clients.set(exists.id, socket);
-        this.sync();
-      } else {
-        const player = new Player(message.payload.player);
+      } else if (this.core.players.length < 2) {
+        const player = new Player(message.payload.player, this.core);
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);
-        this.players.set(player.id, player)
-        this.sync();
+        this.players.set(player.id, player);
       }
-      return true
+      this.sync(true);
+      return true;
     } else {
-      return false
+      return false;
     }
   }
 
@@ -59,16 +60,144 @@ export class Room {
     this.core.start();
   }
 
-  // 現在のステータスを全て送信
-  sync = () => {
-    console.log('syncing')
-    const players: { [key: string]: Player } = this.core.players.reduce((acc, player) => {
-      acc[player.id] = player;
-      return acc;
-    }, {} as { [key: string]: Player })
+  /**
+   * 特定のプレイヤーにメッセージを送信する
+   * @param playerId 送信先プレイヤーID
+   * @param payload 送信するペイロード
+   */
+  broadcastToPlayer(playerId: string, message: Message) {
+    const client = this.clients.get(playerId);
+    if (client) {
+      client.send(JSON.stringify(message));
+    } else {
+      console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
+    }
+  }
 
-    this.clients.forEach((client) => {
-      console.log('Sending: ', client)
+  /**
+   * 全プレイヤーにメッセージを送信する
+   * @param payload 送信するペイロード
+   */
+  broadcastToAll(message: Message) {
+    this.clients.forEach(client => {
+      client.send(JSON.stringify(message));
+    });
+  }
+
+  // SEイベントを送信
+  soundEffect(soundId: string, playerId?: string) {
+    const message = createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'SoundEffect',
+        soundId: soundId,
+      },
+    });
+
+    if (playerId) {
+      this.broadcastToPlayer(playerId, message);
+    } else {
+      this.broadcastToAll(message);
+    }
+  }
+
+  // 現在のステータスを全て送信
+  sync = (force: boolean = false) => {
+    // Colorマッピング
+    const colorMap: { [key: number]: 'red' | 'yellow' | 'blue' | 'green' | 'purple' | 'none' } = {
+      1: 'red',
+      2: 'yellow',
+      3: 'blue',
+      4: 'green',
+      5: 'purple',
+      6: 'none',
+    };
+
+    // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
+    const playersState: { [key: string]: Player | object } = {};
+    this.core.players.forEach(player => {
+      playersState[player.id] = {
+        ...player,
+        deck: player.deck.map(card => ({ id: card.id })),
+        hand: player.hand.map(card => ({ id: card.id })),
+        trigger: player.trigger.map(card => ({
+          id: card.id,
+          color: colorMap[card.catalog.color as number] ?? 'none',
+        })),
+      };
+    });
+    const syncState = JSON.stringify({
+      rule: this.rule,
+      game: {
+        round: this.core.round,
+        turn: this.core.turn,
+      },
+      players: playersState,
+    });
+
+    // 簡易ハッシュ関数
+    function simpleHash(str: string): string {
+      let hash = 0,
+        i,
+        chr;
+      if (str.length === 0) return hash.toString();
+      for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return hash.toString();
+    }
+
+    const currentHash = simpleHash(syncState);
+
+    if (this.cache === currentHash && !force) {
+      // 状態が変わっていなければ通信をスキップ
+      return;
+    }
+
+    // 状態が変わった場合のみ通信
+    this.clients.forEach((client, playerId) => {
+      const players = this.core.players.reduce(
+        (acc: { [key: string]: Player | object }, player) => {
+          if (player.id === playerId) {
+            // 自分: デッキはIDのみ
+            acc[player.id] = {
+              ...player,
+              deck:
+                this.rule.debug?.enable && this.rule.debug.reveal.self.deck
+                  ? player.deck
+                  : player.deck.map(card => ({ id: card.id })),
+            };
+          } else {
+            // 相手: デッキ・手札はIDのみ、トリガーはID+color
+            acc[player.id] = {
+              ...player,
+              deck:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.deck
+                  ? player.deck
+                  : player.deck.map(card => ({ id: card.id })),
+              hand:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.hand
+                  ? player.hand
+                  : player.hand.map(card => ({ id: card.id })),
+              trigger:
+                this.rule.debug?.enable && this.rule.debug.reveal.opponent.trigger
+                  ? player.trigger
+                  : player.trigger.map(card => ({
+                      id: card.id,
+                      color: colorMap[card.catalog.color as number] ?? 'none',
+                    })),
+            };
+          }
+          return acc;
+        },
+        {}
+      );
+
       const data = JSON.stringify({
         action: {
           type: 'sync',
@@ -77,16 +206,19 @@ export class Room {
         payload: {
           type: 'Sync',
           body: {
+            rule: this.rule,
             game: {
               round: this.core.round,
               turn: this.core.turn,
             },
             players,
-          }
-        }
-      } satisfies Message<SyncPayload>)
-      console.log(data)
-      client.send(data)
-    })
-  }
+          },
+        },
+      });
+      client.send(data);
+    });
+
+    // 通信した場合はキャッシュを更新
+    this.cache = currentHash;
+  };
 }
