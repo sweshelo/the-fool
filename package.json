@@ -31,6 +31,7 @@
     "ws": "^8.18.1"
   },
   "scripts": {
+    "preinstall": "git submodule update --init --recursive",
     "dev": "bun --hot run index.ts",
     "prepare": "husky"
   },
