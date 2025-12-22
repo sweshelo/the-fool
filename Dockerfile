@@ -32,5 +32,5 @@ COPY --from=prerelease /usr/src/app/tsconfig.json .
 
 # run the app
 USER bun
-EXPOSE 3000/tcp
+EXPOSE 5000/tcp
 ENTRYPOINT [ "bun", "run", "index.ts" ]
