@@ -1,0 +1,17 @@
+# ビルド・開発関連
+certs/
+bundle/
+node_modules/
+.vscode/
+.husky/
+
+# ドキュメント・設定ファイル
+README.md
+.prettierrc
+eslint.config.mjs
+.env.sample
+*.ps1
+a.ts
+
+# Git関連（ただし.gitと.gitmodulesは必要なので除外しない）
+.gitignore
