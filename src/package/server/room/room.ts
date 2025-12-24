@@ -4,10 +4,11 @@ import { Core } from '../../core/core';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
-import { nanoid } from 'nanoid';
 
 export class Room {
-  id = nanoid(6);
+  id = Math.floor(Math.random() * 99999)
+    .toString()
+    .padStart(5, '0');
   name: string;
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();
