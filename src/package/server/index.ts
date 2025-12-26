@@ -78,8 +78,6 @@ export class Server {
   }
 
   private onOpen(ws: ServerWebSocket) {
-    console.log('Client connected');
-
     // 新しいユーザーを作成
     // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
     const user = new User();
@@ -102,7 +100,7 @@ export class Server {
         console.log('room %s has been deleted.', roomId);
       }
     }
-    console.log('Client disconnected');
+    this.clients.delete(ws);
   }
 
   private onMessage(ws: ServerWebSocket, data: string) {
