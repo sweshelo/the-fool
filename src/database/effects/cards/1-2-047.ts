@@ -11,7 +11,8 @@ export const effects: CardEffects = {
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       stack.target.id !== stack.processing.id && // 自身以外
-      stack.target.catalog.species?.includes('昆虫') // 昆虫ユニット
+      stack.target.catalog.species?.includes('昆虫') && // 昆虫ユニット
+      stack.processing.lv < 3
     ) {
       await System.show(stack, 'クロック・アップ', 'レベル+1');
 
