@@ -24,7 +24,7 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・魔夜の太陽', '紫ゲージ+1');
-        Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+        await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
         break;
       }
 
@@ -39,7 +39,7 @@ export const effects: CardEffects = {
             'effect'
           )
         );
-        Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -2);
+        await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -2);
         break;
       }
     }
@@ -48,7 +48,10 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard) => {
-    if (stack.processing.owner.hand.length <= stack.core.room.rule.player.max.hand) {
+    if (
+      stack.processing.owner.hand.length <= stack.core.room.rule.player.max.hand &&
+      stack.processing.owner.id === stack.source.id
+    ) {
       await System.show(stack, '魔夜の太陽', '[魔導の書]を手札に作成');
       stack.processing.owner.hand.push(new Intercept(stack.processing.owner, 'PR-027'));
     }

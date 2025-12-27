@@ -2,7 +2,7 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
-  checkBreak: (stack: StackWithCard) => {
+  checkDrive: (stack: StackWithCard) => {
     const targets = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id,
@@ -13,7 +13,7 @@ export const effects: CardEffects = {
 
   // 実際の効果本体
   // 関数名に self は付かない
-  onBreak: async (stack: StackWithCard): Promise<void> => {
+  onDrive: async (stack: StackWithCard): Promise<void> => {
     const targets = EffectHelper.candidate(
       stack.core,
       unit => unit.lv >= 2 && unit.owner.id !== stack.processing.owner.id,

@@ -4,6 +4,7 @@ import { Unit } from '@/package/core/class/card';
 
 const balsamDance = async (stack: StackWithCard, hideMessage = false) => {
   if (
+    (!hideMessage && stack.processing.id === stack.target?.id) || // onDriveで自身の召喚効果として処理中 (2回目になるので発動させない)
     !(stack.target instanceof Unit) ||
     !stack.processing.owner.field.find(unit => unit.id == stack.target?.id)
   )

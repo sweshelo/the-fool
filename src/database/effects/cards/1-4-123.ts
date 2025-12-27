@@ -11,7 +11,7 @@ const getCheckFunction = (cost: number) => {
       stack.target.owner.id === stack.processing.owner.id &&
       stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
       stack.option?.type === 'break'
-      ? stack.option.cause === 'effect'
+      ? stack.option.cause !== 'battle'
       : true && stack.processing.owner.field.length <= stack.core.room.rule.player.max.field;
   };
 };

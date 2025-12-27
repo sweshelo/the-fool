@@ -10,7 +10,7 @@ export const effects: CardEffects = {
 
   // 実際の効果本体
   // 関数名に self は付かない
-  onAttack: async (stack: StackWithCard): Promise<void> => {
+  onDrive: async (stack: StackWithCard): Promise<void> => {
     switch (stack.processing.lv) {
       case 1:
       case 2: {
