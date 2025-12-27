@@ -1,10 +1,12 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const gloomForest = async (stack: StackWithCard) => {
-  await System.show(stack, '妖霧の森', 'CP-2');
-  Effect.modifyCP(stack, stack.processing, stack.processing.owner, -2);
+  if (stack.target instanceof Unit) {
+    await System.show(stack, '妖霧の森', 'CP-2');
+    Effect.modifyCP(stack, stack.processing, stack.target.owner, -2);
+  }
 };
 
 export const effects: CardEffects = {

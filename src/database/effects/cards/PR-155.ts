@@ -19,6 +19,6 @@ const replaceMagick = async (stack: StackWithCard) => {
 export const effects: CardEffects = {
   onDriveSelf: replaceMagick,
   onDrive: async (stack: StackWithCard) => {
-    if (stack.processing.id !== stack.source.id) replaceMagick(stack);
+    if (stack.processing.id !== stack.target?.id) replaceMagick(stack);
   },
 };

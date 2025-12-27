@@ -10,7 +10,7 @@ export const effects: CardEffects = {
   },
 
   onIntercept: async (stack: StackWithCard<Card>): Promise<void> => {
-    if (stack.target instanceof Card && stack.target.owner.id === stack.processing.owner.id) {
+    if (stack.source.id === stack.processing.owner.id) {
       const candidate = EffectHelper.candidate(
         stack.core,
         unit => unit.owner.id !== stack.processing.owner.id,
@@ -31,7 +31,8 @@ export const effects: CardEffects = {
   },
 
   onTrigger: async (stack: StackWithCard<Card>): Promise<void> => {
-    if (stack.target instanceof Card && stack.target.owner.id === stack.processing.owner.id) {
+    console.log(stack.option);
+    if (stack.source.id === stack.processing.owner.id) {
       if (stack.option?.type === 'lv' && stack.option.value >= 2) {
         await System.show(stack, 'ビューティートリック', '基本BP+1000');
         stack.processing.owner.field.forEach(unit =>

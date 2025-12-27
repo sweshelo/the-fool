@@ -1,5 +1,6 @@
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Intercept } from '@/package/core/class/card/Intercept';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -44,6 +45,13 @@ export const effects: CardEffects = {
     }
 
     await System.show(stack, '慈母の寵愛', '【魔導士】のBP+[コスト×1000]');
+  },
+
+  onTurnEnd: async (stack: StackWithCard) => {
+    if (stack.processing.owner.hand.length <= stack.core.room.rule.player.max.hand) {
+      await System.show(stack, '魔夜の太陽', '[魔導の書]を手札に作成');
+      stack.processing.owner.hand.push(new Intercept(stack.processing.owner, 'PR-027'));
+    }
   },
 
   fieldEffect: stack => {
