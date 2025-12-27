@@ -2,6 +2,14 @@ import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card/Card';
 import type { Unit } from '@/package/core/class/card';
 import type { Core } from '@/package/core/core';
+import type {
+  EventCheckHandlers,
+  EventOnHandlers,
+  EventOnHandlersSelf,
+  EventOnHandlersOther,
+  EventOnHandlersInTrash,
+  EventOnHandlersOpponent,
+} from './eventHandlers';
 
 /**
  * A Stack with a guaranteed Card in the processing property
@@ -27,9 +35,13 @@ export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean>
  * Interface for the effects object exported by card effect files
  * Defines the structure and types for card effect methods
  */
-export interface CardEffects {
-  [key: `on${string}`]: OnEffectMethod;
-  [key: `check${string}`]: CheckEffectMethod;
+export interface CardEffects
+  extends Partial<EventCheckHandlers<CheckEffectMethod>>,
+    Partial<EventOnHandlers<OnEffectMethod>>,
+    Partial<EventOnHandlersSelf<OnEffectMethod>>,
+    Partial<EventOnHandlersOther<OnEffectMethod>>,
+    Partial<EventOnHandlersInTrash<OnEffectMethod>>,
+    Partial<EventOnHandlersOpponent<OnEffectMethod>> {
   fieldEffect?: (stack: StackWithCard<Unit>) => void;
   isBootable?: (core: Core, self: Unit) => boolean;
   handEffect?: ((core: Core, self: Card) => void) | ((core: Core, self: Unit) => void);

@@ -40,11 +40,13 @@ export const effects: CardEffects = {
   },
 
   // 相手インターセプト効果発動時: 相手全ユニットの基本BP-1000
-  async onOpponentInterceptEffect(stack: StackWithCard<Unit>) {
-    const opponent = stack.processing.owner.opponent;
-    await System.show(stack, 'わんわんどりーみん', '基本BP-1000');
-    for (const unit of opponent.field) {
-      Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
+  async onIntercept(stack: StackWithCard<Unit>) {
+    if (stack.processing.owner.id !== stack.source.id) {
+      const opponent = stack.processing.owner.opponent;
+      await System.show(stack, 'わんわんどりーみん', '基本BP-1000');
+      for (const unit of opponent.field) {
+        Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
+      }
     }
   },
 };

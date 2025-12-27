@@ -2,53 +2,30 @@ import type { Core } from '@/package/core/core';
 import type { Catalog, ICard } from '../submodule/suit/types/game/card';
 import type { Stack } from '@/package/core/class/stack';
 import { getCardEffect } from './effects';
-import type { Event } from './effects/classes/event';
 import type {
-  CheckHandlerName,
-  OnHandlerName,
-  OnHandlerNameSelf,
-  OnHandlerNameOther,
-  OnHandlerNameInTrash,
-  OnHandlerNameOpponent,
+  EventCheckHandlers,
+  EventOnHandlers,
+  EventOnHandlersSelf,
+  EventOnHandlersOther,
+  EventOnHandlersInTrash,
+  EventOnHandlersOpponent,
 } from './effects/classes/eventHandlers';
 
 export interface HandlerFunction {
   (stack: Stack, card: ICard, core: Core): Promise<void>;
 }
 
-// 全イベントに対するハンドラーを動的に生成
-type EventCheckHandlers = {
-  [E in Event as CheckHandlerName<E>]?: (stack: Stack) => boolean;
-};
-
-type EventOnHandlers = {
-  [E in Event as OnHandlerName<E>]?: HandlerFunction;
-};
-
-type EventOnHandlersSelf = {
-  [E in Event as OnHandlerNameSelf<E>]?: HandlerFunction;
-};
-
-type EventOnHandlersOther = {
-  [E in Event as OnHandlerNameOther<E>]?: HandlerFunction;
-};
-
-type EventOnHandlersInTrash = {
-  [E in Event as OnHandlerNameInTrash<E>]?: HandlerFunction;
-};
-
-type EventOnHandlersOpponent = {
-  [E in Event as OnHandlerNameOpponent<E>]?: HandlerFunction;
-};
+// イベントハンドラー型の具体化
+type CheckMethod = (stack: Stack) => boolean;
 
 export interface CatalogWithHandler
   extends Catalog,
-    Partial<EventCheckHandlers>,
-    Partial<EventOnHandlers>,
-    Partial<EventOnHandlersSelf>,
-    Partial<EventOnHandlersOther>,
-    Partial<EventOnHandlersInTrash>,
-    Partial<EventOnHandlersOpponent> {
+    Partial<EventCheckHandlers<CheckMethod>>,
+    Partial<EventOnHandlers<HandlerFunction>>,
+    Partial<EventOnHandlersSelf<HandlerFunction>>,
+    Partial<EventOnHandlersOther<HandlerFunction>>,
+    Partial<EventOnHandlersInTrash<HandlerFunction>>,
+    Partial<EventOnHandlersOpponent<HandlerFunction>> {
   fieldEffect?: (stack: Stack) => void;
   handEffect?: (core: Core, card: ICard) => void;
   [key: string]: unknown;

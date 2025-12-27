@@ -34,3 +34,28 @@ export type AllOnHandlerNamesWithSuffix =
 
 // 全てのハンドラー名のUnion型
 export type AllHandlerNames = AllCheckHandlerNames | AllOnHandlerNamesWithSuffix;
+
+// 共通のハンドラー型マッピング（factory.ts と types.ts で共有）
+export type EventCheckHandlers<CheckMethod> = {
+  [E in Event as CheckHandlerName<E>]?: CheckMethod;
+};
+
+export type EventOnHandlers<OnMethod> = {
+  [E in Event as OnHandlerName<E>]?: OnMethod;
+};
+
+export type EventOnHandlersSelf<OnMethod> = {
+  [E in Event as OnHandlerNameSelf<E>]?: OnMethod;
+};
+
+export type EventOnHandlersOther<OnMethod> = {
+  [E in Event as OnHandlerNameOther<E>]?: OnMethod;
+};
+
+export type EventOnHandlersInTrash<OnMethod> = {
+  [E in Event as OnHandlerNameInTrash<E>]?: OnMethod;
+};
+
+export type EventOnHandlersOpponent<OnMethod> = {
+  [E in Event as OnHandlerNameOpponent<E>]?: OnMethod;
+};
