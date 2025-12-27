@@ -1,3 +1,4 @@
+import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
@@ -26,9 +27,13 @@ export const effects: CardEffects = {
     }
   },
 
-  onIntercept: async (stack: StackWithCard): Promise<void> => {
+  onIntercept: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (stack.processing.owner.id === stack.source.id && stack.processing.owner.hand.length > 0) {
-      await System.show(stack, 'ギフト・オブ・ウアス', '手札を1枚捨てる\nカードを1枚引く');
+      await System.show(
+        stack,
+        'ギフト・オブ・ウアス',
+        '手札を1枚捨てる\nカードを1枚引く\n【沈黙】を得る'
+      );
       const [target] = await EffectHelper.selectCard(
         stack,
         stack.processing.owner,
@@ -38,6 +43,10 @@ export const effects: CardEffects = {
       );
       Effect.handes(stack, stack.processing, target);
       EffectTemplate.draw(stack.processing.owner, stack.core);
+      Effect.keyword(stack, stack.processing, stack.processing, '沈黙', {
+        event: 'turnEnd',
+        count: 1,
+      });
     }
   },
 };
