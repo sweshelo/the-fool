@@ -14,7 +14,11 @@ export const effects: CardEffects = {
   },
 
   checkPlayerAttack: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.source.catalog.species?.includes('天使') === true;
+    return (
+      stack.source instanceof Unit &&
+      stack.source.catalog.species?.includes('天使') === true &&
+      stack.processing.owner.id === stack.source.owner.id
+    );
   },
 
   onPlayerAttack: async (stack: StackWithCard) => {
