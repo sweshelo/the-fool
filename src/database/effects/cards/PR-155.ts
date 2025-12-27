@@ -12,13 +12,13 @@ const replaceMagick = async (stack: StackWithCard) => {
     );
     Effect.handes(stack, stack.processing, target);
     EffectTemplate.draw(stack.processing.owner, stack.core);
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   }
 };
 
 export const effects: CardEffects = {
   onDriveSelf: replaceMagick,
   onDrive: async (stack: StackWithCard) => {
-    if (stack.processing.id !== stack.target?.id) replaceMagick(stack);
+    if (stack.processing.id !== stack.target?.id) await replaceMagick(stack);
   },
 };
