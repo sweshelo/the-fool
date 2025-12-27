@@ -40,7 +40,7 @@ export const effects: CardEffects = {
           )
         );
 
-        if (salvage) Effect.move(stack, stack.processing, target, 'hand');
+        if (salvage) Effect.move(stack, stack.processing, salvage, 'hand');
         break;
       }
     }

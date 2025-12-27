@@ -49,7 +49,7 @@ export const effects: CardEffects = {
 
   onTurnEnd: async (stack: StackWithCard) => {
     if (
-      stack.processing.owner.hand.length <= stack.core.room.rule.player.max.hand &&
+      stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand &&
       stack.processing.owner.id === stack.source.id
     ) {
       await System.show(stack, '魔夜の太陽', '[魔導の書]を手札に作成');

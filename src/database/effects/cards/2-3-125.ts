@@ -31,7 +31,6 @@ export const effects: CardEffects = {
   },
 
   onTrigger: async (stack: StackWithCard<Card>): Promise<void> => {
-    console.log(stack.option);
     if (stack.source.id === stack.processing.owner.id) {
       if (stack.option?.type === 'lv' && stack.option.value >= 2) {
         await System.show(stack, 'ビューティートリック', '基本BP+1000');

@@ -6,13 +6,15 @@ import { EffectHelper } from '../classes/helper';
 
 const getCheckFunction = (cost: number) => {
   return async (stack: StackWithCard) => {
-    return !!stack.processing.owner.trash.find(unit => unit.catalog.cost <= cost) &&
+    return (
+      !!stack.processing.owner.trash.find(unit => unit.catalog.cost <= cost) &&
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
-      stack.option?.type === 'break'
-      ? stack.option.cause !== 'battle'
-      : true && stack.processing.owner.field.length <= stack.core.room.rule.player.max.field;
+      (stack.option?.type === 'break'
+        ? stack.option.cause !== 'battle'
+        : true && stack.processing.owner.field.length < stack.core.room.rule.player.max.field)
+    );
   };
 };
 
