@@ -10,7 +10,7 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    await System.show(stack, '紅蓮の命', 'トリガーゾーンを全て破壊');
+    await System.show(stack, '紅蓮の命', 'トリガーゾーンを全て破壊\n1ライフダメージ');
     [...stack.processing.owner.trigger, ...stack.processing.owner.opponent.trigger].forEach(card =>
       Effect.move(stack, stack.processing, card, 'trash')
     );

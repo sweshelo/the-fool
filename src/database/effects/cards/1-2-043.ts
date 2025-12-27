@@ -11,7 +11,7 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
     if (stack.processing.owner.id === stack.source.id) {
-      await System.show(stack, 'グリーン・クロック', '青属性ユニットのレベル+1');
+      await System.show(stack, 'グリーン・クロック', '緑属性ユニットのレベル+1');
       const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
