@@ -30,6 +30,6 @@ export const effects: CardEffects = {
     );
     if (!target || !(target instanceof Unit)) throw new Error('1-3-055: 不正なTarget');
     await System.show(stack, '紅炎の召喚術', '捨札から【特殊召喚】');
-    Effect.summon(stack, stack.processing, target);
+    await Effect.summon(stack, stack.processing, target);
   },
 };

@@ -30,6 +30,6 @@ export const effects: CardEffects = {
     );
     if (!target || !(target instanceof Unit)) throw new Error('1-3-065: 不正なTarget');
     await System.show(stack, '冥道の召喚術', '捨札から【特殊召喚】');
-    Effect.summon(stack, stack.processing, target);
+    await Effect.summon(stack, stack.processing, target);
   },
 };

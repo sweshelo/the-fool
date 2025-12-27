@@ -42,7 +42,7 @@ export const effects: CardEffects = {
       await System.show(stack, 'Next stage', '[奈落大帝タルタロス]を 【特殊召喚】\n行動権を消費');
 
       const card = new Unit(stack.processing.owner, '2-3-136');
-      Effect.summon(stack, stack.processing, card);
+      await Effect.summon(stack, stack.processing, card);
       Effect.activate(stack, stack.processing, card, false);
     }
   },
