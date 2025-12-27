@@ -2,6 +2,7 @@ import type { ICard } from '@/submodule/suit/types/game/card';
 import { Atom } from './Atom';
 import type { Player } from '../Player';
 import type { Delta } from '../delta';
+import type { CatalogWithHandler } from '@/database/factory';
 
 export abstract class Card extends Atom implements ICard {
   catalogId: string;
@@ -15,7 +16,7 @@ export abstract class Card extends Atom implements ICard {
     this.delta = [];
   }
 
-  get catalog() {
+  get catalog(): CatalogWithHandler {
     // 遅延ロードを使用して循環依存を回避
     // Lazy load to avoid circular dependency
     const getCatalog = () => {
@@ -24,7 +25,7 @@ export abstract class Card extends Atom implements ICard {
       return master;
     };
 
-    const c = getCatalog().get(this.catalogId);
+    const c: CatalogWithHandler = getCatalog().get(this.catalogId);
     if (!c) throw new Error('カタログに存在しないカードが指定されました');
 
     return c;
