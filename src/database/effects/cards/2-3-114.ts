@@ -33,5 +33,27 @@ export const effects: CardEffects = {
         stack.processing.owner.hand.push(unit.clone(stack.processing.owner, false));
       if (life <= 4) Effect.delete(stack, stack.processing, unit);
     }
+
+    await System.show(stack, '悦び', 'BP+[ライフダメージ×1000]');
+  },
+
+  fieldEffect: (stack: StackWithCard<Unit>): void => {
+    // BP増加量を計算
+    const bpBoost = stack.processing.owner.life.max - stack.processing.owner.life.current;
+
+    // 既にこのユニットが発行したDeltaが存在するか確認
+    const delta = stack.processing.delta.find(
+      d => d.source?.unit === stack.processing.id && d.source?.effectCode === '悦び'
+    );
+
+    if (delta && delta.effect.type === 'bp') {
+      // Deltaを編集する
+      delta.effect.diff = bpBoost;
+    } else {
+      // 新しいDeltaを追加
+      Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
+        source: { unit: stack.processing.id, effectCode: '悦び' },
+      });
+    }
   },
 };
