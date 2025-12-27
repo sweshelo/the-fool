@@ -11,8 +11,8 @@ export const effects: CardEffects = {
     const count =
       stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('珍獣')).length >=
       4
-        ? 1
-        : 2;
+        ? 2
+        : 1;
 
     await System.show(stack, '学びの庭', `【珍獣】を${count}枚引く`);
     [...Array(count)].forEach(() =>
