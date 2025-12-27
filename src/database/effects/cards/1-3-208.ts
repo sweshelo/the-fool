@@ -3,46 +3,34 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
-  // ■アタッカー
-  // このユニットがアタックした時、ターン終了時までこのユニットのBPを+2000する。
   async onAttackSelf(stack: StackWithCard<Unit>) {
-    await System.show(stack, 'アタッカー', 'BP+2000');
-    Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
-      event: 'turnEnd',
-      count: 1,
-    });
-  },
-
-  // ■飽くなき向上心
-  // このユニットがプレイヤーアタックに成功した時、このユニットのレベルを+1する。
-  async onPlayerAttackSelf(stack: StackWithCard<Unit>) {
-    await System.show(stack, '飽くなき向上心', 'レベル+1');
-    Effect.clock(stack, stack.processing, stack.processing, 1);
-  },
-
-  // ■連撃の鎖
-  // このユニットがオーバークロックした時、対戦相手のユニットを1体選ぶ。それに【防御禁止】を与える。
-  async onOverclockSelf(stack: StackWithCard<Unit>) {
-    const opponent = stack.processing.owner.opponent;
     const candidates = EffectHelper.candidate(
       stack.core,
-      unit => unit.owner.id === opponent.id,
+      unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
+    if (candidates.length === 0) return;
 
-    if (candidates.length > 0) {
-      await System.show(stack, '連撃の鎖', '【防御禁止】を付与');
-      const [target] = await EffectHelper.selectUnit(
-        stack,
-        stack.processing.owner,
-        candidates,
-        '対戦相手のユニットを1体選んでください'
-      );
+    await System.show(stack, '狂魔神槍・命滅ノ轍', '5000ダメージ');
+    const [target] = await EffectHelper.selectUnit(
+      stack,
+      stack.processing.owner,
+      candidates,
+      'ダメージを与えるユニットを選択して下さい'
+    );
+    Effect.damage(stack, stack.processing, target, 5000);
+  },
 
-      Effect.keyword(stack, stack.processing, target, '防御禁止', {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+  async onOverclockSelf(stack: StackWithCard<Unit>) {
+    await System.show(stack, '狂魔神槍・命滅ノ轍', '1ライフダメージ');
+    Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+  },
+
+  async onDriveSelf(stack: StackWithCard<Unit>) {
+    if (stack.processing.owner.opponent.field.length === 0) return;
+    await System.show(stack, '狂魔神槍・命滅ノ轍', 'ランダムで2体に【防御禁止】');
+    EffectHelper.random(stack.processing.owner.opponent.field, 2).forEach(unit =>
+      Effect.keyword(stack, stack.processing, unit, '防御禁止')
+    );
   },
 };
