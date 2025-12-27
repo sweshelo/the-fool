@@ -39,7 +39,7 @@ export const effects: CardEffects = {
 
   fieldEffect: (stack: StackWithCard<Unit>): void => {
     // BP増加量を計算
-    const bpBoost = stack.processing.owner.life.max - stack.processing.owner.life.current;
+    const bpBoost = (stack.processing.owner.life.max - stack.processing.owner.life.current) * 1000;
 
     // 既にこのユニットが発行したDeltaが存在するか確認
     const delta = stack.processing.delta.find(
