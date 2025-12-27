@@ -5,10 +5,8 @@ import type { Core } from '@/package/core/core';
 import type {
   EventCheckHandlers,
   EventOnHandlers,
-  EventOnHandlersSelf,
-  EventOnHandlersOther,
-  EventOnHandlersInTrash,
-  EventOnHandlersOpponent,
+  EventOnHandlersWithSuffix,
+  HANDLER_SUFFIXES,
 } from './eventHandlers';
 
 /**
@@ -31,6 +29,11 @@ export type OnEffectMethod =
  */
 export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean> | boolean;
 
+// 全てのサフィックス付きハンドラーを展開
+type AllSuffixHandlers = Partial<
+  EventOnHandlersWithSuffix<OnEffectMethod, (typeof HANDLER_SUFFIXES)[number]>
+>;
+
 /**
  * Interface for the effects object exported by card effect files
  * Defines the structure and types for card effect methods
@@ -38,10 +41,7 @@ export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean>
 export interface CardEffects
   extends Partial<EventCheckHandlers<CheckEffectMethod>>,
     Partial<EventOnHandlers<OnEffectMethod>>,
-    Partial<EventOnHandlersSelf<OnEffectMethod>>,
-    Partial<EventOnHandlersOther<OnEffectMethod>>,
-    Partial<EventOnHandlersInTrash<OnEffectMethod>>,
-    Partial<EventOnHandlersOpponent<OnEffectMethod>> {
+    AllSuffixHandlers {
   fieldEffect?: (stack: StackWithCard<Unit>) => void;
   isBootable?: (core: Core, self: Unit) => boolean;
   handEffect?: ((core: Core, self: Card) => void) | ((core: Core, self: Unit) => void);

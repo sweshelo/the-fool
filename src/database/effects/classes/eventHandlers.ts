@@ -12,11 +12,15 @@ export type CheckHandlerName<E extends Event> = EventHandlerName<E, 'check'>;
 // onハンドラー型: onDrive, onClockup など
 export type OnHandlerName<E extends Event> = EventHandlerName<E, 'on'>;
 
-// サフィックス付きハンドラー型
-export type OnHandlerNameSelf<E extends Event> = `${OnHandlerName<E>}Self`;
-export type OnHandlerNameOther<E extends Event> = `${OnHandlerName<E>}Other`;
-export type OnHandlerNameInTrash<E extends Event> = `${OnHandlerName<E>}InTrash`;
-export type OnHandlerNameOpponent<E extends Event> = `${OnHandlerName<E>}Opponent`;
+// ハンドラーのサフィックス定数
+export const HANDLER_SUFFIXES = ['Self', 'Other', 'InTrash', 'Opponent'] as const;
+export type HandlerSuffix = (typeof HANDLER_SUFFIXES)[number];
+
+// サフィックス付きハンドラー型: onDriveSelf, onDriveOther など
+export type OnHandlerNameWithSuffix<
+  E extends Event,
+  S extends HandlerSuffix,
+> = `${OnHandlerName<E>}${S}`;
 
 // 全てのチェックハンドラー名のUnion型
 export type AllCheckHandlerNames = CheckHandlerName<Event>;
@@ -27,10 +31,7 @@ export type AllOnHandlerNames = OnHandlerName<Event>;
 // 全てのonハンドラー名のUnion型（サフィックス付き含む）
 export type AllOnHandlerNamesWithSuffix =
   | OnHandlerName<Event>
-  | OnHandlerNameSelf<Event>
-  | OnHandlerNameOther<Event>
-  | OnHandlerNameInTrash<Event>
-  | OnHandlerNameOpponent<Event>;
+  | OnHandlerNameWithSuffix<Event, HandlerSuffix>;
 
 // 全てのハンドラー名のUnion型
 export type AllHandlerNames = AllCheckHandlerNames | AllOnHandlerNamesWithSuffix;
@@ -44,18 +45,6 @@ export type EventOnHandlers<OnMethod> = {
   [E in Event as OnHandlerName<E>]?: OnMethod;
 };
 
-export type EventOnHandlersSelf<OnMethod> = {
-  [E in Event as OnHandlerNameSelf<E>]?: OnMethod;
-};
-
-export type EventOnHandlersOther<OnMethod> = {
-  [E in Event as OnHandlerNameOther<E>]?: OnMethod;
-};
-
-export type EventOnHandlersInTrash<OnMethod> = {
-  [E in Event as OnHandlerNameInTrash<E>]?: OnMethod;
-};
-
-export type EventOnHandlersOpponent<OnMethod> = {
-  [E in Event as OnHandlerNameOpponent<E>]?: OnMethod;
+export type EventOnHandlersWithSuffix<OnMethod, S extends HandlerSuffix> = {
+  [E in Event as OnHandlerNameWithSuffix<E, S>]?: OnMethod;
 };
