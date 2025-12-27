@@ -1,4 +1,3 @@
-/*
 import master from '@/database/catalog';
 import { EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
@@ -43,4 +42,3 @@ export const effects: CardEffects = {
     });
   },
 };
-*/

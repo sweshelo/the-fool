@@ -62,8 +62,8 @@ export const effects: CardEffects = {
       candidate.length > 0
     ) {
       await System.show(stack, '天満ちる神の調べ', 'コスト3以下を【特殊召喚】');
-      EffectHelper.random(candidate, 1).forEach(unit =>
-        Effect.summon(stack, stack.processing, unit)
+      await Promise.all(
+        EffectHelper.random(candidate, 1).map(unit => Effect.summon(stack, stack.processing, unit))
       );
     }
   },

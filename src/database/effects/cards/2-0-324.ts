@@ -1,7 +1,7 @@
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -36,15 +36,14 @@ export const effects: CardEffects = {
     const targets = stack.processing.owner.deck.filter(
       card => card.catalog.type === 'unit' && card.catalog.cost <= 3
     );
+    const [target] = EffectHelper.random(targets, 1);
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id &&
-      targets.length > 0 &&
+      target instanceof Unit &&
       stack.processing.owner.field.length <= 4
     ) {
       await System.show(stack, '私の救世主さま', 'コスト3以下を【特殊召喚】');
-      EffectHelper.random(targets, 1).forEach(card =>
-        Effect.summon(stack, stack.processing, card as Unit)
-      );
+      await Effect.summon(stack, stack.processing, target);
     }
   },
 };
