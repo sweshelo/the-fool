@@ -9,7 +9,8 @@ export const effects: CardEffects = {
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
     const count =
-      stack.processing.owner.field.filter(unit => unit.catalog.species.includes('珍獣')).length >= 4
+      stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('珍獣')).length >=
+      4
         ? 1
         : 2;
 
