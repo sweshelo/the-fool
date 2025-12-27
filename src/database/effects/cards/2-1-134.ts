@@ -43,11 +43,7 @@ export const effects: CardEffects = {
       const actualSummons = Math.min(maxSummons, availableSpace);
 
       if (actualSummons > 0) {
-        await System.show(
-          stack,
-          'エクストリーム・サモン',
-          `同名ユニットを${actualSummons}体【特殊召喚】`
-        );
+        await System.show(stack, 'エクストリーム・サモン', `同名ユニットを4体まで【特殊召喚】`);
 
         // 特殊召喚するユニットを選択
         const unitsToSummon = EffectHelper.random(candidates, actualSummons);

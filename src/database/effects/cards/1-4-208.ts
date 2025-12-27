@@ -28,7 +28,6 @@ export const effects: CardEffects = {
 
     // BPを+3000（ターン終了時まで）
     Effect.modifyBP(stack, stack.processing, target, 3000, {
-      source: { unit: stack.processing.id, effectCode: '裂帛の威令' },
       event: 'turnEnd',
       count: 1,
     });
@@ -62,7 +61,6 @@ export const effects: CardEffects = {
 
         // BPを+3000（ターン終了時まで）
         Effect.modifyBP(stack, stack.processing, target, 3000, {
-          source: { unit: stack.processing.id, effectCode: '裂帛の威令' },
           event: 'turnEnd',
           count: 1,
         });

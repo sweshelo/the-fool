@@ -89,6 +89,16 @@ export class Server {
     if (roomId) {
       // ルームからの退出処理などを実装
       this.clientRooms.delete(ws);
+      this.clients.delete(ws);
+
+      const remainingClientsInRoom = Array.from(this.clientRooms.values()).filter(
+        id => id === roomId
+      ).length;
+      // 接続ユーザが居なくなったらルームを削除
+      if (remainingClientsInRoom === 0) {
+        this.rooms.delete(roomId);
+        console.log('room %s has been deleted.', roomId);
+      }
     }
     this.clients.delete(ws);
   }
