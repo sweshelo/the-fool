@@ -1123,7 +1123,7 @@ export class Core {
     }
 
     this.stack = [
-      new Stack({ type: '_messageRecieved', source: this.getTurnPlayer(), core: this }),
+      new Stack({ type: '_messageReceived', source: this.getTurnPlayer(), core: this }),
     ];
     await this.resolveStack();
   }

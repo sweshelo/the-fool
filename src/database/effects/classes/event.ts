@@ -29,7 +29,7 @@ export const internalEvents = [
   '_postBattle',
   '_postBattleClockUp',
   '_withdraw',
-  '_messageRecieved',
+  '_messageReceived',
   '_deathCounterCheckStack',
 ] as const;
 
