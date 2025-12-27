@@ -1,8 +1,8 @@
 import { Effect, EffectTemplate, System } from '..';
-import type { StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
 
-export const effects = {
+export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(
       stack,
