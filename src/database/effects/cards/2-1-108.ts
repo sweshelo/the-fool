@@ -9,16 +9,22 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.opponent.trigger.forEach(card =>
-      card.delta.push(
-        new Delta(
-          { type: 'banned' },
-          {
-            source: { unit: stack.processing.id },
-          }
-        )
+    stack.processing.owner.opponent.trigger
+      .filter(
+        card =>
+          (card.catalog.type === 'trigger' || card.catalog.type === 'intercept') &&
+          !card.delta.find(delta => delta.source?.unit === stack.processing.id)
       )
-    );
+      .forEach(card =>
+        card.delta.push(
+          new Delta(
+            { type: 'banned' },
+            {
+              source: { unit: stack.processing.id },
+            }
+          )
+        )
+      );
   },
 
   onBlockSelf: async (stack: StackWithCard<Unit>) => {
