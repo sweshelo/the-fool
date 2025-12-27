@@ -551,12 +551,13 @@ export class Stack implements IStack {
           this.processing = undefined;
 
           // 発動したトリガーカードを捨札に送る
+          const lv = card.lv;
           card.lv = 1;
           owner.called = owner.called.filter(c => c.id !== card.id);
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
-          this.addChildStack('trigger', owner, card);
+          this.addChildStack('trigger', owner, card, { type: 'lv', value: lv });
         }
         core.room.sync();
         return check;
