@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkTurnStart: (stack: StackWithCard): boolean => {
-    return stack.source.id === stack.processing.owner.id;
+    return stack.source.id !== stack.processing.owner.id;
   },
 
   // 実際の効果本体

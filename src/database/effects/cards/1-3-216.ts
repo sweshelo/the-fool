@@ -104,15 +104,11 @@ export const effects: CardEffects = {
   },
 
   // プレイヤーアタックを受けた時の効果
-  onPlayerAttackTarget: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のプレイヤーがアタックされた時だけ発動
     if (stack.target && stack.target.id === stack.processing.owner.id) {
       await System.show(stack, 'えんじぇりっく・きゅあー', 'ライフ+1\n自身を消滅');
-
-      // ライフを+1
-      // Note: ライフの増加は直接的な方法がないため、
-      // ここではSystem.showで表示するだけにして実際の処理はコアにお任せ
-      await System.show(stack, 'えんじぇりっく・きゅあー', 'ライフが+1された');
+      Effect.modifyLife(stack, stack.processing.owner, 1);
 
       // 自身を消滅
       Effect.delete(stack, stack.processing, stack.processing);
