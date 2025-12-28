@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       '【消滅効果耐性】\n【スピードムーブ】\n手札を全て捨てる'
     );
     // 手札を全て捨てる
-    for (const card of [...owner.hand]) {
+    for (const card of owner.hand) {
       Effect.handes(stack, self, card);
     }
 
