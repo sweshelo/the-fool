@@ -13,7 +13,7 @@ export type CheckHandlerName<E extends Event> = EventHandlerName<E, 'check'>;
 export type OnHandlerName<E extends Event> = EventHandlerName<E, 'on'>;
 
 // ハンドラーのサフィックス定数
-export const HANDLER_SUFFIXES = ['Self', 'Other', 'InTrash', 'Opponent'] as const;
+export const HANDLER_SUFFIXES = ['Self', 'InTrash'] as const;
 export type HandlerSuffix = (typeof HANDLER_SUFFIXES)[number];
 
 // サフィックス付きハンドラー型: onDriveSelf, onDriveOther など
