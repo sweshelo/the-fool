@@ -22,7 +22,8 @@ type AllSuffixHandlers = Partial<
 >;
 
 export interface CatalogWithHandler
-  extends Catalog,
+  extends
+    Catalog,
     Partial<EventCheckHandlers<CheckMethod>>,
     Partial<EventOnHandlers<HandlerFunction>>,
     AllSuffixHandlers {
