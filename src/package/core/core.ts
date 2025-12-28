@@ -214,7 +214,12 @@ export class Core {
     // CP初期化
     const turnPlayer = this.getTurnPlayer();
     if (turnPlayer) {
-      console.log('ROUND: %s / Turn: %s', this.round, this.turn);
+      console.log(
+        `[turnChange] Room: %s | ROUND: %s / Turn: %s`,
+        this.room.id,
+        this.round,
+        this.turn
+      );
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -809,7 +814,11 @@ export class Core {
   }
 
   async handleMessage(message: Message) {
-    console.log('passed message to Core : type<%s>', message.action.type);
+    console.log(
+      '[handleMessage] action: %s | payload: %s',
+      message.action.type,
+      message.payload.type
+    );
     switch (message.payload.type) {
       case 'Choose': {
         const payload: ChoosePayload = message.payload;

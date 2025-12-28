@@ -17,7 +17,11 @@ export const effects: CardEffects = {
     );
 
     // 紫ゲージが4以上の場合、捨札からコスト3以下の紫属性ユニットを2体特殊召喚
-    if (purpleGauge >= 4 && trashCards.length > 0) {
+    if (
+      purpleGauge >= 4 &&
+      trashCards.length > 0 &&
+      stack.core.room.rule.player.max.field - stack.processing.owner.field.length >= 2
+    ) {
       await System.show(
         stack,
         '黎明を告げる紫翼',

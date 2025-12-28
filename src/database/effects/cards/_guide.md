@@ -8,7 +8,7 @@
 
 ## 関数名とその型
 
-`effects/classes/types.ts` を参照。
+`src/database/effects/classes/effect.ts` を参照。
 
 イベント名の代表的なものを挙げる。
 

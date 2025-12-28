@@ -49,33 +49,34 @@ export const effects: CardEffects = {
     const opponentUnits = opponent.field;
 
     // 対戦相手のユニットがいるかチェック
-    if (opponentUnits.length > 0) {
-      await System.show(
-        stack,
-        'ウィーゼル・ディソーダー',
-        '敵全体の基本BP-1000\nコスト3ユニットを【特殊召喚】'
+    const message: string[] = [];
+
+    if (opponentUnits.length > 0) message.push('敵全体の基本BP-1000');
+    if (stack.processing.owner.field.length <= 4) message.push('コスト3ユニットを【特殊召喚】');
+
+    if (message.length === 0) return;
+
+    await System.show(stack, 'ウィーゼル・ディソーダー', message.join('\n'));
+
+    // 対戦相手の全てのユニットの基本BPを-1000する
+    opponentUnits.forEach(unit => {
+      Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
+    });
+
+    // あなたのフィールドのユニットが4体以下の場合、特殊召喚
+    if (stack.processing.owner.field.length <= 4) {
+      // デッキから進化ユニット以外のコスト3のユニットをフィルタリング
+      const summonTargets = stack.processing.owner.deck.filter(
+        card => card instanceof Unit && !(card instanceof Evolve) && card.catalog.cost === 3
       );
 
-      // 対戦相手の全てのユニットの基本BPを-1000する
-      opponentUnits.forEach(unit => {
-        Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
-      });
+      if (summonTargets.length > 0) {
+        // ランダムで1体選択
+        const [target] = EffectHelper.random(summonTargets);
 
-      // あなたのフィールドのユニットが4体以下の場合、特殊召喚
-      if (stack.processing.owner.field.length <= 4) {
-        // デッキから進化ユニット以外のコスト3のユニットをフィルタリング
-        const summonTargets = stack.processing.owner.deck.filter(
-          card => card instanceof Unit && !(card instanceof Evolve) && card.catalog.cost === 3
-        );
-
-        if (summonTargets.length > 0) {
-          // ランダムで1体選択
-          const [target] = EffectHelper.random(summonTargets);
-
-          if (target instanceof Unit) {
-            // 特殊召喚
-            await Effect.summon(stack, stack.processing, target);
-          }
+        if (target instanceof Unit) {
+          // 特殊召喚
+          await Effect.summon(stack, stack.processing, target);
         }
       }
     }

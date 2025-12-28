@@ -32,7 +32,7 @@ export const effects: CardEffects = {
     ).forEach(unit => Effect.keyword(stack, self, unit, '秩序の盾'));
   },
 
-  onDriveOther: async (stack: StackWithCard<Unit>) => {
+  onDrive: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing as Unit;
     const target = stack.target as Unit;
 
