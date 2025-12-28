@@ -17,7 +17,6 @@ export const effects: CardEffects = {
 
     // 全てのユニットのBPを+2000
     owner.field.forEach(unit => {
-      console.log(unit.catalog.name);
       // 既にこのユニットが発行したDeltaが存在するか確認
       const delta = unit.delta.find(
         d =>

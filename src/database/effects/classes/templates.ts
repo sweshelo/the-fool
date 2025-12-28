@@ -44,14 +44,12 @@ export class EffectTemplate {
       count,
     };
     const [response] = await System.prompt(stack, driver.id, choices);
-    console.log('response', response);
 
     // 召喚者の手札が上限に達している場合は何もしない
     if (driver?.hand === undefined || driver?.hand?.length >= stack.core.room.rule.player.max.hand)
       return;
 
     const target = driver.trash.find(c => c.id === response);
-    console.log('target', target);
 
     // targetを引き抜き、手札に加える
     if (target && stack.processing) {

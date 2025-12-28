@@ -93,6 +93,16 @@ export class Stack implements IStack {
    * @param core ゲームのコアインスタンス
    */
   async resolve(core: Core): Promise<void> {
+    // Log
+    if (!this.type.startsWith('_'))
+      console.log(
+        '[stack.resolve] Room: %s | event: %s | source: %s | target: %s',
+        core.room.id,
+        this.type,
+        this.source instanceof Card ? this.source.catalog.name : this.source.id,
+        this.target instanceof Card ? this.target.catalog.name : this.target?.id
+      );
+
     // ターンプレイヤーを取得
     const turnPlayer = core.getTurnPlayer();
     const nonTurnPlayer = core.players.find(p => p.id !== turnPlayer.id);
@@ -272,9 +282,21 @@ export class Stack implements IStack {
       );
       this.processing = undefined;
     });
+
+    // Log
+    if (!this.type.startsWith('_'))
+      console.log(
+        '[stack.resolve] Finished. Room: %s | event: %s | source: %s | target: %s',
+        core.room.id,
+        this.type,
+        this.source instanceof Card ? this.source.catalog.name : this.source.id,
+        this.target instanceof Card ? this.target.catalog.name : this.target?.id
+      );
   }
 
   private async resolveChild(core: Core): Promise<void> {
+    if (this.children.length > 0)
+      console.log('processing %d child stack(s) of %s stack', this.children.length, this.type);
     for (const child of this.children) {
       await child.resolve(core);
     }
@@ -605,9 +627,11 @@ export class Stack implements IStack {
   }
 
   private processFieldEffect() {
+    /*
     const target = this.target instanceof Card ? this.target.catalog.name : '?';
     const source = this.source instanceof Card ? this.source.catalog.name : '?';
     console.log('%s -> %s による %s の発生で、フィールド効果呼び出し', source, target, this.type);
+    */
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {

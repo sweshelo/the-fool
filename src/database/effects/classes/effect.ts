@@ -169,7 +169,6 @@ export class Effect {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
     const isOnField = exists.result && exists.place?.name === 'field';
-    console.log(exists);
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
     // 既に破壊されているユニットのBPは変動させない
@@ -297,7 +296,6 @@ export class Effect {
     const isOnField =
       exists.result && exists.place?.name === 'field' && target.destination !== location;
 
-    console.log(exists);
     if (!isOnField) return;
 
     console.log(

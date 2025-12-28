@@ -12,7 +12,6 @@ export const effects: CardEffects = {
     const isOpponentTurn = owner.id !== stack.source.id;
     const isOnField = opponent.field.length > 0 && owner.field.length > 0;
 
-    console.log(isOpponentTurn && isOnField);
     return isOpponentTurn && isOnField;
   },
 
@@ -46,7 +45,6 @@ export const effects: CardEffects = {
     const opponentUnits = stack.core.players
       .find(player => player.id === stack.source.id)
       ?.field.filter(unit => selection.includes(unit.id));
-    console.log('found -> ', opponentUnits);
     if (!opponentUnits || opponentUnits.length === 0)
       throw new Error('選択された対象ユニットが見つかりませんでした');
 
