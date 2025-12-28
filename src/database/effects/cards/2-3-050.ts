@@ -1,4 +1,3 @@
-import type { Unit } from '@/package/core/class/card';
 import type { Card } from '@/package/core/class/card/Card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
@@ -18,7 +17,7 @@ export const effects: CardEffects = {
     return isOpponentTurn && magicianUnits.length > 0;
   },
 
-  onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     const selfLevel = stack.processing.lv;
 
     // 【魔導士】ユニットを取得
@@ -55,7 +54,7 @@ export const effects: CardEffects = {
 
         // 捨札からインターセプトカードをランダムで手札に加える
         const interceptCards = stack.processing.owner.trash.filter(
-          card => card.catalog.category === 'intercept'
+          card => card.catalog.type === 'intercept'
         );
         if (interceptCards.length > 0) {
           const selectedCards = EffectHelper.random(interceptCards, 1);
