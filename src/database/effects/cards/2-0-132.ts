@@ -37,12 +37,17 @@ export const effects: CardEffects = {
     await Effect.modifyPurple(stack, self, owner, -4);
   },
 
-  onTurnStartOpponent: async (stack: StackWithCard<Unit>) => {
+  onTurnStart: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing as Unit;
     const owner = self.owner;
 
     // 紫ゲージが1以上で、対戦相手の手札が7枚の場合のみ発動
-    if ((owner.purple ?? 0) < 1 || owner.opponent.hand.length !== 7) return;
+    if (
+      (owner.purple ?? 0) < 1 ||
+      owner.opponent.hand.length !== 7 ||
+      stack.processing.owner.id === stack.source.id
+    )
+      return;
 
     await System.show(stack, '理不尽な訓令', '手札を2枚捨てる');
 
