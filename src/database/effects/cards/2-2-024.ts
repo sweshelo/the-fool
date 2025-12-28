@@ -49,14 +49,14 @@ export const effects: CardEffects = {
     const opponentUnits = opponent.field;
 
     // 対戦相手のユニットがいるかチェック
-    let message: string = '';
+    const message: string[] = [];
 
-    if (opponentUnits.length > 0) message += '敵全体の基本BP-1000';
-    if (stack.processing.owner.field.length <= 4) message += 'コスト3ユニットを【特殊召喚】';
+    if (opponentUnits.length > 0) message.push('敵全体の基本BP-1000');
+    if (stack.processing.owner.field.length <= 4) message.push('コスト3ユニットを【特殊召喚】');
 
-    if (message === '') return;
+    if (message.length === 0) return;
 
-    await System.show(stack, 'ウィーゼル・ディソーダー', message);
+    await System.show(stack, 'ウィーゼル・ディソーダー', message.join('\n'));
 
     // 対戦相手の全てのユニットの基本BPを-1000する
     opponentUnits.forEach(unit => {
