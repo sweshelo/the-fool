@@ -5,7 +5,11 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
-    return stack.processing.owner.id === stack.source.id;
+    return (
+      stack.processing.owner.id === stack.source.id &&
+      stack.target instanceof Unit &&
+      stack.target.catalog.color === Color.BLUE
+    );
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
