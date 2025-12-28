@@ -1,1 +1,2 @@
+bunx tsc
 bunx lint-staged
