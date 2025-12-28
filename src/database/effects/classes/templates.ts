@@ -9,10 +9,11 @@ import { Card, Unit } from '@/package/core/class/card';
 import type { StackWithCard } from './types';
 import { Delta } from '@/package/core/class/delta';
 import type { Catalog } from '@/submodule/suit/types';
+import type { Species } from '@/submodule/suit/types/game/card/species';
 
 interface ReinforcementMatcher {
   color?: number;
-  species?: string;
+  species?: Species;
   type?: Omit<Catalog['type'], 'joker'>[];
 }
 

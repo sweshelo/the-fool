@@ -46,9 +46,9 @@ export const effects: CardEffects = {
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand) {
-      await System.show(stack, '笑顔のハートフルキッチン♪', 'ランダムな【魔道士】を1枚作成');
+      await System.show(stack, '笑顔のハートフルキッチン♪', 'ランダムな【魔導士】を1枚作成');
       const [target] = EffectHelper.random([
-        ...master.values().filter(catalog => catalog.species?.includes('魔道士')),
+        ...master.values().filter(catalog => catalog.species?.includes('魔導士')),
       ]);
       switch (target?.type) {
         case 'unit':
