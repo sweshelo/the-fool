@@ -1,0 +1,10 @@
+pre-commit:
+  jobs:
+    - name: lint
+      run: bunx oxlint {staged_files}
+
+    - name: format
+      run: bunx oxfmt {staged_files}
+
+    - name: type check
+      run: bunx tsc
