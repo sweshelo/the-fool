@@ -10,7 +10,8 @@ export const effects: CardEffects = {
     const owner = self.owner;
     const opponent = owner.opponent;
     if (owner.hand.includes(self) && opponent.field.length >= 2 && owner.field.length === 0) {
-      self.delta.push(new Delta({ type: 'cost', value: -3 }, { source: { unit: self.id } }));
+      if (!self.delta.find(delta => delta.source?.unit === self.id))
+        self.delta.push(new Delta({ type: 'cost', value: -3 }, { source: { unit: self.id } }));
     } else {
       self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
     }
