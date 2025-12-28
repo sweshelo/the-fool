@@ -6,5 +6,5 @@
   "trailingComma": "es5",
   "printWidth": 100,
   "arrowParens": "avoid",
-  "ignorePatterns": []
+  "ignorePatterns": ["src/submodule/**"]
 }
