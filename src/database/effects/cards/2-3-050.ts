@@ -19,7 +19,7 @@ export const effects: CardEffects = {
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const selfLevel = stack.option?.type === 'lv' ? stack.option.value : 1;
+    const selfLevel = stack.processing.lv;
 
     // 【魔導士】ユニットを取得
     const magicianUnits = EffectHelper.candidate(
