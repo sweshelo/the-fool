@@ -22,7 +22,7 @@ export const effects: CardEffects = {
         '【複製】し消滅させるユニットを選択',
         1
       );
-      Effect.clone(stack, stack.processing, target, stack.processing.owner);
+      await Effect.clone(stack, stack.processing, target, stack.processing.owner);
       Effect.delete(stack, stack.processing, target);
     }
   },

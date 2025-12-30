@@ -22,6 +22,7 @@ export const effects: CardEffects = {
     const hasFieldSpace = stack.processing.owner.field.length <= 4;
 
     if (isOpponentTurn && isAtLeast25BlueCardsInTrash && hasFieldSpace) {
+      // oxlint-disable-next-line no-floating-promises
       System.show(stack, '永久凍土', '【特殊召喚】');
       await Effect.summon(stack, stack.processing, stack.processing);
     }

@@ -13,7 +13,7 @@ export const effects = {
     const isSamePlayer = driver.id === player.id;
 
     // 召喚者のフィールドに4属性揃っているか確認する
-    const colors = [...new Set(player.field.map(unit => master.get(unit.catalogId)!.color))].length;
+    const colors = new Set(player.field.map(unit => master.get(unit.catalogId)!.color)).size;
     const isGreaterThan4Colors = colors >= 4;
 
     return isSamePlayer && isGreaterThan4Colors;

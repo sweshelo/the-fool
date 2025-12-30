@@ -28,12 +28,16 @@ export const effects: CardEffects = {
     // stack.sourceとstack.targetが存在し、両方Unitであることを確認
     if (stack.source instanceof Unit && stack.target instanceof Unit) {
       await System.show(stack, 'エナジードレイン', '基本BP+2000、基本BP-2000');
+      const ownUnit =
+        stack.processing.owner.id === stack.source.owner.id ? stack.source : stack.target;
+      const opponentUnit =
+        stack.processing.owner.id === stack.source.owner.id ? stack.target : stack.source;
 
       // 自ユニットのBPを+2000
-      Effect.modifyBP(stack, stack.processing, stack.source, +2000, { isBaseBP: true });
+      Effect.modifyBP(stack, stack.processing, ownUnit, +2000, { isBaseBP: true });
 
       // 相手ユニットのBPを-2000
-      Effect.modifyBP(stack, stack.processing, stack.target, -2000, { isBaseBP: true });
+      Effect.modifyBP(stack, stack.processing, opponentUnit, -2000, { isBaseBP: true });
     }
   },
 };

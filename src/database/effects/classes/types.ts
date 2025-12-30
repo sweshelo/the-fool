@@ -39,7 +39,8 @@ type AllSuffixHandlers = Partial<
  * Defines the structure and types for card effect methods
  */
 export interface CardEffects
-  extends Partial<EventCheckHandlers<CheckEffectMethod>>,
+  extends
+    Partial<EventCheckHandlers<CheckEffectMethod>>,
     Partial<EventOnHandlers<OnEffectMethod>>,
     AllSuffixHandlers {
   fieldEffect?: (stack: StackWithCard<Unit>) => void;

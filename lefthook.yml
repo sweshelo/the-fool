@@ -1,0 +1,13 @@
+pre-commit:
+  jobs:
+    - name: lint
+      run: bunx oxlint {staged_files} --type-aware
+
+    - name: format
+      run: bunx oxfmt {staged_files}
+
+    - name: stage
+      run: git add {staged_files}
+
+    - name: type check
+      run: bunx tsc

@@ -148,7 +148,7 @@ export class Server {
           if ('roomId' in payload && typeof payload.roomId === 'string') {
             // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId);
-            if (!room) throw new Error('ルームが見つかりませんでした');
+            if (!room) throw new Error(`ルームが見つかりませんでした: ${payload.roomId}`);
 
             // 参加処理だけServer側で登録処理を走らせる
             if (message.payload.type === 'PlayerEntry') {
@@ -165,7 +165,10 @@ export class Server {
           }
           break;
         case 'core':
-          this.getRoom(client)?.core.handleMessage(message);
+          // oxlint-disable-next-line no-floating-promises
+          this.getRoom(client)
+            ?.core.handleMessage(message)
+            .catch(e => console.error('メッセージハンドリング中にエラーが発生しました。', e));
           break;
         case 'server':
         default:

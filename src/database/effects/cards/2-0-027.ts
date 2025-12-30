@@ -8,6 +8,6 @@ export const effects: CardEffects = {
       stack.processing.owner.trash.filter(card => card.catalog.type === 'intercept'),
       1
     ).forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
 };

@@ -71,14 +71,15 @@ export class Core {
 
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
-      this.start();
       this.room.soundEffect('agent-interrupt');
+      // oxlint-disable-next-line no-floating-promises
+      this.start();
     }
   }
 
   async start() {
     this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
-    this.turnChange(true);
+    await this.turnChange(true);
   }
 
   /**
@@ -996,7 +997,7 @@ export class Core {
       }
 
       case 'TurnEnd': {
-        this.turnChange();
+        await this.turnChange();
         break;
       }
 
@@ -1011,7 +1012,7 @@ export class Core {
         if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止'))
           throw new Error('攻撃できないユニットがアタッカーとして指定されました');
 
-        this.attack(attacker);
+        await this.attack(attacker);
         break;
       }
 

@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     );
 
     if (opponentUnits.length === 0) return;
-    System.show(stack, 'カオスディール', '破壊');
+    await System.show(stack, 'カオスディール', 'ユニットを1体破壊');
 
     const [target] = await EffectHelper.selectUnit(
       stack,
@@ -42,7 +42,7 @@ export const effects: CardEffects = {
 
     if (undeadUnits.length === 0) return;
 
-    System.show(
+    await System.show(
       stack,
       'カオスディール',
       `【不死】ユニットを破壊${opponentUnits.length > 0 ? '\nレベル2以上のユニットを破壊' : ''}`
@@ -73,7 +73,7 @@ export const effects: CardEffects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard) => {
-    System.show(stack, 'カオスディール', '捨札から選んで回収');
+    await System.show(stack, 'カオスディール', '捨札から選んで回収');
     await EffectTemplate.revive(stack, 1);
   },
 };

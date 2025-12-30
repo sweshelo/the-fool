@@ -21,6 +21,7 @@ export const effects: CardEffects = {
     const hasFieldSpace = stack.processing.owner.field.length <= 4;
 
     if (isOpponentTurn && isAtLeast20BlueCardsInTrash && hasFieldSpace) {
+      // oxlint-disable-next-line no-floating-promises
       System.show(stack, 'オーシャンヒロイン', '【特殊召喚】');
       await Effect.summon(stack, stack.processing, stack.processing);
     }

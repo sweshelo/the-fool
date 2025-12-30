@@ -53,7 +53,7 @@ export const effects: CardEffects = {
     if (purpleGauge) {
       const amount = stack.processing.lv >= 2 ? 2 : 1;
       await System.show(stack, 'グレープミスト♪', `紫ゲージ+${amount}`);
-      Effect.modifyPurple(stack, stack.processing, owner, amount);
+      await Effect.modifyPurple(stack, stack.processing, owner, amount);
     } else {
       await System.show(stack, '紫玉の飛沫', '手札の紫属性のコスト-1');
     }

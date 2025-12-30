@@ -5,14 +5,14 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, '加護＆精神統一の構え', '効果に選ばれない\n紫ゲージ+1');
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
     Effect.keyword(stack, stack.processing, stack.processing, '加護');
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
       await System.show(stack, '精神統一の構え', '紫ゲージ+1');
-      Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+      await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
     }
   },
 

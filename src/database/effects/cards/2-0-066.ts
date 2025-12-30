@@ -39,7 +39,7 @@ export const effects: CardEffects = {
           EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['intercept'] });
 
           // 紫ゲージ+1
-          Effect.modifyPurple(stack, stack.processing, stack.processing.owner, +1);
+          await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, +1);
           break;
 
         case 3:
@@ -50,7 +50,7 @@ export const effects: CardEffects = {
           Effect.bounce(stack, stack.processing, stack.target, 'deck');
 
           // 紫ゲージ+3
-          Effect.modifyPurple(stack, stack.processing, stack.processing.owner, +3);
+          await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, +3);
           break;
       }
     }
