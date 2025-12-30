@@ -16,7 +16,6 @@ export const effects: CardEffects = {
       // フィールドが5体未満であれば、レベル1のヴォジャノーイも召喚
       if (stack.processing.owner.field.length < 5) {
         const lv1Unit = new Unit(stack.processing.owner, '1-2-038');
-        Effect.clock(stack, stack.processing, lv1Unit, 1);
         await Effect.summon(stack, stack.processing, lv1Unit);
       }
     }
