@@ -10,7 +10,7 @@ export const effects = {
     const targets = [...opponent.field, ...opponent.hand, ...opponent.trigger];
     if (targets.length > 0 && stack.processing.owner.purple) {
       await System.show(stack, '破壊光線', 'ランダムに消滅');
-      EffectHelper.random(targets, 5).forEach(card => {
+      EffectHelper.random(targets, stack.processing.owner.purple).forEach(card => {
         if (card instanceof Unit && opponent.field.some(unit => unit.id === card.id)) {
           Effect.delete(stack, stack.processing, card);
         } else {
