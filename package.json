@@ -5,7 +5,8 @@
   "module": "index.ts",
   "scripts": {
     "preinstall": "git submodule update --init --recursive",
-    "dev": "bun --hot run index.ts"
+    "dev": "bun --hot run index.ts",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

@@ -11,9 +11,8 @@ const getCheckFunction = (cost: number) => {
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
-      (stack.option?.type === 'break'
-        ? stack.option.cause !== 'battle'
-        : true && stack.processing.owner.field.length < stack.core.room.rule.player.max.field)
+      stack.processing.owner.field.length < stack.core.room.rule.player.max.field &&
+      (stack.option?.type === 'break' ? stack.option.cause !== 'battle' : true)
     );
   };
 };

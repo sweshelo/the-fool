@@ -21,6 +21,7 @@ export const effects: CardEffects = {
     const opponentHasLessThan3Cards = opponent.hand.length <= 2;
 
     if (isOpponentTurn && hasLessThan3Units && opponentHasLessThan3Cards) {
+      // oxlint-disable-next-line no-floating-promises
       Effect.summon(stack, self, self);
       await System.show(stack, '受け継ぎし墓守', '【特殊召喚】');
     }
