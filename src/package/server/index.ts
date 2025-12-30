@@ -166,7 +166,9 @@ export class Server {
           break;
         case 'core':
           // oxlint-disable-next-line no-floating-promises
-          this.getRoom(client)?.core.handleMessage(message);
+          this.getRoom(client)
+            ?.core.handleMessage(message)
+            .catch(e => console.error('メッセージハンドリング中にエラーが発生しました。', e));
           break;
         case 'server':
         default:
