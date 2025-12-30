@@ -67,7 +67,7 @@ export const effects: CardEffects = {
     await System.show(stack, '虚ろの無海', '行動権を消費\n5000ダメージ');
     const [target] = await EffectHelper.selectUnit(
       stack,
-      opponent,
+      stack.processing.owner,
       candidates,
       '行動権を消費し5000ダメージを与えるユニットを選んでください',
       1

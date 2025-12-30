@@ -5,10 +5,26 @@ import type { Player } from '../Player';
 import type { Delta } from '../delta';
 
 export class Unit extends Card implements IUnit {
+  /**
+   * 基本BP
+   * NOTE: 現在のBPを得る場合は currentBP を利用する
+   */
   bp: number;
+  /**
+   * 行動権
+   */
   active: boolean;
+  /**
+   * フィールドから離れることが確定している場合、処理が完了後に転送される予定の領域
+   */
   destination?: string;
+  /**
+   * Lv3にクロックアップ後、オーバークロック処理を完了しているか
+   */
   overclocked?: boolean;
+  /**
+   * 複製されたユニットであるか
+   */
   isCopy: boolean;
   hasBootAbility: undefined | boolean;
   isBooted: boolean = false;

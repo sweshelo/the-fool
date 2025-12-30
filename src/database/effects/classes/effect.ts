@@ -764,7 +764,7 @@ export class Effect {
   }
 
   static modifyLife(stack: Stack, player: Player, value: number) {
-    player.life.current += value;
+    player.life.current = Math.min(value + player.life.current, player.life.max);
     if (value > 0) stack.core.room.soundEffect('recover');
     if (value < 0) stack.core.room.soundEffect('damage');
   }
