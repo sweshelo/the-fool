@@ -1,10 +1,8 @@
-export const events = [
+export const cardEvents = [
   'drive',
   'clockup',
   'clockdown',
   'overclock',
-  'turnStart',
-  'turnEnd',
   'attack',
   'block',
   'battle',
@@ -17,12 +15,17 @@ export const events = [
   'handes',
   'lost',
   'move',
+  'extraSummon',
+  'boot',
+] as const;
+
+export const commonEvents = [
   'modifyCP',
   'modifyPurple',
-  'extraSummon',
+  'turnStart',
+  'turnEnd',
   'intercept',
   'trigger',
-  'boot',
 ] as const;
 
 export const internalEvents = [
@@ -34,6 +37,7 @@ export const internalEvents = [
 ] as const;
 
 // Union型として抽出
-export type Event = (typeof events)[number];
+export type CardEvent = (typeof cardEvents)[number];
+export type CommonEvent = (typeof commonEvents)[number];
 export type InternalEvent = (typeof internalEvents)[number];
-export type AllEvents = Event | InternalEvent;
+export type GameEvent = CardEvent | CommonEvent | InternalEvent;
