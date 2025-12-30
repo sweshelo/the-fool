@@ -16,21 +16,24 @@ export const effects: CardEffects = {
       unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    if (opponentUnits.length === 0) return;
-    await System.show(stack, '天魔二断討', 'BP+2000\n1000ダメージ');
+    if (opponentUnits.length === 0) {
+      await System.show(stack, '天魔二断討', 'BP+2000\n1000ダメージ');
+      const [target] = await EffectHelper.selectUnit(
+        stack,
+        stack.processing.owner,
+        opponentUnits,
+        '1000ダメージを与えるユニットを選択',
+        1
+      );
+      Effect.damage(stack, stack.processing, target, 1000);
+    } else {
+      await System.show(stack, '天魔二断討', 'BP+2000');
+    }
     Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
       source: { unit: stack.processing.id, effectCode: '天魔二断討' },
       event: 'turnEnd',
       count: 1,
     });
-    const [target] = await EffectHelper.selectUnit(
-      stack,
-      stack.processing.owner,
-      opponentUnits,
-      '1000ダメージを与えるユニットを選択',
-      1
-    );
-    Effect.damage(stack, stack.processing, target, 1000);
   },
 
   // プレイヤーアタック成功時効果
