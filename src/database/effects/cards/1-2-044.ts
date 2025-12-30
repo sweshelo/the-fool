@@ -6,10 +6,10 @@ export const effects: CardEffects = {
   // ■カウンター・クロック
   // あなたがプレイヤーアタックを受けるたび
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
-    if (stack.source.id === stack.processing.owner.opponent.id) {
+    if (stack.target?.id === stack.processing.owner.opponent.id) {
       const candidates = EffectHelper.candidate(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.id && unit.lv < 3,
+        unit => unit.lv < 3,
         stack.processing.owner
       );
 
