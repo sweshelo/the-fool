@@ -5,11 +5,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // このユニットが戦闘した時、戦闘中の相手ユニットを破壊する。このユニットの行動権を消費する。
   onBattleSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    if (stack.target && stack.target instanceof Unit) {
-      await System.show(stack, '秘技・無明剣', '相手ユニット破壊\n行動権消費');
+    const target = stack.processing.id === stack.target?.id ? stack.source : stack.target;
+    if (target instanceof Unit) {
+      await System.show(stack, '秘技・無明剣', '戦闘中の相手ユニットを破壊\n行動権消費');
 
       // 戦闘中の相手ユニットを破壊
-      Effect.break(stack, stack.processing, stack.target, 'effect');
+      Effect.break(stack, stack.processing, target, 'effect');
 
       // 自身の行動権を消費
       Effect.activate(stack, stack.processing, stack.processing, false);
