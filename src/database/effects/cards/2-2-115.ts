@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
+import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   // ■呑舟の大海嘯
@@ -20,7 +21,9 @@ export const effects: CardEffects = {
     let effectText = '敵Lv2以上のユニットを全て破壊\n敵Lv1のユニットのレベル+1';
 
     // 捨札の青属性カードをチェック
-    const blueCardsInTrash = stack.processing.owner.trash.filter(card => card.catalog.color === 2);
+    const blueCardsInTrash = stack.processing.owner.trash.filter(
+      card => card.catalog.color === Color.BLUE
+    );
     if (blueCardsInTrash.length >= 10) {
       effectText += '\n【スピードムーブ】を得る';
     }
