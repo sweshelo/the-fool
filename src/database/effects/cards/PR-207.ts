@@ -26,7 +26,7 @@ export const effects: CardEffects = {
 
   // あなたのユニットがプレイヤーアタックに成功した時
   checkPlayerAttack: (stack: StackWithCard): boolean => {
-    return stack.source.id === stack.processing.owner.id;
+    return stack.source instanceof Unit && stack.source.owner.id === stack.processing.owner.id;
   },
 
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
