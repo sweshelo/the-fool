@@ -16,7 +16,7 @@ export const effects: CardEffects = {
       unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    if (opponentUnits.length === 0) {
+    if (opponentUnits.length !== 0) {
       await System.show(stack, '天魔二断討', 'BP+2000\n1000ダメージ');
       const [target] = await EffectHelper.selectUnit(
         stack,
