@@ -22,16 +22,13 @@ export const effects: CardEffects = {
 
   // アタック時の効果
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // 自分自身のアタック時のみ発動
-    if (stack.source instanceof Unit && stack.source.id === stack.processing.id) {
-      await System.show(stack, 'アタッカー', 'BP+2000');
+    await System.show(stack, 'アタッカー', 'BP+2000');
 
-      // BP+2000（ターン終了時まで）
-      Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+    // BP+2000（ターン終了時まで）
+    Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
+      event: 'turnEnd',
+      count: 1,
+    });
   },
 
   // 戦闘時の効果

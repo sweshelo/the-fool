@@ -43,6 +43,11 @@ export const effects: CardEffects = {
 
   // 相手ターン終了時の効果
   onTurnEnd: async (stack: StackWithCard<Unit>): Promise<void> => {
+    if (
+      stack.processing.owner.id === stack.core.getTurnPlayer().id ||
+      !(stack.processing instanceof Unit)
+    )
+      return;
     await EffectTemplate.reincarnate(stack, stack.processing);
   },
 };
