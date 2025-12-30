@@ -70,7 +70,10 @@ export const effects: CardEffects = {
 
   // ■次元的アルゴリズム
   // あなたのターン終了時、あなたのデッキからカードをランダムで3枚消滅させる。
-  async onTurnEndSelf(stack: StackWithCard<Unit>) {
+  async onTurnEnd(stack: StackWithCard<Unit>) {
+    // 自分のターン終了時かチェック
+    if (stack.source !== stack.processing.owner) return;
+
     const owner = stack.processing.owner;
     const deck = owner.deck;
     if (deck.length > 0) {
