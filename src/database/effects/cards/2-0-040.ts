@@ -7,14 +7,14 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, '闇との契約', 'インターセプトカードを1枚引く\n紫ゲージ+1');
     EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['intercept'] });
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
 
   // アタック時効果
   onAttackSelf: async (stack: StackWithCard<Unit>) => {
     if ((stack.processing.owner.purple ?? 0) <= 2) {
       await System.show(stack, '背徳の円舞曲', '紫ゲージ+1');
-      Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+      await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
     }
   },
 };

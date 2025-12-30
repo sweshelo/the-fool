@@ -61,7 +61,7 @@ export const effects: CardEffects = {
     }
 
     if (isOnPurpleUnit) {
-      Effect.modifyPurple(stack, stack.processing, opponent, -1);
+      await Effect.modifyPurple(stack, stack.processing, opponent, -1);
     }
   },
 };

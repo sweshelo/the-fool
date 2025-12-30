@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, '学んだ和心', '行動権を消費\n紫ゲージ+2');
     Effect.activate(stack, stack.processing, stack.processing, false);
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 2);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 2);
   },
 
   // ブロック時効果

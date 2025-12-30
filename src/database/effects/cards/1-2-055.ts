@@ -12,7 +12,7 @@ const gloomForest = async (stack: StackWithCard) => {
 export const effects: CardEffects = {
   onDriveSelf: gloomForest,
   onDrive: async (stack: StackWithCard<Unit>) => {
-    if (stack.target?.id !== stack.processing.id) gloomForest(stack);
+    if (stack.target?.id !== stack.processing.id) await gloomForest(stack);
   },
 
   onTurnStart: async (stack: StackWithCard) => {

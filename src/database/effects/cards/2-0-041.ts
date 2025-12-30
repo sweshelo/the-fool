@@ -62,6 +62,6 @@ export const effects: CardEffects = {
     );
     await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
     Effect.break(stack, stack.processing, target, 'effect');
-    Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
 };

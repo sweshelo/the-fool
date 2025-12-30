@@ -51,7 +51,7 @@ export const effects: CardEffects = {
               '選略・まじかるツヴァイ',
               'デッキから【魔導士】ユニットを【特殊召喚】'
             );
-            if (randomCard) Effect.summon(stack, stack.processing, randomCard);
+            if (randomCard) await Effect.summon(stack, stack.processing, randomCard);
           }
           break;
         case '2':

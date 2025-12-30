@@ -165,6 +165,7 @@ export class Server {
           }
           break;
         case 'core':
+          // oxlint-disable-next-line no-floating-promises
           this.getRoom(client)?.core.handleMessage(message);
           break;
         case 'server':

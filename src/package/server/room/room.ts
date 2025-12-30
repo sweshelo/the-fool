@@ -58,6 +58,7 @@ export class Room {
 
   // ゲーム開始
   start() {
+    // oxlint-disable-next-line no-floating-promises
     this.core.start();
   }
 
