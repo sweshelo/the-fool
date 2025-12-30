@@ -17,8 +17,8 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    const isOption1Selectable = stack.processing.owner.opponent.field.length === 0;
-    const isOption2Selectable = stack.processing.owner.field.length > 4;
+    const isOption1Selectable = stack.processing.owner.field.length < 5;
+    const isOption2Selectable = stack.processing.owner.opponent.field.length > 0;
 
     // どちらか選べる場合のみ
     if (isOption1Selectable || isOption2Selectable) {

@@ -23,7 +23,9 @@ export const effects: CardEffects = {
       );
 
       Effect.modifyBP(stack, stack.processing, target, -5000, { isBaseBP: true });
-      EffectTemplate.draw(stack.processing.owner, stack.core);
+    } else {
+      await System.show(stack, 'ドロー', 'カードを1枚引く');
     }
+    EffectTemplate.draw(stack.processing.owner, stack.core);
   },
 };

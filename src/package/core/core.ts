@@ -594,43 +594,48 @@ export class Core {
     // 破壊が決定したら破壊する
     if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
     if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
+    const isWinnerHasPenetrate = winner.hasKeyword('貫通');
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     this.stack = [stack];
     await this.resolveStack();
 
-    // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
-    // NOTE: 戦闘による破壊スタックによってフィールドを離れる可能性があるので生存チェックをする
-    if (
-      !isWinnerBreaked &&
-      isLoserBreaked &&
-      winner.owner.field.find(unit => unit.id === winner.id)
-    ) {
-      // 戦闘勝利後のクロックアップ処理
-      const systemStack =
-        winner.lv < 3
-          ? new Stack({
-              type: '_postBattleClockUp',
-              source: loser,
-              target: winner,
-              core: this,
-            })
-          : undefined;
-      if (systemStack) Effect.clock(systemStack, loser, winner, 1);
+    // 戦闘勝利後の処理
+    if (!isWinnerBreaked && isLoserBreaked) {
+      // 【貫通】処理
+      if (isWinnerHasPenetrate) {
+        Effect.modifyLife(stack, loser.owner, -1);
+      }
 
-      // 戦闘勝利スタック
-      const winnerStack = new Stack({
-        type: 'win',
-        source: loser,
-        target: winner,
-        core: this,
-      });
+      // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
+      // NOTE: 戦闘による破壊スタックによってフィールドを離れる可能性があるので生存チェックをする
+      if (winner.owner.field.find(unit => unit.id === winner.id)) {
+        // 戦闘勝利後のクロックアップ処理
+        const systemStack =
+          winner.lv < 3
+            ? new Stack({
+                type: '_postBattleClockUp',
+                source: loser,
+                target: winner,
+                core: this,
+              })
+            : undefined;
+        if (systemStack) Effect.clock(systemStack, loser, winner, 1);
 
-      this.stack = [systemStack, winnerStack].filter(
-        (stack): stack is Stack => stack !== undefined
-      );
-      await this.resolveStack();
+        // 戦闘勝利スタック
+        const winnerStack = new Stack({
+          type: 'win',
+          source: loser,
+          target: winner,
+          core: this,
+        });
+
+        this.stack = [systemStack, winnerStack].filter(
+          (stack): stack is Stack => stack !== undefined
+        );
+        await this.resolveStack();
+      }
     }
 
     this.room.sync();

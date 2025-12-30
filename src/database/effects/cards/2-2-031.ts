@@ -50,5 +50,7 @@ export const effects: CardEffects = {
       Effect.modifyBP(stack, stack.processing, unit, -3000, { isBaseBP: true })
     );
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -3);
+    if (breakCount > 0)
+      Effect.modifyLife(stack, stack.processing.owner.opponent, breakCount >= 2 ? -2 : -1);
   },
 };
