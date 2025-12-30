@@ -35,7 +35,7 @@ export const effects: CardEffects = {
     const isOnPurpleUnit = attributeCounts.purple > 0;
 
     const effects = [
-      opponentUnits ? '【秩序の盾】を得る' : null,
+      isOnRedUnit ? '【秩序の盾】を得る' : null,
       isOnYellowUnit ? '【消滅効果耐性】を得る' : null,
       isOnBlueUnit ? '【破壊効果耐性】を得る' : null,
       isOnGreenUnit ? '基本BP+2000' : null,
