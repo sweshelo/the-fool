@@ -5,8 +5,10 @@ import type { Core } from '@/package/core/core';
 import type {
   EventCheckHandlers,
   EventOnHandlers,
-  EventOnHandlersWithSuffix,
-  HANDLER_SUFFIXES,
+  EventOnHandlersWithTargetSuffix,
+  EventOnHandlersWithEventSuffix,
+  HANDLER_SUFFIXES_TARGET,
+  HANDLER_SUFFIXES_EVENT,
 } from './eventHandlers';
 
 /**
@@ -31,7 +33,8 @@ export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean>
 
 // 全てのサフィックス付きハンドラーを展開
 type AllSuffixHandlers = Partial<
-  EventOnHandlersWithSuffix<OnEffectMethod, (typeof HANDLER_SUFFIXES)[number]>
+  EventOnHandlersWithTargetSuffix<OnEffectMethod, (typeof HANDLER_SUFFIXES_TARGET)[number]> &
+    EventOnHandlersWithEventSuffix<OnEffectMethod, (typeof HANDLER_SUFFIXES_EVENT)[number]>
 >;
 
 /**

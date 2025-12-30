@@ -27,7 +27,7 @@ export const effects: CardEffects = {
   onBattle: async (stack: StackWithCard<Unit>): Promise<void> => {
     // stack.sourceとstack.targetが存在し、両方Unitであることを確認
     if (stack.source instanceof Unit && stack.target instanceof Unit) {
-      await System.show(stack, 'エナジードレイン', '基本BP+2000、基本BP-2000');
+      await System.show(stack, 'エナジードレイン', '基本BP+2000\n基本BP-2000');
       const ownUnit =
         stack.processing.owner.id === stack.source.owner.id ? stack.source : stack.target;
       const opponentUnit =

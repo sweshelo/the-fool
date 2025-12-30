@@ -12,7 +12,7 @@ export const effects: CardEffects = {
             title: '選略・コズミックライトステージ',
             items: [
               { id: '1', description: 'ライフ+1' },
-              { id: '2', description: '手札を1毎作成' },
+              { id: '2', description: '手札を1枚作成' },
             ],
           })
         : ['1'];

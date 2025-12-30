@@ -5,8 +5,10 @@ import { getCardEffect } from './effects';
 import type {
   EventCheckHandlers,
   EventOnHandlers,
-  EventOnHandlersWithSuffix,
-  HANDLER_SUFFIXES,
+  EventOnHandlersWithTargetSuffix,
+  EventOnHandlersWithEventSuffix,
+  HANDLER_SUFFIXES_TARGET,
+  HANDLER_SUFFIXES_EVENT,
 } from './effects/classes/eventHandlers';
 
 export interface HandlerFunction {
@@ -18,7 +20,8 @@ type CheckMethod = (stack: Stack) => boolean;
 
 // 全てのサフィックス付きハンドラーを展開
 type AllSuffixHandlers = Partial<
-  EventOnHandlersWithSuffix<HandlerFunction, (typeof HANDLER_SUFFIXES)[number]>
+  EventOnHandlersWithTargetSuffix<HandlerFunction, (typeof HANDLER_SUFFIXES_TARGET)[number]> &
+    EventOnHandlersWithEventSuffix<HandlerFunction, (typeof HANDLER_SUFFIXES_EVENT)[number]>
 >;
 
 export interface CatalogWithHandler

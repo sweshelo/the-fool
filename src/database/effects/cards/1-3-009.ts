@@ -22,7 +22,7 @@ export const effects: CardEffects = {
 
   // ■母なる揺り籠
   // あなたのターン開始時、全てのユニットに3000ダメージを与える。
-  async onTurnStartSelf(stack: StackWithCard<Unit>) {
+  async onTurnStart(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
     const turnPlayer = stack.core.getTurnPlayer();
 

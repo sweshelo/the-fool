@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
   // 実際の効果本体
   // 関数名に self は付かない
-  onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+  onAttack: async (stack: StackWithCard): Promise<void> => {
     await System.show(
       stack,
       '華麗なる一族',
