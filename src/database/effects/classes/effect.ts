@@ -208,7 +208,7 @@ export class Effect {
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
     if (target.currentBP <= 0) {
-      Effect.break(stack, source, target, 'effect');
+      Effect.break(stack, source, target, 'modifyBp');
       return true;
     }
 
@@ -226,7 +226,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
+    cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
@@ -247,7 +247,7 @@ export class Effect {
 
     stack.addChildStack('break', source, target, {
       type: 'break',
-      cause,
+      cause: cause === 'modifyBp' ? 'effect' : cause,
     });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
