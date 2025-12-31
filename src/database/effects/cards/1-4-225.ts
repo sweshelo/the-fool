@@ -32,9 +32,9 @@ export const effects: CardEffects = {
   // ターン開始時の効果
   onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のターン開始時に発動
-    if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
+    if (stack.processing.owner.id === stack.source.id) {
       // ラウンド数が奇数かチェック
-      const roundNumber = stack.core.room.rule.system.round;
+      const roundNumber = stack.core.round;
 
       if (roundNumber % 2 === 1) {
         // 奇数ラウンド

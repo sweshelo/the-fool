@@ -17,34 +17,30 @@ export const effects: CardEffects = {
 
   // インターセプト: 対戦相手のターン終了時
   checkTurnEnd: (stack: StackWithCard<Card>): boolean => {
-    return stack.source.id === stack.processing.owner.opponent.id;
-  },
-
-  onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
-    // フィールドに[ブラック黄龍]がいるかチェック
     const hasBlackKoryu = stack.processing.owner.field.some(
       unit => unit.catalog.name === 'ブラック黄龍'
     );
+    return stack.source.id === stack.processing.owner.opponent.id && hasBlackKoryu;
+  },
 
-    if (hasBlackKoryu) {
-      const unitsInTrash = stack.processing.owner.trash.filter(
-        card => card instanceof Unit && card.catalog.cost <= 7
+  onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
+    const unitsInTrash = stack.processing.owner.trash.filter(
+      card => card instanceof Unit && card.catalog.cost <= 7
+    );
+
+    if (unitsInTrash.length > 0) {
+      await System.show(stack, '四神の理', 'コスト7以下を【特殊召喚】');
+
+      const [target] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        unitsInTrash,
+        '特殊召喚するユニットを選択',
+        1
       );
 
-      if (unitsInTrash.length > 0) {
-        await System.show(stack, '四神の理', 'コスト7以下を【特殊召喚】');
-
-        const [target] = await EffectHelper.selectCard(
-          stack,
-          stack.processing.owner,
-          unitsInTrash,
-          '特殊召喚するユニットを選択',
-          1
-        );
-
-        if (target instanceof Unit) {
-          await Effect.summon(stack, stack.processing, target);
-        }
+      if (target instanceof Unit) {
+        await Effect.summon(stack, stack.processing, target);
       }
     }
   },

@@ -8,13 +8,13 @@ import { Effect, System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/database/effects/classes/types';
 import { Parry } from './parry';
-import type { AllEvents } from '@/database/effects/classes/event';
+import type { GameEvent } from '@/database/effects/classes/event';
 
 interface IStack {
   /**
    * @param type そのStackのタイプを示す
    */
-  type: AllEvents;
+  type: GameEvent;
   /**
    * @param source そのStackを発生させたカードを示す。例えば召喚操作の場合、召喚したPlayerが指定される。破壊効果の場合は、その効果を発動したUnitが指定される。
    */
@@ -68,7 +68,7 @@ type StackOption =
     };
 
 export class Stack implements IStack {
-  type: AllEvents;
+  type: GameEvent;
   source: Card | Player;
   target?: Card | Player;
   parent: undefined | Stack;
@@ -601,7 +601,7 @@ export class Stack implements IStack {
    * @returns 作成されたスタック
    */
   addChildStack(
-    type: AllEvents,
+    type: GameEvent,
     source: Card | Player,
     target?: Card | Player,
     option?: StackOption
