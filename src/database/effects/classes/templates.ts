@@ -19,12 +19,14 @@ interface ReinforcementMatcher {
 
 export class EffectTemplate {
   static draw(player: Player, core: Core): Card | void {
-    // 手札が上限に達している場合は何もしない
-    if (player.hand.length >= core.room.rule.player.max.hand) return;
+    const { action } = player.draw() ?? {};
 
-    const { action } = player.draw();
-    core.room.soundEffect('draw');
-    return action.source as Card;
+    if (action) {
+      core.room.soundEffect('draw');
+      return action.source as Card;
+    } else {
+      return;
+    }
   }
 
   /**
