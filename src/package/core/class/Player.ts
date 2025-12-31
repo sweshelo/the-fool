@@ -184,21 +184,14 @@ export class Player implements IPlayer {
   }
 
   // カードを引く
-  draw(): PlayerAction {
-    if (this.deck.length > 0) {
-      const source = this.deck.shift() as Card;
-      this.hand.push(source!);
-      return {
-        action: {
-          role: 'system',
-          type: 'draw',
-          source: source,
-        },
-      };
-    } else {
+  draw(allowOverflow: boolean = false): PlayerAction | void {
+    if (this.deck.length === 0) {
       this.trash = [];
       this.delete = [];
       this.deck = this.initDeck();
+    }
+
+    if (this.#core.room.rule.player.max.hand > this.hand.length || allowOverflow) {
       const source = this.deck.shift() as Card;
       this.hand.push(source!);
       return {
