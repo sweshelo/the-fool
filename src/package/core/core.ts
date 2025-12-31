@@ -503,6 +503,23 @@ export class Core {
     const blocker = blockerOwner.field.find(unit => unit.id === blockerId);
 
     this.room.soundEffect('decide');
+    if (blocker) {
+      this.room.broadcastToAll(
+        createMessage({
+          action: {
+            handler: 'client',
+            type: 'effect',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'block',
+              blockerId: blocker.id,
+            },
+          },
+        })
+      );
+    }
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (blocker) {
