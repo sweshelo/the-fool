@@ -12,8 +12,7 @@ export const effects: CardEffects = {
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       (stack.target.catalog.species?.includes('舞姫') ?? false) &&
-      stack.option?.type === 'break' &&
-      stack.option.cause !== 'battle'
+      EffectHelper.isBreakByEffect(stack)
     );
   },
 

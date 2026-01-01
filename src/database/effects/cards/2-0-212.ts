@@ -23,7 +23,11 @@ export const effects: CardEffects = {
   // このユニットがフィールドに出た時、また効果によって破壊された時、あなたのフィールドのユニットが4体以下の場合、
   // あなたの捨札にある進化ユニット以外のコスト3以下の【侍】ユニットを1体【特殊召喚】する。
   onDriveSelf: mainEffect,
-  onBreakSelf: mainEffect,
+  onBreakSelf: async (stack: StackWithCard<Unit>) => {
+    if (EffectHelper.isBreakByEffect(stack)) {
+      await mainEffect(stack);
+    }
+  },
 
   // ■壬生の鬼
   // このユニットが戦闘した時、それがアタック中であなたのフィールドに【侍】ユニットが3体以上いる場合、
