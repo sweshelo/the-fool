@@ -17,6 +17,6 @@ export const effects: CardEffects = {
   // 関数名に self は付かない
   onTurnStart: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, 'トリニティ・アステリズム', '3ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner.opponent, -3);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -3);
   },
 };

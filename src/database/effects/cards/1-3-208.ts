@@ -23,7 +23,7 @@ export const effects: CardEffects = {
 
   async onOverclockSelf(stack: StackWithCard<Unit>) {
     await System.show(stack, '狂魔神槍・命滅ノ轍', '1ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
   },
 
   async onDriveSelf(stack: StackWithCard<Unit>) {

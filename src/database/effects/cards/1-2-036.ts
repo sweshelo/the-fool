@@ -17,7 +17,7 @@ export const effects: CardEffects = {
       return;
 
     await System.show(stack, '海鳴のセレナーデ', 'ライフ-2');
-    Effect.modifyLife(stack, target.owner, -2);
+    Effect.modifyLife(stack, stack.processing, target.owner, -2);
   },
 
   onPlayerAttack: async (stack: StackWithCard<Unit>) => {

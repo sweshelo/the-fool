@@ -41,7 +41,7 @@ export const effects: CardEffects = {
     if (stack.processing.lv === 3) {
       await System.show(stack, '究極の極み', '1ライフダメージ\nレベル-2');
       Effect.clock(stack, stack.processing, stack.processing as Unit, -2);
-      stack.processing.owner.opponent.damage();
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
     }
   },
 };

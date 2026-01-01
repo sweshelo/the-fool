@@ -622,7 +622,7 @@ export class Core {
     if (!isWinnerBreaked && isLoserBreaked) {
       // 【貫通】処理
       if (isWinnerHasPenetrate) {
-        Effect.modifyLife(stack, loser.owner, -1);
+        loser.owner.damage();
       }
 
       // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
@@ -897,7 +897,11 @@ export class Core {
         const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
-        if (!card || !player) return;
+        if (!card || !player) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          console.log(payload);
+          throw new Error('指定されたCardかPlayerのどちらかが不正でした');
+        }
 
         const cardCatalog = catalog.get(card.catalogId);
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');

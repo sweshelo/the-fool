@@ -31,7 +31,7 @@ export const effects: CardEffects = {
       });
 
       // 自分に1ライフダメージ
-      owner.damage();
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
     }
   },
 };

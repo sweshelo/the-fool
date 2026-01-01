@@ -763,10 +763,22 @@ export class Effect {
     }
   }
 
-  static modifyLife(stack: Stack, player: Player, value: number) {
-    player.life.current = Math.min(value + player.life.current, player.life.max);
-    if (value > 0) stack.core.room.soundEffect('recover');
-    if (value < 0) stack.core.room.soundEffect('damage');
+  static modifyLife(stack: Stack, source: Card, player: Player, value: number) {
+    if (value === 0) return;
+
+    if (value < 0) {
+      // value < 0 の場合、player.damage() を必要回数分呼び出す
+      const isSuicideDamage = source.owner.id === player.id;
+      const damageCount = Math.abs(value);
+      for (let i = 0; i < damageCount; i++) {
+        player.damage(isSuicideDamage);
+      }
+      stack.core.room.soundEffect('damage');
+    } else {
+      // value >= 0 の場合は直接ライフを増加
+      player.life.current = Math.min(value + player.life.current, player.life.max);
+      stack.core.room.soundEffect('recover');
+    }
   }
 
   /**

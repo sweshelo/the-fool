@@ -44,6 +44,6 @@ export const effects: CardEffects = {
     await System.show(stack, 'レーザーシックル', '1ライフダメージ');
 
     // 対戦相手に1ライフダメージ
-    Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
   },
 };

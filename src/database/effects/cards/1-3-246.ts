@@ -19,7 +19,7 @@ export const effects: CardEffects = {
       case 1: {
         await System.show(stack, '生命の矢', 'ユニットを破壊\n対戦相手のライフ+1');
         Effect.break(stack, stack.processing, target, 'effect');
-        Effect.modifyLife(stack, stack.processing.owner.opponent, 1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, 1);
         break;
       }
       case 2: {
@@ -30,7 +30,7 @@ export const effects: CardEffects = {
       case 3: {
         await System.show(stack, '生命の矢', 'ユニットを破壊\n自分のライフ+1');
         Effect.break(stack, stack.processing, target, 'effect');
-        Effect.modifyLife(stack, stack.processing.owner, 1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner, 1);
         break;
       }
     }

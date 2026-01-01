@@ -52,6 +52,11 @@ export const effects: CardEffects = {
     );
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -3);
     if (breakCount > 0)
-      Effect.modifyLife(stack, stack.processing.owner.opponent, breakCount >= 2 ? -2 : -1);
+      Effect.modifyLife(
+        stack,
+        stack.processing,
+        stack.processing.owner.opponent,
+        breakCount >= 2 ? -2 : -1
+      );
   },
 };
