@@ -63,7 +63,7 @@ export const effects: CardEffects = {
           '破壊するユニットを選択して下さい'
         );
         Effect.break(stack, stack.processing, target, 'effect');
-        Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
         break;
       }
     }

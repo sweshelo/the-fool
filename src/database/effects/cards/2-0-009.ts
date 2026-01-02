@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     await System.show(stack, '奇跡・癒しの恵み', 'ライフ+1');
 
     // ライフを+1する
-    Effect.modifyLife(stack, self.owner, 1);
+    Effect.modifyLife(stack, stack.processing, self.owner, 1);
 
     // 【神託】を取り除く
     Effect.removeKeyword(stack, self, '神託');

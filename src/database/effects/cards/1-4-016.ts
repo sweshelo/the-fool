@@ -45,10 +45,9 @@ export const effects: CardEffects = {
   // 効果によって破壊された時の効果
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のターン時のみ発動
-    // Note: 効果によって破壊された条件は実装上onBreakSelfが呼ばれた時点で満たしていると仮定
     const isOpponentsTurn = stack.core.getTurnPlayer().id === stack.processing.owner.opponent.id;
 
-    if (isOpponentsTurn) {
+    if (isOpponentsTurn && EffectHelper.isBreakByEffect(stack)) {
       // 対戦相手のユニットが存在するか確認
       const opponentUnits = EffectHelper.candidate(
         stack.core,

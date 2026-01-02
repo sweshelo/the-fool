@@ -7,7 +7,9 @@ import { EffectHelper } from '../classes/helper';
 const getCheckFunction = (cost: number) => {
   return async (stack: StackWithCard) => {
     return (
-      !!stack.processing.owner.trash.find(unit => unit.catalog.cost <= cost) &&
+      !!stack.processing.owner.trash.find(
+        unit => unit instanceof Unit && unit.catalog.type === 'unit' && unit.catalog.cost <= cost
+      ) &&
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
       stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
@@ -20,7 +22,9 @@ const getCheckFunction = (cost: number) => {
 const getSummonFunction = (cost: number) => {
   return async (stack: StackWithCard) => {
     const [target] = EffectHelper.random(
-      stack.processing.owner.trash.filter(card => card instanceof Unit && card.catalog.cost <= cost)
+      stack.processing.owner.trash.filter(
+        card => card instanceof Unit && card.catalog.type === 'unit' && card.catalog.cost <= cost
+      )
     );
     if (!(target instanceof Unit)) throw new Error('1-4-123: 不正なTarget');
     await System.show(stack, "It's showtime", `コスト${cost}以下を【特殊召喚】`);

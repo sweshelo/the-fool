@@ -14,13 +14,13 @@ export const effects: CardEffects = {
       case 1:
       case 2: {
         await System.show(stack, '戦場の業火', 'お互いに1ライフダメージ');
-        Effect.modifyLife(stack, stack.processing.owner, -1);
-        Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
         break;
       }
       case 3: {
         await System.show(stack, '戦場の業火', '1ライフダメージ');
-        Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
         break;
       }
     }

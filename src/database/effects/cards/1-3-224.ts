@@ -29,7 +29,7 @@ export const effects: CardEffects = {
       }
 
       [...Array(level3PlusUnits.length >= 2 ? 2 : 1)].forEach(() =>
-        stack.processing.owner.opponent.damage()
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1)
       );
     }
   },

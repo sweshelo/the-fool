@@ -6,12 +6,12 @@ export const effects: CardEffects = {
   // このユニットがアタックかブロックした時、あなたは1ライフダメージを受ける
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '永遠の命', '1ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
   },
 
   onBlockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '永遠の命', '1ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
   },
 
   // あなたのターン終了時、このユニットのレベルを-1する

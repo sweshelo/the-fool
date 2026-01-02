@@ -17,4 +17,12 @@ export const effects: CardEffects = {
       );
     }
   },
+
+  onIntercept: async (stack: StackWithCard) => {
+    const [target] = EffectHelper.random(stack.processing.owner.opponent.trigger);
+    if (stack.option?.type === 'lv' && stack.option.value >= 2 && target) {
+      await System.show(stack, 'ネオンアロー', 'トリガーゾーンを1枚破壊');
+      Effect.move(stack, stack.processing, target, 'trash');
+    }
+  },
 };

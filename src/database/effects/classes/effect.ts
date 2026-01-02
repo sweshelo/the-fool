@@ -208,7 +208,7 @@ export class Effect {
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
     if (target.currentBP <= 0) {
-      Effect.break(stack, source, target, 'effect');
+      Effect.break(stack, source, target, 'modifyBp');
       return true;
     }
 
@@ -226,7 +226,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
+    cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
@@ -247,7 +247,7 @@ export class Effect {
 
     stack.addChildStack('break', source, target, {
       type: 'break',
-      cause,
+      cause: cause === 'modifyBp' ? 'effect' : cause,
     });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
@@ -763,10 +763,22 @@ export class Effect {
     }
   }
 
-  static modifyLife(stack: Stack, player: Player, value: number) {
-    player.life.current = Math.min(value + player.life.current, player.life.max);
-    if (value > 0) stack.core.room.soundEffect('recover');
-    if (value < 0) stack.core.room.soundEffect('damage');
+  static modifyLife(stack: Stack, source: Card, player: Player, value: number) {
+    if (value === 0) return;
+
+    if (value < 0) {
+      // value < 0 の場合、player.damage() を必要回数分呼び出す
+      const isSuicideDamage = source.owner.id === player.id;
+      const damageCount = Math.abs(value);
+      for (let i = 0; i < damageCount; i++) {
+        player.damage(isSuicideDamage);
+      }
+      stack.core.room.soundEffect('damage');
+    } else {
+      // value >= 0 の場合は直接ライフを増加
+      player.life.current = Math.min(value + player.life.current, player.life.max);
+      stack.core.room.soundEffect('recover');
+    }
   }
 
   /**

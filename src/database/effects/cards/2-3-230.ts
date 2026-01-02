@@ -60,7 +60,7 @@ export const effects: CardEffects = {
     if (trigger) {
       await System.show(stack, '運否天賦', 'カードを3枚引く\n1ライフダメージ');
       [...Array(3)].forEach(() => EffectTemplate.draw(stack.core.getTurnPlayer(), stack.core));
-      Effect.modifyLife(stack, stack.core.getTurnPlayer(), -1);
+      Effect.modifyLife(stack, stack.processing, stack.core.getTurnPlayer(), -1);
     }
   },
 };

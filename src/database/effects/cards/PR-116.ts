@@ -68,8 +68,8 @@ export const effects: CardEffects = {
 
     if (choice === '1') {
       await System.show(stack, '憂国の侵攻', 'お互いに1ライフダメージ');
-      owner.damage();
-      opponent.damage();
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
     } else if (choice === '2') {
       await System.show(stack, '憂国の侵攻', '手札を全て捨てる\nカードを3枚引く');
       stack.core.players

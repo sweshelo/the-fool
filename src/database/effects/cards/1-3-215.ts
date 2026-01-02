@@ -102,7 +102,7 @@ export const effects: CardEffects = {
 
         // 対戦相手に4ライフダメージを与える
         for (let i = 0; i < 4; i++) {
-          stack.processing.owner.opponent.damage();
+          Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
         }
       }
     }
