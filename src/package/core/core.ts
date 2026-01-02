@@ -1018,15 +1018,15 @@ export class Core {
         this.room.sync();
 
         // Create and resolve joker stack
-        this.stack = [
-          new Stack({
-            type: 'joker',
-            source: player,
-            target: joker,
-            core: this,
-          }),
-        ];
+        const jokerStack = new Stack({
+          type: 'joker',
+          source: player,
+          target: joker,
+          core: this,
+        });
 
+        // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
+        this.stack = [jokerStack];
         await this.resolveStack();
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;

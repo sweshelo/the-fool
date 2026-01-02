@@ -147,9 +147,6 @@ export class Room {
             chara: joker.chara,
             cost: joker.cost,
             isAvailable: joker.isAvailable, // getter evaluated here
-            lv: joker.lv,
-            delta: joker.delta,
-            generation: joker.generation,
           })),
           gauge: player.joker.gauge,
         },
@@ -225,6 +222,23 @@ export class Room {
                     })),
             };
           }
+
+          // joker : isAvailable を取得して渡す
+          acc[player.id] = {
+            ...acc[player.id],
+            joker: {
+              card: player.joker.card.map(joker => ({
+                id: joker.id,
+                catalogId: joker.catalogId,
+                chara: joker.chara,
+                cost: joker.cost,
+                isAvailable: joker.isAvailable, // getter evaluated here
+                lv: joker.lv,
+              })),
+              gauge: player.joker.gauge,
+            },
+          };
+
           return acc;
         },
         {}
