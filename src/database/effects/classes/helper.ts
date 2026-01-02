@@ -165,7 +165,7 @@ export class EffectHelper {
    * @param times 回数
    * @param callback 繰り返す関数
    */
-  static async repeat(times: number, callback: () => unknown) {
+  static repeat(times: number, callback: () => unknown) {
     [...Array(times)].forEach(callback);
   }
 
