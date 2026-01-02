@@ -1,3 +1,7 @@
+import { effects as DeleteRaid } from './delete-raid';
+import { effects as HereticScar } from './heretic-scar';
+import { effects as ImperialCrusade } from './imperial-crusade';
+
 export const JokerName = {
   DeleteRaid: 'デリートレイド',
   HereticScar: 'ヘレティックスカー',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Emperor = {
-  [JokerName.DeleteRaid]: undefined,
-  [JokerName.HereticScar]: undefined,
-  [JokerName.ImperialCrusade]: undefined,
+  [JokerName.DeleteRaid]: DeleteRaid,
+  [JokerName.HereticScar]: HereticScar,
+  [JokerName.ImperialCrusade]: ImperialCrusade,
 };

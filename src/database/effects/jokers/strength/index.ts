@@ -1,3 +1,7 @@
+import { effects as RanshouHoushuuNoMai } from './ranshou-houshuu-no-mai';
+import { effects as HiryuuJouunNoKen } from './hiryuu-jouun-no-ken';
+import { effects as IkiShoutenNoRou } from './iki-shouten-no-rou';
+
 export const JokerName = {
   RanshouHoushuuNoMai: '蘭翔鳳集の舞',
   HiryuuJouunNoKen: '飛龍乗雲の拳',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Strength = {
-  [JokerName.RanshouHoushuuNoMai]: undefined,
-  [JokerName.HiryuuJouunNoKen]: undefined,
-  [JokerName.IkiShoutenNoRou]: undefined,
+  [JokerName.RanshouHoushuuNoMai]: RanshouHoushuuNoMai,
+  [JokerName.HiryuuJouunNoKen]: HiryuuJouunNoKen,
+  [JokerName.IkiShoutenNoRou]: IkiShoutenNoRou,
 };

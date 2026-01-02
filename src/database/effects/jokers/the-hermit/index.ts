@@ -1,4 +1,6 @@
 import { effects as RuinLead } from './ruin-lead';
+import { effects as SilenceBillow } from './silence-billow';
+import { effects as EvilGambit } from './evil-gambit';
 
 export const JokerName = {
   RuinLead: 'ルインリード',
@@ -8,6 +10,6 @@ export const JokerName = {
 
 export const Hermit = {
   [JokerName.RuinLead]: RuinLead,
-  [JokerName.SilenceBillow]: undefined,
-  [JokerName.EvilGambit]: undefined,
+  [JokerName.SilenceBillow]: SilenceBillow,
+  [JokerName.EvilGambit]: EvilGambit,
 };

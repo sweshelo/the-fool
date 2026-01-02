@@ -1,3 +1,7 @@
+import { effects as EclipseSaber } from './eclipse-saber';
+import { effects as TowerExecute } from './tower-execute';
+import { effects as ChevalierDuke } from './chevalier-duke';
+
 export const JokerName = {
   EclipseSaber: '秘技・エクリプスセイバー',
   TowerExecute: '奥義・タワーエグゼクト',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Tower = {
-  [JokerName.EclipseSaber]: undefined,
-  [JokerName.TowerExecute]: undefined,
-  [JokerName.ChevalierDuke]: undefined,
+  [JokerName.EclipseSaber]: EclipseSaber,
+  [JokerName.TowerExecute]: TowerExecute,
+  [JokerName.ChevalierDuke]: ChevalierDuke,
 };

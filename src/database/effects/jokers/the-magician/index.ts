@@ -1,3 +1,7 @@
+import { effects as LittleWand } from './little-wand';
+import { effects as WonderfulHand } from './wonderful-hand';
+import { effects as TrickFinger } from './trick-finger';
+
 export const JokerName = {
   LittleWand: 'リトルウォンド',
   WonderfulHand: 'ワンダフルハンド',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Magician = {
-  [JokerName.LittleWand]: undefined,
-  [JokerName.WonderfulHand]: undefined,
-  [JokerName.TrickFinger]: undefined,
+  [JokerName.LittleWand]: LittleWand,
+  [JokerName.WonderfulHand]: WonderfulHand,
+  [JokerName.TrickFinger]: TrickFinger,
 };

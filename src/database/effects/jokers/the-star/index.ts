@@ -1,3 +1,7 @@
+import { effects as Starlight } from './starlight';
+import { effects as RiseAndShine } from './rise-and-shine';
+import { effects as StarImpact } from './star-impact';
+
 export const JokerName = {
   Starlight: 'スターライト',
   RiseAndShine: 'ライズアンドシャイン',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Star = {
-  [JokerName.Starlight]: undefined,
-  [JokerName.RiseAndShine]: undefined,
-  [JokerName.StarImpact]: undefined,
+  [JokerName.Starlight]: Starlight,
+  [JokerName.RiseAndShine]: RiseAndShine,
+  [JokerName.StarImpact]: StarImpact,
 };

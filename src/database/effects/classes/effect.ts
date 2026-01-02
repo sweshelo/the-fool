@@ -782,6 +782,13 @@ export class Effect {
     target.active = activate;
   }
 
+  /**
+   * デスカウンターを付与する
+   * @param _stack
+   * @param _source 効果の発動元
+   * @param target デスカウンターの対象
+   * @param count デスカウンターの数値
+   */
   static death(_stack: Stack, _source: Card, target: Unit, count: number) {
     const deathCounter = target.delta.find(delta => delta.effect.type === 'death');
     if (deathCounter && count < deathCounter.count) {

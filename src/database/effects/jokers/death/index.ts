@@ -1,3 +1,7 @@
+import { effects as Impalement } from './impalement';
+import { effects as PunishmentBreak } from './punishment-break';
+import { effects as SplendidSickle } from './splendid-sickle';
+
 export const JokerName = {
   Impalement: 'インペイルメント',
   PunishmentBreak: 'パニッシュメントブレイク',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Death = {
-  [JokerName.Impalement]: undefined,
-  [JokerName.PunishmentBreak]: undefined,
-  [JokerName.SplendidSickle]: undefined,
+  [JokerName.Impalement]: Impalement,
+  [JokerName.PunishmentBreak]: PunishmentBreak,
+  [JokerName.SplendidSickle]: SplendidSickle,
 };

@@ -1,3 +1,7 @@
+import { effects as MeisatsuSairin } from './meisatsu-sairin';
+import { effects as MeitenKyousatsu } from './meiten-kyousatsu';
+import { effects as GekkaShinmetsu } from './gekka-shinmetsu';
+
 export const JokerName = {
   MeisatsuSairin: '冥札再臨',
   MeitenKyousatsu: '明天凶殺',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Moon = {
-  [JokerName.MeisatsuSairin]: undefined,
-  [JokerName.MeitenKyousatsu]: undefined,
-  [JokerName.GekkaShinmetsu]: undefined,
+  [JokerName.MeisatsuSairin]: MeisatsuSairin,
+  [JokerName.MeitenKyousatsu]: MeitenKyousatsu,
+  [JokerName.GekkaShinmetsu]: GekkaShinmetsu,
 };

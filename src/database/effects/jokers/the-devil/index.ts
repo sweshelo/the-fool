@@ -1,3 +1,7 @@
+import { effects as GuiltyAsh } from './guilty-ash';
+import { effects as VolcanicDisaster } from './volcanic-disaster';
+import { effects as CarnivalDominate } from './carnival-dominate';
+
 export const JokerName = {
   GuiltyAsh: 'ギルティアッシュ',
   VolcanicDisaster: 'ボルカニックディザスター',
@@ -5,7 +9,7 @@ export const JokerName = {
 };
 
 export const Devil = {
-  [JokerName.GuiltyAsh]: undefined,
-  [JokerName.VolcanicDisaster]: undefined,
-  [JokerName.CarnivalDominate]: undefined,
+  [JokerName.GuiltyAsh]: GuiltyAsh,
+  [JokerName.VolcanicDisaster]: VolcanicDisaster,
+  [JokerName.CarnivalDominate]: CarnivalDominate,
 };
