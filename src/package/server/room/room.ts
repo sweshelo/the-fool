@@ -138,22 +138,25 @@ export class Room {
     // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
     const playersState: { [key: string]: Player | object } = {};
     this.core.players.forEach(player => {
-      // Calculate joker availability
-      const jokerAvailability = player.jokers.map(joker => {
+      // Calculate joker availability for each ability
+      const abilities = player.jokers.map(joker => {
         const hasEnoughGauge = player.joker >= joker.catalog.cost;
         const meetsConditions = joker.catalog.checkJoker?.(player, this.core) ?? true;
 
         return {
           id: joker.id,
           catalogId: joker.catalogId,
-          available: hasEnoughGauge && meetsConditions,
           cost: joker.catalog.cost,
+          isAvailable: hasEnoughGauge && meetsConditions,
         };
       });
 
       playersState[player.id] = {
         ...player,
-        jokers: jokerAvailability,
+        joker: {
+          abilities,
+          gauge: player.joker,
+        },
         deck: player.deck.map(card => ({ id: card.id })),
         hand: player.hand.map(card => ({ id: card.id })),
         trigger: player.trigger.map(card => ({
