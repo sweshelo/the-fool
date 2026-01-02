@@ -1,9 +1,17 @@
-import { effects as GraphityEarth } from './graphity-earth';
+import { effects as GraffitiEarth } from './graffiti-earth';
 
 export const JokerName = {
-  GraphityEarth: 'グラフィティ・アース',
+  MirageAurora: 'ミラージュ・アウローラ',
+  SpreadInferno: 'スプレッド・インフェルノ',
+  GraffitiEarth: 'グラフィティ・アース',
+  RegenerateDeluge: 'リジェネレート・デリュージ',
+  AbsoluteArc: 'アブソリュート・アーク',
 };
 
 export const DeathOmega = {
-  [JokerName.GraphityEarth]: GraphityEarth,
+  [JokerName.MirageAurora]: undefined,
+  [JokerName.SpreadInferno]: undefined,
+  [JokerName.GraffitiEarth]: GraffitiEarth,
+  [JokerName.RegenerateDeluge]: undefined,
+  [JokerName.AbsoluteArc]: undefined,
 };

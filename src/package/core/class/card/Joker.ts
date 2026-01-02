@@ -1,6 +1,7 @@
 import { Card } from './Card';
 import type { Player } from '../Player';
 import catalog from '@/database/catalog';
+import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 
 export class Joker extends Card {
   chara: string;
@@ -32,10 +33,14 @@ export class Joker extends Card {
       history => history.action === 'drive' && history.card.catalog.type === 'joker'
     );
 
+    // ジョーカーゲージ量チェック (>の演算子を利用)
+    const hasJokerGauge =
+      player.joker.gauge > JOKER_GAUGE_AMOUNT[this.catalog.gauge as JokerGuageAmountKey];
+
     const hasEnoughCp = player.cp.current >= this.cost;
     const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
 
-    return hasEnoughCp && meetsConditions && !hasActivatedJoker;
+    return hasEnoughCp && meetsConditions && !hasActivatedJoker && hasJokerGauge;
   }
 
   clone(): never {

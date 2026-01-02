@@ -25,6 +25,7 @@ import { Delta } from './class/delta';
 import { Parry } from './class/parry';
 import { Intercept } from './class/card/Intercept';
 import { Trigger } from './class/card/Trigger';
+import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -1014,7 +1015,17 @@ export class Core {
         }
 
         // Consume gauge
-        player.joker.gauge -= cost;
+        if (!joker.catalog.gauge) {
+          throw new Error('ジョーカーゲージの消費量が定義されていません');
+        }
+
+        player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
+
+        if (joker.catalog.cost > 0) {
+          player.cp.current -= joker.catalog.cost;
+          this.room.soundEffect('cp-consume');
+        }
+        this.room.soundEffect('evolve');
         this.room.sync();
 
         this.room.broadcastToAll(
