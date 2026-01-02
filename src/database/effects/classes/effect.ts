@@ -3,6 +3,7 @@ import { Evolve, Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
+import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 
 const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   // クライアントにエフェクトを送信
@@ -484,6 +485,35 @@ export class Effect {
       stack.core.room.sync();
       await new Promise(resolve => setTimeout(resolve, 250));
     }
+  }
+
+  /**
+   * ジョーカーゲージを操作する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のプレイヤー
+   * @param value 増減量
+   */
+  static modifyJokerGauge(
+    stack: Stack,
+    source: Card,
+    target: Player,
+    value: number | JokerGuageAmountKey
+  ) {
+    if (typeof value === 'number') {
+      target.joker.gauge += value;
+      if (target.joker.gauge > 100) target.joker.gauge = 100;
+      if (target.joker.gauge < 0) target.joker.gauge = 0;
+    } else {
+      target.joker.gauge -= JOKER_GAUGE_AMOUNT[value];
+    }
+
+    /* TODO: 将来的に必要になれば。
+    stack.addChildStack('modifyJokerGuage', source, target, {
+      type: 'joker',
+      value,
+    });
+    */
   }
 
   /**

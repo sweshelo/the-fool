@@ -27,17 +27,18 @@ export class Joker extends Card {
     const player = this.owner;
     const core = player.core;
 
-    const hasEnoughGauge = player.joker.gauge >= this.cost;
+    // このターンに使用済みならば呼び出し不可
+    const hasActivatedJoker = core.histories.find(
+      history => history.action === 'drive' && history.card.catalog.type === 'joker'
+    );
+
+    const hasEnoughCp = player.cp.current >= this.cost;
     const meetsConditions = this.catalog.checkJoker?.(player, core) ?? true;
 
-    return hasEnoughGauge && meetsConditions;
+    return hasEnoughCp && meetsConditions && !hasActivatedJoker;
   }
 
-  clone(owner: Player): Joker {
-    const joker = new Joker(owner, this.catalogId);
-    joker.lv = this.lv;
-    joker.delta = [...this.delta];
-    joker.generation = this.generation;
-    return joker;
+  clone(): never {
+    throw new Error('Joker.clone() メソッドを呼び出すことは出来ません');
   }
 }
