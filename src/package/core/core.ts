@@ -10,6 +10,7 @@ import type {
   ContinuePayload,
   TriggerSetPayload,
   EvolveDrivePayload,
+  JokerDrivePayload,
   DebugMakePayload,
   DebugDrivePayload,
 } from '@/submodule/suit/types';
@@ -974,6 +975,59 @@ export class Core {
           await this.drive(player, card, source);
         }
 
+        this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+        break;
+      }
+
+      case 'JokerDrive': {
+        this.room.broadcastToAll(MessageHelper.freeze());
+        const payload: JokerDrivePayload = message.payload;
+
+        // Validate player
+        const player = this.players.find(p => p.id === payload.player);
+        if (!player) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Invalid player');
+        }
+
+        // Find joker ability in player's jokers using IAtom (id + catalogId)
+        const joker = player.jokers.find(j => j.id === payload.target.id);
+
+        if (!joker || joker.catalog.type !== 'joker') {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Invalid joker ability');
+        }
+
+        // Check if player has enough gauge
+        const cost = joker.catalog.cost;
+        if (player.joker < cost) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Insufficient joker gauge');
+        }
+
+        // Check conditions (checkJoker)
+        const canActivate = joker.catalog.checkJoker?.(player, this) ?? true;
+
+        if (!canActivate) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Joker conditions not met');
+        }
+
+        // Consume gauge
+        player.joker -= cost;
+        this.room.sync();
+
+        // Create and resolve joker stack
+        this.stack = [
+          new Stack({
+            type: 'joker',
+            source: player,
+            target: joker,
+            core: this,
+          }),
+        ];
+
+        await this.resolveStack();
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;
       }

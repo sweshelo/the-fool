@@ -2,6 +2,7 @@ import { readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import type { HandlerFunction } from '../factory';
+import { jokerEffects } from './jokers';
 
 export { System } from './classes/system';
 export { Effect } from './classes/effect';
@@ -46,6 +47,14 @@ async function loadCardEffects() {
     }
 
     console.log(`Loaded effects for ${effectMap.size} cards`);
+
+    Object.entries(jokerEffects).forEach(([catalogId, effects]) => {
+      if (effects) {
+        effectMap.set(catalogId, effects);
+      }
+    });
+
+    console.log(`Loaded joker effects for ${Object.entries(jokerEffects).length} abilities`);
   } catch (error) {
     console.error('Failed to load card effects:', error);
   }

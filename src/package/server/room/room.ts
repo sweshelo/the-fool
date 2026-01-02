@@ -1,6 +1,8 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core/core';
+import { Joker } from '../../core/class/card/Joker';
+import catalog from '@/database/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
@@ -44,6 +46,21 @@ export class Room {
         this.clients.set(exists.id, socket);
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
+
+        // Initialize jokers from owned JOKER card names
+        if (message.payload.jokersOwned) {
+          const ownedJokerAbilities: string[] = [];
+          message.payload.jokersOwned.forEach(jokerCardName => {
+            catalog.forEach(entry => {
+              if (entry.type === 'joker' && entry.name === jokerCardName) {
+                ownedJokerAbilities.push(entry.id);
+              }
+            });
+          });
+
+          player.jokers = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
+        }
+
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);
@@ -121,8 +138,22 @@ export class Room {
     // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
     const playersState: { [key: string]: Player | object } = {};
     this.core.players.forEach(player => {
+      // Calculate joker availability
+      const jokerAvailability = player.jokers.map(joker => {
+        const hasEnoughGauge = player.joker >= joker.catalog.cost;
+        const meetsConditions = joker.catalog.checkJoker?.(player, this.core) ?? true;
+
+        return {
+          id: joker.id,
+          catalogId: joker.catalogId,
+          available: hasEnoughGauge && meetsConditions,
+          cost: joker.catalog.cost,
+        };
+      });
+
       playersState[player.id] = {
         ...player,
+        jokers: jokerAvailability,
         deck: player.deck.map(card => ({ id: card.id })),
         hand: player.hand.map(card => ({ id: card.id })),
         trigger: player.trigger.map(card => ({

@@ -2,6 +2,7 @@ import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card/Card';
 import type { Unit } from '@/package/core/class/card';
 import type { Core } from '@/package/core/core';
+import type { Player } from '@/package/core/class/Player';
 import type {
   EventCheckHandlers,
   EventOnHandlers,
@@ -31,6 +32,12 @@ export type OnEffectMethod =
  */
 export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean> | boolean;
 
+/**
+ * Type for checkJoker method
+ * Takes player and core directly instead of stack for efficiency
+ */
+export type CheckJokerMethod = (player: Player, core: Core) => boolean;
+
 // 全てのサフィックス付きハンドラーを展開
 type AllSuffixHandlers = Partial<
   EventOnHandlersWithTargetSuffix<OnEffectMethod, (typeof HANDLER_SUFFIXES_TARGET)[number]> &
@@ -43,10 +50,11 @@ type AllSuffixHandlers = Partial<
  */
 export interface CardEffects
   extends
-    Partial<EventCheckHandlers<CheckEffectMethod>>,
+    Omit<Partial<EventCheckHandlers<CheckEffectMethod>>, 'checkJoker'>,
     Partial<EventOnHandlers<OnEffectMethod>>,
     AllSuffixHandlers {
   fieldEffect?: (stack: StackWithCard<Unit>) => void;
   isBootable?: (core: Core, self: Unit) => boolean;
   handEffect?: ((core: Core, self: Card) => void) | ((core: Core, self: Unit) => void);
+  checkJoker?: CheckJokerMethod;
 }

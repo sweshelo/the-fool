@@ -6,6 +6,7 @@ import { Unit, Evolve } from './card/Unit';
 import master from '@/database/catalog';
 import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
+import { Joker } from './card/Joker';
 import type { Core } from '../core';
 
 export interface PlayerAction {
@@ -43,6 +44,7 @@ export class Player implements IPlayer {
   field: Unit[];
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
+  jokers: Joker[]; // 所有しているJokerアビリティ
   joker: number;
   purple: number | undefined;
 
@@ -69,6 +71,7 @@ export class Player implements IPlayer {
     this.delete = [];
     this.trigger = [];
     this.called = [];
+    this.jokers = [];
     this.#core = core;
 
     // ライブラリからデッキを生成する
