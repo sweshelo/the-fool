@@ -1017,6 +1017,24 @@ export class Core {
         player.joker.gauge -= cost;
         this.room.sync();
 
+        this.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'drive',
+                image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
+                player: player.id,
+                type: 'JOKER',
+              },
+            },
+          })
+        );
+
         // Create and resolve joker stack
         const jokerStack = new Stack({
           type: 'joker',

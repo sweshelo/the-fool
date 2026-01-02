@@ -33,7 +33,7 @@ export class Joker extends Card {
     );
 
     const hasEnoughCp = player.cp.current >= this.cost;
-    const meetsConditions = this.catalog.checkJoker?.(player, core) ?? true;
+    const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
 
     return hasEnoughCp && meetsConditions && !hasActivatedJoker;
   }
