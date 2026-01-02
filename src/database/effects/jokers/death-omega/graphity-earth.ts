@@ -1,8 +1,8 @@
-import { System } from '../classes/system';
-import { EffectHelper } from '../classes/helper';
-import type { CardEffects, StackWithCard } from '../classes/types';
-import { Effect } from '../classes/effect';
-import { EffectTemplate } from '../classes/templates';
+import { System } from '../../classes/system';
+import { EffectHelper } from '../../classes/helper';
+import type { CardEffects, StackWithCard } from '../../classes/types';
+import { Effect } from '../../classes/effect';
+import { EffectTemplate } from '../../classes/templates';
 import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {

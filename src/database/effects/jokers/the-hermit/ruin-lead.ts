@@ -1,8 +1,8 @@
-import { System } from '../classes/system';
-import { EffectHelper } from '../classes/helper';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import { System } from '../../classes/system';
+import { EffectHelper } from '../../classes/helper';
+import type { CardEffects, StackWithCard } from '../../classes/types';
 import type { Card } from '@/package/core/class/card/Card';
-import { Effect } from '../classes/effect';
+import { Effect } from '../../classes/effect';
 
 export const effects: CardEffects = {
   checkJoker: (player, _core) => {

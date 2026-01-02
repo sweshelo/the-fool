@@ -1,11 +1,8 @@
-import { effects as ruinLead } from './ruin-lead';
-import { effects as graphityEarth } from './graphity-earth';
+import { Hermit } from './the-hermit';
+import { DeathOmega } from './death-omega';
+import type { CardEffects } from '../classes/types';
 
-export const jokerEffects: Record<string, any> = {
-  ルインリード: ruinLead,
-  グラフィティ・アース: graphityEarth,
-
-  // TODO: Add other joker abilities as they are implemented
-  // 'サイレンスビロウ': undefined,
-  // 'エビルガンビット': undefined,
+export const jokerEffects: Record<string, CardEffects> = {
+  ...Hermit,
+  ...DeathOmega,
 };
