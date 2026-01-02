@@ -52,7 +52,7 @@ export class Room {
           const ownedJokerAbilities: string[] = [];
           message.payload.jokersOwned.forEach(jokerCardName => {
             catalog.forEach(entry => {
-              if (entry.type === 'joker' && entry.name === jokerCardName) {
+              if (entry.type === 'joker' && entry.id === jokerCardName) {
                 ownedJokerAbilities.push(entry.id);
               }
             });
