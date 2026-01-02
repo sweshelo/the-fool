@@ -44,8 +44,10 @@ export class Player implements IPlayer {
   field: Unit[];
   trigger: Card[];
   called: Card[]; // 呼び出し済みTrigger/Interceptを一時的に格納
-  jokers: Joker[]; // 所有しているJokerアビリティ
-  joker: number;
+  joker: {
+    card: Joker[]; // 所有しているJokerアビリティ
+    gauge: number; // ジョーカーゲージ
+  };
   purple: number | undefined;
 
   #core: Core;
@@ -71,14 +73,15 @@ export class Player implements IPlayer {
     this.delete = [];
     this.trigger = [];
     this.called = [];
-    this.jokers = [];
+    this.joker = {
+      card: [],
+      gauge: 0,
+    };
     this.#core = core;
 
     // ライブラリからデッキを生成する
     this.library = [...deck];
     this.deck = this.initDeck();
-
-    this.joker = 0;
   }
 
   initDeck() {
@@ -233,9 +236,14 @@ export class Player implements IPlayer {
     }
   }
 
+  // Core アクセス（Joker.isAvailable getter で使用）
+  get core() {
+    return this.#core;
+  }
+
   damage(self: boolean = false) {
     this.life.current--;
-    if (!self) this.joker += 10;
+    if (!self) this.joker.gauge += 10;
 
     if (this.life.current <= 0) return true;
   }

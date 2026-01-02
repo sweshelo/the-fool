@@ -203,7 +203,7 @@ export class Core {
         this.getTurnPlayer().field = afterField;
         this.room.soundEffect('leave');
       }
-      this.getTurnPlayer().joker += 10;
+      this.getTurnPlayer().joker.gauge += 10;
       this.room.sync();
 
       // ターン開始処理
@@ -991,7 +991,7 @@ export class Core {
         }
 
         // Find joker ability in player's jokers using IAtom (id + catalogId)
-        const joker = player.jokers.find(j => j.id === payload.target.id);
+        const joker = player.joker.card.find(j => j.id === payload.target.id);
 
         if (!joker || joker.catalog.type !== 'joker') {
           this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
@@ -1000,7 +1000,7 @@ export class Core {
 
         // Check if player has enough gauge
         const cost = joker.catalog.cost;
-        if (player.joker < cost) {
+        if (player.joker.gauge < cost) {
           this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient joker gauge');
         }
@@ -1014,7 +1014,7 @@ export class Core {
         }
 
         // Consume gauge
-        player.joker -= cost;
+        player.joker.gauge -= cost;
         this.room.sync();
 
         // Create and resolve joker stack

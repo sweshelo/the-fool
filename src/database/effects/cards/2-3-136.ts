@@ -14,9 +14,9 @@ export const effects: CardEffects = {
       unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    if (candidates.length === 0 || stack.processing.owner.joker < 20) return;
+    if (candidates.length === 0 || stack.processing.owner.joker.gauge < 20) return;
     await System.show(stack, 'Heart Heat Beat', 'ジョーカーゲージを20%減少\n手札に戻す');
-    stack.processing.owner.joker -= 20;
+    stack.processing.owner.joker.gauge -= 20;
     const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,

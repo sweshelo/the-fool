@@ -58,7 +58,7 @@ export class Room {
             });
           });
 
-          player.jokers = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
+          player.joker.card = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
         }
 
         // socket 登録
@@ -138,24 +138,20 @@ export class Room {
     // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
     const playersState: { [key: string]: Player | object } = {};
     this.core.players.forEach(player => {
-      // Calculate joker availability for each ability
-      const abilities = player.jokers.map(joker => {
-        const hasEnoughGauge = player.joker >= joker.catalog.cost;
-        const meetsConditions = joker.catalog.checkJoker?.(player, this.core) ?? true;
-
-        return {
-          id: joker.id,
-          catalogId: joker.catalogId,
-          cost: joker.catalog.cost,
-          isAvailable: hasEnoughGauge && meetsConditions,
-        };
-      });
-
       playersState[player.id] = {
         ...player,
         joker: {
-          abilities,
-          gauge: player.joker,
+          card: player.joker.card.map(joker => ({
+            id: joker.id,
+            catalogId: joker.catalogId,
+            chara: joker.chara,
+            cost: joker.cost,
+            isAvailable: joker.isAvailable, // getter evaluated here
+            lv: joker.lv,
+            delta: joker.delta,
+            generation: joker.generation,
+          })),
+          gauge: player.joker.gauge,
         },
         deck: player.deck.map(card => ({ id: card.id })),
         hand: player.hand.map(card => ({ id: card.id })),
