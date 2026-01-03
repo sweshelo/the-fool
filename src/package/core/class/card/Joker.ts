@@ -35,7 +35,7 @@ export class Joker extends Card {
 
     // ジョーカーゲージ量チェック (>の演算子を利用)
     const hasJokerGauge =
-      player.joker.gauge > JOKER_GAUGE_AMOUNT[this.catalog.gauge as JokerGuageAmountKey];
+      player.joker.gauge >= JOKER_GAUGE_AMOUNT[this.catalog.gauge as JokerGuageAmountKey];
 
     const hasEnoughCp = player.cp.current >= this.cost;
     const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
