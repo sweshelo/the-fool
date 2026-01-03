@@ -538,6 +538,15 @@ export class Effect {
     if (target.lv > 3) target.lv = 3;
     if (target.lv < 1) target.lv = 1;
 
+    // 手札にあるカードはスタックに積まず終了
+    if (target.owner.hand.find(card => card.id === target.id)) {
+      if (target.lv !== before) {
+        if (value > 0) stack.core.room.soundEffect('clock-up');
+        if (value < 0) stack.core.room.soundEffect('trash');
+      }
+      return;
+    }
+
     // 結果としてLvが変動した場合にのみStackを積む
     if (target.lv !== before) {
       // Lv上昇の場合はダメージをリセットする

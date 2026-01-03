@@ -25,8 +25,6 @@ export const effects: CardEffects = {
     );
 
     // レベルを+2する
-    // Note: 手札のカードのレベルを変更する機能は現在実装されていません
-    // 代わりにclockを使用しますが、これはユニットのみに有効です
     if (selectedCard instanceof Unit) {
       Effect.clock(stack, stack.processing, selectedCard, 2);
     }
