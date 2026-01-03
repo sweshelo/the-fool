@@ -502,11 +502,12 @@ export class Effect {
   ) {
     if (typeof value === 'number') {
       target.joker.gauge += value;
-      if (target.joker.gauge > 100) target.joker.gauge = 100;
-      if (target.joker.gauge < 0) target.joker.gauge = 0;
     } else {
       target.joker.gauge -= JOKER_GAUGE_AMOUNT[value];
     }
+
+    if (target.joker.gauge > 100) target.joker.gauge = 100;
+    if (target.joker.gauge < 0) target.joker.gauge = 0;
 
     /* TODO: 将来的に必要になれば。
     stack.addChildStack('modifyJokerGuage', source, target, {
