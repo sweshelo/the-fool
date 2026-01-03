@@ -33,7 +33,7 @@ type EffectResponseCallback = Function;
 interface History {
   card: Card;
   generation: number;
-  action: 'drive' | 'boot';
+  action: 'drive' | 'boot' | 'joker';
 }
 
 export class Core {
@@ -1053,6 +1053,11 @@ export class Core {
         );
 
         // Create and resolve joker stack
+        this.histories.push({
+          card: joker,
+          action: 'joker',
+          generation: joker.generation,
+        });
         const jokerStack = new Stack({
           type: 'joker',
           source: player,
