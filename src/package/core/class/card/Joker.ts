@@ -25,22 +25,26 @@ export class Joker extends Card {
    * Depends on player's gauge and checkJoker conditions
    */
   get isAvailable(): boolean {
-    const player = this.owner;
-    const core = player.core;
+    try {
+      const player = this.owner;
+      const core = player.core;
 
-    // このターンに使用済みならば呼び出し不可
-    const hasActivatedJoker = core.histories.find(
-      history => history.action === 'drive' && history.card.catalog.type === 'joker'
-    );
+      // このターンに使用済みならば呼び出し不可
+      const hasActivatedJoker = core.histories.find(
+        history => history.action === 'drive' && history.card.catalog.type === 'joker'
+      );
 
-    // ジョーカーゲージ量チェック (>の演算子を利用)
-    const hasJokerGauge =
-      player.joker.gauge >= JOKER_GAUGE_AMOUNT[this.catalog.gauge as JokerGuageAmountKey];
+      // ジョーカーゲージ量チェック (>の演算子を利用)
+      const hasJokerGauge =
+        player.joker.gauge >= JOKER_GAUGE_AMOUNT[this.catalog.gauge as JokerGuageAmountKey];
 
-    const hasEnoughCp = player.cp.current >= this.cost;
-    const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
+      const hasEnoughCp = player.cp.current >= this.cost;
+      const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
 
-    return hasEnoughCp && meetsConditions && !hasActivatedJoker && hasJokerGauge;
+      return hasEnoughCp && meetsConditions && !hasActivatedJoker && hasJokerGauge;
+    } catch {
+      return false;
+    }
   }
 
   clone(): never {
