@@ -34,7 +34,7 @@ export const effects: CardEffects = {
       Effect.bounce(stack, stack.processing, unit, 'hand');
 
       // コストを-2する
-      unit.delta.push(new Delta({ type: 'cost', value: -2 }));
+      unit.delta.push(new Delta({ type: 'cost', value: -2 }, { permanent: true }));
     });
   },
 };
