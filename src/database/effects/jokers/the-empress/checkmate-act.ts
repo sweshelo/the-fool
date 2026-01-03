@@ -1,0 +1,45 @@
+import { System } from '../../classes/system';
+import { EffectHelper } from '../../classes/helper';
+import { Effect } from '../../classes/effect';
+import type { CardEffects, StackWithCard } from '../../classes/types';
+
+export const effects: CardEffects = {
+  checkJoker: (player, core) => {
+    return EffectHelper.candidate(core, unit => unit.owner.id !== player.id, player).length > 0;
+  },
+
+  onJokerSelf: async (stack: StackWithCard) => {
+    const owner = stack.processing.owner;
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== owner.id,
+      owner
+    );
+
+    await System.show(stack, 'チェックメイトアクト', '【防御禁止】付与\nトリガーセット');
+
+    // 対戦相手のユニットを2体まで選ぶ
+    const selectedCount = Math.min(2, candidates.length);
+    const targets = await EffectHelper.selectUnit(
+      stack,
+      owner,
+      candidates,
+      '【防御禁止】を与えるユニットを選択',
+      selectedCount
+    );
+
+    // 【防御禁止】を与える
+    targets.forEach(unit => {
+      Effect.keyword(stack, stack.processing, unit, '防御禁止');
+    });
+
+    // デッキからインターセプトカードを2枚までランダムでトリガーゾーンにセットする
+    const interceptCards = owner.deck.filter(card => card.catalog.type === 'intercept');
+    const setCount = Math.min(2, interceptCards.length);
+    const cardsToSet = EffectHelper.random(interceptCards, setCount);
+
+    cardsToSet.forEach(card => {
+      Effect.move(stack, stack.processing, card, 'trigger');
+    });
+  },
+};

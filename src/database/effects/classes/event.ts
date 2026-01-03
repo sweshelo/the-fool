@@ -17,6 +17,7 @@ export const cardEvents = [
   'move',
   'extraSummon',
   'boot',
+  'joker',
 ] as const;
 
 export const commonEvents = [

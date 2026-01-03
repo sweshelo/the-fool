@@ -141,6 +141,16 @@ export class Stack implements IStack {
         break;
       }
 
+      // ジョーカー効果の場合
+      case 'joker': {
+        if (this.target instanceof Card) {
+          await this.processCardEffect(this.target, core, 'Self');
+          this.processFieldEffect(); // field-effect
+          await this.resolveChild(core);
+        }
+        break;
+      }
+
       // 両方のチェックをする場合
       case 'battle': {
         if (this.source instanceof Unit && this.target instanceof Unit) {

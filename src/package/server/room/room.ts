@@ -1,6 +1,8 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core/core';
+import { Joker } from '../../core/class/card/Joker';
+import catalog from '@/database/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
@@ -44,6 +46,21 @@ export class Room {
         this.clients.set(exists.id, socket);
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
+
+        // Initialize jokers from owned JOKER card names
+        if (message.payload.jokersOwned) {
+          const ownedJokerAbilities: string[] = [];
+          message.payload.jokersOwned.forEach(jokerCardName => {
+            catalog.forEach(entry => {
+              if (entry.type === 'joker' && entry.id === jokerCardName) {
+                ownedJokerAbilities.push(entry.id);
+              }
+            });
+          });
+
+          player.joker.card = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
+        }
+
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);
@@ -118,11 +135,25 @@ export class Room {
       6: 'none',
     };
 
+    // sync メソッド内またはクラスメソッドとして追加
+    const serializeJokerState = (player: Player) => ({
+      card: player.joker.card.map(joker => ({
+        id: joker.id,
+        catalogId: joker.catalogId,
+        chara: joker.chara,
+        cost: joker.cost,
+        isAvailable: joker.isAvailable,
+        lv: joker.lv,
+      })),
+      gauge: player.joker.gauge,
+    });
+
     // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
     const playersState: { [key: string]: Player | object } = {};
     this.core.players.forEach(player => {
       playersState[player.id] = {
         ...player,
+        joker: serializeJokerState(player),
         deck: player.deck.map(card => ({ id: card.id })),
         hand: player.hand.map(card => ({ id: card.id })),
         trigger: player.trigger.map(card => ({
@@ -195,6 +226,13 @@ export class Room {
                     })),
             };
           }
+
+          // joker : isAvailable を取得して渡す
+          acc[player.id] = {
+            ...acc[player.id],
+            joker: serializeJokerState(player),
+          };
+
           return acc;
         },
         {}
