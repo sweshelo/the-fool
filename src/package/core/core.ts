@@ -1007,7 +1007,7 @@ export class Core {
         }
 
         // Check conditions (checkJoker)
-        const canActivate = joker.catalog.checkJoker?.(player, this) ?? true;
+        const canActivate = joker.catalog.checkJoker?.(player, this) ?? false;
 
         if (!canActivate) {
           this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
