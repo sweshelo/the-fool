@@ -1,7 +1,8 @@
 import { readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
-import type { HandlerFunction } from '../factory';
+import { jokerEffects } from './jokers';
+import type { CardEffects } from './classes/types';
 
 export { System } from './classes/system';
 export { Effect } from './classes/effect';
@@ -12,13 +13,8 @@ export { EffectTemplate } from './classes/templates';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// インターフェース定義
-export interface CardEffect {
-  [key: string]: HandlerFunction;
-}
-
 // カード効果のマップ
-const effectMap = new Map<string, CardEffect>();
+const effectMap = new Map<string, CardEffects>();
 
 // カードモジュールを読み込み、マッピングする関数
 async function loadCardEffects() {
@@ -46,6 +42,14 @@ async function loadCardEffects() {
     }
 
     console.log(`Loaded effects for ${effectMap.size} cards`);
+
+    Object.entries(jokerEffects).forEach(([catalogId, effects]) => {
+      if (effects) {
+        effectMap.set(catalogId, effects);
+      }
+    });
+
+    console.log(`Loaded joker effects for ${Object.entries(jokerEffects).length} abilities`);
   } catch (error) {
     console.error('Failed to load card effects:', error);
   }
@@ -55,6 +59,6 @@ async function loadCardEffects() {
 await loadCardEffects();
 
 // 特定のカードIDの効果を取得する関数
-export function getCardEffect(cardId: string): CardEffect | undefined {
+export function getCardEffect(cardId: string): CardEffects | undefined {
   return effectMap.get(cardId);
 }

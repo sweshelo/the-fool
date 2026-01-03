@@ -31,7 +31,7 @@ export const effects: CardEffects = {
       const unit = candidate.find(unit => unit.id === target);
       if (unit) {
         Effect.break(stack, stack.processing, unit, 'effect');
-        stack.processing.owner.opponent.damage();
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
       }
     }
   },

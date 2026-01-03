@@ -37,6 +37,7 @@ export const effects: CardEffects = {
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
+    if (!stack.processing.owner.purple || stack.processing.owner.purple < 3) return;
     const breakCount = stack.processing.owner.opponent.field.filter(
       unit => unit.currentBP - 3000 <= 0
     ).length;
@@ -51,6 +52,11 @@ export const effects: CardEffects = {
     );
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -3);
     if (breakCount > 0)
-      Effect.modifyLife(stack, stack.processing.owner.opponent, breakCount >= 2 ? -2 : -1);
+      Effect.modifyLife(
+        stack,
+        stack.processing,
+        stack.processing.owner.opponent,
+        breakCount >= 2 ? -2 : -1
+      );
   },
 };

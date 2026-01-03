@@ -18,10 +18,13 @@ console.log('Checking card changes between current branch and main...');
 console.log('================================================================\n');
 
 // mainブランチとの差分を取得
-const gitDiff = execSync('git diff main --name-status -- "src/database/effects/cards/*.ts"', {
-  encoding: 'utf-8',
-  stdio: ['pipe', 'pipe', 'ignore'], // stderrを無視してwarningを非表示に
-});
+const gitDiff = execSync(
+  'git diff origin/release --name-status -- "src/database/effects/cards/*.ts"',
+  {
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'ignore'], // stderrを無視してwarningを非表示に
+  }
+);
 
 // catalog.jsonを読み込み
 const catalogPath = join(process.cwd(), 'src/submodule/suit/catalog/catalog.json');

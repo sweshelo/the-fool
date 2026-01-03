@@ -24,9 +24,6 @@ export const effects: CardEffects = {
     }
 
     // 自身のBPを上昇
-    Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-      event: 'turnEnd',
-      count: 1,
-    });
+    Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, { isBaseBP: true });
   },
 };

@@ -19,7 +19,12 @@ export const effects: CardEffects = {
     );
     const player = stack.processing.owner;
     [...Array(2)].forEach(() => EffectTemplate.draw(player, stack.core));
-    stack.processing.owner.joker = 0;
-    Effect.modifyLife(stack, stack.processing.owner, -2);
+    Effect.modifyJokerGauge(
+      stack,
+      stack.processing,
+      stack.processing.owner,
+      -stack.processing.owner.joker.gauge
+    );
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner, -2);
   },
 };

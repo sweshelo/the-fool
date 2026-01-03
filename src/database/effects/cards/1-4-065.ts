@@ -9,8 +9,7 @@ export const effects: CardEffects = {
     return (
       stack.target instanceof Unit &&
       stack.target.owner.id === stack.processing.owner.id &&
-      stack.option?.type === 'break' &&
-      stack.option.cause === 'effect' &&
+      EffectHelper.isBreakByEffect(stack) &&
       stack.processing.owner.field.length <= 3
     );
   },

@@ -3,6 +3,7 @@ import { Evolve, Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
+import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 
 const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   // クライアントにエフェクトを送信
@@ -208,7 +209,7 @@ export class Effect {
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 
     if (target.currentBP <= 0) {
-      Effect.break(stack, source, target, 'effect');
+      Effect.break(stack, source, target, 'modifyBp');
       return true;
     }
 
@@ -226,7 +227,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    cause: 'effect' | 'damage' | 'battle' | 'death' | 'system' = 'effect'
+    cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
   ): void {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
@@ -247,7 +248,7 @@ export class Effect {
 
     stack.addChildStack('break', source, target, {
       type: 'break',
-      cause,
+      cause: cause === 'modifyBp' ? 'effect' : cause,
     });
     target.destination = 'trash';
     stack.core.room.soundEffect('bang');
@@ -487,6 +488,36 @@ export class Effect {
   }
 
   /**
+   * ジョーカーゲージを操作する
+   * @param stack
+   * @param source 効果の発動元
+   * @param target 対象のプレイヤー
+   * @param value 増減量
+   */
+  static modifyJokerGauge(
+    stack: Stack,
+    source: Card,
+    target: Player,
+    value: number | JokerGuageAmountKey
+  ) {
+    if (typeof value === 'number') {
+      target.joker.gauge += value;
+    } else {
+      target.joker.gauge -= JOKER_GAUGE_AMOUNT[value];
+    }
+
+    if (target.joker.gauge > 100) target.joker.gauge = 100;
+    if (target.joker.gauge < 0) target.joker.gauge = 0;
+
+    /* TODO: 将来的に必要になれば。
+    stack.addChildStack('modifyJokerGuage', source, target, {
+      type: 'joker',
+      value,
+    });
+    */
+  }
+
+  /**
    * クロックレベルを操作する
    * @param stack
    * @param source 効果の発動元
@@ -506,6 +537,15 @@ export class Effect {
     target.lv += value;
     if (target.lv > 3) target.lv = 3;
     if (target.lv < 1) target.lv = 1;
+
+    // 手札にあるカードはスタックに積まず終了
+    if (target.owner.hand.find(card => card.id === target.id)) {
+      if (target.lv !== before) {
+        if (value > 0) stack.core.room.soundEffect('clock-up');
+        if (value < 0) stack.core.room.soundEffect('trash');
+      }
+      return;
+    }
 
     // 結果としてLvが変動した場合にのみStackを積む
     if (target.lv !== before) {
@@ -752,6 +792,13 @@ export class Effect {
     target.active = activate;
   }
 
+  /**
+   * デスカウンターを付与する
+   * @param _stack
+   * @param _source 効果の発動元
+   * @param target デスカウンターの対象
+   * @param count デスカウンターの数値
+   */
   static death(_stack: Stack, _source: Card, target: Unit, count: number) {
     const deathCounter = target.delta.find(delta => delta.effect.type === 'death');
     if (deathCounter && count < deathCounter.count) {
@@ -763,10 +810,22 @@ export class Effect {
     }
   }
 
-  static modifyLife(stack: Stack, player: Player, value: number) {
-    player.life.current = Math.min(value + player.life.current, player.life.max);
-    if (value > 0) stack.core.room.soundEffect('recover');
-    if (value < 0) stack.core.room.soundEffect('damage');
+  static modifyLife(stack: Stack, source: Card, player: Player, value: number) {
+    if (value === 0) return;
+
+    if (value < 0) {
+      // value < 0 の場合、player.damage() を必要回数分呼び出す
+      const isSuicideDamage = source.owner.id === player.id;
+      const damageCount = Math.abs(value);
+      for (let i = 0; i < damageCount; i++) {
+        player.damage(isSuicideDamage);
+      }
+      stack.core.room.soundEffect('damage');
+    } else {
+      // value >= 0 の場合は直接ライフを増加
+      player.life.current = Math.min(value + player.life.current, player.life.max);
+      stack.core.room.soundEffect('recover');
+    }
   }
 
   /**

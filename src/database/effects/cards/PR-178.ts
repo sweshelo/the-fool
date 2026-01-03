@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -28,7 +28,7 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 対戦相手のターン中かつ効果によって破壊された場合
-    if (stack.core.getTurnPlayer().id === opponent.id && stack.source.id !== owner.id) {
+    if (stack.core.getTurnPlayer().id === opponent.id && EffectHelper.isBreakByEffect(stack)) {
       await System.show(stack, 'ミンナ、マタネ！', '手札に戻る');
 
       // 捨札に送られる前にこの処理がフックされ、手札に戻す
@@ -44,6 +44,6 @@ export const effects: CardEffects = {
     await System.show(stack, 'レーザーシックル', '1ライフダメージ');
 
     // 対戦相手に1ライフダメージ
-    opponent.damage();
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
   },
 };

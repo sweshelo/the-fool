@@ -27,11 +27,12 @@ type AllSuffixHandlers = Partial<
 export interface CatalogWithHandler
   extends
     Catalog,
-    Partial<EventCheckHandlers<CheckMethod>>,
+    Omit<Partial<EventCheckHandlers<CheckMethod>>, 'checkJoker'>,
     Partial<EventOnHandlers<HandlerFunction>>,
     AllSuffixHandlers {
   fieldEffect?: (stack: Stack) => void;
   handEffect?: (core: Core, card: ICard) => void;
+  checkJoker?: (player: import('@/package/core/class/Player').Player, core: Core) => boolean;
   [key: string]: unknown;
 }
 

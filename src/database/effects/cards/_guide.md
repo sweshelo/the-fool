@@ -8,9 +8,8 @@
 
 ## 関数名とその型
 
-`src/database/effects/classes/effect.ts` を参照。
-
 イベント名の代表的なものを挙げる。
+イベント名の定義は、[event.ts](/src/database/effects/classes/event.ts) と [eventHandlers.ts](/src/database/effects/classes/eventHandlers.ts) を参照。
 
 | 識別子       | 内容                           | 例             |
 | ------------ | ------------------------------ | -------------- |
@@ -44,6 +43,8 @@
 `src/submodule/suit/types/game/card/index.ts`を参照。実装は`src/package/core/class/card/*.ts`を参照。
 
 ### 共通ガイドライン
+
+カードの効果実装に当たっては、[effect.ts](/src/database/effects/classes/effect.ts) と [helper.ts](/src/database/effects/classes/helper.ts) を利用する。ゲームオブジェクトの直接的な操作は控えること。
 
 - 発動タイミングについて言及されていないキーワード効果(【】で括られた能力)がテキストにある時、それは召喚時に付与されることを示している。onDriveSelfの処理に追加すること。
 - カードの移動は Effect.move を、BPの操作は Effect.modifyBP を使い、各オブジェクトの値を直接操作してはならない。

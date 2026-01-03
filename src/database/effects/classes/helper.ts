@@ -67,6 +67,16 @@ export class EffectHelper {
     return out.filter(e => e !== undefined);
   }
 
+  /**
+   * フィールド上に存在するユニットで構成された Unit[] から ユーザに1つを選ばせる
+   * カードを選択する場合は selectCard を利用する
+   * @param stack stack
+   * @param player 対象を選択するプレイヤー
+   * @param targets 対象の候補
+   * @param title UIに表示するメッセージ
+   * @param count 選択するユニット数
+   * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
+   */
   static async selectUnit(
     stack: Stack,
     player: Player,
@@ -120,6 +130,16 @@ export class EffectHelper {
     throw new Error('選択すべきユニットが見つかりませんでした');
   }
 
+  /**
+   * 与えられた Card[] で構成されたリストを提示し ユーザに1つを選ばせる
+   * フィールド上のユニットを選択する場合は selectUnit を利用する
+   * @param stack stack
+   * @param player 対象を選択するプレイヤー
+   * @param targets 対象の候補
+   * @param title UIに表示するメッセージ
+   * @param count 選択するユニット数
+   * @returns Promise。 最低1つのCardを含む Card[] が得られる。
+   */
   static async selectCard(
     stack: Stack,
     player: Player,
@@ -138,5 +158,43 @@ export class EffectHelper {
 
     if (result.length > 0) return result as [Card, ...Card[]];
     throw new Error('選択すべきカードが見つかりませんでした');
+  }
+
+  /**
+   * 与えられたメソッドを繰り返す
+   * @param times 回数
+   * @param callback 繰り返す関数
+   */
+  static repeat(times: number, callback: () => unknown) {
+    [...Array(times)].forEach(callback);
+  }
+
+  /**
+   * 与えられた破壊スタックに対して、それが「効果による破壊」とみなされるかを判定する
+   * @param stack
+   */
+  static isBreakByEffect(stack: Stack): boolean {
+    if (stack.type !== 'break')
+      throw new Error('isBreakByEffect: 破壊スタックではないスタックを渡されました');
+    if (stack.option?.type !== 'break')
+      throw new Error('isBreakByEffect: 破壊理由が格納されていないスタックを渡されました');
+
+    const cause = stack.option.cause;
+    const effectTable = ['damage', 'effect']; // 効果による破壊とみなす cause 一覧
+
+    return effectTable.includes(cause);
+  }
+
+  static hasGauge(player: Player, gaugeKey: '小' | '中' | '大' | '特大'): boolean {
+    switch (gaugeKey) {
+      case '小':
+        return player.joker.gauge > 40;
+      case '中':
+        return player.joker.gauge > 52.5;
+      case '大':
+        return player.joker.gauge > 65;
+      case '特大':
+        return player.joker.gauge > 80;
+    }
   }
 }

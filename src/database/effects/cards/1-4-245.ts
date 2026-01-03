@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     await System.show(stack, '神の見えざる手', '1ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner.opponent, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
   },
 
   checkTurnEnd: (stack: StackWithCard<Card>): boolean => {
@@ -27,6 +27,6 @@ export const effects: CardEffects = {
 
   onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
     await System.show(stack, '神の見えざる手', '2ライフダメージ');
-    Effect.modifyLife(stack, stack.processing.owner.opponent, -2);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -2);
   },
 };

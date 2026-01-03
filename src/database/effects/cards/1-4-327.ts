@@ -14,6 +14,6 @@ export const effects: CardEffects = {
     [...stack.processing.owner.trigger, ...stack.processing.owner.opponent.trigger].forEach(card =>
       Effect.move(stack, stack.processing, card, 'trash')
     );
-    Effect.modifyLife(stack, stack.processing.owner, -1);
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
   },
 };

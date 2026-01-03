@@ -135,6 +135,17 @@ export class Stack implements IStack {
       case 'playerAttack': {
         if (this.source instanceof Unit && !this.source.hasKeyword('沈黙')) {
           await this.processCardEffect(this.source, core, 'Self');
+          this.processFieldEffect(); // fireld-effect
+          await this.resolveChild(core);
+        }
+        break;
+      }
+
+      // ジョーカー効果の場合
+      case 'joker': {
+        if (this.target instanceof Card) {
+          await this.processCardEffect(this.target, core, 'Self');
+          this.processFieldEffect(); // field-effect
           await this.resolveChild(core);
         }
         break;
@@ -147,6 +158,7 @@ export class Stack implements IStack {
           for (const target of targets) {
             if (target instanceof Unit && !target.hasKeyword('沈黙')) {
               await this.processCardEffect(target, core, 'Self');
+              this.processFieldEffect(); //field-effect
               await this.resolveChild(core);
             }
           }
@@ -160,20 +172,18 @@ export class Stack implements IStack {
       default: {
         if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
           await this.processCardEffect(this.target, core, 'Self');
+          this.processFieldEffect(); // field-effect
           await this.resolveChild(core);
         }
         break;
       }
     }
 
-    // フィールド効果
-    this.processFieldEffect();
-    await this.resolveChild(this.core);
-
     // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
       if (!turnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
       await this.processCardEffect(unit, core);
+      this.processFieldEffect(); // field-effect
       await this.resolveChild(core);
     }
 
@@ -182,6 +192,7 @@ export class Stack implements IStack {
       for (const unit of field.nonTurnPlayer) {
         if (!nonTurnPlayer.field.find(u => u.id === unit.id) || unit.hasKeyword('沈黙')) continue;
         await this.processCardEffect(unit, core);
+        this.processFieldEffect(); // field-effect
         await this.resolveChild(core);
       }
     }

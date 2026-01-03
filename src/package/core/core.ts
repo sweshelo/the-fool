@@ -10,6 +10,7 @@ import type {
   ContinuePayload,
   TriggerSetPayload,
   EvolveDrivePayload,
+  JokerDrivePayload,
   DebugMakePayload,
   DebugDrivePayload,
 } from '@/submodule/suit/types';
@@ -24,6 +25,7 @@ import { Delta } from './class/delta';
 import { Parry } from './class/parry';
 import { Intercept } from './class/card/Intercept';
 import { Trigger } from './class/card/Trigger';
+import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
@@ -31,7 +33,7 @@ type EffectResponseCallback = Function;
 interface History {
   card: Card;
   generation: number;
-  action: 'drive' | 'boot';
+  action: 'drive' | 'boot' | 'joker';
 }
 
 export class Core {
@@ -202,7 +204,7 @@ export class Core {
         this.getTurnPlayer().field = afterField;
         this.room.soundEffect('leave');
       }
-      this.getTurnPlayer().joker += 10;
+      this.getTurnPlayer().joker.gauge += 10;
       this.room.sync();
 
       // ターン開始処理
@@ -622,7 +624,7 @@ export class Core {
     if (!isWinnerBreaked && isLoserBreaked) {
       // 【貫通】処理
       if (isWinnerHasPenetrate) {
-        Effect.modifyLife(stack, loser.owner, -1);
+        loser.owner.damage();
       }
 
       // winnerが生存しており、Lvが3未満の場合はクロックアップさせる
@@ -897,7 +899,11 @@ export class Core {
         const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
-        if (!card || !player) return;
+        if (!card || !player) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          console.log(payload);
+          throw new Error('指定されたCardかPlayerのどちらかが不正でした');
+        }
 
         const cardCatalog = catalog.get(card.catalogId);
         if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
@@ -970,6 +976,98 @@ export class Core {
           await this.drive(player, card, source);
         }
 
+        this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+        break;
+      }
+
+      case 'JokerDrive': {
+        this.room.broadcastToAll(MessageHelper.freeze());
+        const payload: JokerDrivePayload = message.payload;
+
+        // Validate player
+        const player = this.players.find(p => p.id === payload.player);
+        if (!player) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Invalid player');
+        }
+
+        // Find joker ability in player's jokers using IAtom (id + catalogId)
+        const joker = player.joker.card.find(j => j.id === payload.target.id);
+
+        if (!joker || joker.catalog.type !== 'joker') {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Invalid joker ability');
+        }
+
+        // Check if player has enough gauge
+        if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Insufficient joker gauge');
+        }
+
+        // check if player has enough cp
+        const cost = joker.catalog.cost;
+        if (player.cp.current < cost) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Insufficient cp');
+        }
+
+        // Check conditions (checkJoker)
+        const canActivate = joker.catalog.checkJoker?.(player, this) ?? false;
+
+        if (!canActivate) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Joker conditions not met');
+        }
+
+        // Consume gauge
+        if (!joker.catalog.gauge) {
+          throw new Error('ジョーカーゲージの消費量が定義されていません');
+        }
+
+        player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
+
+        if (joker.catalog.cost > 0) {
+          player.cp.current -= joker.catalog.cost;
+          this.room.soundEffect('cp-consume');
+        }
+        this.room.soundEffect('evolve');
+        this.room.sync();
+
+        this.room.broadcastToAll(
+          createMessage({
+            action: {
+              type: 'effect',
+              handler: 'client',
+            },
+            payload: {
+              type: 'VisualEffect',
+              body: {
+                effect: 'drive',
+                image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
+                player: player.id,
+                type: 'JOKER',
+              },
+            },
+          })
+        );
+
+        // Create and resolve joker stack
+        this.histories.push({
+          card: joker,
+          action: 'joker',
+          generation: joker.generation,
+        });
+        const jokerStack = new Stack({
+          type: 'joker',
+          source: player,
+          target: joker,
+          core: this,
+        });
+
+        // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
+        this.stack = [jokerStack];
+        await this.resolveStack();
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;
       }

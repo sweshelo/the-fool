@@ -27,29 +27,18 @@ export const effects: CardEffects = {
   // 戦闘で勝利した時のインターセプト効果
   onWin: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
+    await System.show(stack, '森の女神', 'カードを1枚引く\nCP+1');
 
-    // 自分のユニットが戦闘で勝利した時のみ発動
-    if (stack.target instanceof Unit && stack.target.owner.id === owner.id) {
-      await System.show(stack, '森の女神', 'カードを1枚引く\nCP+1');
+    // カードを1枚引く
+    EffectTemplate.draw(owner, stack.core);
 
-      // カードを1枚引く
-      EffectTemplate.draw(owner, stack.core);
-
-      // CPを+1する
-      Effect.modifyCP(stack, stack.processing, owner, 1);
-    }
+    // CPを+1する
+    Effect.modifyCP(stack, stack.processing, owner, 1);
   },
 
   // プレイヤーアタックを受けた時のインターセプト効果
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
-    const owner = stack.processing.owner;
-
-    // 自分がプレイヤーアタックを受けた時のみ発動
-    if (
-      stack.source instanceof Unit &&
-      stack.source.owner.id !== owner.id && // 相手のユニット
-      stack.target?.id === owner.id // 自分がターゲット
-    ) {
+    if (stack.source instanceof Unit) {
       await System.show(stack, '森の女神', '基本BP-3000');
 
       // プレイヤーアタックしたユニットの基本BPを-3000する
@@ -61,10 +50,7 @@ export const effects: CardEffects = {
 
   // インターセプトカード効果の発動チェック：戦闘時
   checkBattle: async (stack: StackWithCard): Promise<boolean> => {
-    const owner = stack.processing.owner;
-
-    // 自分のユニットが戦闘した時のみ発動可能
-    return stack.target instanceof Unit && stack.target.owner.id === owner.id;
+    return true;
   },
 
   // インターセプトカード効果の発動チェック：戦闘勝利時

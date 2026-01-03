@@ -42,12 +42,7 @@ export const effects: CardEffects = {
         delta.effect.diff = 1000;
       } else {
         // 新しいDeltaを追加
-        Effect.modifyBP(stack, stack.processing, unit, 1000, {
-          source: {
-            unit: stack.processing.id,
-            effectCode: '繁殖',
-          },
-        });
+        Effect.modifyBP(stack, stack.processing, unit, 1000, { isBaseBP: true });
       }
     }
   },

@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
@@ -31,6 +31,6 @@ export const effects: CardEffects = {
 
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '五輪の神髄', '1ライフダメージ');
-    stack.processing.owner.opponent.damage();
+    Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
   },
 };

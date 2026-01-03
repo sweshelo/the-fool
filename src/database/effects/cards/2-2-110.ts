@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・コズミックライトステージ', 'ライフ+1');
-        Effect.modifyLife(stack, stack.processing.owner, 1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner, 1);
         break;
       }
 
