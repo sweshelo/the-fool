@@ -1000,10 +1000,16 @@ export class Core {
         }
 
         // Check if player has enough gauge
-        const cost = joker.catalog.cost;
-        if (player.joker.gauge < cost) {
+        if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
           this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient joker gauge');
+        }
+
+        // check if player has enough cp
+        const cost = joker.catalog.cost;
+        if (player.cp.current < cost) {
+          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
+          throw new Error('Insufficient cp');
         }
 
         // Check conditions (checkJoker)
