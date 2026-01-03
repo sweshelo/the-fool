@@ -24,7 +24,11 @@ export const effects: CardEffects = {
     await System.show(stack, 'リジェネレート・デリュージ', '5体まで【特殊召喚】');
 
     // ランダムで5体まで【特殊召喚】する
-    const summonCount = Math.min(5, candidates.length, stack.core.room.rule.player.max.field);
+    const summonCount = Math.min(
+      5,
+      candidates.length,
+      stack.core.room.rule.player.max.field - stack.processing.owner.field.length
+    );
     const unitsToSummon = EffectHelper.random(candidates, summonCount);
 
     for await (const unit of unitsToSummon) {
