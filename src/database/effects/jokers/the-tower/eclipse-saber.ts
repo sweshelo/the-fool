@@ -2,7 +2,6 @@ import { System } from '../../classes/system';
 import { EffectHelper } from '../../classes/helper';
 import { Effect } from '../../classes/effect';
 import type { CardEffects, StackWithCard } from '../../classes/types';
-import type { Card } from '@/package/core/class/card/Card';
 
 export const effects: CardEffects = {
   checkJoker: (player, _core) => {
@@ -19,7 +18,6 @@ export const effects: CardEffects = {
     await System.show(stack, '秘技・エクリプスセイバー', '消滅カード回収');
 
     // 捨札からカードを1枚選んで手札に加える
-    // Note: 消滅カードの追跡機能は現在実装されていないため、全捨札から選択可能
     const [selectedCard] = await EffectHelper.selectCard(
       stack,
       owner,
