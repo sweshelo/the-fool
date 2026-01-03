@@ -135,21 +135,25 @@ export class Room {
       6: 'none',
     };
 
+    // sync メソッド内またはクラスメソッドとして追加
+    const serializeJokerState = (player: Player) => ({
+      card: player.joker.card.map(joker => ({
+        id: joker.id,
+        catalogId: joker.catalogId,
+        chara: joker.chara,
+        cost: joker.cost,
+        isAvailable: joker.isAvailable,
+        lv: joker.lv,
+      })),
+      gauge: player.joker.gauge,
+    });
+
     // すべてのプレイヤーの状態をまとめてハッシュ化し、キャッシュと比較
     const playersState: { [key: string]: Player | object } = {};
     this.core.players.forEach(player => {
       playersState[player.id] = {
         ...player,
-        joker: {
-          card: player.joker.card.map(joker => ({
-            id: joker.id,
-            catalogId: joker.catalogId,
-            chara: joker.chara,
-            cost: joker.cost,
-            isAvailable: joker.isAvailable, // getter evaluated here
-          })),
-          gauge: player.joker.gauge,
-        },
+        joker: serializeJokerState(player),
         deck: player.deck.map(card => ({ id: card.id })),
         hand: player.hand.map(card => ({ id: card.id })),
         trigger: player.trigger.map(card => ({
@@ -226,17 +230,7 @@ export class Room {
           // joker : isAvailable を取得して渡す
           acc[player.id] = {
             ...acc[player.id],
-            joker: {
-              card: player.joker.card.map(joker => ({
-                id: joker.id,
-                catalogId: joker.catalogId,
-                chara: joker.chara,
-                cost: joker.cost,
-                isAvailable: joker.isAvailable, // getter evaluated here
-                lv: joker.lv,
-              })),
-              gauge: player.joker.gauge,
-            },
+            joker: serializeJokerState(player),
           };
 
           return acc;
