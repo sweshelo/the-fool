@@ -4,6 +4,11 @@ import { apiRouter } from './apiRouter';
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
 import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
+import type {
+  PlayerDisconnectedPayload,
+  ErrorPayload,
+} from '@/submodule/suit/types/message/payload/client';
+import { ErrorCode, ErrorMessage } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
 
 class ServerError extends Error {}
@@ -86,21 +91,45 @@ export class Server {
 
   private onClose(ws: ServerWebSocket) {
     const roomId = this.clientRooms.get(ws);
-    if (roomId) {
-      // ルームからの退出処理などを実装
+    const disconnectedUser = this.clients.get(ws);
+
+    if (roomId && disconnectedUser) {
+      const room = this.rooms.get(roomId);
+
+      if (room) {
+        // 切断通知を他のプレイヤーに送信（切断する前に）
+        const payload: PlayerDisconnectedPayload = {
+          type: 'PlayerDisconnected',
+          disconnectedPlayerId: disconnectedUser.id,
+          reason: 'connection_lost',
+          timestamp: Date.now(),
+          roomWillClose: room.clients.size <= 1,
+        };
+
+        room.broadcastToAllExcept(
+          {
+            action: { handler: 'client', type: 'disconnected' },
+            payload,
+          },
+          disconnectedUser.id
+        );
+      }
+
+      // クリーンアップ
       this.clientRooms.delete(ws);
       this.clients.delete(ws);
 
+      // 空になったらroom削除
       const remainingClientsInRoom = Array.from(this.clientRooms.values()).filter(
         id => id === roomId
       ).length;
-      // 接続ユーザが居なくなったらルームを削除
       if (remainingClientsInRoom === 0) {
         this.rooms.delete(roomId);
         console.log('room %s has been deleted.', roomId);
       }
+    } else {
+      this.clients.delete(ws);
     }
-    this.clients.delete(ws);
   }
 
   private onMessage(ws: ServerWebSocket, data: string) {
@@ -175,31 +204,25 @@ export class Server {
           this.handleMessageForServer(client, message);
       }
     } catch (e) {
-      if (e instanceof Error) {
-        console.error(e);
-        client.send(
-          JSON.stringify({
-            action: {
-              type: 'error',
-            },
-            payload: {
-              error: e.message,
-            },
-          })
-        );
-      } else {
-        client.send(
-          JSON.stringify({
-            action: {
-              type: 'error',
-            },
-            payload: {
-              error: '想定外の事象が発生しました。',
-              body: e,
-            },
-          })
-        );
-      }
+      console.error(e);
+
+      const errorPayload: ErrorPayload = {
+        type: 'Error',
+        errorCode: e instanceof Error ? ErrorCode.SYS_INTERNAL_ERROR : ErrorCode.SYS_UNKNOWN_ERROR,
+        message: e instanceof Error ? e.message : '想定外の事象が発生しました。',
+        details: e instanceof Error ? undefined : { body: e },
+        timestamp: Date.now(),
+      };
+
+      client.send(
+        JSON.stringify({
+          action: {
+            handler: 'client',
+            type: 'error',
+          },
+          payload: errorPayload,
+        })
+      );
     }
   }
 

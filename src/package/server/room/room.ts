@@ -1,4 +1,5 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
+import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core/core';
 import { Joker } from '../../core/class/card/Joker';
@@ -44,6 +45,21 @@ export class Room {
         // clients再登録
         this.clients.delete(exists.id);
         this.clients.set(exists.id, socket);
+
+        // 再接続通知を他のプレイヤーに送信
+        const reconnectPayload: PlayerReconnectedPayload = {
+          type: 'PlayerReconnected',
+          reconnectedPlayerId: exists.id,
+          timestamp: Date.now(),
+        };
+
+        this.broadcastToAllExcept(
+          {
+            action: { handler: 'client', type: 'reconnected' },
+            payload: reconnectPayload,
+          },
+          exists.id
+        );
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
 
@@ -100,6 +116,20 @@ export class Room {
   broadcastToAll(message: Message) {
     this.clients.forEach(client => {
       client.send(JSON.stringify(message));
+    });
+  }
+
+  /**
+   * 特定のプレイヤーを除く全員にメッセージを送信する
+   * @param message 送信するメッセージ
+   * @param excludePlayerId 除外するプレイヤーID
+   */
+  broadcastToAllExcept(message: Message, excludePlayerId: string) {
+    this.clients.forEach((client, playerId) => {
+      if (playerId !== excludePlayerId && client.readyState === 1) {
+        // 1 = WebSocket.OPEN
+        client.send(JSON.stringify(message));
+      }
     });
   }
 
