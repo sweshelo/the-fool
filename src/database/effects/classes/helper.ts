@@ -6,6 +6,8 @@ import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { createMessage } from '@/submodule/suit/types';
 
+type UnitPickFilter = ((unit: Unit) => boolean) | 'owns' | 'opponents' | 'all';
+
 export class EffectHelper {
   /**
    * 『自身以外に』の効果を実行する
@@ -87,17 +89,21 @@ export class EffectHelper {
     count: number = 1
   ): Promise<[Unit, ...Unit[]]> {
     const selected: Unit[] = [];
-    let candidate: Unit[] = EffectHelper.candidate(
-      stack.core,
-      unit => targets.map(unit => unit.id).includes(unit.id),
-      player
-    );
+    const units = stack.core.players.flatMap(player => player.field);
 
-    while (selected.length < count && candidate.length > 0) {
+    while (selected.length < count) {
+      const candidate: Unit[] = targets.filter(
+        unit => !unit.hasKeyword('加護') && !selected.includes(unit) && units.includes(unit)
+      );
+      const selectHacked = candidate.filter(
+        unit => unit.hasKeyword('セレクトハック') && unit.owner.id !== player.id
+      );
+      if (candidate.length <= 0) break;
+
       const [choiceId] = await System.prompt(stack, player.id, {
         title,
         type: 'unit',
-        items: candidate,
+        items: selectHacked.length > 0 ? selectHacked : candidate,
       });
 
       const chosen = targets.find(unit => unit.id === choiceId) ?? candidate[0];
@@ -121,11 +127,6 @@ export class EffectHelper {
       );
 
       selected.push(chosen);
-      candidate = EffectHelper.candidate(
-        stack.core,
-        unit => targets.some(t => t.id === unit.id) && !selected.some(s => s.id === unit.id),
-        player
-      );
     }
 
     if (selected.length > 0) return selected as [Unit, ...Unit[]];
@@ -214,13 +215,26 @@ export class EffectHelper {
    * @param filter 独自のフィルタ関数
    * @returns 選択可能であるか
    */
-  static isUnitSelectable(core: Core, filter: (unit: Unit) => boolean): boolean {
+  static isUnitSelectable(core: Core, filter: UnitPickFilter, selector: Player): boolean {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
+    // フィルタ関数を取得
+    const filterMethod = () => {
+      switch (filter) {
+        case 'owns':
+          return (unit: Unit) => unit.owner.id === selector.id;
+        case 'opponents':
+          return (unit: Unit) => unit.owner.id !== selector.id;
+        case 'all':
+          return () => true;
+      }
+      return filter;
+    };
+
     return core.players
       .map(p => p.field)
       .flat()
       .filter(exceptBlessing)
-      .some(filter);
+      .some(filterMethod);
   }
 
   /**
@@ -228,27 +242,39 @@ export class EffectHelper {
    * カードを選択する場合は selectCard を利用する
    * @param stack stack
    * @param player 対象を選択するプレイヤー
-   * @param filter 対象の候補を絞り込むフィルター関数
+   * @param filter 自分のユニットのみの場合は 'owns'、敵ユニットのみの場合は 'oppents'、全ての場合は 'all'、カスタム条件の場合は対象の候補を絞り込むフィルター関数
    * @param title UIに表示するメッセージ
    * @param count 選択するユニット数
    * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
-   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.pickUnit() を利用して下さい。
    */
   static async pickUnit(
     stack: Stack,
     player: Player,
-    filter: (unit: Unit) => boolean,
+    filter: UnitPickFilter,
     title: string,
     count: number = 1
   ): Promise<[Unit, ...Unit[]]> {
     const selected: Unit[] = [];
+
+    // フィルタ関数を取得
+    const filterMethod = () => {
+      switch (filter) {
+        case 'owns':
+          return (unit: Unit) => unit.owner.id === player.id;
+        case 'opponents':
+          return (unit: Unit) => unit.owner.id !== player.id;
+        case 'all':
+          return () => true;
+      }
+      return filter;
+    };
 
     while (selected.length < count) {
       // フィールド上から対象になりえるユニットを取得
       const candidate: Unit[] = stack.core.players
         .flatMap(player => player.field)
         .filter(unit => !selected.includes(unit) && unit.hasKeyword('加護'))
-        .filter(filter);
+        .filter(filterMethod);
       if (candidate.length <= 0) break;
 
       // 選択者と所有者が異なる、セレクトハックを持つユニットを取得
