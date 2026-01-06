@@ -6,7 +6,7 @@ import type { Core } from '@/package/core/core';
 export const effects: CardEffects = {
   // 起動・フォース＜ウィルス・黙＞
   isBootable: (core: Core, self: Unit): boolean => {
-    return EffectTemplate.virusInjectable(self.owner.opponent);
+    return EffectHelper.isVirusInjectable(self.owner.opponent);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {

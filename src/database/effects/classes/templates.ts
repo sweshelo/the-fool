@@ -97,6 +97,11 @@ export class EffectTemplate {
     return undefined;
   }
 
+  /**
+   * [武身転生]
+   * @param stack
+   * @param unit
+   */
   static async reincarnate(stack: Stack, unit: Unit) {
     const hasFieldSpace = unit.owner.field.length <= 4;
     const targets = unit.owner.deck.filter(card => {
@@ -120,13 +125,16 @@ export class EffectTemplate {
     }
   }
 
-  static virusInjectable(player: Player) {
-    return player.field.filter(unit => !unit.catalog.species?.includes('ウィルス')).length < 5;
-  }
-
+  /**
+   * 【ウィルス】を【特殊召喚】する
+   * @param stack
+   * @param player 対象のプレイヤー
+   * @param virus ウィルスユニットのID
+   * @example EffectTemplate.virusInject(stack, stack.processing.owner.opponent, 'ウィルス・炎')
+   */
   static async virusInject(stack: StackWithCard, player: Player, virus: string) {
     // ウィルスを除くユニット数が5体未満
-    if (EffectTemplate.virusInjectable(player)) {
+    if (EffectHelper.isVirusInjectable(player)) {
       // ウィルスを除外する
       if (player.field.some(unit => unit.catalog.species?.includes('ウィルス'))) {
         player.field = player.field.filter(unit => !unit.catalog.species?.includes('ウィルス'));

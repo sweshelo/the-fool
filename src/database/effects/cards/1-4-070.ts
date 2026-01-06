@@ -49,7 +49,7 @@ export const effects: CardEffects = {
   },
 
   // インターセプトカード効果の発動チェック：戦闘時
-  checkBattle: async (stack: StackWithCard): Promise<boolean> => {
+  checkBattle: async (_stack: StackWithCard): Promise<boolean> => {
     return true;
   },
 

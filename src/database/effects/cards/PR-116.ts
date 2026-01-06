@@ -46,7 +46,6 @@ export const effects: CardEffects = {
   // プレイヤーアタック成功時、選略
   async onPlayerAttackSelf(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
 
     // 選択肢
     const options = [

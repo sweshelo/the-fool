@@ -7,22 +7,20 @@ export const effects: CardEffects = {
     const hasRedCardAtLeast5InTrash =
       stack.processing.owner.opponent.trash.filter(card => card.catalog.color === Color.RED)
         .length >= 5;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner.opponent
-    );
     const isOpponentUnitDriven = stack.source.id !== stack.processing.owner.id;
 
-    if (isOpponentUnitDriven && hasRedCardAtLeast5InTrash && candidate.length > 0) {
+    if (
+      isOpponentUnitDriven &&
+      hasRedCardAtLeast5InTrash &&
+      EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner)
+    ) {
       await System.show(stack, '＜ウィルス・焔＞', '1000ダメージ');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.opponent.id, {
-        type: 'unit',
-        title: 'ダメージを与えるユニットを選択',
-        items: candidate,
-      });
-
-      const target = candidate.find(unit => unit.id === unitId);
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'owns',
+        'ダメージを与えるユニットを選択'
+      );
       if (target) {
         Effect.damage(stack, stack.processing, target, 1000, 'effect');
       }
