@@ -14,7 +14,8 @@ export const effects: CardEffects = {
     const owner = self.owner;
 
     //デッキが空、またはトリガーゾーンが満杯なら何もしない
-    if (owner.deck.length === 0 || owner.trigger.length === 4) return;
+    if (owner.deck.length === 0 || owner.trigger.length >= stack.core.room.rule.player.max.trigger)
+      return;
 
     await System.show(stack, '冷酷なる躾', 'デッキからランダムで1枚トリガーゾーンにセット');
 

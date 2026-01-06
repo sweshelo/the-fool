@@ -18,10 +18,10 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     //対戦相手の行動権のあるユニットをフィルタリング
-    const inactiveUnits = opponent.field.filter(unit => unit.active);
+    const activeUnits = opponent.field.filter(unit => unit.active);
 
     //選択肢1は、行動権のあるユニットが1体以上いる場合のみ選択可能
-    const canOption1 = inactiveUnits.length > 0;
+    const canOption1 = activeUnits.length > 0;
 
     //選択肢2は、CPが2以上あり、相手フィールドにユニットが1体以上いる場合のみ選択可能
     const canOption2 = owner.cp.current >= 2 && opponent.field.length > 0;
@@ -29,48 +29,43 @@ export const effects: CardEffects = {
     //どちらも選べない場合は効果をキャンセル
     if (!canOption1 && !canOption2) return;
 
-    let choice: string[];
+    let choice: string | undefined;
     //選択肢の提示（どちらか一方しか選択できない場合は自動選択）
     if (canOption1 && canOption2) {
-      choice = await System.prompt(stack, owner.id, {
+      [choice] = await System.prompt(stack, owner.id, {
         // 選略: owner.id
         title: '選略・霊猫鋼球乱舞',
         type: 'option',
         items: [
           {
             id: '1',
-            description: '相手の行動権のあるユニットからランダム1体に【強制防御】を付与。',
+            description: '行動権のあるユニットに\n【強制防御】を与える',
           },
           {
             id: '2',
-            description:
-              'CP-2 相手ユニットからランダム1体の基本BP-3000 【獣】ユニットの数繰り返す。',
+            description: 'CP-2\n基本BP-3000 ×【獣】ユニットの数',
           },
         ],
       });
     } else if (canOption1) {
-      choice = ['1'];
+      [choice] = ['1'];
     } else {
-      choice = ['2'];
+      [choice] = ['2'];
     }
 
-    if (choice[0] === '1') {
+    if (choice === '1') {
       await System.show(
         stack,
         '選略・霊猫鋼球乱舞',
-        '相手の行動権のあるユニットから\nランダム1体に【強制防御】を付与'
+        '行動権のあるユニットに\n【強制防御】を与える'
       );
 
       //ランダムに1体選択して【強制防御】を与える
-      EffectHelper.random(inactiveUnits, 1).forEach(unit =>
+      EffectHelper.random(activeUnits, 1).forEach(unit =>
         Effect.keyword(stack, self, unit, '強制防御')
       );
     } else {
-      await System.show(
-        stack,
-        '選略・霊猫鋼球乱舞',
-        'CP-2 相手ユニットからランダム1体の基本BP-3000\n【獣】ユニットの数繰り返す。'
-      );
+      await System.show(stack, '選略・霊猫鋼球乱舞', 'CP-2\n基本BP-3000 ×【獣】ユニットの数');
 
       //CPを-2する
       Effect.modifyCP(stack, self, owner, -2);
@@ -93,24 +88,24 @@ export const effects: CardEffects = {
   },
 
   isBootable(core: Core, self: Unit): boolean {
-    return (
-      self.owner.field.filter(
-        unit => unit instanceof Unit && (unit.catalog.species?.includes('獣') ?? false)
-      ).length > 0
+    return EffectHelper.isUnitSelectable(
+      core,
+      unit => unit.owner.id === self.owner.id && (unit.catalog.species?.includes('獣') ?? false),
+      self.owner
     );
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
 
-    //【獣】ユニットをフィルタリング
+    /*     //【獣】ユニットをフィルタリング
     const candidates = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id === owner.id && (unit.catalog.species?.includes('獣') ?? false),
       owner
     );
 
-    if (candidates.length === 0) return;
+    if (candidates.length === 0) return; */
 
     await System.show(
       stack,
@@ -118,10 +113,10 @@ export const effects: CardEffects = {
       '【獣】ユニット1体の基本BP-2000\n【スピードムーブ】を付与'
     );
 
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      unit => unit.owner.id === owner.id && (unit.catalog.species?.includes('獣') ?? false),
       '【獣】ユニットを選択'
     );
 
