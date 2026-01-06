@@ -25,6 +25,7 @@ export class EffectHelper {
    * @param filter 独自のフィルタ関数
    * @param selector 選択肢を提供するプレイヤー
    * @returns 選択可能なユニット
+   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.isUnitSelectable() を利用して下さい。
    */
   static candidate(core: Core, filter: (unit: Unit) => boolean, selector: Player): Unit[] {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
@@ -76,6 +77,7 @@ export class EffectHelper {
    * @param title UIに表示するメッセージ
    * @param count 選択するユニット数
    * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
+   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.pickUnit() を利用して下さい。
    */
   static async selectUnit(
     stack: Stack,
@@ -205,5 +207,85 @@ export class EffectHelper {
    */
   static isVirusInjectable(player: Player) {
     return player.field.filter(unit => !unit.catalog.species?.includes('ウィルス')).length < 5;
+  }
+
+  /**
+   * 【加護】を持つユニットを考慮して、プレイヤーがユニットを選択できるかを調べる
+   * @param filter 独自のフィルタ関数
+   * @returns 選択可能であるか
+   */
+  static isUnitSelectable(core: Core, filter: (unit: Unit) => boolean): boolean {
+    const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
+    return core.players
+      .map(p => p.field)
+      .flat()
+      .filter(exceptBlessing)
+      .some(filter);
+  }
+
+  /**
+   * フィールド上に存在するユニットを特定条件でフィルタし、【加護】【セレクトハック】を考慮したうえで ユーザに1つ以上を選ばせる
+   * カードを選択する場合は selectCard を利用する
+   * @param stack stack
+   * @param player 対象を選択するプレイヤー
+   * @param filter 対象の候補を絞り込むフィルター関数
+   * @param title UIに表示するメッセージ
+   * @param count 選択するユニット数
+   * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
+   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.pickUnit() を利用して下さい。
+   */
+  static async pickUnit(
+    stack: Stack,
+    player: Player,
+    filter: (unit: Unit) => boolean,
+    title: string,
+    count: number = 1
+  ): Promise<[Unit, ...Unit[]]> {
+    const selected: Unit[] = [];
+
+    while (selected.length < count) {
+      // フィールド上から対象になりえるユニットを取得
+      const candidate: Unit[] = stack.core.players
+        .flatMap(player => player.field)
+        .filter(unit => !selected.includes(unit) && unit.hasKeyword('加護'))
+        .filter(filter);
+      if (candidate.length <= 0) break;
+
+      // 選択者と所有者が異なる、セレクトハックを持つユニットを取得
+      const selectHacked: Unit[] = candidate.filter(
+        unit => unit.owner.id !== player.id && unit.hasKeyword('セレクトハック')
+      );
+
+      const [choiceId] = await System.prompt(stack, player.id, {
+        title,
+        type: 'unit',
+        items: selectHacked.length > 0 ? selectHacked : candidate,
+      });
+
+      const chosen = candidate.find(unit => unit.id === choiceId) ?? candidate[0];
+      if (!chosen) throw new Error('対象のユニットが存在しません');
+
+      // クライアントにエフェクトを送信
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
+          },
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'select',
+              unitId: chosen.id,
+            },
+          },
+        })
+      );
+
+      selected.push(chosen);
+    }
+
+    if (selected.length > 0) return selected as [Unit, ...Unit[]];
+    throw new Error('選択すべきユニットが見つかりませんでした');
   }
 }
