@@ -79,7 +79,7 @@
     "typescript/no-implied-eval": "warn",
     "typescript/no-meaningless-void-operator": "warn",
     "typescript/no-misused-new": "warn",
-    "typescript/no-misused-spread": "warn",
+    "typescript/no-misused-spread": "off",
     "typescript/no-non-null-asserted-optional-chain": "warn",
     "typescript/no-redundant-type-constituents": "warn",
     "typescript/no-this-alias": "warn",
