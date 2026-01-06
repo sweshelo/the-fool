@@ -48,7 +48,7 @@ export const effects: CardEffects = {
 
   // 【戦士】ユニットがアタックした時効果
   onAttack: async (stack: StackWithCard<Unit>) => {
-    const attacker = stack.target as Unit;
+    const attacker = stack.target;
     // 攻撃者がユニットで、かつこの効果の所有者のユニットで、【戦士】であることを確認
     if (
       !(attacker instanceof Unit) ||
