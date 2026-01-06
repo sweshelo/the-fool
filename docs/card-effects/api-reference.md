@@ -737,7 +737,7 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
   // 1. 選択可能なユニットをフィルタリング
   // 2. 選択可能なユニットが存在しない場合は発動しない
-  if (EffectHelper.isSelectable(stack.core, 'opponents', owner)) return;
+  if (EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
   // 3. 効果表示
   await System.show(stack, 'カード名', '破壊');
