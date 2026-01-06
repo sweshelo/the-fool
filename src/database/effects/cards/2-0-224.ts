@@ -1,4 +1,4 @@
-import { System } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Card } from '@/package/core/class/card';
 
@@ -22,11 +22,7 @@ export const effects: CardEffects = {
 
     //【沈黙】ユニットの数だけループして除去
     for (const unit of silencedUnits) {
-      if (unit.delta) {
-        unit.delta = unit.delta.filter(
-          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '沈黙')
-        );
-      }
+      Effect.removeKeyword(stack, unit, '沈黙');
     }
   },
 };
