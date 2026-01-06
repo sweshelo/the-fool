@@ -1,5 +1,5 @@
 import type { Unit } from '@/package/core/class/card';
-import { Effect, System, EffectHelper } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {

@@ -5,7 +5,7 @@ import { EffectTemplate } from '../../classes/templates';
 import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
-  checkJoker: (player, _core) => {
+  checkJoker: (_player, _core) => {
     return true;
   },
 
