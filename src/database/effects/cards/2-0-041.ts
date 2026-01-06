@@ -5,12 +5,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // ターン開始時効果
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const units = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
+    const filter = () => true;
     if (units.length === 0) return;
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      units,
+      filter,
       'レベルを+1するユニットを選択',
       1
     );
@@ -47,16 +47,12 @@ export const effects: CardEffects = {
 
   // プレイヤーアタック時効果
   onPlayerAttack: async (stack: StackWithCard<Unit>) => {
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2;
     if (opponentUnits.length === 0) return;
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentUnits,
+      filter,
       '破壊するユニットを選択',
       1
     );

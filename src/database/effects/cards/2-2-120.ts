@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
     const opponent = owner.opponent;
-    if (opponent.field.length > 0) {
+    if (opponent.field_selectable) {
       await System.show(
         stack,
         'わんわんどりーみん',

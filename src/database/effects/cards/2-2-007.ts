@@ -13,12 +13,12 @@ export const effects: CardEffects = {
   // ■起動・ONIマーケティング
   isBootable(core: Core, self: Unit): boolean {
     const opponentUnits = self.owner.opponent.field;
-    return opponentUnits.length > 0;
+    return opponentUnits_selectable;
   },
 
   async onBootSelf(stack: StackWithCard<Unit>): Promise<void> {
     const opponentUnits = stack.processing.owner.opponent.field;
-    if (opponentUnits.length > 0) {
+    if (opponentUnits_selectable) {
       await System.show(stack, 'ONIマーケティング', 'ランダムで1体に【呪縛】');
       const [target] = EffectHelper.random(opponentUnits, 1);
       if (target) {
@@ -39,19 +39,14 @@ export const effects: CardEffects = {
       return;
     }
 
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-
-    if (candidates.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ONIタイムセール', '行動権を消費');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         '行動権を消費するユニットを選択'
       );
 

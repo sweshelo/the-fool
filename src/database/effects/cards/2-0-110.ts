@@ -3,20 +3,21 @@ import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const bushiUnits = EffectHelper.candidate(
+  const bushiUnitsFilter = unit =>
+    unit.owner.id === stack.processing.owner.id &&
+    (unit.catalog.species?.includes('武身') ?? false);
+  const bushiUnits_selectable = EffectHelper.isUnitSelectable(
     stack.core,
-    unit =>
-      unit.owner.id === stack.processing.owner.id &&
-      (unit.catalog.species?.includes('武身') ?? false),
+    bushiUnitsFilter,
     stack.processing.owner
   );
 
-  if (bushiUnits.length > 0) {
+  if (bushiUnits_selectable) {
     await System.show(stack, '光弓の煌星', '【破壊効果耐性】を与える');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      bushiUnits,
+      bushiUnitsFilter,
       '【破壊効果耐性】を与えるユニットを選択'
     );
 

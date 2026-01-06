@@ -11,23 +11,19 @@ export const effects: CardEffects = {
 
   // 召喚時の効果：固着を付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const targetCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (targetCandidates.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(
         stack,
         '巨象の粉塵炎＆固着',
         '2000ダメージ\n対戦相手の効果によって手札に戻らない'
       );
       // ユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targetCandidates,
+        filter,
         '2000ダメージを与えるユニットを選択'
       );
 
@@ -45,11 +41,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
-    const targetCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === opponent.id;
 
     // 自分の獣ユニットが出た時のみ処理
     if (
@@ -59,14 +51,14 @@ export const effects: CardEffects = {
       stack.target.id !== stack.processing.id
     ) {
       // 相手のユニットが存在する場合のみ処理
-      if (targetCandidates.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
         await System.show(stack, '巨象の粉塵炎', '2000ダメージ');
 
         // ユニットを1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           owner,
-          targetCandidates,
+          filter,
           '2000ダメージを与えるユニットを選択'
         );
 

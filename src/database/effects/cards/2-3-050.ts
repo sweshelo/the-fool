@@ -6,26 +6,28 @@ export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard<Card>): boolean => {
     // 相手のターン開始時かつ【魔導士】ユニットが存在する場合のみ発動
     const isOpponentTurn = stack.core.getTurnPlayer().id === stack.processing.owner.opponent.id;
-    const magicianUnits = EffectHelper.candidate(
+    const magicianUnitsFilter = unit =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('魔導士') ?? false);
+    const magicianUnits_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('魔導士') ?? false),
+      magicianUnitsFilter,
       stack.processing.owner
     );
 
-    return isOpponentTurn && magicianUnits.length > 0;
+    return isOpponentTurn && magicianUnits_selectable;
   },
 
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     const selfLevel = stack.processing.lv;
 
     // 【魔導士】ユニットを取得
-    const magicianUnits = EffectHelper.candidate(
+    const magicianUnitsFilter = unit =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('魔導士') ?? false);
+    const magicianUnits_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('魔導士') ?? false),
+      magicianUnitsFilter,
       stack.processing.owner
     );
 
@@ -56,7 +58,7 @@ export const effects: CardEffects = {
         const interceptCards = stack.processing.owner.trash.filter(
           card => card.catalog.type === 'intercept'
         );
-        if (interceptCards.length > 0) {
+        if (interceptCards_selectable) {
           const selectedCards = EffectHelper.random(interceptCards, 1);
           const selectedCard = selectedCards[0];
           if (selectedCard) {

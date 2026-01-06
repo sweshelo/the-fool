@@ -3,32 +3,22 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const effect = async (stack: StackWithCard<Unit>) => {
-  const myCandidates = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === stack.processing.owner.id,
-    stack.processing.owner
-  );
-
-  const opponentCandidates = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === stack.processing.owner.opponent.id,
-    stack.processing.owner
-  );
-
-  if (myCandidates.length > 0 && opponentCandidates.length > 0) {
+  const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
+  const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+  if (myCandidates_selectable && opponentCandidates_selectable) {
     await System.show(stack, 'バニシング・ポイント', 'お互いのユニットを消滅');
 
-    const [myTarget] = await EffectHelper.selectUnit(
+    const [myTarget] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      myCandidates,
+      filter,
       '消滅させる自分のユニットを選択'
     );
 
-    const [opponentTarget] = await EffectHelper.selectUnit(
+    const [opponentTarget] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentCandidates,
+      filter,
       '消滅させる相手のユニットを選択'
     );
 
@@ -52,19 +42,14 @@ export const effects: CardEffects = {
   // ■エリミネイト・ポイント
   // このユニットが消滅した時
   onDeleteSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-
-    if (candidates.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'エリミネイト・ポイント', '敵ユニットを消滅');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         '消滅させる相手のユニットを選択'
       );
 

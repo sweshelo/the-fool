@@ -62,7 +62,7 @@ export const effects: CardEffects = {
       const opponent = stack.processing.owner.opponent;
 
       // 対戦相手のトリガーゾーンにカードがない場合
-      if (opponent.trigger.length === 0 && opponent.field.length > 0) {
+      if (opponent.trigger.length === 0 && opponent.field_selectable) {
         await System.show(stack, 'ヘパイストスの炉炎', 'ユニットを破壊');
 
         try {
@@ -94,7 +94,7 @@ async function destroyAllTriggers(
   // 全プレイヤーのトリガーゾーンからカードを集める
   const allTriggers = allPlayers.flatMap(player => player.trigger.map(card => ({ card, player })));
 
-  if (allTriggers.length > 0) {
+  if (allTriggers_selectable) {
     await System.show(
       stack,
       `ヘパイストスの炉炎＆消滅効果耐性`,

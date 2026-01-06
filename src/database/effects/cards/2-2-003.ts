@@ -12,14 +12,9 @@ export const effects: CardEffects = {
   // ■選略・システムδ
   // このユニットがアタックした時
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
     // BP増加は常に可能
-    const isOption2Available = opponentUnits.length > 0;
+    const isOption2Available = opponentUnits_selectable;
 
     const [choice] = !isOption2Available
       ? ['1']
@@ -38,12 +33,12 @@ export const effects: CardEffects = {
         event: 'turnEnd',
         count: 1,
       });
-    } else if (choice === '2' && opponentUnits.length > 0) {
+    } else if (choice === '2' && opponentUnits_selectable) {
       await System.show(stack, 'システムδ', '3000ダメージ');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        opponentUnits,
+        filter,
         'ダメージを与えるユニットを選択'
       );
       Effect.damage(stack, stack.processing, target, 3000);

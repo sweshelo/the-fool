@@ -6,29 +6,25 @@ import master from '@/submodule/suit/catalog/catalog';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (candidate.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (candidate_selectable) {
       await System.show(stack, 'ヘスティアのハピネスクッキング♪', '4000ダメージ');
-      const [target1] = await EffectHelper.selectUnit(
+      const [target1] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidate,
+        filter,
         'ダメージを与えるユニットを選択して下さい',
         1
       );
       const result1 = Effect.damage(stack, stack.processing, target1, 4000, 'effect');
 
       const remainCandidate = candidate.filter(unit => unit.id !== target1.id);
-      if (result1 && remainCandidate.length > 0) {
+      if (result1 && remainCandidate_selectable) {
         await System.show(stack, 'ヘスティアのハピネスクッキング♪', '3000ダメージ');
-        const [target2] = await EffectHelper.selectUnit(
+        const [target2] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          remainCandidate,
+          filter,
           'ダメージを与えるユニットを選択して下さい',
           1
         );

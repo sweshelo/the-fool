@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 相手のトリガーゾーンにカードがあるか確認
-    if (opponent.trigger.length > 0) {
+    if (opponent.trigger_selectable) {
       await System.show(stack, '純真な心のままに', 'トリガーゾーンのカードを手札に戻す');
 
       // トリガーゾーンのカードを全て手札に戻す
@@ -36,22 +36,24 @@ export const effects: CardEffects = {
       // 相手のコスト2以下のユニットを取得
       const lowCostUnits = opponent.field.filter(unit => unit.catalog.cost <= 2);
 
-      if (lowCostUnits.length > 0) {
+      if (lowCostUnits_selectable) {
         // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
+        const targetCandidatesFilter = (unit: Unit) =>
+          unit.owner.id === opponent.id && unit.catalog.cost <= 2;
+        const targetCandidates_selectable = EffectHelper.isUnitSelectable(
           stack.core,
-          unit => unit.owner.id === opponent.id && unit.catalog.cost <= 2,
+          targetCandidatesFilter,
           owner
         );
 
-        if (targetCandidates.length > 0) {
+        if (targetCandidates_selectable) {
           await System.show(stack, '銀翼転身', 'ユニットを【複製】する');
 
           // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            targetCandidates,
+            targetCandidatesFilter,
             '【複製】するユニットを選択'
           );
 

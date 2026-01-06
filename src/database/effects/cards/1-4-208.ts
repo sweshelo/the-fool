@@ -12,17 +12,17 @@ export const effects: CardEffects = {
   // 召喚時効果
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対象を1体選択
-    const fieldUnits = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
+    const filter = (unit: Unit) => true;
 
     await System.show(
       stack,
       '裂帛の威令',
       `【消滅効果耐性】\n【悪魔】を1枚引く\nBP7000以上に【防御禁止】\nBP+3000`
     );
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      fieldUnits,
+      filter,
       'BPを+3000するユニットを選択'
     );
 
@@ -46,16 +46,16 @@ export const effects: CardEffects = {
       stack.processing.id !== stack.target.id
     ) {
       // プレイヤーのフィールド上のユニットを全て取得
-      const fieldUnits = stack.core.players.map(player => player.field).flat();
+      const filter = (unit: Unit) => true;
 
-      if (fieldUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '裂帛の威令', 'BP+3000');
 
         // 対象を1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          fieldUnits,
+          filter,
           'BP+3000するユニットを選択'
         );
 

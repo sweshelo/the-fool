@@ -7,18 +7,14 @@ export const effects: CardEffects = {
   // あなたがプレイヤーアタックを受けるたび
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.target?.id === stack.processing.owner.id) {
-      const candidates = EffectHelper.candidate(
-        stack.core,
-        unit => unit.lv < 3,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.lv < 3;
 
-      if (candidates.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'カウンター・クロック', 'レベル+1');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidates,
+          filter,
           'レベルを上げるユニットを選択'
         );
         Effect.clock(stack, stack.processing, target, 1);
@@ -32,13 +28,10 @@ export const effects: CardEffects = {
     // 自分のターン開始時は発動しない
     if (turnPlayer.id === stack.processing.owner.id) return;
 
-    const warriorUnits = EffectHelper.candidate(
-      stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('戦士') ?? false),
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('戦士') ?? false);
+    const warriorUnits = stack.core.field.filter(filter);
     if (warriorUnits.length === 0) return;
     await System.show(stack, '竜兵の底力', '【戦士】ユニットの基本BP+1000');
     warriorUnits.forEach(unit => {
@@ -56,19 +49,14 @@ export const effects: CardEffects = {
       !attacker.catalog.species?.includes('戦士')
     )
       return;
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (opponentUnits.length === 0) return;
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
     await System.show(stack, '竜兵の力', '【強制防御】を付与');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentUnits,
-      '【強制防御】を与えるユニットを選択',
-      1
+      filter,
+      '【強制防御】を与えるユニットを選択'
     );
     Effect.keyword(stack, stack.processing, target, '強制防御', { event: 'turnEnd', count: 1 });
   },

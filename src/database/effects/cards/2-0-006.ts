@@ -10,21 +10,15 @@ export const effects: CardEffects = {
   },
 
   onWinSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
-    if (candidate.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (candidate_selectable) {
       await System.show(stack, '剪定', '3000ダメージ');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: 'ダメージを与えるユニットを選択',
-        items: candidate,
-      });
-
-      const target = candidate.find(unit => unit.id === unitId);
+      const [unitId] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'ダメージを与えるユニットを選択'
+      );
       if (target) {
         Effect.damage(stack, stack.processing, target, 3000, 'effect');
       }
@@ -35,7 +29,7 @@ export const effects: CardEffects = {
     const targets = stack.processing.owner.opponent.field;
 
     if (stack.processing.lv === 3) {
-      if (targets.length > 0) {
+      if (targets_selectable) {
         await System.show(stack, '剪定', '敵全体に[対戦相手の手札×2000]ダメージ\n自身のレベル-2');
         targets.forEach(unit =>
           Effect.damage(

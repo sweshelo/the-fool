@@ -21,23 +21,22 @@ export const effects: CardEffects = {
       stack.source.catalog.species?.includes('忍者')
     ) {
       // 選択肢を提示
-      const [choice] =
-        stack.processing.owner.hand.length > 0
-          ? await System.prompt(stack, owner.id, {
-              type: 'option',
-              title: '選略・密偵勅命',
-              items: [
-                { id: '1', description: '手札を1枚捨て、ブロックされない効果を得る' },
-                { id: '2', description: 'BP+2000' },
-              ],
-            })
-          : ['2'];
+      const [choice] = stack.processing.owner.hand_selectable
+        ? await System.prompt(stack, owner.id, {
+            type: 'option',
+            title: '選略・密偵勅命',
+            items: [
+              { id: '1', description: '手札を1枚捨て、ブロックされない効果を得る' },
+              { id: '2', description: 'BP+2000' },
+            ],
+          })
+        : ['2'];
 
       // 選択した効果を発動
       switch (choice) {
         case '1':
           // ①：手札を1枚選んで捨て、ブロックされない効果を与える
-          if (owner.hand.length > 0) {
+          if (owner.hand_selectable) {
             await System.show(stack, '選略・密偵勅命', '手札を1枚捨て、ブロックされない効果を付与');
 
             // 手札を1枚選ぶ
@@ -85,22 +84,23 @@ export const effects: CardEffects = {
       const opponent = owner.opponent;
 
       // 相手のユニットが存在する場合のみ処理
-      if (opponent.field.length > 0) {
+      if (opponent.field_selectable) {
         // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
+        const targetCandidatesFilter = (unit: Unit) => unit.owner.id === opponent.id;
+        const targetCandidates_selectable = EffectHelper.isUnitSelectable(
           stack.core,
-          unit => unit.owner.id === opponent.id,
+          targetCandidatesFilter,
           owner
         );
 
-        if (targetCandidates.length > 0) {
+        if (targetCandidates_selectable) {
           await System.show(stack, '曲者討伐', '敵に2000ダメージ');
 
           // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            targetCandidates,
+            targetCandidatesFilter,
             'ダメージを与えるユニットを選択'
           );
 

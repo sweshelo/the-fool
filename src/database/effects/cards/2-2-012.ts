@@ -12,11 +12,11 @@ export const effects: CardEffects = {
   },
 
   isBootable: (core: Core, self: Unit) => {
+    const selfFilter = (unit: Unit) => unit.owner.id === self.owner.id;
+    const opponentFilter = (unit: Unit) => unit.owner.id === self.owner.opponent.id;
     return (
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.id, self.owner).length >
-        0 &&
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.opponent.id, self.owner)
-        .length > 0
+      EffectHelper.isUnitSelectable(core, selfFilter, self.owner) &&
+      EffectHelper.isUnitSelectable(core, opponentFilter, self.owner)
     );
   },
 
@@ -59,7 +59,7 @@ export const effects: CardEffects = {
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id &&
       stack.processing.owner.field.length <= 4 &&
-      candidate.length > 0
+      candidate_selectable
     ) {
       await System.show(stack, '天満ちる神の調べ', 'コスト3以下を【特殊召喚】');
       await Promise.all(

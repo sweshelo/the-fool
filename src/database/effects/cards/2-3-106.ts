@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     switch (self.lv) {
       // Lv1: 相手ユニット1体選び1000ダメージ→成功時自身にスピードムーブ
       case 1:
-        if (opponent.field.length > 0) {
+        if (opponent.field_selectable) {
           await System.show(
             stack,
             'スパイダー×スライサー',
@@ -34,7 +34,7 @@ export const effects: CardEffects = {
       case 2:
         // Lv2: 自身にスピードムーブ→相手ユニットランダム1体に2000ダメージ
         Effect.speedMove(stack, self);
-        if (opponent.field.length > 0) {
+        if (opponent.field_selectable) {
           await System.show(
             stack,
             'スパイダー×スライサー',
@@ -48,7 +48,7 @@ export const effects: CardEffects = {
         break;
       case 3:
         // Lv3: 相手ユニットランダム1体に7000ダメージ
-        if (opponent.field.length > 0) {
+        if (opponent.field_selectable) {
           await System.show(stack, 'スパイダー×スライサー', '敵ユニット1体に7000ダメージ');
           const [target] = EffectHelper.random(opponent.field, 1);
           if (target) {

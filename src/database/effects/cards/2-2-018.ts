@@ -49,7 +49,7 @@ export const effects: CardEffects = {
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id &&
-      stack.processing.owner.deck.length > 0
+      stack.processing.owner.deck_selectable
     ) {
       await System.show(stack, '闇を蝕む混沌', '捨札に5枚送る');
       EffectHelper.random(stack.processing.owner.deck, 5).forEach(card =>

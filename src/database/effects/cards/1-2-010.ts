@@ -24,23 +24,27 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 昆虫ユニット
-    const ownIncects = EffectHelper.candidate(
-      stack.core,
-      (unit: Unit) => !!unit.catalog.species?.includes('昆虫') && unit.owner.id === owner.id,
-      stack.processing.owner
-    );
+    const insectFilter = (unit: Unit) =>
+      !!unit.catalog.species?.includes('昆虫') && unit.owner.id === owner.id;
 
     // 相手フィールドのユニット
-    const opponentUnits = EffectHelper.candidate(
+    const opponentFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+
+    const hasInsects = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      insectFilter,
+      stack.processing.owner
+    );
+    const hasOpponents = EffectHelper.isUnitSelectable(
+      stack.core,
+      opponentFilter,
       stack.processing.owner
     );
 
     await System.show(
       stack,
       '魔王剣・渇望ノ生贄',
-      `BP+[【悪魔】×2000]${ownIncects.length > 0 ? '\n【昆虫】ユニットを1体選んで破壊' : ''}${ownIncects.length > 0 && opponentUnits.length > 0 ? '\n1体に5000ダメージ' : ''}`
+      `BP+[【悪魔】×2000]${hasInsects ? '\n【昆虫】ユニットを1体選んで破壊' : ''}${hasInsects && hasOpponents ? '\n1体に5000ダメージ' : ''}`
     );
 
     // BP増加
@@ -50,19 +54,19 @@ export const effects: CardEffects = {
       count: 1,
     });
 
-    if (ownIncects.length > 0) {
-      const [breakUnit] = await EffectHelper.selectUnit(
+    if (hasInsects) {
+      const [breakUnit] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        ownIncects,
+        insectFilter,
         '破壊する【昆虫】ユニットを選択'
       );
 
-      if (opponentUnits.length > 0) {
-        const [damageUnit] = await EffectHelper.selectUnit(
+      if (hasOpponents) {
+        const [damageUnit] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentUnits,
+          opponentFilter,
           'ダメージを与えるユニットを選択'
         );
         Effect.damage(stack, stack.processing, damageUnit, 5000, 'effect');

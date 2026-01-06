@@ -48,21 +48,22 @@ export const effects: CardEffects = {
   // ストロベリーファイア♪ - ユニット召喚時効果
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     // Find opponent units
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       const damage = stack.processing.lv >= 2 ? 4000 : 1000;
       await System.show(stack, 'ストロベリーファイア♪', `対戦相手のユニットに${damage}ダメージ`);
 
       // Select target unit
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         'ダメージを与えるユニットを選択して下さい'
       );
 

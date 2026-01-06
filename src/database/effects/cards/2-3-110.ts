@@ -15,7 +15,7 @@ export const effects: CardEffects = {
     // 回収対象となるカードをマージ
     const triggers: Card[] = [...trashTriggers, ...deletedTriggers];
 
-    if (triggers.length > 0) {
+    if (triggers_selectable) {
       await System.show(stack, 'スクラップ・ポリッシュ', '捨札と消滅からトリガーカードを2枚回収');
 
       // ランダムに最大2枚選出
@@ -28,21 +28,16 @@ export const effects: CardEffects = {
   // ■アージェント・アンガー
   // このユニットがオーバークロックした時、対戦相手のユニットを1体選ぶ。それを対戦相手のデッキに戻す。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
-    if (candidate.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (candidate_selectable) {
       await System.show(stack, 'アージェント・アンガー', 'デッキに戻す');
 
       try {
         // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.selectUnit(
+        const [selected] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidate,
+          filter,
           'アージェント・アンガー'
         );
 

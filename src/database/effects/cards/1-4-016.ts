@@ -49,20 +49,16 @@ export const effects: CardEffects = {
 
     if (isOpponentsTurn && EffectHelper.isBreakByEffect(stack)) {
       // 対戦相手のユニットが存在するか確認
-      const opponentUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-      if (opponentUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '天変雷舞・威神電震', 'ユニットの行動権を消費');
 
         // 対象を1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentUnits,
+          filter,
           '行動権を消費するユニットを選択'
         );
 

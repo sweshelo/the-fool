@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     const destroyCount = unitsToDestroy.length;
 
     // 条件確認：捨札にカードがあり、フィールドにユニットが2体以上
-    if (owner.trash.length > 0 && owner.field.length >= 2 && owner.deck.length > 10) {
+    if (owner.trash_selectable && owner.field.length >= 2 && owner.deck.length > 10) {
       await System.show(
         stack,
         '魂沌遊戯',
@@ -45,19 +45,14 @@ export const effects: CardEffects = {
   onBreak: async (stack: StackWithCard): Promise<void> => {
     // 味方ユニットが破壊された時
     if (stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id) {
-      const opponentUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      );
-
-      if (opponentUnits.length > 0) {
+      const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+      if (opponentUnits_selectable) {
         await System.show(stack, '魂沌遊戯', '【沈黙】とデスカウンター[1]を付与');
 
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentUnits,
+          filter,
           '【沈黙】とデスカウンター[1]を与えるユニットを選択'
         );
 

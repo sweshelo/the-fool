@@ -5,14 +5,10 @@ import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && !unit.active,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id && !unit.active;
     const life = stack.processing.owner.life.current;
 
-    if (candidate.length > 0) {
+    if (candidate_selectable) {
       await System.show(
         stack,
         'ロード・トゥ・ヴァルハラ',

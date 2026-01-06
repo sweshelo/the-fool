@@ -61,40 +61,31 @@ export const effects: CardEffects = {
 
     // 自分のターン終了時かつ自身がレベル1の場合に発動
     if (owner.id === turnPlayer.id && stack.processing.lv === 1) {
-      const ownUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === owner.id,
-        owner
-      );
+      const hasOwnUnits = EffectHelper.isUnitSelectable(stack.core, 'owns', owner);
+      const hasOpponentUnits = EffectHelper.isUnitSelectable(stack.core, 'opponents', owner);
 
-      const opponentUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === owner.opponent.id,
-        owner
-      );
-
-      // お互いにユニットがいる場合のみ処理
-      if (ownUnits.length > 0 || opponentUnits.length > 0) {
+      // お互いの最低どちらかユニットがいる場合のみ処理
+      if (hasOwnUnits || hasOpponentUnits) {
         await System.show(stack, '八咫鏡', 'お互いのユニットを消滅');
         const deleteTargets: Unit[] = [];
 
         // 自分のユニットを1体選択
-        if (ownUnits.length > 0) {
-          const [ownTarget] = await EffectHelper.selectUnit(
+        if (hasOwnUnits) {
+          const [ownTarget] = await EffectHelper.pickUnit(
             stack,
             owner,
-            ownUnits,
+            'owns',
             '消滅させる自分のユニットを選択'
           );
           deleteTargets.push(ownTarget);
         }
 
         // 相手のユニットを1体選択
-        if (opponentUnits.length > 0) {
-          const [opponentTarget] = await EffectHelper.selectUnit(
+        if (hasOpponentUnits) {
+          const [opponentTarget] = await EffectHelper.pickUnit(
             stack,
             owner,
-            opponentUnits,
+            'opponents',
             '消滅させる相手のユニットを選択'
           );
           deleteTargets.push(opponentTarget);

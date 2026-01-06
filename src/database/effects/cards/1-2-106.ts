@@ -16,20 +16,15 @@ export const effects: CardEffects = {
       case 1:
       case 2:
         // レベル1～2の効果: 対戦相手のユニットを1体選ぶ。それに5000ダメージを与える。
-        const oppUnitsLv12 = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === stack.processing.owner.opponent.id,
-          stack.processing.owner
-        );
+        const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-        if (oppUnitsLv12.length > 0) {
+        if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
           await System.show(stack, 'フレイムボルテックス', '5000ダメージ');
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            oppUnitsLv12,
-            'ダメージを与えるユニットを選択して下さい',
-            1
+            filter,
+            'ダメージを与えるユニットを選択して下さい'
           );
 
           Effect.damage(stack, stack.processing, target, 5000, 'effect');

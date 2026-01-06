@@ -12,7 +12,8 @@ export const effects: CardEffects = {
 
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
-    const units = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
+    const unitsFilter = (unit: Unit) => unit.owner.id === owner.id;
+    const units_selectable = EffectHelper.isUnitSelectable(stack.core, unitsFilter, owner);
 
     if (units.length === 0) return;
 
@@ -27,11 +28,12 @@ export const effects: CardEffects = {
     });
 
     // 対象ユニットを選択
-    const [targetId] = await System.prompt(stack, owner.id, {
-      type: 'unit',
-      title: 'レベルを変更するユニットを選択',
-      items: units,
-    });
+    const [targetId] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      unitsFilter,
+      'レベルを変更するユニットを選択'
+    );
 
     const target = owner.field.find(unit => unit.id === targetId);
     if (!target) return;

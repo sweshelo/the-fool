@@ -19,7 +19,7 @@ export const effects: CardEffects = {
     // 自分のターン終了時のみ発動
     if (owner.id === stack.core.getTurnPlayer().id) {
       // 消滅しているカードがあるか確認
-      if (owner.delete.length > 0) {
+      if (owner.delete_selectable) {
         await System.show(stack, '輪廻転書', '消滅しているカードを捨札に送る');
 
         // ランダムで1枚選ぶ
@@ -37,20 +37,22 @@ export const effects: CardEffects = {
 // 【沈黙】効果を持つ対戦相手のユニットを選んで破壊する共通ロジック
 async function destroySilencedUnit(stack: StackWithCard<Unit>): Promise<void> {
   // 対戦相手の【沈黙】状態のユニットを取得
-  const silencedUnits = EffectHelper.candidate(
+  const silencedUnitsFilter = (unit: Unit) =>
+    unit.owner.id !== stack.processing.owner.id && unit.hasKeyword('沈黙');
+  const silencedUnits_selectable = EffectHelper.isUnitSelectable(
     stack.core,
-    unit => unit.owner.id !== stack.processing.owner.id && unit.hasKeyword('沈黙'),
+    silencedUnitsFilter,
     stack.processing.owner
   );
 
-  if (silencedUnits.length > 0) {
+  if (silencedUnits_selectable) {
     await System.show(stack, '時流の審理', '【沈黙】を持つユニットを破壊');
 
     // ユニット選択
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      silencedUnits,
+      silencedUnitsFilter,
       '破壊するユニットを選択してください'
     );
 

@@ -15,15 +15,15 @@ export const effects: CardEffects = {
     // このユニット以外の自分のユニットをフィルタリング
     const targets = stack.processing.owner.field.filter(unit => unit.id !== stack.processing.id);
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(stack, 'ニュードチャージ', 'ユニットを手札に戻す\nCP+1\n自身のBP+1000');
 
       try {
         // ユニットを選択
-        const [selected] = await EffectHelper.selectUnit(
+        const [selected] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          targets,
+          filter,
           'ニュードチャージ'
         );
 
@@ -51,7 +51,7 @@ export const effects: CardEffects = {
     // 対戦相手のユニットがいるかチェック
     const message: string[] = [];
 
-    if (opponentUnits.length > 0) message.push('敵全体の基本BP-1000');
+    if (opponentUnits_selectable) message.push('敵全体の基本BP-1000');
     if (stack.processing.owner.field.length <= 4) message.push('コスト3ユニットを【特殊召喚】');
 
     if (message.length === 0) return;
@@ -70,7 +70,7 @@ export const effects: CardEffects = {
         card => card instanceof Unit && !(card instanceof Evolve) && card.catalog.cost === 3
       );
 
-      if (summonTargets.length > 0) {
+      if (summonTargets_selectable) {
         // ランダムで1体選択
         const [target] = EffectHelper.random(summonTargets);
 

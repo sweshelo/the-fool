@@ -9,18 +9,14 @@ export const effects: CardEffects = {
   },
 
   onAttackSelf: async (stack: StackWithCard<Unit>) => {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     if (candidates.length === 0 || stack.processing.owner.joker.gauge < 20) return;
     await System.show(stack, 'Heart Heat Beat', 'ジョーカーゲージを20%減少\n手札に戻す');
     stack.processing.owner.joker.gauge -= 20;
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      candidates,
+      filter,
       '手札に戻すユニットを選択してください',
       1
     );

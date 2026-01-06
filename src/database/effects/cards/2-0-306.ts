@@ -1,3 +1,4 @@
+import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { StackWithCard } from '../classes/types';
 
@@ -17,9 +18,10 @@ export const effects = {
   },
 
   onAttackSelf: async (stack: StackWithCard) => {
-    const opponents = EffectHelper.candidate(
+    const opponentsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const opponentsSelectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      opponentsFilter,
       stack.processing.owner
     );
     const isCardsInTrigger =
@@ -30,7 +32,7 @@ export const effects = {
       await System.show(
         stack,
         '集炎の魔陣',
-        `トリガーゾーンを1枚破壊${opponents.length > 0 ? '\n3000ダメージ' : ''}`
+        `トリガーゾーンを1枚破壊${opponentsSelectable ? '\n3000ダメージ' : ''}`
       );
 
       EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
@@ -40,16 +42,14 @@ export const effects = {
         Effect.move(stack, stack.processing, card, 'trash')
       );
 
-      if (opponents.length > 0) {
-        const owner = stack.processing.owner;
-        const [target] = await System.prompt(stack, owner.id, {
-          title: 'ダメージを与えるユニットを選択',
-          type: 'unit',
-          items: opponents,
-        });
-        const unit = stack.processing.owner.opponent.field.find(unit => unit.id === target);
-        if (!unit) throw new Error('存在しないユニットが選択されました');
-        Effect.damage(stack, stack.processing, unit, 3000, 'effect');
+      if (opponentsSelectable) {
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          opponentsFilter,
+          'ダメージを与えるユニットを選んで下さい'
+        );
+        Effect.damage(stack, stack.processing, target, 3000, 'effect');
       }
     }
   },

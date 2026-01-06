@@ -6,38 +6,40 @@ export const effects: CardEffects = {
   // バグ・サンシャイン：フィールドに出た時の効果
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分の【昆虫】ユニットと対戦相手のユニットを選択
-    const ownInsectUnits = EffectHelper.candidate(
+    const ownInsectUnitsFilter = unit =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('昆虫') || false) &&
+      unit.id !== stack.processing.id;
+    const ownInsectUnits_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('昆虫') || false) &&
-        unit.id !== stack.processing.id,
+      ownInsectUnitsFilter,
       stack.processing.owner
     );
 
-    const enemyUnits = EffectHelper.candidate(
+    const enemyUnitsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    const enemyUnits_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
+      enemyUnitsFilter,
       stack.processing.owner
     );
 
     // どちらも選択可能なユニットがある場合のみ発動
-    if (ownInsectUnits.length > 0 && enemyUnits.length > 0) {
+    if (ownInsectUnits_selectable && enemyUnits_selectable) {
       await System.show(stack, 'バグ・サンシャイン', '【昆虫】ユニットを破壊\n5000ダメージ');
 
       // 自分の【昆虫】ユニットを選択
-      const [insectUnit] = await EffectHelper.selectUnit(
+      const [insectUnit] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        ownInsectUnits,
+        ownInsectUnitsFilter,
         '破壊する【昆虫】ユニットを選択'
       );
 
       // 対戦相手のユニットを選択
-      const [enemyUnit] = await EffectHelper.selectUnit(
+      const [enemyUnit] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        enemyUnits,
+        enemyUnitsFilter,
         'ダメージを与えるユニットを選択'
       );
 
@@ -59,19 +61,20 @@ export const effects: CardEffects = {
       brokenUnit.id !== stack.processing.id &&
       (brokenUnit.catalog.species?.includes('昆虫') || false)
     ) {
-      const targets = EffectHelper.candidate(
+      const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+      const targets_selectable = EffectHelper.isUnitSelectable(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.opponent.id,
+        targetsFilter,
         stack.processing.owner
       );
 
-      if (targets.length > 0) {
+      if (targets_selectable) {
         await System.show(stack, 'バグ・ジャミング', '【防御禁止】を付与');
 
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          targets,
+          targetsFilter,
           '【防御禁止】を与えるユニットを選択'
         );
 

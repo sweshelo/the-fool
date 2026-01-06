@@ -8,7 +8,7 @@ export const effects: CardEffects = {
   isBootable: (core, self: Unit): boolean => {
     const opponentInactiveUnits = self.owner.opponent.field.filter(unit => !unit.active);
 
-    return opponentInactiveUnits.length > 0;
+    return opponentInactiveUnits_selectable;
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -16,7 +16,7 @@ export const effects: CardEffects = {
       unit => !unit.active
     );
 
-    if (opponentInactiveUnits.length > 0) {
+    if (opponentInactiveUnits_selectable) {
       await System.show(stack, '一斉掃射', '行動済の敵全体に2000ダメージ');
 
       // 対戦相手の全ての行動済ユニットに2000ダメージを与える
@@ -34,23 +34,24 @@ export const effects: CardEffects = {
 
     if (hasFieldSpace) {
       // コスト3以下の機械ユニットを検索
-      const machineUnits = EffectHelper.candidate(
+      const machineUnitsFilter = unit =>
+        unit instanceof Unit &&
+        unit.catalog.cost <= 3 &&
+        (unit.catalog.species?.includes('機械') ?? false);
+      const machineUnits_selectable = EffectHelper.isUnitSelectable(
         stack.core,
-        unit =>
-          unit instanceof Unit &&
-          unit.catalog.cost <= 3 &&
-          (unit.catalog.species?.includes('機械') ?? false),
+        machineUnitsFilter,
         stack.processing.owner
       );
 
-      if (machineUnits.length > 0) {
+      if (machineUnits_selectable) {
         await System.show(stack, '救援部隊投入', 'コスト3以下の【機械】を【複製】');
 
         // ユーザーに選択させる
-        const [choice] = await EffectHelper.selectUnit(
+        const [choice] = await EffectHelper.pickUnit(
           stack,
           owner,
-          machineUnits,
+          machineUnitsFilter,
           '【複製】する【機械】ユニットを選択'
         );
 

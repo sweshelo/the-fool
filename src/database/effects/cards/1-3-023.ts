@@ -11,18 +11,14 @@ export const effects: CardEffects = {
 
   onBootSelf: async (stack: StackWithCard<Unit>) => {
     // 相手のフィールドにユニットが存在するか確認
-    const selectableUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (selectableUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '冥界エール', '自身を破壊\n相手ユニットのレベル+1');
-      const [selectedUnit] = await EffectHelper.selectUnit(
+      const [selectedUnit] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        selectableUnits,
+        filter,
         'レベル+1するユニットを選んでください'
       );
 
@@ -35,11 +31,7 @@ export const effects: CardEffects = {
 
   isBootable: (core: Core, self: Unit) => {
     // 相手のフィールドにユニットが存在するか確認
-    const selectableUnits = EffectHelper.candidate(
-      core,
-      unit => unit.owner.id !== self.owner.id,
-      self.owner
-    );
-    return selectableUnits.length > 0;
+    const filter = (unit: Unit) => unit.owner.id !== self.owner.id;
+    return EffectHelper.isUnitSelectable(core, filter, self.owner);
   },
 };

@@ -7,20 +7,15 @@ export const effects: CardEffects = {
   // 召喚時に【神託】を付与し、相手ユニットを1体選んで手札に作成
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const opponent = stack.processing.owner.opponent;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      stack.processing.owner
-    );
-
-    if (candidates.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id === opponent.id;
+    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
       // 効果テキストをまとめて表示
       await System.show(stack, '包み込む白翼', '【神託】を付与\n手札に作成');
       // 相手ユニットを1体選んで手札に作成
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         '手札に作成するユニットを選んでください',
         1
       );

@@ -7,12 +7,7 @@ import { Color } from '@/submodule/suit/constant/color';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     const [choice] =
       candidate.length === 0
         ? ['1']

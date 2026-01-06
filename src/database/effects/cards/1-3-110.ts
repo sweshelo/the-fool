@@ -33,11 +33,7 @@ export const effects: CardEffects = {
   // アタック時の効果
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
     // 自分の機械ユニットをカウント
     const machineUnits = owner.field.filter(
@@ -45,14 +41,17 @@ export const effects: CardEffects = {
     );
 
     // 機械ユニットが3体以上いる場合
-    if (machineUnits.length >= 3 && candidate.length > 0) {
+    if (
+      machineUnits.length >= 3 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
+    ) {
       await System.show(stack, '雷式機工甲冑', '敵ユニットを手札に戻す');
 
       // 対戦相手のユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        candidate,
+        filter,
         '手札に戻すユニットを選択'
       );
 
@@ -71,9 +70,9 @@ export const effects: CardEffects = {
     // 対戦相手のターン終了時のみ発動
     if (opponent.id === stack.core.getTurnPlayer().id) {
       // フィールド上の行動権消費状態のユニットをフィルタリング
-      const inactiveUnits = [...owner.field, ...opponent.field].filter(unit => !unit.active);
+      const filter = (unit: Unit) => !unit.active;
 
-      if (inactiveUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
         // 自分の機械ユニットをカウント
         const machineUnits = owner.field.filter(
           unit => Array.isArray(unit.catalog.species) && unit.catalog.species.includes('機械')
@@ -86,10 +85,10 @@ export const effects: CardEffects = {
           await System.show(stack, '雷式機工甲冑', `行動済ユニットに[【機械】×2000]ダメージ`);
 
           // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            inactiveUnits,
+            filter,
             `ダメージを与えるユニットを選択`
           );
 

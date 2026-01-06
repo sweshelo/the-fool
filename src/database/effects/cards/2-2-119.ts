@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     // CPが1以上あるか確認
     const hasSufficientCP = self.owner.cp.current >= 1;
     // 対戦相手のユニットが存在するか確認
-    const hasOpponentUnits = self.owner.opponent.field.length > 0;
+    const hasOpponentUnits = self.owner.opponent.field_selectable;
     // 1ターンに1度の制限をチェック
     const notUsedThisTurn = !core.histories.some(
       history => history.card.id === self.id && history.action === 'boot'
@@ -25,7 +25,7 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 対戦相手のユニットが存在するか確認
-    if (opponent.field.length > 0) {
+    if (opponent.field_selectable) {
       await System.show(stack, 'カムランの決戦', 'CP-1\n敵ユニット1体に【強制防御】');
 
       try {
@@ -54,7 +54,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const trashCards = [...owner.trash]; // コピーを作成して操作
 
-    if (trashCards.length > 0) {
+    if (trashCards_selectable) {
       await System.show(
         stack,
         '緋翠のクラレント＆貫通',

@@ -7,18 +7,14 @@ export const effects: CardEffects = {
   // あなたがプレイヤーアタックを受けるたび
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.target?.id === stack.processing.owner.id) {
-      const candidates = EffectHelper.candidate(
-        stack.core,
-        unit => unit.lv < 3,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.lv < 3;
 
-      if (candidates.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'カウンター・クロック', 'レベル+1');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidates,
+          filter,
           'レベルを上げるユニットを選択'
         );
         Effect.clock(stack, stack.processing, target, 1);

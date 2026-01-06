@@ -7,12 +7,7 @@ export const effects: CardEffects = {
   // あなたの【機械】ユニットがフィールドに出た時、対戦相手のユニットを1体選ぶ。それに2000ダメージを与える。
   onDrive: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     // 召喚されたユニットが機械タイプかつ自分の所有ユニットかチェック
     if (
       stack.target instanceof Unit &&
@@ -21,14 +16,14 @@ export const effects: CardEffects = {
       stack.target.owner.id === owner.id
     ) {
       // 対戦相手のフィールドにユニットがいるか確認
-      if (candidate.length > 0) {
+      if (candidate_selectable) {
         await System.show(stack, 'マシン・バースト', '2000ダメージ');
 
         // 対戦相手のユニットを1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           owner,
-          candidate,
+          filter,
           '2000ダメージを与えるユニットを選択'
         );
 

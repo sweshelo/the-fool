@@ -33,16 +33,17 @@ export const effects: CardEffects = {
     // 自分のターン開始時効果
     else if (isPlayersTurn) {
       // 対戦相手の行動済みユニットを検索
-      const inactiveUnits = stack.processing.owner.opponent.field.filter(unit => !unit.active);
+      const filter = (unit: Unit) =>
+        unit.owner.id === stack.processing.owner.opponent.id && !unit.active;
 
-      if (inactiveUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '永縛の神威', '行動済ユニットを1体消滅');
 
         // 対象を1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          inactiveUnits,
+          filter,
           '消滅させる行動済ユニットを選択'
         );
 

@@ -5,20 +5,11 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 選略効果
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const fieldUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
     const magicianUnits = fieldUnits.filter(unit => unit.catalog.species?.includes('魔導士'));
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     const isOption1Selectable = stack.processing.owner.field.length < 5;
-    const isOption2Selectable = stack.processing.owner.opponent.field.length > 0;
+    const isOption2Selectable = stack.processing.owner.opponent.field_selectable;
 
     // どちらか選べる場合のみ
     if (isOption1Selectable || isOption2Selectable) {
@@ -44,7 +35,7 @@ export const effects: CardEffects = {
               card.catalog.species?.includes('魔導士') &&
               card.catalog.type === 'unit'
           ) as Unit[];
-          if (deck.length > 0) {
+          if (deck_selectable) {
             const [randomCard] = EffectHelper.random(deck, 1);
             await System.show(
               stack,

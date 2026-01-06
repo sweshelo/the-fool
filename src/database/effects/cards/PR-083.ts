@@ -16,12 +16,9 @@ export const effects: CardEffects = {
   },
 
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp,
-      stack.processing.owner
-    );
-    if (candidate.length > 0) {
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp;
+    if (candidate_selectable) {
       await System.show(stack, '炎王獣の大咆哮', 'ユニットを破壊\n1ライフダメージ');
       const [target] = await System.prompt(stack, stack.processing.owner.id, {
         title: '破壊するユニットを選択',

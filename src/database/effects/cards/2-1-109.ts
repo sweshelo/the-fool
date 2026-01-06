@@ -8,12 +8,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing as Unit;
     const owner = self.owner;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.opponent.id,
-      owner
-    );
-
+    const filter = (unit: Unit) => unit.owner.id === owner.opponent.id;
     if (candidate.length === 0 || owner.hand.length === 0) return;
 
     // 選択肢を表示
@@ -51,10 +46,10 @@ export const effects: CardEffects = {
       }
 
       // 対戦相手のユニットを1体選んで消滅
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        candidate,
+        filter,
         '消滅させるユニットを選択して下さい',
         1
       );
@@ -72,7 +67,7 @@ export const effects: CardEffects = {
 
     // 捨札にある消滅しているカードを探す
     const deletedCards = owner.trash.filter(card => owner.delete.includes(card));
-    if (deletedCards.length > 0) {
+    if (deletedCards_selectable) {
       await System.show(stack, '銀弾装填', '消滅から1枚回収');
 
       // ランダムで1枚選んで手札に加える

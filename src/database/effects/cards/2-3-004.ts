@@ -11,14 +11,14 @@ export const effects: CardEffects = {
     // 自分のフィールド上のユニット
     const friendlyUnits = stack.processing.owner.field;
 
-    if (friendlyUnits.length > 0) {
+    if (friendlyUnits_selectable) {
       await System.show(stack, '起動・アウトレイジ', '【スピードムーブ】と【防御禁止】を付与');
 
       // ユニット選択
-      const [targetUnit] = await EffectHelper.selectUnit(
+      const [targetUnit] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        friendlyUnits,
+        friendlyUnitsFilter,
         '【スピードムーブ】と【防御禁止】を与えるユニットを選択'
       );
 
@@ -80,7 +80,7 @@ export const effects: CardEffects = {
       unit => unit.catalog.species?.includes('昆虫') // 昆虫ユニット
     );
 
-    if (insectUnits.length > 0) {
+    if (insectUnits_selectable) {
       await System.show(
         stack,
         '鍬獄のカンニバル',
@@ -88,10 +88,10 @@ export const effects: CardEffects = {
       );
 
       // 破壊する昆虫ユニットを選択
-      const [targetInsect] = await EffectHelper.selectUnit(
+      const [targetInsect] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        insectUnits,
+        insectUnitsFilter,
         '破壊する【昆虫】ユニットを選択'
       );
 

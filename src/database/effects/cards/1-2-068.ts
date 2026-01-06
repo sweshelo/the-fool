@@ -21,34 +21,29 @@ export const effects: CardEffects = {
     const maxCount = stack.processing.lv === 3 ? 3 : 2;
 
     await System.show(stack, '人身御供', `味方全体を消滅\n敵${maxCount}体を選び消滅`);
-    const units = EffectHelper.candidate(
-      stack.core,
-      (unit: Unit) => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
     // ユニットの選択を実施する
-    const count = Math.min(units.length, maxCount);
-    const selection: string[] = [];
+    const selection: Unit[] = [];
 
-    for (let i = 0; i < count; i++) {
-      const [unit] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: '消滅させるユニットを選択',
-        items: units.filter(unit => !selection.includes(unit.id)),
-      });
+    for (let i = 0; i < maxCount; i++) {
+      const remainingFilter = (unit: Unit) =>
+        unit.owner.id !== stack.processing.owner.id &&
+        !selection.some(selected => selected.id === unit.id);
 
-      if (unit) selection.push(unit);
+      if (!EffectHelper.isUnitSelectable(stack.core, remainingFilter, stack.processing.owner))
+        break;
+
+      const [unit] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        remainingFilter,
+        '消滅させるユニットを選択'
+      );
+      selection.push(unit);
     }
 
-    // 対戦相手のフィールドから対象のユニットを特定
-    const opponentUnits = stack.core.players
-      .find(player => player.id === stack.source.id)
-      ?.field.filter(unit => selection.includes(unit.id));
-    if (!opponentUnits || opponentUnits.length === 0)
-      throw new Error('選択された対象ユニットが見つかりませんでした');
-
-    [...stack.processing.owner.field, ...opponentUnits].forEach(unit =>
+    [...stack.processing.owner.field, ...selection].forEach(unit =>
       Effect.delete(stack, stack.processing, unit)
     );
   },
