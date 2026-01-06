@@ -18,7 +18,7 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    const isOption1Available = true; // BP増加は常に可能
+    // BP増加は常に可能
     const isOption2Available = opponentUnits.length > 0;
 
     const [choice] = !isOption2Available

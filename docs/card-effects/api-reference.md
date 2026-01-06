@@ -322,51 +322,56 @@ Effect.activate(stack, self, target, false);
 
 ### メソッド一覧
 
-#### `EffectHelper.candidate()`
+#### `EffectHelper.isUnitSelectable()`
 
-【セレクトハック】や【加護】を考慮して、選択可能なユニットをフィルタリングします。
+ユニットを選択する効果を発動可能かチェックします。
 
 ```typescript
-static candidate(
+static isUnitSelectable(
   core: Core,
-  filter: (unit: Unit) => boolean,
+  filter: ((unit: Unit) => boolean) | 'owns' | 'opponents' | 'all',
   selector: Player
-): Unit[]
+): boolean
 ```
 
 **パラメータ:**
 
 - `core` - コアオブジェクト
-- `filter` - 独自のフィルタ関数
+- `filter` - 独自のフィルタ関数 または フィルタキーワード
 - `selector` - 選択を行うプレイヤー
 
 **使用例:**
 
 ```typescript
-// 対戦相手のLv3以上のユニットを選択可能にする
-const candidates = EffectHelper.candidate(
+// 対戦相手のLv3以上のユニットを選択可能か調べる
+if(EffectHelper.isUnitSelectable(
   stack.core,
   unit => unit.owner.id === opponent.id && unit.lv >= 3,
   owner
-);
+)) {
+  // ...
+};
 ```
 
 **自動処理:**
 
 - 【加護】を持つユニットを除外
-- 【セレクトハック】を持つユニットがいる場合、そのユニットのみを返す
 
 ---
 
-#### `EffectHelper.selectUnit()`
+#### `EffectHelper.pickUnit()`
 
 フィールド上のユニットから1体以上を選択します。
 
+> [!Important]
+> 以前存在した `EffectHelper.selectUnit()` は現在非推奨です。これは、`candidate()` + `selectUnit()` では、複数のユニットを選択する際に【セレクトハック】を十分に考慮できていないためです。
+> `isUnitSelectable()` + `pickUnit()` を使用して下さい。
+
 ```typescript
-static async selectUnit(
+static async pickUnit(
   stack: Stack,
   player: Player,
-  targets: Unit[],
+  filter: UnitPickFilter,
   title: string,
   count: number = 1
 ): Promise<[Unit, ...Unit[]]>
@@ -376,30 +381,24 @@ static async selectUnit(
 
 - `stack` - スタック
 - `player` - 選択を行うプレイヤー
-- `targets` - 選択候補のユニット配列
+- `filter` - 選択を絞り込むフィルター または フィルタキーワード
 - `title` - UI に表示するメッセージ
 - `count` - 選択するユニット数（デフォルト: 1）
 
 **使用例:**
 
 ```typescript
-// 選択可能なユニットをフィルタリング
-const candidates = EffectHelper.candidate(
-  stack.core,
-  unit => unit.owner.id === opponent.id,
-  owner
-);
-
+// 選択可能なユニットが存在するかチェック
 // 選択可能なユニットが存在しない場合は発動しない
-if (candidates.length === 0) return;
+if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
 await System.show(stack, 'カード名', '破壊');
 
 // ユニットを選択
-const [target] = await EffectHelper.selectUnit(
+const [target] = await EffectHelper.pickUnit(
   stack,
   owner,
-  candidates,
+  'opponents',
   '破壊するユニットを選択'
 );
 
@@ -617,7 +616,7 @@ static async prompt(
 **使用例:**
 
 ```typescript
-// ユニット選択（EffectHelper.selectUnit を推奨）
+// ユニット選択（EffectHelper.pickUnit を推奨）
 const [unitId] = await System.prompt(stack, owner.id, {
   title: '対象を選択',
   type: 'unit',
@@ -737,23 +736,17 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
   const opponent = owner.opponent;
 
   // 1. 選択可能なユニットをフィルタリング
-  const candidates = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === opponent.id && unit.lv >= 2,
-    owner
-  );
-
   // 2. 選択可能なユニットが存在しない場合は発動しない
-  if (candidates.length === 0) return;
+  if (EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
   // 3. 効果表示
   await System.show(stack, 'カード名', '破壊');
 
   // 4. ユニット選択
-  const [target] = await EffectHelper.selectUnit(
+  const [target] = await EffectHelper.pickUnit(
     stack,
     owner,
-    candidates,
+    'opponents',
     '破壊するユニットを選択'
   );
 
