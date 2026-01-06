@@ -390,7 +390,7 @@ static async pickUnit(
 ```typescript
 // 選択可能なユニットが存在するかチェック
 // 選択可能なユニットが存在しない場合は発動しない
-if (EffectHelper.isSelectable(stack.core, 'opponents', stack.processing.owner)) return;
+if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
 await System.show(stack, 'カード名', '破壊');
 
