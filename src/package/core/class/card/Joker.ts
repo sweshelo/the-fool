@@ -30,9 +30,7 @@ export class Joker extends Card {
       const core = player.core;
 
       // このターンに使用済みならば呼び出し不可
-      const hasActivatedJoker = core.histories.find(
-        history => history.action === 'drive' && history.card.catalog.type === 'joker'
-      );
+      const hasActivatedJoker = core.histories.find(history => history.action === 'joker');
 
       // ジョーカーゲージ量チェック (>の演算子を利用)
       const hasJokerGauge =
