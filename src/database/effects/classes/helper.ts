@@ -135,7 +135,7 @@ export class EffectHelper {
 
   /**
    * 与えられた Card[] で構成されたリストを提示し ユーザに1つを選ばせる
-   * フィールド上のユニットを選択する場合は selectUnit を利用する
+   * フィールド上のユニットを選択する場合は pickUnit を利用する
    * @param stack stack
    * @param player 対象を選択するプレイヤー
    * @param targets 対象の候補

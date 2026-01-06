@@ -154,17 +154,17 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
   const owner = stack.processing.owner;
   const opponent = owner.opponent;
 
-  // 条件確認：対戦相手のフィールドにユニットが存在するか
-  if (opponent.field.length === 0) return;
+  // 条件確認：選択可能なユニットが存在するか
+  if (!EffectHelper.isSelectable(stack.core, 'opponents', owner)) return;
 
   // 効果表示
   await System.show(stack, 'カード名', '手札に戻す');
 
   // ユニット選択
-  const [target] = await EffectHelper.selectUnit(
+  const [target] = await EffectHelper.pickUnit(
     stack,
     owner,
-    opponent.field,
+    'opponents',
     '手札に戻すユニットを選択'
   );
 
@@ -304,27 +304,24 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 ユニットを選ぶ効果では、以下の手順を踏みます：
 
-1. **`EffectHelper.candidate()`** で選択可能なユニットをフィルタリング
-2. **`EffectHelper.selectUnit()`** でユニットを選択
+1. **`EffectHelper.isSelectable()`** で選択可能なユニットが存在するかチェック
+2. **`EffectHelper.pickUnit()`** でユニットを選択
 
 ```typescript
-// 選択可能なユニットをフィルタ
-const candidates = EffectHelper.candidate(
+// 選択可能なユニットが存在するかチェック
+if (!EffectHelper.isSelectable(
   stack.core,
   unit => unit.owner.id === opponent.id && unit.lv >= 3,
   owner
-);
-
-// 選択可能なユニットが存在しない場合は発動しない
-if (candidates.length === 0) return;
+)) return;
 
 await System.show(stack, 'カード名', '破壊');
 
 // ユニットを選択
-const [target] = await EffectHelper.selectUnit(
+const [target] = await EffectHelper.pickUnit(
   stack,
   owner,
-  candidates,
+  unit => unit.owner.id === opponent.id && unit.lv >= 3,
   '破壊するユニットを選択'
 );
 
@@ -499,11 +496,11 @@ const opponent = owner.opponent;
 
 ```typescript
 // 相手のフィールドにLv3以上のユニットが存在するか確認
-const candidates = EffectHelper.candidate(
+if (!EffectHelper.isSelectable(
   stack.core,
   unit => unit.owner.id === opponent.id && unit.lv >= 3,
   owner
-);
+)) return;
 ```
 
 ## 次のステップ
