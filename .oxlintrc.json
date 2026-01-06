@@ -71,6 +71,7 @@
     "typescript/await-thenable": "warn",
     "typescript/no-array-delete": "warn",
     "typescript/no-base-to-string": "warn",
+    "typescript/no-deprecated": "error",
     "typescript/no-duplicate-enum-values": "warn",
     "typescript/no-duplicate-type-constituents": "warn",
     "typescript/no-extra-non-null-assertion": "warn",
