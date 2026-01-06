@@ -197,4 +197,13 @@ export class EffectHelper {
         return player.joker.gauge > 80;
     }
   }
+
+  /**
+   * 対象プレイヤーのフィールドに【ウィルス】ユニットを【特殊召喚】可能であるかを調べる
+   * @param player 調査対象のプレイヤー
+   * @returns boolean
+   */
+  static isVirusInjectable(player: Player) {
+    return player.field.filter(unit => !unit.catalog.species?.includes('ウィルス')).length < 5;
+  }
 }
