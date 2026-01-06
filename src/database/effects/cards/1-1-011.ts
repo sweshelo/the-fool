@@ -25,29 +25,19 @@ export const effects: CardEffects = {
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 自分のユニットが存在するか確認
-    if (owner.field.length > 0) {
+    // 自分のユニットが選択できるか確認
+    if (EffectHelper.isUnitSelectable(stack.core, 'owns', owner)) {
       await System.show(stack, 'インフィニティーバースト', 'ユニットの行動権を回復');
-
-      // 対象を選択可能なユニットを取得
-      const targetCandidates = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === owner.id,
-        owner
+      // ユニットを1体選択
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'owns',
+        '行動権を回復するユニットを選択'
       );
 
-      if (targetCandidates.length > 0) {
-        // ユニットを1体選択
-        const [target] = await EffectHelper.selectUnit(
-          stack,
-          owner,
-          targetCandidates,
-          '行動権を回復するユニットを選択'
-        );
-
-        // 行動権を回復
-        Effect.activate(stack, stack.processing, target, true);
-      }
+      // 行動権を回復
+      Effect.activate(stack, stack.processing, target, true);
     }
   },
 
