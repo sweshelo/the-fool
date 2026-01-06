@@ -218,7 +218,7 @@ export class EffectHelper {
   static isUnitSelectable(core: Core, filter: UnitPickFilter, selector: Player): boolean {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
     // フィルタ関数を取得
-    const filterMethod = () => {
+    const getFilterMethod = () => {
       switch (filter) {
         case 'owns':
           return (unit: Unit) => unit.owner.id === selector.id;
@@ -234,7 +234,7 @@ export class EffectHelper {
       .map(p => p.field)
       .flat()
       .filter(exceptBlessing)
-      .some(filterMethod);
+      .some(getFilterMethod());
   }
 
   /**
@@ -257,7 +257,7 @@ export class EffectHelper {
     const selected: Unit[] = [];
 
     // フィルタ関数を取得
-    const filterMethod = () => {
+    const getFilterMethod = () => {
       switch (filter) {
         case 'owns':
           return (unit: Unit) => unit.owner.id === player.id;
@@ -274,7 +274,7 @@ export class EffectHelper {
       const candidate: Unit[] = stack.core.players
         .flatMap(player => player.field)
         .filter(unit => !selected.includes(unit) && unit.hasKeyword('加護'))
-        .filter(filterMethod);
+        .filter(getFilterMethod());
       if (candidate.length <= 0) break;
 
       // 選択者と所有者が異なる、セレクトハックを持つユニットを取得
