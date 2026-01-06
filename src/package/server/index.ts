@@ -11,7 +11,15 @@ import type {
 import { ErrorCode, ErrorMessage } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
 
-class ServerError extends Error {}
+class ServerError extends Error {
+  constructor(
+    message: string,
+    public errorCode: ErrorCode = ErrorCode.SYS_INTERNAL_ERROR
+  ) {
+    super(message);
+    this.name = 'ServerError';
+  }
+}
 
 export class Server {
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
@@ -138,15 +146,38 @@ export class Server {
       this.handleMessage(ws, message);
     } catch (error) {
       console.error('Invalid message format:', error);
+
+      // JSONパースエラーの場合は適切なエラーコードを送信
+      const errorPayload: ErrorPayload = {
+        type: 'Error',
+        errorCode: ErrorCode.CONN_INVALID_MESSAGE,
+        message: '無効なメッセージ形式です',
+        details: error instanceof Error ? { error: error.message } : undefined,
+        timestamp: Date.now(),
+      };
+
+      ws.send(
+        JSON.stringify({
+          action: {
+            handler: 'client',
+            type: 'error',
+          },
+          payload: errorPayload,
+        })
+      );
     }
   }
 
   private getRoom(client: ServerWebSocket) {
     const roomId = this.clientRooms.get(client);
-    if (!roomId) throw new ServerError('参加していないルームに対する操作が試みられました。');
+    if (!roomId)
+      throw new ServerError(
+        '参加していないルームに対する操作が試みられました。',
+        ErrorCode.ROOM_NOT_FOUND
+      );
 
     const room = this.rooms.get(roomId);
-    if (!room) throw new ServerError('ルームが見つかりませんでした。');
+    if (!room) throw new ServerError('ルームが見つかりませんでした。', ErrorCode.ROOM_NOT_FOUND);
 
     return roomId ? this.rooms.get(roomId) : undefined;
   }
@@ -177,7 +208,11 @@ export class Server {
           if ('roomId' in payload && typeof payload.roomId === 'string') {
             // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId);
-            if (!room) throw new Error(`ルームが見つかりませんでした: ${payload.roomId}`);
+            if (!room)
+              throw new ServerError(
+                `ルームが見つかりませんでした: ${payload.roomId}`,
+                ErrorCode.ROOM_NOT_FOUND
+              );
 
             // 参加処理だけServer側で登録処理を走らせる
             if (message.payload.type === 'PlayerEntry') {
@@ -186,7 +221,7 @@ export class Server {
                 this.clientRooms.delete(client);
                 this.clientRooms.set(client, room.id);
               } else {
-                throw new Error('ルームの参加に失敗しました');
+                throw new ServerError('ルームの参加に失敗しました', ErrorCode.ROOM_FULL);
               }
             } else {
               room.handleMessage(client, message);
@@ -206,11 +241,30 @@ export class Server {
     } catch (e) {
       console.error(e);
 
+      let errorCode: ErrorCode;
+      let message: string;
+      let details: Record<string, unknown> | undefined;
+
+      if (e instanceof ServerError) {
+        // ServerErrorの場合は指定されたエラーコードを使用
+        errorCode = e.errorCode;
+        message = e.message;
+      } else if (e instanceof Error) {
+        // 通常のErrorの場合はInternal Error
+        errorCode = ErrorCode.SYS_INTERNAL_ERROR;
+        message = e.message;
+      } else {
+        // その他の場合はUnknown Error
+        errorCode = ErrorCode.SYS_UNKNOWN_ERROR;
+        message = '想定外の事象が発生しました。';
+        details = { body: e };
+      }
+
       const errorPayload: ErrorPayload = {
         type: 'Error',
-        errorCode: e instanceof Error ? ErrorCode.SYS_INTERNAL_ERROR : ErrorCode.SYS_UNKNOWN_ERROR,
-        message: e instanceof Error ? e.message : '想定外の事象が発生しました。',
-        details: e instanceof Error ? undefined : { body: e },
+        errorCode,
+        message,
+        details,
         timestamp: Date.now(),
       };
 
