@@ -273,7 +273,7 @@ export class EffectHelper {
       // フィールド上から対象になりえるユニットを取得
       const candidate: Unit[] = stack.core.players
         .flatMap(player => player.field)
-        .filter(unit => !selected.includes(unit) && unit.hasKeyword('加護'))
+        .filter(unit => !selected.includes(unit) && !unit.hasKeyword('加護'))
         .filter(getFilterMethod());
       if (candidate.length <= 0) break;
 
