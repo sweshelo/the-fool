@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   // このユニットがオーバークロックした時、対戦相手のユニットを2体まで選ぶ。それらに5000ダメージを与える。
 
   // オーバークロック時の効果
-  onOverclock: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
