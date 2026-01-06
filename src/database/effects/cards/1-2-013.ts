@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const turnPlayer = stack.core.getTurnPlayer();
 
-    if (turnPlayer.id !== self.owner.id) return;
+    if (turnPlayer.id !== self.owner.id || self.lv >= 3) return;
 
     await System.show(stack, '宴もたけなわ', 'レベル+1');
 
