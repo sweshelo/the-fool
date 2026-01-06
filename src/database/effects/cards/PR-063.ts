@@ -28,12 +28,12 @@ export const effects: CardEffects = {
     );
 
     // 自分フィールドにいる【昆虫】と【悪魔】ユニットの数をカウント
-    const BugandDevilCount = stack.processing.owner.field.filter(
+    const bugandDevilCount = stack.processing.owner.field.filter(
       unit => unit.catalog.species?.includes('昆虫') || unit.catalog.species?.includes('悪魔')
     ).length;
 
     // BP増加量を計算
-    const bpBoost = BugandDevilCount * 1000;
+    const bpBoost = bugandDevilCount * 1000;
 
     if (delta && delta.effect.type === 'bp') {
       // Deltaを更新
