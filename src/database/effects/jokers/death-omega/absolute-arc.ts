@@ -9,8 +9,7 @@ export const effects: CardEffects = {
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
-    const owner = stack.processing.owner;
-    await System.show(stack, 'アブソリュート・アーク', '勝利');
+    await System.show(stack, 'アブソリュート・アーク', '対戦に勝利する');
 
     // 対戦に勝利する
     Effect.modifyLife(

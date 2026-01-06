@@ -6,7 +6,8 @@
   "scripts": {
     "preinstall": "git submodule update --init --recursive",
     "dev": "bun --hot run index.ts",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "lint": "bunx oxlint --type-aware"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

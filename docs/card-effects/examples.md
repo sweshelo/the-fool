@@ -102,23 +102,20 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    // 選択可能なユニットをフィルタリング
-    const candidates = EffectHelper.candidate(
+    // 選択可能なユニットが存在するかチェック
+    if (!EffectHelper.isUnitSelectable(
       stack.core,
       unit => unit.owner.id === opponent.id && unit.lv >= 2,
       owner
-    );
-
-    // 選択可能なユニットが存在しない場合は発動しない
-    if (candidates.length === 0) return;
+    )) return;
 
     await System.show(stack, 'カード名', '破壊');
 
     // ユニット選択
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      unit => unit.owner.id === opponent.id && unit.lv >= 2,
       '破壊するユニットを選択'
     );
 
@@ -267,24 +264,23 @@ export const effects: CardEffects = {
     if (stack.processing.owner.id !== stack.core.getTurnPlayer().id) {
       // 自身のレベルが2以上の場合
       if (stack.processing.lv >= 2) {
-        const targets = EffectHelper.candidate(
+        // 選択可能なユニットが存在するかチェック
+        if (!EffectHelper.isUnitSelectable(
           stack.core,
-          unit => unit.owner.id === stack.processing.owner.id,
+          'owns',
           stack.processing.owner
+        )) return;
+
+        await System.show(stack, '争いの追憶', 'ユニットを消滅');
+
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          'owns',
+          '消滅させるユニットを選択'
         );
 
-        if (targets.length > 0) {
-          await System.show(stack, '争いの追憶', 'ユニットを消滅');
-
-          const [target] = await EffectHelper.selectUnit(
-            stack,
-            stack.processing.owner,
-            targets,
-            '消滅させるユニットを選択'
-          );
-
-          Effect.delete(stack, stack.processing, target);
-        }
+        Effect.delete(stack, stack.processing, target);
       }
     }
   },
@@ -365,17 +361,18 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const opponent = self.owner.opponent;
 
-    if (opponent.field.length === 0) return;
+    // 選択可能なユニットが存在するかチェック
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', self.owner)) return;
 
     // レベルに応じてダメージ量が変わる
     const damage = self.lv === 1 ? 3000 : self.lv === 2 ? 5000 : 7000;
 
     await System.show(stack, 'カード名', `${damage}ダメージ`);
 
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      opponent.field,
+      'opponents',
       'ダメージを与えるユニットを選択'
     );
 
@@ -560,21 +557,19 @@ export const effects: CardEffects = {
     }
 
     // レベル2以上のユニットが存在するか確認
-    const candidates = EffectHelper.candidate(
+    if (!EffectHelper.isUnitSelectable(
       stack.core,
       unit => unit.lv >= 2 && unit.owner.id === opponent.id,
       self.owner
-    );
-
-    if (candidates.length === 0) return;
+    )) return;
 
     await System.show(stack, '光の守護精霊', '手札に戻す');
 
     // 対戦相手のレベル2以上のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      candidates,
+      unit => unit.lv >= 2 && unit.owner.id === opponent.id,
       '手札に戻すユニットを選んでください'
     );
 
@@ -603,18 +598,21 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 ### 条件分岐のデバッグ
 
 ```typescript
-const candidates = EffectHelper.candidate(
-  stack.core,
-  unit => {
-    const isOpponent = unit.owner.id === opponent.id;
-    const isLv2OrMore = unit.lv >= 2;
+// フィルタ関数内でデバッグ出力
+const filter = (unit: Unit) => {
+  const isOpponent = unit.owner.id === opponent.id;
+  const isLv2OrMore = unit.lv >= 2;
 
-    console.log(`ユニット ${unit.catalog.name}: 相手=${isOpponent}, Lv2以上=${isLv2OrMore}`);
+  console.log(`ユニット ${unit.catalog.name}: 相手=${isOpponent}, Lv2以上=${isLv2OrMore}`);
 
-    return isOpponent && isLv2OrMore;
-  },
-  owner
-);
+  return isOpponent && isLv2OrMore;
+};
+
+// 選択可能かチェック
+if (!EffectHelper.isUnitSelectable(stack.core, filter, owner)) return;
+
+// ユニット選択
+const [target] = await EffectHelper.pickUnit(stack, owner, filter, '対象を選択');
 ```
 
 ---

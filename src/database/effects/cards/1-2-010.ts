@@ -22,7 +22,6 @@ export const effects: CardEffects = {
 
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
 
     // 昆虫ユニット
     const ownIncects = EffectHelper.candidate(

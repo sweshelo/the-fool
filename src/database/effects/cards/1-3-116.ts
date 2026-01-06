@@ -3,26 +3,40 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
-  // プレイヤーアタック時効果
-  onPlayerAttack: async (stack: StackWithCard<Unit>) => {
-    const units = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
-    if (units.length === 0 || stack.processing.owner.id !== stack.target?.id) return;
-    await System.show(stack, 'カウンター・クロック', 'レベル+1');
-    const [target] = await EffectHelper.selectUnit(
-      stack,
-      stack.processing.owner,
-      units,
-      'レベルを+1するユニットを選択',
-      1
-    );
-    Effect.clock(stack, stack.processing, target, 1);
+  // ■カウンター・クロック
+  // あなたがプレイヤーアタックを受けるたび
+  onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
+    if (stack.target?.id === stack.processing.owner.id) {
+      const candidates = EffectHelper.candidate(
+        stack.core,
+        unit => unit.lv < 3,
+        stack.processing.owner
+      );
+
+      if (candidates.length > 0) {
+        await System.show(stack, 'カウンター・クロック', 'レベル+1');
+        const [target] = await EffectHelper.selectUnit(
+          stack,
+          stack.processing.owner,
+          candidates,
+          'レベルを上げるユニットを選択'
+        );
+        Effect.clock(stack, stack.processing, target, 1);
+      }
+    }
   },
 
   // 対戦相手のターン開始時効果
   onTurnStart: async (stack: StackWithCard<Unit>) => {
+    const turnPlayer = stack.core.getTurnPlayer();
+    // 自分のターン開始時は発動しない
+    if (turnPlayer.id === stack.processing.owner.id) return;
+
     const warriorUnits = EffectHelper.candidate(
       stack.core,
-      unit => unit.catalog.species?.includes('戦士') ?? false,
+      unit =>
+        unit.owner.id === stack.processing.owner.id &&
+        (unit.catalog.species?.includes('戦士') ?? false),
       stack.processing.owner
     );
     if (warriorUnits.length === 0) return;
@@ -34,7 +48,14 @@ export const effects: CardEffects = {
 
   // 【戦士】ユニットがアタックした時効果
   onAttack: async (stack: StackWithCard<Unit>) => {
-    if (!(stack.target instanceof Unit) || !stack.target.catalog.species?.includes('戦士')) return;
+    const attacker = stack.target;
+    // 攻撃者がユニットで、かつこの効果の所有者のユニットで、【戦士】であることを確認
+    if (
+      !(attacker instanceof Unit) ||
+      attacker.owner.id !== stack.processing.owner.id ||
+      !attacker.catalog.species?.includes('戦士')
+    )
+      return;
     const opponentUnits = EffectHelper.candidate(
       stack.core,
       unit => unit.owner.id !== stack.processing.owner.id,
