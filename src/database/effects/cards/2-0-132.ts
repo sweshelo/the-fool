@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     // 紫ゲージが4以上 かつ ユニットが選択可能の場合のみ発動
     if (
       (owner.purple ?? 0) < 4 ||
-      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     )
       return;
 

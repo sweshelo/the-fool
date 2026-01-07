@@ -10,12 +10,12 @@ export const effects: CardEffects = {
 
   onAttackSelf: async (stack: StackWithCard<Unit>) => {
     if (
-      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
       stack.processing.owner.joker.gauge < 20
     )
       return;
     await System.show(stack, 'Heart Heat Beat', 'ジョーカーゲージを20%減少\n手札に戻す');
-    stack.processing.owner.joker.gauge -= 20;
+    Effect.modifyJokerGauge(stack, stack.processing, stack.processing.owner, -20);
     const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,

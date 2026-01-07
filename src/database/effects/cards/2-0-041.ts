@@ -49,7 +49,7 @@ export const effects: CardEffects = {
   // プレイヤーアタック時効果
   onPlayerAttack: async (stack: StackWithCard<Unit>) => {
     const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2;
-    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
     await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
     const [target] = await EffectHelper.pickUnit(
       stack,

@@ -55,7 +55,7 @@ export const effects: CardEffects = {
   // 対戦相手のターン開始時、対戦相手のユニットを1体選ぶ。それの行動権を消費し5000ダメージを与える。
   onTurnStart: async (stack: StackWithCard<Unit>) => {
     if (
-      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
       stack.processing.owner.id === stack.core.getTurnPlayer().id
     )
       return;
