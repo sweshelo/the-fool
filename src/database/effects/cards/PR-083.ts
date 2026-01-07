@@ -4,35 +4,30 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(
       stack,
       '炎王獣の闘気',
       '【スピードムーブ】\n【無我の境地】\n【不屈】\n敵全体のBP-2000'
     );
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '無我の境地');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '不屈');
-    Effect.speedMove(stack, stack.processing as Unit);
+    Effect.keyword(stack, stack.processing, stack.processing, '無我の境地');
+    Effect.keyword(stack, stack.processing, stack.processing, '不屈');
+    Effect.speedMove(stack, stack.processing);
   },
 
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp,
-      stack.processing.owner
-    );
-    if (candidate.length > 0) {
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.currentBP < unit.bp;
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '炎王獣の大咆哮', 'ユニットを破壊\n1ライフダメージ');
-      const [target] = await System.prompt(stack, stack.processing.owner.id, {
-        title: '破壊するユニットを選択',
-        type: 'unit',
-        items: candidate,
-      });
-      const unit = candidate.find(unit => unit.id === target);
-      if (unit) {
-        Effect.break(stack, stack.processing, unit, 'effect');
-        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
-      }
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '破壊するユニットを選択して下さい'
+      );
+      Effect.break(stack, stack.processing, target, 'effect');
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
     }
   },
 
