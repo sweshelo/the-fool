@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 相手のトリガーゾーンにカードがあるか確認
-    if (opponent.trigger_selectable) {
+    if (opponent.trigger.length > 0) {
       await System.show(stack, '純真な心のままに', 'トリガーゾーンのカードを手札に戻す');
 
       // トリガーゾーンのカードを全て手札に戻す
@@ -34,32 +34,21 @@ export const effects: CardEffects = {
     // フィールドのユニットが4体以下か確認
     if (owner.field.length <= 4) {
       // 相手のコスト2以下のユニットを取得
-      const lowCostUnits = opponent.field.filter(unit => unit.catalog.cost <= 2);
+      const filter = (unit: Unit) => unit.owner.id === opponent.id && unit.catalog.cost <= 2;
 
-      if (lowCostUnits_selectable) {
-        // 対象を選択可能なユニットを取得
-        const targetCandidatesFilter = (unit: Unit) =>
-          unit.owner.id === opponent.id && unit.catalog.cost <= 2;
-        const targetCandidates_selectable = EffectHelper.isUnitSelectable(
-          stack.core,
-          targetCandidatesFilter,
-          owner
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
+        await System.show(stack, '銀翼転身', 'ユニットを【複製】する');
+
+        // ユニットを1体選択
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          owner,
+          filter,
+          '【複製】するユニットを選択'
         );
 
-        if (targetCandidates_selectable) {
-          await System.show(stack, '銀翼転身', 'ユニットを【複製】する');
-
-          // ユニットを1体選択
-          const [target] = await EffectHelper.pickUnit(
-            stack,
-            owner,
-            targetCandidatesFilter,
-            '【複製】するユニットを選択'
-          );
-
-          // 選択したユニットを複製
-          await Effect.clone(stack, stack.processing, target, owner);
-        }
+        // 選択したユニットを複製
+        await Effect.clone(stack, stack.processing, target, owner);
       }
     }
   },

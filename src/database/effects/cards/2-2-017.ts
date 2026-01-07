@@ -5,13 +5,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    if (candidate_selectable) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(stack, '霜雪の抜刀', 'レベルを3にする');
-      const [unitId] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        filter,
+        'opponents',
         'レベルを3にするユニットを選択'
       );
       if (target) {
@@ -21,7 +20,7 @@ export const effects: CardEffects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
-    if (stack.processing.owner.opponent.hand_selectable) {
+    if (stack.processing.owner.opponent.hand.length > 0) {
       await System.show(stack, '雪解けの一閃', '手札を公開する\n1枚選び破壊');
       const choices: Choices = {
         title: '破壊するカードを選択してください',
