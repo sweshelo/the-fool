@@ -5,7 +5,7 @@ import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   // 起動・フォース＜ウィルス・黙＞
-  isBootable: (core: Core, self: Unit): boolean => {
+  isBootable: (_core: Core, self: Unit): boolean => {
     return EffectHelper.isVirusInjectable(self.owner.opponent);
   },
 

@@ -1,8 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
-import type { StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../classes/types';
 
-export const effects = {
+export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
     if (
       stack.processing.owner.deck.length > 0 &&
@@ -18,10 +17,9 @@ export const effects = {
   },
 
   onAttackSelf: async (stack: StackWithCard) => {
-    const opponentsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     const opponentsSelectable = EffectHelper.isUnitSelectable(
       stack.core,
-      opponentsFilter,
+      'opponents',
       stack.processing.owner
     );
     const isCardsInTrigger =
@@ -46,7 +44,7 @@ export const effects = {
         const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentsFilter,
+          'opponents',
           'ダメージを与えるユニットを選んで下さい'
         );
         Effect.damage(stack, stack.processing, target, 3000, 'effect');
@@ -54,7 +52,7 @@ export const effects = {
     }
   },
 
-  upSelf: async (stack: StackWithCard) => {
+  onClockupSelf: async (stack: StackWithCard) => {
     if (stack.processing.owner.deck.length > 0) {
       await System.show(stack, '篝夜に咲く花', 'トリガーゾーンにセット');
       EffectHelper.random(stack.processing.owner.deck).forEach(card =>

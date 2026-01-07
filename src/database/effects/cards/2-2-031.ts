@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
-  // 起動・フォース＜ウィルス・黙＞
+  // 起動・妖精王の覇気
   isBootable: (core: Core, self: Unit): boolean => {
     return (
       self.owner.trigger.length > 0 &&
