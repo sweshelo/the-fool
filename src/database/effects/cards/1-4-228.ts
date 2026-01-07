@@ -4,15 +4,14 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Choices } from '@/submodule/suit/types/game/system';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const targetsFilter = unit =>
-    unit.owner.id === stack.processing.owner.id &&
-    (unit.catalog.species?.includes('武身') ?? false);
-  const targets_selectable = EffectHelper.isUnitSelectable(
+  const targets = EffectHelper.candidate(
     stack.core,
-    targetsFilter,
+    unit =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('武身') ?? false),
     stack.processing.owner
   );
-  if (targets_selectable) {
+  if (targets.length > 0) {
     await System.show(stack, '鏡盾の守護', '【秩序の盾】を付与');
     const choices: Choices = {
       title: '【秩序の盾】を与えるユニットを選択してください',

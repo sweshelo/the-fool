@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     // CP1以上かつBP一時減少中の相手ユニットがいるか
     const hasCP = self.owner.cp.current >= 1;
     const targets = self.owner.opponent.field.filter(unit => unit.bp > unit.currentBP);
-    return hasCP && targets_selectable;
+    return hasCP && targets.length > 0;
   },
 
   async onBootSelf(stack: StackWithCard<Unit>) {
@@ -18,12 +18,12 @@ export const effects: CardEffects = {
     const owner = self.owner;
     const opponent = owner.opponent;
     const targets = opponent.field.filter(unit => unit.bp > unit.currentBP);
-    if (owner.cp.current >= 1 && targets_selectable) {
+    if (owner.cp.current >= 1 && targets.length > 0) {
       await System.show(stack, '殺戮と破壊の演舞', 'CP-1\nBP減少中の敵ユニット1体を破壊');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         owner,
-        targetsFilter,
+        targets,
         '破壊するユニットを選択'
       );
       Effect.modifyCP(stack, self, owner, -1);
@@ -37,12 +37,12 @@ export const effects: CardEffects = {
     const owner = self.owner;
     // 赤属性ユニット
     const redUnits = owner.field.filter(unit => unit.catalog.color === Color.RED);
-    if (redUnits_selectable) {
+    if (redUnits.length > 0) {
       await System.show(stack, '爆神鼓舞', 'レベル+2');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         owner,
-        redUnitsFilter,
+        redUnits,
         'レベルを上げるユニットを選択'
       );
       Effect.clock(stack, self, target, 2);

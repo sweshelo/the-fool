@@ -28,10 +28,9 @@ export const effects: CardEffects = {
     // 自分のターン開始時は発動しない
     if (turnPlayer.id === stack.processing.owner.id) return;
 
-    const filter = (unit: Unit) =>
-      unit.owner.id === stack.processing.owner.id &&
-      (unit.catalog.species?.includes('戦士') ?? false);
-    const warriorUnits = stack.core.field.filter(filter);
+    const warriorUnits = stack.processing.owner.field.filter(unit =>
+      unit.catalog.species?.includes('戦士')
+    );
     if (warriorUnits.length === 0) return;
     await System.show(stack, '竜兵の底力', '【戦士】ユニットの基本BP+1000');
     warriorUnits.forEach(unit => {

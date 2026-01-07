@@ -11,13 +11,17 @@ export const effects: CardEffects = {
 
   // アタック時効果
   onAttackSelf: async (stack: StackWithCard<Unit>) => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const opponentUnits = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
     if (opponentUnits.length !== 0) {
       await System.show(stack, '天魔二断討', 'BP+2000\n1000ダメージ');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        opponentUnits,
         '1000ダメージを与えるユニットを選択',
         1
       );

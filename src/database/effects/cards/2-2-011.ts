@@ -9,7 +9,12 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 選択可能なユニットが存在するか確認（選択可能か、EffectHelper.candidateでチェック）
-    const filter = (unit: Unit) => (!unit.active && unit.owner.id === opponent.id ? true : false);
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => (!unit.active && unit.owner.id === opponent.id ? true : false),
+      stack.processing.owner
+    );
+
     // 自分の全ての機械ユニットをフィルタリング
     const machineUnits = stack.processing.owner.field.filter(
       unit =>
@@ -18,7 +23,7 @@ export const effects: CardEffects = {
         unit.catalog.species.includes('機械')
     );
 
-    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+    if (candidates.length > 0) {
       await System.show(
         stack,
         'ライジングストーム＆イグナイトフォース',
@@ -27,10 +32,10 @@ export const effects: CardEffects = {
 
       // ユニットを選択
       try {
-        const [selected] = await EffectHelper.pickUnit(
+        const [selected] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          filter,
+          candidates,
           'ライジングストーム'
         );
 
@@ -75,7 +80,7 @@ export const effects: CardEffects = {
           unit.catalog.species.includes('機械')
       );
 
-      if (machineUnits_selectable) {
+      if (machineUnits.length > 0) {
         await System.show(stack, 'イグナイトフォース', '機械ユニットのレベル+1');
 
         // 機械ユニットのレベルを+1する
@@ -90,15 +95,20 @@ export const effects: CardEffects = {
   // このユニットがオーバークロックした時、あなたの【機械】ユニットを2体まで選ぶ。それらに【加護】を与える。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 選択可能なユニットが存在するか確認（選択可能か、EffectHelper.candidateでチェック）
-    const filter = (unit: Unit) => {
-      return unit.catalog.species &&
-        Array.isArray(unit.catalog.species) &&
-        unit.catalog.species.includes('機械') &&
-        unit.owner.id === stack.processing.owner.id
-        ? true
-        : false;
-    };
-    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => {
+        return unit.catalog.species &&
+          Array.isArray(unit.catalog.species) &&
+          unit.catalog.species.includes('機械') &&
+          unit.owner.id === stack.processing.owner.id
+          ? true
+          : false;
+      },
+      stack.processing.owner
+    );
+
+    if (candidates.length > 0) {
       await System.show(stack, 'デュアルシールド', '機械ユニット最大2体に【加護】');
 
       try {
@@ -110,11 +120,11 @@ export const effects: CardEffects = {
           if (candidates.length > selected.length) {
             const remainingUnits = candidates.filter(unit => !selected.some(s => s.id === unit.id));
 
-            if (remainingUnits_selectable) {
-              const [unit] = await EffectHelper.pickUnit(
+            if (remainingUnits.length > 0) {
+              const [unit] = await EffectHelper.selectUnit(
                 stack,
                 stack.processing.owner,
-                filter,
+                remainingUnits,
                 'デュアルシールド'
               );
               selected.push(unit);

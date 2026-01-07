@@ -40,12 +40,11 @@ export const effects: CardEffects = {
 
     const targets: (Unit | undefined)[] = [];
     for (const candidates of candidatesSet) {
-      const [unitId] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        candidatesFilter,
-        '【狂戦士】【強制防御】を与えるユニットを選択'
-      );
+      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
+        type: 'unit',
+        title: '【狂戦士】【強制防御】を与えるユニットを選択',
+        items: candidates,
+      });
       targets.push(candidates.find(unit => unit.id === unitId));
     }
 

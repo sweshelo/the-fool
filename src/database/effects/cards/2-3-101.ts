@@ -19,13 +19,12 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {
-    const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    if (targets_selectable) {
+    if (targets.length > 0) {
       await System.show(stack, 'ビートルクラッシュ', '1000ダメージ');
       const choices: Choices = {
         title: 'ダメージを与えるユニットを選択してください',

@@ -19,7 +19,7 @@ export const effects: CardEffects = {
           card.catalog.cost <= 7
       ) as Unit[];
 
-      if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+      if (candidates.length > 0) {
         await System.show(stack, '冥霊の目醒め', '捨札から【特殊召喚】\nレベル+2');
 
         // ユニット選択
@@ -45,15 +45,20 @@ export const effects: CardEffects = {
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを取得
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    if (opponentUnits_selectable) {
+    const opponentUnits = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+
+    if (opponentUnits.length > 0) {
       await System.show(stack, '審命の布告', 'デスカウンター[1]を与える');
 
       // ユニット選択
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        opponentUnits,
         'デスカウンター[1]を与えるユニットを選択'
       );
 

@@ -10,16 +10,20 @@ export const effects: CardEffects = {
       unit => unit.owner.id === self.owner.id,
       self.owner
     );
-    return candidate_selectable;
+    return candidate.length > 0;
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '起動・月に叢雲、花に風', 'ユニットを破壊\n紫ゲージ+2');
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const [target] = await EffectHelper.pickUnit(
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
+    );
+    const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,
-      filter,
+      candidate,
       '破壊するユニットを選択して下さい',
       1
     );
@@ -29,7 +33,7 @@ export const effects: CardEffects = {
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (
-      stack.processing.owner.opponent.field_selectable &&
+      stack.processing.owner.opponent.field.length > 0 &&
       stack.processing.owner.purple !== undefined
     ) {
       await System.show(stack, '月に叢雲、花に風', '敵全体に[紫ゲージ×1000]ダメージ');

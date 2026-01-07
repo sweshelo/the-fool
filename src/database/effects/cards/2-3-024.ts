@@ -29,20 +29,24 @@ export const effects: CardEffects = {
   },
 
   onIntercept: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
     if (
       stack.target instanceof Card &&
       stack.target.catalog.type === 'intercept' &&
       stack.option?.type === 'lv' &&
       stack.option.value >= 2 &&
       stack.target.owner.id === stack.processing.owner.id &&
-      candidate_selectable
+      candidate.length > 0
     ) {
       await System.show(stack, 'オルタナティブダクト', '2000ダメージ');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidate,
         'ダメージを与えるユニットを選択して下さい',
         1
       );

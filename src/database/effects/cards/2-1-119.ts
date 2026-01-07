@@ -14,14 +14,18 @@ export const effects: CardEffects = {
     EffectTemplate.reinforcements(stack, owner, { species: '戦士' });
 
     // フィールドの【戦士】ユニットを1体選ぶ
-    const filter = unit =>
-      (unit.catalog.species?.includes('戦士') && stack.processing.owner.id === unit.owner.id) ??
-      false;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit =>
+        (unit.catalog.species?.includes('戦士') && stack.processing.owner.id === unit.owner.id) ??
+        false,
+      owner
+    );
     (
-      await EffectHelper.pickUnit(
+      await EffectHelper.selectUnit(
         stack,
         owner,
-        filter,
+        candidate,
         '【秩序の盾】を与えるユニットを選択して下さい',
         1
       )

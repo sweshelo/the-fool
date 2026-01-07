@@ -7,10 +7,14 @@ export const effects: CardEffects = {
   // このユニットがフィールドに出た時、対戦相手のユニットを1体選ぶ。それを消滅させ、
   // そのユニットと同名のカードを対戦相手の手札、捨札、デッキから全て消滅させる。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
     const opponent = stack.processing.owner.opponent;
 
-    if (candidate_selectable) {
+    if (candidate.length > 0) {
       await System.show(
         stack,
         'びっくりさせちゃえ！',
@@ -19,10 +23,10 @@ export const effects: CardEffects = {
 
       try {
         // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
+        const [selected] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          filter,
+          candidate,
           'びっくりさせちゃえ！'
         );
 

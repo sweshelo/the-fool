@@ -55,15 +55,20 @@ export const effects: CardEffects = {
   // 対戦相手のターン開始時、対戦相手のユニットを1体選ぶ。それの行動権を消費し5000ダメージを与える。
   onTurnStart: async (stack: StackWithCard<Unit>) => {
     const opponent = stack.processing.owner.opponent;
-    const filter = (unit: Unit) => unit.owner.id === opponent.id;
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === opponent.id,
+      opponent
+    );
+
     if (candidates.length === 0 || stack.processing.owner.id === stack.core.getTurnPlayer().id)
       return;
 
     await System.show(stack, '虚ろの無海', '行動権を消費\n5000ダメージ');
-    const [target] = await EffectHelper.pickUnit(
+    const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,
-      filter,
+      candidates,
       '行動権を消費し5000ダメージを与えるユニットを選んでください',
       1
     );

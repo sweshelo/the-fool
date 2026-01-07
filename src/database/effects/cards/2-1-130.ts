@@ -7,13 +7,12 @@ import type { KeywordEffect } from '@/submodule/suit/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkTurnStart: (stack: StackWithCard) => {
-    const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id === stack.processing.owner.id,
       stack.processing.owner
     );
-    return targets_selectable && stack.processing.owner.id !== stack.core.getTurnPlayer().id;
+    return targets.length > 0 && stack.processing.owner.id !== stack.core.getTurnPlayer().id;
   },
 
   // 実際の効果本体
@@ -24,10 +23,9 @@ export const effects: CardEffects = {
       'パーフェクトテリトリー',
       '【破壊効果耐性】【消滅効果耐性】【不滅】【防御禁止】【固着】【加護】【沈黙効果耐性】を付与'
     );
-    const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id === stack.processing.owner.id,
       stack.processing.owner
     );
     const choices: Choices = {

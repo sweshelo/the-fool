@@ -11,10 +11,9 @@ export const effects: CardEffects = {
     if (stack.processing.owner.field.length <= 4) {
       await System.show(stack, '冥界ランデブー', 'ユニットを【複製】し破壊');
 
-      const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-      const targets_selectable = EffectHelper.isUnitSelectable(
+      const targets = EffectHelper.candidate(
         stack.core,
-        targetsFilter,
+        unit => unit.owner.id === stack.processing.owner.id,
         stack.processing.owner
       );
       const choices: Choices = {

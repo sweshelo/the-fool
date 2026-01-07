@@ -7,15 +7,13 @@ import { Delta } from '@/package/core/class/delta';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const targetsFilter = (unit: Unit) =>
-      unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3,
       stack.processing.owner
     );
     if (
-      targets_selectable &&
+      targets.length > 0 &&
       stack.processing.owner.field.length < stack.core.room.rule.player.max.field
     ) {
       await System.show(

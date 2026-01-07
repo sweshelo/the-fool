@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     );
 
     if (
-      intercepts_selectable &&
+      intercepts.length > 0 &&
       stack.processing.owner.trigger.length < stack.core.room.rule.player.max.trigger
     ) {
       await System.show(
@@ -30,20 +30,24 @@ export const effects: CardEffects = {
   },
 
   onIntercept: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
     if (
       stack.target instanceof Card &&
       stack.target.catalog.type === 'intercept' &&
       stack.option?.type === 'lv' &&
       stack.option.value >= 3 &&
       stack.target.owner.id === stack.processing.owner.id &&
-      candidate_selectable
+      candidate.length > 0
     ) {
       await System.show(stack, '詭謀と絶望のノクターン', 'ユニットを破壊する');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidate,
         '破壊するユニットを選択して下さい',
         1
       );

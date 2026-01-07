@@ -5,11 +5,15 @@ export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '黙滅の烏羽', '【沈黙】を与える');
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const [target] = await EffectHelper.pickUnit(
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+    const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,
-      filter,
+      candidate,
       '【沈黙】を与えるユニットを選択'
     );
     Effect.keyword(stack, stack.processing, target, '沈黙');

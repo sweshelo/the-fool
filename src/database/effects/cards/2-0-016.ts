@@ -34,15 +34,13 @@ export const effects: CardEffects = {
 
   onClockupSelf: async (stack: StackWithCard): Promise<void> => {
     const isClockUpToLv3 = stack.processing.lv === 3;
-    const targetsFilter = (unit: Unit) =>
-      unit.owner.id !== stack.processing.owner.id && unit.lv >= 2;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2,
       stack.processing.owner
     );
 
-    if (isClockUpToLv3 && targets_selectable) {
+    if (isClockUpToLv3 && targets.length > 0) {
       await System.show(stack, '絶対零度の息吹', 'レベル2以上のユニットを1体破壊');
       const choices: Choices = {
         title: '破壊するユニットを選択してください',

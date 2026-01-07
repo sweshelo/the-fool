@@ -5,14 +5,12 @@ export const effects: CardEffects = {
   checkBreak: (stack: StackWithCard) => {
     // 対戦相手のフィールドに選択可能なユニットがいるかチェック
     const filterLevel = stack.processing.lv >= 2 ? 1 : 2;
-    const targetsFilter = (unit: Unit) =>
-      unit.lv >= filterLevel && unit.owner.id !== stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.lv >= filterLevel && unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    return targets_selectable;
+    return targets.length > 0;
   },
 
   // 実際の効果本体
@@ -21,17 +19,15 @@ export const effects: CardEffects = {
     switch (stack.processing.lv) {
       case 1: {
         await System.show(stack, '憎しみの藁人形', 'レベル2以上のユニットを破壊');
-        const targetsFilter = (unit: Unit) =>
-          unit.lv >= 2 && unit.owner.id !== stack.processing.owner.id;
-        const targets_selectable = EffectHelper.isUnitSelectable(
+        const targets = EffectHelper.candidate(
           stack.core,
-          targetsFilter,
+          unit => unit.lv >= 2 && unit.owner.id !== stack.processing.owner.id,
           stack.processing.owner
         );
-        const [target] = await EffectHelper.pickUnit(
+        const [target] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          targetsFilter,
+          targets,
           '破壊するユニットを選択して下さい'
         );
         Effect.break(stack, stack.processing, target, 'effect');
@@ -39,16 +35,15 @@ export const effects: CardEffects = {
       }
       case 2: {
         await System.show(stack, '憎しみの藁人形', 'ユニットを破壊');
-        const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-        const targets_selectable = EffectHelper.isUnitSelectable(
+        const targets = EffectHelper.candidate(
           stack.core,
-          targetsFilter,
+          unit => unit.owner.id !== stack.processing.owner.id,
           stack.processing.owner
         );
-        const [target] = await EffectHelper.pickUnit(
+        const [target] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          targetsFilter,
+          targets,
           '破壊するユニットを選択して下さい'
         );
         Effect.break(stack, stack.processing, target, 'effect');
@@ -56,16 +51,15 @@ export const effects: CardEffects = {
       }
       case 3: {
         await System.show(stack, '憎しみの藁人形', 'ユニットを破壊\n1ライフダメージ');
-        const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-        const targets_selectable = EffectHelper.isUnitSelectable(
+        const targets = EffectHelper.candidate(
           stack.core,
-          targetsFilter,
+          unit => unit.owner.id !== stack.processing.owner.id,
           stack.processing.owner
         );
-        const [target] = await EffectHelper.pickUnit(
+        const [target] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          targetsFilter,
+          targets,
           '破壊するユニットを選択して下さい'
         );
         Effect.break(stack, stack.processing, target, 'effect');

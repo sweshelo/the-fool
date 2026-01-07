@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   // 起動・フォース＜ウィルス・黙＞
   isBootable: (core: Core, self: Unit): boolean => {
     return (
-      self.owner.trigger_selectable &&
+      self.owner.trigger.length > 0 &&
       EffectHelper.candidate(core, unit => unit.owner.id === self.owner.id, self.owner).length > 0
     );
   },
@@ -18,14 +18,18 @@ export const effects: CardEffects = {
       '起動・妖精王の覇気',
       'トリガーゾーンを1枚破壊\n【スピードムーブ】を与える'
     );
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
+    );
     EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
       Effect.move(stack, stack.processing, card, 'trash')
     );
-    const [target] = await EffectHelper.pickUnit(
+    const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,
-      filter,
+      candidate,
       '【スピードムーブ】を与えるユニットを選択して下さい',
       1
     );

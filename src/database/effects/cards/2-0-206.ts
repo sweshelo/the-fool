@@ -10,16 +10,21 @@ export const effects: CardEffects = {
     const owner = self.owner;
 
     if (stack.core.getTurnPlayer().id === owner.id) {
-      const filter = (unit: Unit) => unit.owner.id === owner.opponent.id;
+      const candidate = EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id === owner.opponent.id,
+        owner
+      );
+
       // 手札が7枚の場合
-      if (owner.hand.length === 7 && candidate_selectable) {
+      if (owner.hand.length === 7 && candidate.length > 0) {
         await System.show(stack, 'かほうはねてまて♪', '手札に戻す');
 
         // 対戦相手のフィールドのユニットを選択
-        const [target] = await EffectHelper.pickUnit(
+        const [target] = await EffectHelper.selectUnit(
           stack,
           owner,
-          filter,
+          candidate,
           '手札に戻すユニットを選択して下さい',
           1
         );

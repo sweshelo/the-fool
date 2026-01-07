@@ -21,7 +21,7 @@ export const effects: CardEffects = {
     // Find virus units on opponent's field
     const virusUnits = opponent.field.filter(unit => unit.catalog.species?.includes('ウィルス'));
 
-    if (virusUnits_selectable) {
+    if (virusUnits.length > 0) {
       await System.show(
         stack,
         'ウィルスクラッシュ',
@@ -29,22 +29,26 @@ export const effects: CardEffects = {
       );
 
       // Select a virus unit to destroy
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        virusUnits,
         '破壊する【ウィルス】ユニットを選択'
       );
 
       // Get all opponent units for second destruction
-      const filter = (unit: Unit) =>
-        unit.owner.id !== stack.processing.owner.id && unit.id !== target.id;
-      if (opponentUnits_selectable) {
+      const opponentUnits = EffectHelper.candidate(
+        stack.core,
+        unit => unit.owner.id !== stack.processing.owner.id && unit.id !== target.id,
+        stack.processing.owner
+      );
+
+      if (opponentUnits.length > 0) {
         // Select a unit to destroy
-        const [secondTarget] = await EffectHelper.pickUnit(
+        const [secondTarget] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          filter,
+          opponentUnits,
           '破壊するユニットを選択'
         );
 

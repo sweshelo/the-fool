@@ -14,16 +14,21 @@ export const effects: CardEffects = {
     );
 
     // 天使を1体選ぶ
-    const filter = (unit: Unit) => {
-      return unit.catalog.species!.includes('天使') && stack.processing.owner.id === owner.id;
-    };
-    if (candidate_selectable) {
-      const [unitId] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        filter,
-        '【秩序の盾】を与えるユニットを選択'
-      );
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      (unit: Unit) => {
+        return unit.catalog.species!.includes('天使') && stack.processing.owner.id === owner.id;
+      },
+      stack.processing.owner
+    );
+    if (candidate.length > 0) {
+      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
+        type: 'unit',
+        title: '【秩序の盾】を与えるユニットを選択',
+        items: candidate,
+      });
+
+      const unit = candidate.find(unit => unit.id === unitId);
       if (unit) Effect.keyword(stack, stack.processing, unit, '秩序の盾');
     }
 

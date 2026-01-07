@@ -8,29 +8,36 @@ export const effects: CardEffects = {
   isBootable(core: Core, self: Unit): boolean {
     const myUnits = self.owner.field;
     const opponentUnits = self.owner.opponent.field;
-    return myUnits_selectable && opponentUnits_selectable;
+    return myUnits.length > 0 && opponentUnits.length > 0;
   },
 
   async onBootSelf(stack: StackWithCard<Unit>): Promise<void> {
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
-    if (
-      EffectHelper.isSelectable(stack.core, filter, stack.processing.owner) &&
-      opponentCandidates_selectable
-    ) {
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
+    );
+
+    const opponentCandidates = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === stack.processing.owner.opponent.id,
+      stack.processing.owner
+    );
+
+    if (candidates.length > 0 && opponentCandidates.length > 0) {
       await System.show(stack, '愛熱のキスショット', '選んだユニットに1000ダメージ');
 
-      const [myTarget] = await EffectHelper.pickUnit(
+      const [myTarget] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidates,
         '自分のユニットを選択'
       );
 
-      const [opponentTarget] = await EffectHelper.pickUnit(
+      const [opponentTarget] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        opponentCandidates,
         '相手のユニットを選択'
       );
 
@@ -42,9 +49,14 @@ export const effects: CardEffects = {
   // ■選略・魅惑のキャノンショット
   async onDriveSelf(stack: StackWithCard<Unit>): Promise<void> {
     const handUnits = stack.processing.owner.hand.filter(card => card instanceof Unit);
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const isOption1Available = handUnits_selectable;
-    const isOption2Available = fieldUnits_selectable;
+    const fieldUnits = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === stack.processing.owner.id,
+      stack.processing.owner
+    );
+
+    const isOption1Available = handUnits.length > 0;
+    const isOption2Available = fieldUnits.length > 0;
 
     if (!isOption1Available && !isOption2Available) return;
 
@@ -76,10 +88,10 @@ export const effects: CardEffects = {
       }
     } else if (choice === '2' && isOption2Available) {
       await System.show(stack, '魅惑のキャノンショット', 'フィールドのユニットのレベル+1');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        fieldUnits,
         'レベルを上げるユニットを選択'
       );
       Effect.clock(stack, stack.processing, target, 1);

@@ -6,13 +6,12 @@ import { Unit } from '@/package/core/class/card';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const targets = EffectHelper.candidate(
       stack.core,
-      targetsFilter,
+      unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
-    if (targets_selectable) {
+    if (targets.length > 0) {
       await System.show(stack, '焦熱の煌星', '[対戦相手のフィールド×2000]ダメージ');
       const choices: Choices = {
         title: 'ダメージを与えるユニットを選択してください',

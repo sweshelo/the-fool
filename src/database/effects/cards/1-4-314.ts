@@ -15,12 +15,17 @@ export const effects: CardEffects = {
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '一滴の光', '消滅させる');
 
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    if (candidate_selectable) {
-      const [target] = await EffectHelper.pickUnit(
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+
+    if (candidate.length > 0) {
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidate,
         '消滅させるユニットを選択'
       );
 

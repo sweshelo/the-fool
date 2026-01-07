@@ -14,19 +14,17 @@ export const effects: CardEffects = {
   // 召喚時に加護を付与し、選略効果を発動
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットが存在するかチェック
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-
-    // 選択肢1が可能か（対戦相手のユニットが存在するか）
-    const option1Available = EffectHelper.isUnitSelectable(
+    const opponentUnits = EffectHelper.candidate(
       stack.core,
-      filter,
+      unit => unit.owner.id !== stack.processing.owner.id,
       stack.processing.owner
     );
 
-    // 選択肢2が可能か（CPが1以上あるか、かつ対戦相手のユニットが存在するか）
-    const option2Available = stack.processing.owner.cp.current >= 1 && option1Available;
+    // 選択肢1が可能か（対戦相手のユニットが存在するか）
+    const option1Available = opponentUnits.length > 0;
 
-    const opponentUnits = stack.core.field.filter(filter);
+    // 選択肢2が可能か（CPが1以上あるか、かつ対戦相手のユニットが存在するか）
+    const option2Available = stack.processing.owner.cp.current >= 1 && opponentUnits.length > 0;
 
     // 両方の選択肢が不可能な場合、加護のみ付与して終了
     if (option1Available || option2Available) {

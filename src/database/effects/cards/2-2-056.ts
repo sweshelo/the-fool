@@ -5,29 +5,39 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+
     // あなたのユニットがフィールドに出た時、あなたのフィールドに青属性ユニットがいる場合
     return (
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.processing.owner.field.some(unit => unit.catalog.color === Color.BLUE) &&
-      candidate_selectable
+      candidate.length > 0
     );
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const candidate = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id !== stack.processing.owner.id,
+      stack.processing.owner
+    );
+
     // 対戦相手のユニットを選択
-    if (candidate_selectable) {
+    if (candidate.length > 0) {
       await System.show(
         stack,
         '光を呑む闇',
         '対戦相手のユニットのレベル+1\n捨札からユニットカードを1枚手札に加える\n紫ゲージ+1'
       );
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidate,
         'レベルを+1するユニットを選択してください',
         1
       );
@@ -37,7 +47,7 @@ export const effects: CardEffects = {
 
       // 捨札にあるユニットカードをランダムで1枚手札に加える
       const unitCardsInTrash = stack.processing.owner.trash.filter(card => card instanceof Unit);
-      if (unitCardsInTrash_selectable) {
+      if (unitCardsInTrash.length > 0) {
         const [randomCards] = EffectHelper.random(unitCardsInTrash, 1);
         if (randomCards) {
           Effect.move(stack, stack.processing, randomCards, 'hand');

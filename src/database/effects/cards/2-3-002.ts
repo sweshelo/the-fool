@@ -21,17 +21,21 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 選択可能なユニットをチェック（防御禁止状態の相手ユニット）
-    const filter = (unit: Unit) =>
-      unit.owner.id === opponent.id && unit.hasKeyword('防御禁止') ? true : false;
-    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => (unit.owner.id === opponent.id && unit.hasKeyword('防御禁止') ? true : false),
+      stack.processing.owner
+    );
+
+    if (candidates.length > 0) {
       await System.show(stack, 'チクタクバーン', '【防御禁止】の敵ユニット1体に5000ダメージ');
 
       try {
         // ユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
+        const [selected] = await EffectHelper.selectUnit(
           stack,
           stack.processing.owner,
-          filter,
+          candidates,
           'ダメージを与えるユニットを選択'
         );
 

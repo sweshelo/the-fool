@@ -3,13 +3,17 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import { Card, Unit } from '@/package/core/class/card';
 
 const onLost = async (stack: StackWithCard<Unit>) => {
-  const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-  if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+  const candidates = EffectHelper.candidate(
+    stack.core,
+    unit => unit.owner.id !== stack.processing.owner.id,
+    stack.processing.owner
+  );
+  if (candidates.length > 0) {
     await System.show(stack, '燃え移る命の灯り', '3000ダメージ');
-    const [target] = await EffectHelper.pickUnit(
+    const [target] = await EffectHelper.selectUnit(
       stack,
       stack.processing.owner,
-      filter,
+      candidates,
       'ダメージを与えるユニットを選択して下さい'
     );
     Effect.damage(stack, stack.processing, target, 3000);

@@ -41,13 +41,18 @@ export const effects: CardEffects = {
       return;
 
     const opponent = stack.processing.owner.opponent;
-    const filter = (unit: Unit) => unit.owner.id === opponent.id;
-    if (EffectHelper.isSelectable(stack.core, filter, stack.processing.owner)) {
+    const candidates = EffectHelper.candidate(
+      stack.core,
+      unit => unit.owner.id === opponent.id,
+      stack.processing.owner
+    );
+
+    if (candidates.length > 0) {
       await System.show(stack, 'ロジックなど燃え尽きろォ！', '3000ダメージ');
-      const [target] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.selectUnit(
         stack,
         stack.processing.owner,
-        filter,
+        candidates,
         'ダメージを与えるユニットを選んでください'
       );
 
@@ -67,7 +72,7 @@ export const effects: CardEffects = {
       card => card instanceof Unit && card.catalog.color === 1 // 1 = RED color enum value
     );
 
-    if (redUnits_selectable) {
+    if (redUnits.length > 0) {
       // 注意: ユニットのIDを指定しないDeltaを生成
       // これにより、ユニットがフィールドを離れても効果が持続する
       for (const unit of redUnits) {
