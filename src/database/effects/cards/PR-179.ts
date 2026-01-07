@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     // 天使を1体選ぶ
     const filter = (unit: Unit) => {
-      return unit.catalog.species!.includes('天使') && stack.processing.owner.id === owner.id;
+      return unit.catalog.species!.includes('天使') && unit.owner.id === owner.id;
     };
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       const [target] = await EffectHelper.pickUnit(
@@ -28,8 +28,7 @@ export const effects: CardEffects = {
     }
 
     stack.core.players.forEach(player => {
-      player.deck = [...player.deck, ...player.trash];
-      player.trash = [];
+      player.trash.forEach(card => Effect.move(stack, stack.processing, card, 'deck'));
     });
 
     if (isBouncedMoreThan10Cards) EffectTemplate.draw(owner, stack.core);
