@@ -19,18 +19,15 @@ export const effects: CardEffects = {
       return;
     }
 
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id && unit.lv >= 3,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.opponent.id && unit.lv >= 3;
 
-    if (candidates.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '弱者選別', 'Lv3以上のユニットを破壊');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         '破壊するユニットを選択'
       );
       Effect.break(stack, stack.processing, target);

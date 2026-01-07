@@ -1,4 +1,3 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
@@ -7,13 +6,10 @@ import { Delta } from '@/package/core/class/delta';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const targets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3;
     if (
-      targets.length > 0 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner) &&
       stack.processing.owner.field.length < stack.core.room.rule.player.max.field
     ) {
       await System.show(
@@ -21,18 +17,13 @@ export const effects: CardEffects = {
         '醒命の光矢&神制の耀矢',
         'コスト3以下を【複製】\nコスト7以上をフィールドに出せない'
       );
-      const choices: Choices = {
-        title: '【複製】するユニットを選択してください',
-        type: 'unit',
-        items: targets,
-      };
-
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-      const unit = targets.find(card => card.id === unitId);
-      if (!unit || !(unit instanceof Unit))
-        throw new Error('正しいカードが選択されませんでした', { cause: unit });
-
-      await Effect.clone(stack, stack.processing, unit, stack.processing.owner);
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '【複製】するユニットを選択してください'
+      );
+      await Effect.clone(stack, stack.processing, target, stack.processing.owner);
     } else {
       await System.show(stack, '神制の耀矢', 'コスト7以上をフィールドに出せない');
     }
@@ -55,16 +46,12 @@ export const effects: CardEffects = {
     if (stack.processing.owner.delete.length <= 0) return;
 
     await System.show(stack, '醒命の光矢', '消滅から1枚回収');
-    const choices: Choices = {
-      title: '手札に加えるカードを選択してください',
-      type: 'card',
-      items: stack.processing.owner.delete,
-      count: 1,
-    };
-    const [cardId] = await System.prompt(stack, stack.processing.owner.id, choices);
-    const card = stack.processing.owner.delete.find(card => card.id === cardId);
-
-    if (!card) throw new Error('正しいカードが選択されませんでした');
+    const [card] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      stack.processing.owner.delete,
+      '手札に加えるカードを選択してください'
+    );
     Effect.move(stack, stack.processing, card, 'hand');
   },
 

@@ -16,20 +16,17 @@ export const effects: CardEffects = {
     });
 
     // 対戦相手のコスト2以下のユニットをフィルタリング
-    const lowCostUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 2,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 2;
 
-    if (lowCostUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '富の採掘', '行動権を消費');
 
       // ユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        lowCostUnits,
+        filter,
         '行動権を消費するユニットを選択'
       );
 

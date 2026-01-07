@@ -28,15 +28,11 @@ export const effects: CardEffects = {
     const candidateCard = stack.processing.owner.opponent.trash.filter(
       card => card.catalog.cost <= 1 && card.catalog.type === 'unit'
     );
-    const candidateUnit = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
     if (
       candidateCard.length > 0 &&
-      candidateUnit.length > 0 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner) &&
       stack.processing.owner.opponent.field.length < stack.core.room.rule.player.max.field
     ) {
       await System.show(
@@ -44,10 +40,10 @@ export const effects: CardEffects = {
         '創生の儀式・輪廻転生',
         'コスト1以下を【特殊召喚】\nユニットを1体破壊'
       );
-      const [breakTarget] = await EffectHelper.selectUnit(
+      const [breakTarget] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidateUnit,
+        filter,
         '破壊するユニットを選択して下さい'
       );
       const [summonTarget] = EffectHelper.random(candidateCard);

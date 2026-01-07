@@ -38,20 +38,17 @@ export const effects: CardEffects = {
       return;
 
     // レベル2以上のユニットが存在するか確認
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.lv >= 2 && unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-    if (candidates.length === 0) return;
+    const filter = (unit: Unit) =>
+      unit.lv >= 2 && unit.owner.id === stack.processing.owner.opponent.id;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
 
     await System.show(stack, '光の守護精霊', '手札に戻す');
 
     // 対戦相手のレベル2以上のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      candidates,
+      filter,
       '手札に戻すユニットを選んでください'
     );
 

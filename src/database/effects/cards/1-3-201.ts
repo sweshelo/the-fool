@@ -9,20 +9,16 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 自分のユニットをフィルタリング
-    const friendlyUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
 
-    if (friendlyUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '試作型・Vフィールド', '【消滅効果耐性】を付与');
 
       // ユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        friendlyUnits,
+        filter,
         '【消滅効果耐性】を付与するユニットを選択'
       );
 
@@ -41,16 +37,16 @@ export const effects: CardEffects = {
     // 自分のターン開始時のみ発動
     if (owner.id === stack.core.getTurnPlayer().id) {
       // 自分のユニットをフィルタリング
-      const friendlyUnits = owner.field;
+      const filter = (unit: Unit) => unit.owner.id === owner.id;
 
-      if (friendlyUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
         await System.show(stack, 'サポーター', 'BP+1000');
 
         // ユニットを1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           owner,
-          friendlyUnits,
+          filter,
           'BP+1000するユニットを選択'
         );
 

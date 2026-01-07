@@ -13,21 +13,17 @@ export const effects: CardEffects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (candidate.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '白夜の封剣', '行動権を消費\n【呪縛】を付与');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: '行動権を消費し【呪縛】を与えるユニットを選択',
-        items: candidate,
-      });
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '行動権を消費し【呪縛】を与えるユニットを選択'
+      );
 
-      const target = candidate.find(unit => unit.id === unitId);
       if (target) {
         Effect.activate(stack, stack.processing, target, false);
         Effect.keyword(stack, stack.processing, target, '呪縛');

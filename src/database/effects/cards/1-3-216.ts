@@ -14,17 +14,19 @@ export const effects: CardEffects = {
   // 召喚時に加護を付与し、選略効果を発動
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットが存在するかチェック
-    const opponentUnits = EffectHelper.candidate(
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+
+    // 選択肢1が可能か（対戦相手のユニットが存在するか）
+    const option1Available = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      filter,
       stack.processing.owner
     );
 
-    // 選択肢1が可能か（対戦相手のユニットが存在するか）
-    const option1Available = opponentUnits.length > 0;
-
     // 選択肢2が可能か（CPが1以上あるか、かつ対戦相手のユニットが存在するか）
-    const option2Available = stack.processing.owner.cp.current >= 1 && opponentUnits.length > 0;
+    const option2Available =
+      stack.processing.owner.cp.current >= 1 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner);
 
     // 両方の選択肢が不可能な場合、加護のみ付与して終了
     if (option1Available || option2Available) {
@@ -58,13 +60,12 @@ export const effects: CardEffects = {
           );
 
           // ユニットを最大2体選択
-          const targetCount = Math.min(2, opponentUnits.length);
-          const targets = await EffectHelper.selectUnit(
+          const targets = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            opponentUnits,
+            filter,
             '手札に戻すユニットを選択',
-            targetCount
+            2
           );
 
           // 選択したユニットを手札に戻す
@@ -86,8 +87,7 @@ export const effects: CardEffects = {
           );
 
           // ランダムで最大2体選択
-          const targetCount = Math.min(2, opponentUnits.length);
-          const randomTargets = EffectHelper.random(opponentUnits, targetCount);
+          const randomTargets = EffectHelper.random(stack.processing.owner.opponent.field, 2);
 
           // 選択したユニットをデッキに戻す
           for (const target of randomTargets) {
