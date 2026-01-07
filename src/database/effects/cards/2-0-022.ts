@@ -17,20 +17,19 @@ export const effects: CardEffects = {
     );
 
     // 対戦相手のユニットが存在するか確認
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (hasUsedGreenCardThisTurn && opponentUnits.length > 0) {
+    if (
+      hasUsedGreenCardThisTurn &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
+    ) {
       await System.show(stack, '連撃・豪熱の息吹', '基本BP-5000');
 
       // 対象を1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        opponentUnits,
+        filter,
         '基本BPを-5000するユニットを選択'
       );
 

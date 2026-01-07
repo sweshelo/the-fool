@@ -4,21 +4,18 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2;
     if (
       stack.processing.owner.purple &&
       stack.processing.owner.purple >= 3 &&
-      candidate.length > 0
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
     ) {
       await System.show(stack, 'リボーン・オブ・ナイル', 'コスト2以下を【複製】し消滅');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidate,
+        filter,
         '【複製】し消滅させるユニットを選択',
         1
       );

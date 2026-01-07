@@ -9,62 +9,35 @@ export const effects: CardEffects = {
   // （この効果は1ターンに1度発動できる）
   isBootable: (core: Core, self: Unit): boolean => {
     // 自分と対戦相手のユニットが存在するか確認
-    const hasSelfUnits =
-      EffectHelper.candidate(
-        core,
-        unit => (unit.owner.id === self.owner.id ? true : false),
-        self.owner
-      ).length > 0;
-    const hasOpponentUnits =
-      EffectHelper.candidate(
-        core,
-        unit => (unit.owner.id === self.owner.opponent.id ? true : false),
-        self.owner
-      ).length > 0;
-
-    return hasSelfUnits && hasOpponentUnits;
+    return (
+      EffectHelper.isUnitSelectable(core, 'owns', self.owner) &&
+      EffectHelper.isUnitSelectable(core, 'owns', self.owner)
+    );
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
 
-    // 自分のユニット
-    const selfUnits = owner.field;
-    // 対戦相手のユニット
-    const opponentUnits = opponent.field;
-
-    if (selfUnits.length > 0 && opponentUnits.length > 0) {
+    if (
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', owner) &&
+      EffectHelper.isUnitSelectable(stack.core, 'owns', owner)
+    ) {
       await System.show(stack, '寒慄の咆哮', '味方と敵それぞれ1体に【沈黙】');
 
       try {
-        // 選択可能なユニットを確認（自分側）
-        const selfCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => (unit.owner.id === owner.id ? true : false),
-          owner
-        );
-
         // 自分のユニットを選択
-        const [selectedSelf] = await EffectHelper.selectUnit(
+        const [selectedSelf] = await EffectHelper.pickUnit(
           stack,
           owner,
-          selfCandidates,
+          'owns',
           '【沈黙】を与えるユニットを選択して下さい'
         );
 
-        // 選択可能なユニットを確認（相手側）
-        const opponentCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => (unit.owner.id === opponent.id ? true : false),
-          owner
-        );
-
         // 対戦相手のユニットを選択
-        const [selectedOpponent] = await EffectHelper.selectUnit(
+        const [selectedOpponent] = await EffectHelper.pickUnit(
           stack,
           owner,
-          opponentCandidates,
+          'opponents',
           '【沈黙】を与えるユニットを選択して下さい'
         );
 
@@ -85,21 +58,17 @@ export const effects: CardEffects = {
       const opponent = stack.processing.owner.opponent;
 
       // 選択可能なユニットを確認（沈黙状態の相手ユニット）
-      const candidates = EffectHelper.candidate(
-        stack.core,
-        unit => (unit.owner.id === opponent.id && unit.hasKeyword('沈黙') ? true : false),
-        stack.processing.owner
-      );
-
-      if (candidates.length > 0) {
+      const filter = (unit: Unit) =>
+        unit.owner.id === opponent.id && unit.hasKeyword('沈黙') ? true : false;
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'ガンマレイ', '【沈黙】状態の敵ユニット1体を破壊');
 
         try {
           // ユニットを選択
-          const [selected] = await EffectHelper.selectUnit(
+          const [selected] = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            candidates,
+            filter,
             '破壊するユニットを選択して下さい'
           );
 
