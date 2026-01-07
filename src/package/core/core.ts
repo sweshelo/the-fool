@@ -223,6 +223,22 @@ export class Core {
         this.round,
         this.turn
       );
+
+      this.room.broadcastToAll(
+        createMessage({
+          action: {
+            handler: 'client',
+            type: 'visual',
+          },
+          payload: {
+            type: 'TurnChange',
+            player: turnPlayer.id,
+            isFirst: (this.turn - 1) % 2 === 0,
+          },
+        })
+      );
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
