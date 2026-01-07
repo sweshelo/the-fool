@@ -6,16 +6,16 @@ export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
     const isSelectable =
-      EffectHelper.candidate(
+      EffectHelper.isUnitSelectable(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.id,
+        (unit: Unit) => unit.owner.id === stack.processing.owner.id,
         stack.processing.owner
-      ).length > 0 &&
-      EffectHelper.candidate(
+      ) &&
+      EffectHelper.isUnitSelectable(
         stack.core,
-        unit => unit.owner.id === stack.processing.owner.opponent.id,
+        (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id,
         stack.processing.owner
-      ).length > 0;
+      );
     const isOwnUnitDriven = stack.source.id === stack.processing.owner.id;
 
     return isSelectable && isOwnUnitDriven;
@@ -25,34 +25,23 @@ export const effects: CardEffects = {
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '終わらない戦い', '【狂戦士】と【強制防御】を与える');
-    const candidatesSet = [
-      EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === stack.processing.owner.id,
-        stack.processing.owner
-      ),
-      EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === stack.processing.owner.opponent.id,
-        stack.processing.owner
-      ),
-    ];
 
-    const targets: (Unit | undefined)[] = [];
-    for (const candidates of candidatesSet) {
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: '【狂戦士】【強制防御】を与えるユニットを選択',
-        items: candidates,
-      });
-      targets.push(candidates.find(unit => unit.id === unitId));
-    }
-
-    targets
-      .filter(v => v !== undefined)
-      .forEach(unit => {
-        Effect.keyword(stack, stack.processing, unit, '強制防御');
-        Effect.keyword(stack, stack.processing, unit, '狂戦士');
-      });
+    [
+      ...(await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'owns',
+        '【狂戦士】【強制防御】を与えるユニットを選択'
+      )),
+      ...(await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        '【狂戦士】【強制防御】を与えるユニットを選択'
+      )),
+    ].forEach(unit => {
+      Effect.keyword(stack, stack.processing, unit, '強制防御');
+      Effect.keyword(stack, stack.processing, unit, '狂戦士');
+    });
   },
 };
