@@ -17,18 +17,19 @@ export const effects: CardEffects = {
   },
 
   onBreak: async (stack: StackWithCard<Card>): Promise<void> => {
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(stack, '巫女の護り手', 'ユニットを破壊');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         '破壊するユニットを選択'
       );
 

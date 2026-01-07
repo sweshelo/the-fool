@@ -5,24 +5,19 @@ import type { CardEffects, StackWithCard } from '../../classes/types';
 
 export const effects: CardEffects = {
   checkJoker: (player, core) => {
-    return EffectHelper.candidate(core, unit => unit.owner.id === player.id, player).length > 0;
+    return EffectHelper.isUnitSelectable(core, 'owns', player);
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id,
-      owner
-    );
 
-    await System.show(stack, 'インサイトストライフ', '【スピードムーブ】付与');
+    await System.show(stack, 'インサイトストライフ', '【スピードムーブ】を与える');
 
     // 自分のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      'owns',
       '【スピードムーブ】を与えるユニットを選択'
     );
 

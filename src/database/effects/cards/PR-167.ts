@@ -11,17 +11,10 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing;
     const owner = self.owner;
-    const opponent = owner.opponent;
-
-    //自身以外の味方ユニットをフィルタリング
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id && unit.id !== self.id,
-      owner
-    );
 
     // 選略[2]は、選択可能なユニットが1体以上いる場合のみ選択可能
-    const canOption2 = candidates.length >= 1;
+    const filter = (unit: Unit) => unit.owner.id === owner.id && unit.id !== self.id;
+    const canOption2 = EffectHelper.isUnitSelectable(stack.core, filter, owner);
 
     // 選択肢の提示（どちらか一方しか選択できない場合は自動選択）
     const [choice] = canOption2
@@ -39,10 +32,10 @@ export const effects: CardEffects = {
     if (choice === '2') {
       await System.show(stack, '選略・サプライズアップ', '自身を破壊\n味方1体に【加護】を付与');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        candidates,
+        filter,
         '【加護】を与えるユニットを1体選択して下さい'
       );
 

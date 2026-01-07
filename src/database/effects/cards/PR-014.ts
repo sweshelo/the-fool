@@ -8,21 +8,16 @@ export const effects: CardEffects = {
     // 相手のターン開始時のみ発動
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) return;
 
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
 
-    if (candidates.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
 
     await System.show(stack, 'リブート', '行動権を回復');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      candidates,
-      '行動権を回復するユニットを選んでください',
-      1
+      filter,
+      '行動権を回復するユニットを選んでください'
     );
     if (!target) return;
 
