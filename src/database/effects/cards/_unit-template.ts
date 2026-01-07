@@ -28,35 +28,24 @@ export const effects: CardEffects = {
 
   // あなたのターン終了時、それが偶数ラウンドの場合、お互いのユニットを1体ずつ選ぶ。それらを破壊する。
   onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const oppTargets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-    const ownTargets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
-
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id && // 自分のターン
       stack.core.round % 2 === 0 && // 偶数ラウンド
-      oppTargets.length > 0 && // 相手のユニットを1体以上選択可能
-      ownTargets.length > 0 // 自分のユニットを1体以上選択可能
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) && // 相手のユニットを1体以上選択可能
+      EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) // 自分のユニットを1体以上選択可能
     ) {
       await System.show(stack, '効果I', 'お互いのユニットを破壊');
-      const [ownTarget] = await EffectHelper.selectUnit(
+      const [ownTarget] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        ownTargets,
+        'owns',
         '破壊するユニットを選択して下さい',
         1
       );
-      const [oppTarget] = await EffectHelper.selectUnit(
+      const [oppTarget] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        oppTargets,
+        'opponents',
         '破壊するユニットを選択して下さい',
         1
       );

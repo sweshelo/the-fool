@@ -5,21 +5,20 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // ターン開始時効果
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const units = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
-    if (units.length === 0) return;
-    const [target] = await EffectHelper.selectUnit(
+    if (!EffectHelper.isUnitSelectable(stack.core, 'all', stack.processing.owner)) return;
+    await System.show(stack, 'クロック・コントロール', 'レベル+1');
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      units,
+      'all',
       'レベルを+1するユニットを選択',
       1
     );
-    await System.show(stack, 'クロック・コントロール', 'レベル+1');
     Effect.clock(stack, stack.processing, target, 1);
   },
 
   // クロックアップ時効果
-  onOverclockSelf: async (stack: StackWithCard<Unit>) => {
+  onClockupSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, 'クロック・コントロール', '進化ユニットカードを1枚引く');
     EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['advanced_unit'] });
   },
@@ -31,7 +30,9 @@ export const effects: CardEffects = {
       stack.processing.lv === 2 &&
       !stack.processing.delta.find(delta => delta.source?.unit === stack.processing.id)
     ) {
-      Effect.keyword(stack, stack.processing, stack.processing, '加護');
+      Effect.keyword(stack, stack.processing, stack.processing, '加護', {
+        source: { unit: stack.processing.id },
+      });
     }
 
     // Lv2以外で自分の効果による加護がある場合: 加護を除去
@@ -47,20 +48,15 @@ export const effects: CardEffects = {
 
   // プレイヤーアタック時効果
   onPlayerAttack: async (stack: StackWithCard<Unit>) => {
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2,
-      stack.processing.owner
-    );
-    if (opponentUnits.length === 0) return;
-    const [target] = await EffectHelper.selectUnit(
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2;
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
+    await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentUnits,
-      '破壊するユニットを選択',
-      1
+      filter,
+      '破壊するユニットを選択'
     );
-    await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
     Effect.break(stack, stack.processing, target, 'effect');
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },

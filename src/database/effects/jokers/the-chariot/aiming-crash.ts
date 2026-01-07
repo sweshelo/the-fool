@@ -2,28 +2,25 @@ import { System } from '../../classes/system';
 import { EffectHelper } from '../../classes/helper';
 import { Effect } from '../../classes/effect';
 import type { CardEffects, StackWithCard } from '../../classes/types';
+import type { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   checkJoker: (player, core) => {
-    return EffectHelper.candidate(core, unit => unit.owner.id !== player.id, player).length > 0;
+    return EffectHelper.isUnitSelectable(core, (unit: Unit) => unit.owner.id !== player.id, player);
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== owner.id,
-      owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== owner.id;
 
     await System.show(stack, 'エイミングクラッシュ', '【強制防御】付与\nCP+1');
 
     // 対戦相手のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      filter,
       '【強制防御】を与えるユニットを選択'
     );
 

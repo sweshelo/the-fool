@@ -17,17 +17,12 @@ export const effects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard) => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (candidate) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner)) {
       await System.show(stack, 'グロウアップシールド', '基本BP+2000\n【加護】を与える');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidate,
+        'owns',
         '対象を選択して下さい'
       );
       Effect.modifyBP(stack, stack.processing, target, 2000, { isBaseBP: true });
