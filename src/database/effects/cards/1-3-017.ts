@@ -12,7 +12,11 @@ export const effects: CardEffects = {
     const filter = (unit: Unit) => unit.owner.id === owner.id;
     const opponentCandidates = opponent.field.filter(unit => unit.catalog.cost <= 2);
 
-    if (selfCandidates.length === 0 || opponentCandidates.length === 0) return;
+    if (
+      !EffectHelper.isUnitSelectable(stack.core, 'owns', owner) ||
+      opponentCandidates.length === 0
+    )
+      return;
 
     await System.show(stack, 'アイリス・ソング', 'ユニットをデッキに戻す');
     const [selfTarget] = await EffectHelper.pickUnit(
@@ -37,14 +41,13 @@ export const effects: CardEffects = {
       return;
 
     const opponent = stack.processing.owner.opponent;
-    const filter = (unit: Unit) => unit.owner.id === opponent.id;
-    if (candidates.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
     await System.show(stack, 'レインボウ・ソング', '行動権を消費');
     const [target] = await EffectHelper.pickUnit(
       stack,
       opponent,
-      filter,
+      'opponents',
       '行動権を消費するユニットを選んでください',
       1
     );
