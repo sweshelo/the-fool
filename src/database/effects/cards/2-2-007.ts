@@ -39,19 +39,15 @@ export const effects: CardEffects = {
       return;
     }
 
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (candidates.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ONIタイムセール', '行動権を消費');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         '行動権を消費するユニットを選択'
       );
 

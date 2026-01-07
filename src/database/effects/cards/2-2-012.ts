@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Choices } from '@/submodule/suit/types/game/system';
 import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
@@ -13,41 +12,28 @@ export const effects: CardEffects = {
 
   isBootable: (core: Core, self: Unit) => {
     return (
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.id, self.owner).length >
-        0 &&
-      EffectHelper.candidate(core, unit => unit.owner.id === self.owner.opponent.id, self.owner)
-        .length > 0
+      EffectHelper.isUnitSelectable(core, 'owns', self.owner) &&
+      EffectHelper.isUnitSelectable(core, 'opponents', self.owner)
     );
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '起動・善神の判決', 'お互いのユニットを消滅');
-    const targets: Unit[] = [];
 
-    for (const candidate of [
-      EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === stack.processing.owner.id,
-        stack.processing.owner
-      ),
-      EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      ),
-    ]) {
-      const choices: Choices = {
-        title: '消滅させるユニットを選択してください',
-        type: 'unit',
-        items: candidate,
-      };
-
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-      const unit = candidate.find(card => card.id === unitId);
-      if (!unit) throw new Error('正しいカードが選択されませんでした');
-
-      targets.push(unit);
-    }
+    const targets = [
+      ...(await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'owns',
+        '消滅させるユニットを選択してください'
+      )),
+      ...(await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        '消滅させるユニットを選択してください'
+      )),
+    ];
 
     targets.forEach(unit => Effect.delete(stack, stack.processing, unit));
   },

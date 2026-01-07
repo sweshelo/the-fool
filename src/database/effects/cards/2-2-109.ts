@@ -29,21 +29,15 @@ export const effects: CardEffects = {
   },
 
   isBootable: (core: Core, self: Unit) => {
-    return EffectHelper.candidate(core, () => true, self.owner).length > 0;
+    return EffectHelper.isUnitSelectable(core, 'all', self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const targetsFilter = () => true;
-    const targets_selectable = EffectHelper.isUnitSelectable(
-      stack.core,
-      targetsFilter,
-      stack.processing.owner
-    );
     await System.show(stack, '起動・あま～いイチゴケーキ♪', 'ユニットのレベルを-1');
     const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      targetsFilter,
+      'all',
       'レベルを下げるユニットを選択して下さい',
       1
     );

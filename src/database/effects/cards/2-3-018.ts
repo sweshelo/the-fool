@@ -9,7 +9,7 @@ export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit): boolean => {
     // フィールド上に2体以上のユニットが存在するか確認
     // 自分自身も含めた全ユニット数をチェック
-    return EffectHelper.candidate(core, () => true, self.owner).length >= 2;
+    return EffectHelper.isUnitSelectable(core, 'all', self.owner, 2);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -20,21 +20,17 @@ export const effects: CardEffects = {
 
       try {
         // 1体目のユニットを選択
-        const [firstUnit] = await EffectHelper.selectUnit(
+        const [firstUnit] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          EffectHelper.candidate(stack.core, () => true, stack.processing.owner),
+          () => true,
           'BPを入れ替えるユニットを選択'
         );
 
-        const [secondUnit] = await EffectHelper.selectUnit(
+        const [secondUnit] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          EffectHelper.candidate(
-            stack.core,
-            unit => unit.id !== firstUnit.id,
-            stack.processing.owner
-          ),
+          (unit: Unit) => unit.id !== firstUnit.id,
           'BPを入れ替えるユニットを選択'
         );
 

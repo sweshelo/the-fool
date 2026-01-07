@@ -212,10 +212,16 @@ export class EffectHelper {
 
   /**
    * 【加護】を持つユニットを考慮して、プレイヤーがユニットを選択できるかを調べる
-   * @param filter 独自のフィルタ関数
+   * @param filter 独自のフィルタ関数か 'owns' 'opponents' 'all' のキーワード
+   * @param count 厳密にそのユニット数を選択する必要がある場合、選択するユニット数
    * @returns 選択可能であるか
    */
-  static isUnitSelectable(core: Core, filter: UnitPickFilter, selector: Player): boolean {
+  static isUnitSelectable(
+    core: Core,
+    filter: UnitPickFilter,
+    selector: Player,
+    count: number = 1
+  ): boolean {
     const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
     // フィルタ関数を取得
     const getFilterMethod = () => {
@@ -230,11 +236,13 @@ export class EffectHelper {
       return filter;
     };
 
-    return core.players
+    const candidate = core.players
       .map(p => p.field)
       .flat()
       .filter(exceptBlessing)
-      .some(getFilterMethod());
+      .filter(getFilterMethod());
+
+    return candidate.length >= count;
   }
 
   /**
