@@ -8,34 +8,29 @@ export const effects: CardEffects = {
   // ■起動・アウトレイジ
   // あなたのユニットを1体選ぶ。それに【スピードムーブ】と【防御禁止】を与える。
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // 自分のフィールド上のユニット
-    const friendlyUnits = stack.processing.owner.field;
+    await System.show(stack, '起動・アウトレイジ', '【スピードムーブ】と【防御禁止】を付与');
 
-    if (friendlyUnits.length > 0) {
-      await System.show(stack, '起動・アウトレイジ', '【スピードムーブ】と【防御禁止】を付与');
+    // ユニット選択
+    const [targetUnit] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      'owns',
+      '【スピードムーブ】と【防御禁止】を与えるユニットを選択'
+    );
 
-      // ユニット選択
-      const [targetUnit] = await EffectHelper.selectUnit(
-        stack,
-        stack.processing.owner,
-        friendlyUnits,
-        '【スピードムーブ】と【防御禁止】を与えるユニットを選択'
-      );
+    // スピードムーブを与える
+    Effect.speedMove(stack, targetUnit);
 
-      // スピードムーブを与える
-      Effect.speedMove(stack, targetUnit);
-
-      // 防御禁止を与える
-      Effect.keyword(stack, stack.processing, targetUnit, '防御禁止', {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+    // 防御禁止を与える
+    Effect.keyword(stack, stack.processing, targetUnit, '防御禁止', {
+      event: 'turnEnd',
+      count: 1,
+    });
   },
 
   // ■忍び寄る羽音
   // 手札のこのカードのコストは-［あなたのフィールドの【昆虫】ユニット×1］される。このユニットのコストは4以下にならない。
-  handEffect: (core: Core, self: Card): void => {
+  handEffect: (_core: Core, self: Card): void => {
     if (self instanceof Unit) {
       // プレイヤーのフィールド上の昆虫ユニット数を数える
       const insectCount = self.owner.field.filter(unit =>
@@ -76,11 +71,10 @@ export const effects: CardEffects = {
   // 対戦相手の全てのユニットに破壊したユニットのBP分のダメージを与える。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のフィールド上の昆虫ユニット
-    const insectUnits = stack.processing.owner.field.filter(
-      unit => unit.catalog.species?.includes('昆虫') // 昆虫ユニット
-    );
+    const insectFilter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id && !!unit.catalog.species?.includes('昆虫');
 
-    if (insectUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, insectFilter, stack.processing.owner)) {
       await System.show(
         stack,
         '鍬獄のカンニバル',
@@ -88,10 +82,10 @@ export const effects: CardEffects = {
       );
 
       // 破壊する昆虫ユニットを選択
-      const [targetInsect] = await EffectHelper.selectUnit(
+      const [targetInsect] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        insectUnits,
+        insectFilter,
         '破壊する【昆虫】ユニットを選択'
       );
 
@@ -109,8 +103,8 @@ export const effects: CardEffects = {
     }
   },
 
-  // Boot可能かどうかのチェック（行動権があるかどうか）
+  // Boot可能かどうかのチェック
   isBootable: (core: Core, self: Unit): boolean => {
-    return self.active;
+    return EffectHelper.isUnitSelectable(core, 'owns', self.owner);
   },
 };

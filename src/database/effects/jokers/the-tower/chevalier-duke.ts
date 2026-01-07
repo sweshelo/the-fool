@@ -6,27 +6,21 @@ import type { CardEffects, StackWithCard } from '../../classes/types';
 
 export const effects: CardEffects = {
   checkJoker: (player, core) => {
-    return EffectHelper.candidate(core, unit => unit.owner.id === player.id, player).length > 0;
+    return EffectHelper.isUnitSelectable(core, 'owns', player);
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id,
-      owner
-    );
 
     await System.show(stack, '極意・シュヴァリエドゥーク', '2体まで手札戻す\nコスト-2');
 
     // 自分のユニットを2体まで手札に戻す
-    const selectedCount = Math.min(2, candidates.length);
-    const targets = await EffectHelper.selectUnit(
+    const targets = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      'owns',
       '手札に戻すユニットを選択',
-      selectedCount
+      2
     );
 
     targets.forEach(unit => {

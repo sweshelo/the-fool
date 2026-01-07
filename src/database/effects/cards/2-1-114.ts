@@ -37,20 +37,17 @@ export const effects: CardEffects = {
 // 【沈黙】効果を持つ対戦相手のユニットを選んで破壊する共通ロジック
 async function destroySilencedUnit(stack: StackWithCard<Unit>): Promise<void> {
   // 対戦相手の【沈黙】状態のユニットを取得
-  const silencedUnits = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id !== stack.processing.owner.id && unit.hasKeyword('沈黙'),
-    stack.processing.owner
-  );
+  const filter = (unit: Unit) =>
+    unit.owner.id !== stack.processing.owner.id && unit.hasKeyword('沈黙');
 
-  if (silencedUnits.length > 0) {
+  if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
     await System.show(stack, '時流の審理', '【沈黙】を持つユニットを破壊');
 
     // ユニット選択
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      silencedUnits,
+      filter,
       '破壊するユニットを選択してください'
     );
 

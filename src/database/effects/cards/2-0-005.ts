@@ -3,18 +3,19 @@ import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const targets = EffectHelper.candidate(
+  const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+  const targets_selectable = EffectHelper.isUnitSelectable(
     stack.core,
-    unit => unit.owner.id === stack.processing.owner.opponent.id,
+    targetsFilter,
     stack.processing.owner
   );
 
-  if (targets.length > 0) {
+  if (targets_selectable) {
     await System.show(stack, '炎剣の劫火', '3000ダメージ');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      targets,
+      targetsFilter,
       'ダメージを与えるユニットを選択'
     );
 

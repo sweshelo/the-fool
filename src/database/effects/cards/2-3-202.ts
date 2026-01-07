@@ -18,13 +18,9 @@ export const effects: CardEffects = {
   // このユニットがアタックした時、対戦相手のユニットを1体選ぶ。それに［【四聖獣】×2000］ダメージを与える。
   onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを取得
-    const oppUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (oppUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       // 四聖獣ユニットの数を数える
       const fourGodCount = countFourGodUnits(stack);
       const damage = fourGodCount * 2000;
@@ -32,10 +28,10 @@ export const effects: CardEffects = {
       await System.show(stack, '朱天無双', `敵ユニットに[四聖獣×2000]ダメージ`);
 
       // 対戦相手のユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        oppUnits,
+        filter,
         'ダメージを与えるユニットを選択してください',
         1
       );
@@ -48,20 +44,16 @@ export const effects: CardEffects = {
   // このユニットがプレイヤーアタックに成功した時、対戦相手のユニットを1体選ぶ。それに【狂戦士】を与える。
   onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを取得
-    const oppUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (oppUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '紅翼黒天翔', '敵ユニットに【狂戦士】を付与');
 
       // 対戦相手のユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        oppUnits,
+        filter,
         '【狂戦士】を付与するユニットを選択してください',
         1
       );

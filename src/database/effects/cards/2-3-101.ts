@@ -1,4 +1,3 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
@@ -19,25 +18,16 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {
-    const targets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (targets.length > 0) {
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ビートルクラッシュ', '1000ダメージ');
-      const choices: Choices = {
-        title: 'ダメージを与えるユニットを選択してください',
-        type: 'unit',
-        items: targets,
-      };
-
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-      const unit = targets.find(card => card.id === unitId);
-      if (!unit || !(unit instanceof Unit))
-        throw new Error('正しいカードが選択されませんでした', unit);
-
-      Effect.damage(stack, stack.processing, unit, 1000, 'effect');
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        'ダメージを与えるユニットを選択してください'
+      );
+      Effect.damage(stack, stack.processing, target, 1000, 'effect');
     }
   },
 };
