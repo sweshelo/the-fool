@@ -5,20 +5,14 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (candidate.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(stack, '霜雪の抜刀', 'レベルを3にする');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: 'レベルを3にするユニットを選択',
-        items: candidate,
-      });
-
-      const target = candidate.find(unit => unit.id === unitId);
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        'レベルを3にするユニットを選択'
+      );
       if (target) {
         Effect.clock(stack, stack.processing, target, +2);
       }

@@ -8,20 +8,21 @@ const effect = async (stack: StackWithCard<Unit>): Promise<void> => {
     unit.catalog.species?.includes('侍')
   ).length;
 
-  const targets = EffectHelper.candidate(
+  const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+  const targets_selectable = EffectHelper.isUnitSelectable(
     stack.core,
-    unit => unit.owner.id === stack.processing.owner.opponent.id,
+    targetsFilter,
     stack.processing.owner
   );
 
-  if (targets.length > 0) {
+  if (targets_selectable) {
     const bpReduction = samuraiCount * 2000;
     await System.show(stack, '無心の抜刀術', '基本BP-[【侍】×2000]');
 
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      targets,
+      targetsFilter,
       '基本BPを下げるユニットを選択'
     );
 

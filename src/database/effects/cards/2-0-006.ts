@@ -10,24 +10,15 @@ export const effects: CardEffects = {
   },
 
   onWinSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
-    if (candidate.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(stack, '剪定', '3000ダメージ');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: 'ダメージを与えるユニットを選択',
-        items: candidate,
-      });
-
-      const target = candidate.find(unit => unit.id === unitId);
-      if (target) {
-        Effect.damage(stack, stack.processing, target, 3000, 'effect');
-      }
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        'ダメージを与えるユニットを選択して下さい'
+      );
+      Effect.damage(stack, stack.processing, target, 3000, 'effect');
     }
   },
 

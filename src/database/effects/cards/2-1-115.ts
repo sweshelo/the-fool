@@ -45,20 +45,16 @@ export const effects: CardEffects = {
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを取得
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (opponentUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '審命の布告', 'デスカウンター[1]を与える');
 
       // ユニット選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        opponentUnits,
+        filter,
         'デスカウンター[1]を与えるユニットを選択'
       );
 

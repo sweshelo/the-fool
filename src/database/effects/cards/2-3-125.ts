@@ -11,17 +11,17 @@ export const effects: CardEffects = {
 
   onIntercept: async (stack: StackWithCard<Card>): Promise<void> => {
     if (stack.source.id === stack.processing.owner.id) {
-      const candidate = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      );
-      if (stack.option?.type === 'lv' && stack.option.value >= 2 && candidate.length > 0) {
+      const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+      if (
+        stack.option?.type === 'lv' &&
+        stack.option.value >= 2 &&
+        EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
+      ) {
         await System.show(stack, 'ビューティートリック', '基本BP-1000');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidate,
+          filter,
           'ダメージを与えるユニットを選択して下さい',
           1
         );

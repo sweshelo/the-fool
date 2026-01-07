@@ -6,15 +6,13 @@ import { EffectHelper } from '../classes/helper';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.opponent.id,
-      owner
-    );
-
-    if (candidate.length === 0 || owner.hand.length === 0) return;
+    if (
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
+      owner.hand.length === 0
+    )
+      return;
 
     // 選択肢を表示
     const choices = [
@@ -51,10 +49,10 @@ export const effects: CardEffects = {
       }
 
       // 対戦相手のユニットを1体選んで消滅
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        candidate,
+        'opponents',
         '消滅させるユニットを選択して下さい',
         1
       );

@@ -45,19 +45,15 @@ export const effects: CardEffects = {
   onBreak: async (stack: StackWithCard): Promise<void> => {
     // 味方ユニットが破壊された時
     if (stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id) {
-      const opponentUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-      if (opponentUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '魂沌遊戯', '【沈黙】とデスカウンター[1]を付与');
 
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentUnits,
+          filter,
           '【沈黙】とデスカウンター[1]を与えるユニットを選択'
         );
 

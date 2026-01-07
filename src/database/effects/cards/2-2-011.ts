@@ -9,11 +9,7 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 選択可能なユニットが存在するか確認（選択可能か、EffectHelper.candidateでチェック）
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => (!unit.active && unit.owner.id === opponent.id ? true : false),
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => (!unit.active && unit.owner.id === opponent.id ? true : false);
 
     // 自分の全ての機械ユニットをフィルタリング
     const machineUnits = stack.processing.owner.field.filter(
@@ -23,7 +19,7 @@ export const effects: CardEffects = {
         unit.catalog.species.includes('機械')
     );
 
-    if (candidates.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(
         stack,
         'ライジングストーム＆イグナイトフォース',
@@ -32,10 +28,10 @@ export const effects: CardEffects = {
 
       // ユニットを選択
       try {
-        const [selected] = await EffectHelper.selectUnit(
+        const [selected] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidates,
+          filter,
           'ライジングストーム'
         );
 
@@ -81,7 +77,7 @@ export const effects: CardEffects = {
       );
 
       if (machineUnits.length > 0) {
-        await System.show(stack, 'イグナイトフォース', '機械ユニットのレベル+1');
+        await System.show(stack, 'イグナイトフォース', '【機械】ユニットのレベル+1');
 
         // 機械ユニットのレベルを+1する
         machineUnits.forEach(unit => {
@@ -95,42 +91,27 @@ export const effects: CardEffects = {
   // このユニットがオーバークロックした時、あなたの【機械】ユニットを2体まで選ぶ。それらに【加護】を与える。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 選択可能なユニットが存在するか確認（選択可能か、EffectHelper.candidateでチェック）
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => {
-        return unit.catalog.species &&
-          Array.isArray(unit.catalog.species) &&
-          unit.catalog.species.includes('機械') &&
-          unit.owner.id === stack.processing.owner.id
-          ? true
-          : false;
-      },
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => {
+      return unit.catalog.species &&
+        Array.isArray(unit.catalog.species) &&
+        unit.catalog.species.includes('機械') &&
+        unit.owner.id === stack.processing.owner.id
+        ? true
+        : false;
+    };
 
-    if (candidates.length > 0) {
-      await System.show(stack, 'デュアルシールド', '機械ユニット最大2体に【加護】');
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
+      await System.show(stack, 'デュアルシールド', '【機械】ユニットに【加護】');
 
       try {
         // ユニットを選択（最大2体）
-        const selected: Unit[] = [];
-
-        // 最大2体選択するために2回繰り返す
-        for (let i = 0; i < 2; i++) {
-          if (candidates.length > selected.length) {
-            const remainingUnits = candidates.filter(unit => !selected.some(s => s.id === unit.id));
-
-            if (remainingUnits.length > 0) {
-              const [unit] = await EffectHelper.selectUnit(
-                stack,
-                stack.processing.owner,
-                remainingUnits,
-                'デュアルシールド'
-              );
-              selected.push(unit);
-            }
-          }
-        }
+        const selected = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          filter,
+          '【加護】を与えるユニットを選択して下さい',
+          2
+        );
 
         // 選択されたユニットに【加護】を与える
         selected.forEach(unit => {

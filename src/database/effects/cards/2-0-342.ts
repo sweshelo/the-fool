@@ -1,6 +1,6 @@
 import { Effect, System, EffectHelper } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Card } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   //■オリハルコンの剣
@@ -8,14 +8,14 @@ export const effects: CardEffects = {
 
   checkIntercept: (stack: StackWithCard<Card>): boolean => {
     const owner = stack.processing.owner;
-    const ownUnits = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
+    const filter = (unit: Unit) => unit.owner.id === owner.id;
 
     //対戦相手のインターセプトカードが発動した時かつ自分のフィールドにユニットがいる場合に発動
     return (
       owner.opponent.id === stack.source.id &&
       stack.target instanceof Card &&
       stack.target.catalog.type === 'intercept' &&
-      ownUnits.length > 0
+      EffectHelper.isUnitSelectable(stack.core, filter, owner)
     );
   },
 
@@ -23,15 +23,15 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 自分のユニットの選択肢を作成
-    const ownUnits = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
+    const filter = (unit: Unit) => unit.owner.id === owner.id;
 
     await System.show(stack, 'オリハルコンの剣', 'BP+7000');
 
     // 自分のユニットを1体選択
-    const [selectedUnit] = await EffectHelper.selectUnit(
+    const [selectedUnit] = await EffectHelper.pickUnit(
       stack,
       owner,
-      ownUnits,
+      filter,
       'BPを+7000する自分のユニットを選択'
     );
 
