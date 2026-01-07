@@ -5,21 +5,14 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
-    const oppCandidateFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const oppCandidate_selectable = EffectHelper.isUnitSelectable(
+    const isChoice1Avail =
+      stack.processing.owner.cp.current >= 1 &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
+    const isChoice2Avail = EffectHelper.isUnitSelectable(
       stack.core,
-      oppCandidateFilter,
+      'owns',
       stack.processing.owner
     );
-    const ownCandidateFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const ownCandidate_selectable = EffectHelper.isUnitSelectable(
-      stack.core,
-      ownCandidateFilter,
-      stack.processing.owner
-    );
-
-    const isChoice1Avail = stack.processing.owner.cp.current >= 1 && oppCandidate_selectable;
-    const isChoice2Avail = ownCandidate_selectable;
 
     return (
       stack.target instanceof Unit &&
@@ -31,21 +24,14 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const oppCandidateFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const oppCandidate_selectable = EffectHelper.isUnitSelectable(
+    const isChoice1Avail =
+      stack.processing.owner.cp.current >= 1 &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
+    const isChoice2Avail = EffectHelper.isUnitSelectable(
       stack.core,
-      oppCandidateFilter,
+      'owns',
       stack.processing.owner
     );
-    const ownCandidateFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
-    const ownCandidate_selectable = EffectHelper.isUnitSelectable(
-      stack.core,
-      ownCandidateFilter,
-      stack.processing.owner
-    );
-
-    const isChoice1Avail = stack.processing.owner.cp.current >= 1 && oppCandidate_selectable;
-    const isChoice2Avail = ownCandidate_selectable;
 
     let choice: string | undefined = undefined;
     if (isChoice1Avail && isChoice2Avail) {
@@ -68,7 +54,7 @@ export const effects: CardEffects = {
         const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          oppCandidateFilter,
+          'opponents',
           '手札に戻すユニットを選択して下さい'
         );
         Effect.modifyCP(stack, stack.processing, stack.processing.owner, -1);
@@ -81,7 +67,7 @@ export const effects: CardEffects = {
         const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          ownCandidateFilter,
+          'owns',
           '【沈黙効果耐性】を与えるユニットを選択して下さい'
         );
         Effect.keyword(stack, stack.processing, target, '沈黙効果耐性');
