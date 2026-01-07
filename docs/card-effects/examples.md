@@ -103,7 +103,7 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 選択可能なユニットが存在するかチェック
-    if (!EffectHelper.isSelectable(
+    if (!EffectHelper.isUnitSelectable(
       stack.core,
       unit => unit.owner.id === opponent.id && unit.lv >= 2,
       owner
@@ -265,7 +265,7 @@ export const effects: CardEffects = {
       // 自身のレベルが2以上の場合
       if (stack.processing.lv >= 2) {
         // 選択可能なユニットが存在するかチェック
-        if (!EffectHelper.isSelectable(
+        if (!EffectHelper.isUnitSelectable(
           stack.core,
           'owns',
           stack.processing.owner
@@ -362,7 +362,7 @@ export const effects: CardEffects = {
     const opponent = self.owner.opponent;
 
     // 選択可能なユニットが存在するかチェック
-    if (!EffectHelper.isSelectable(stack.core, 'opponents', self.owner)) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', self.owner)) return;
 
     // レベルに応じてダメージ量が変わる
     const damage = self.lv === 1 ? 3000 : self.lv === 2 ? 5000 : 7000;
@@ -557,7 +557,7 @@ export const effects: CardEffects = {
     }
 
     // レベル2以上のユニットが存在するか確認
-    if (!EffectHelper.isSelectable(
+    if (!EffectHelper.isUnitSelectable(
       stack.core,
       unit => unit.lv >= 2 && unit.owner.id === opponent.id,
       self.owner
@@ -609,7 +609,7 @@ const filter = (unit: Unit) => {
 };
 
 // 選択可能かチェック
-if (!EffectHelper.isSelectable(stack.core, filter, owner)) return;
+if (!EffectHelper.isUnitSelectable(stack.core, filter, owner)) return;
 
 // ユニット選択
 const [target] = await EffectHelper.pickUnit(stack, owner, filter, '対象を選択');

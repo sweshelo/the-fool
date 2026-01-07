@@ -322,12 +322,12 @@ Effect.activate(stack, self, target, false);
 
 ### メソッド一覧
 
-#### `EffectHelper.isSelectable()`
+#### `EffectHelper.isUnitSelectable()`
 
 ユニットを選択する効果を発動可能かチェックします。
 
 ```typescript
-static isSelectable(
+static isUnitSelectable(
   core: Core,
   filter: ((unit: Unit) => boolean) | 'owns' | 'opponents' | 'all',
   selector: Player
@@ -344,7 +344,7 @@ static isSelectable(
 
 ```typescript
 // 対戦相手のLv3以上のユニットを選択可能か調べる
-if(EffectHelper.isSelectable(
+if(EffectHelper.isUnitSelectable(
   stack.core,
   unit => unit.owner.id === opponent.id && unit.lv >= 3,
   owner
@@ -365,7 +365,7 @@ if(EffectHelper.isSelectable(
 
 > [!Important]
 > 以前存在した `EffectHelper.selectUnit()` は現在非推奨です。これは、`candidate()` + `selectUnit()` では、複数のユニットを選択する際に【セレクトハック】を十分に考慮できていないためです。
-> `isSelectable()` + `pickUnit()` を使用して下さい。
+> `isUnitSelectable()` + `pickUnit()` を使用して下さい。
 
 ```typescript
 static async pickUnit(
@@ -737,7 +737,7 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
   // 1. 選択可能なユニットをフィルタリング
   // 2. 選択可能なユニットが存在しない場合は発動しない
-  if (EffectHelper.isSelectable(stack.core, 'opponents', owner)) return;
+  if (EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
   // 3. 効果表示
   await System.show(stack, 'カード名', '破壊');

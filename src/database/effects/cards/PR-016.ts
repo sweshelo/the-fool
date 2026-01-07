@@ -12,9 +12,7 @@ export const effects: CardEffects = {
       stack.target.owner.id === stack.processing.owner.id
     ) {
       await System.show(stack, 'グロウダンス', 'BP+2000');
-      Effect.modifyBP(stack, stack.processing, stack.target, +2000, {
-        source: { unit: stack.processing.id },
-      });
+      Effect.modifyBP(stack, stack.processing, stack.target, +2000, { isBaseBP: true });
     }
   },
 };
