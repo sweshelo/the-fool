@@ -19,24 +19,28 @@ export const effects = {
   // 自身以外が召喚された時に発動する効果を記述
   // 味方ユニットであるかの判定などを忘れない
   onOverclockSelf: async (stack: StackWithCard) => {
-    const opponent = stack.processing.owner.opponent;
-    const filter = (unit: Unit) => {
+    const owner = stack.processing.owner;
+    const opponent = owner.opponent;
+    /*    const filter = (unit: Unit) => {
       return opponent.field.some(u => u.id === unit.id);
-    };
-    const units = EffectHelper.candidate(stack.core, filter, stack.processing.owner);
+    };*/
+    const units = EffectHelper.isUnitSelectable(
+      stack.core,
+      unit => unit.owner.id === opponent.id,
+      owner
+    );
 
-    if (Array.isArray(units) && units.length > 0) {
-      await System.show(stack, '破界炎舞・絶華繚乱', '10000ダメージ');
-      const owner = stack.processing.owner;
-      const [target] = await System.prompt(stack, owner.id, {
-        title: 'ダメージを与えるユニットを選択',
-        type: 'unit',
-        items: units,
-      });
-      const unit = opponent.field.find(unit => unit.id === target);
-      if (!unit) throw new Error('存在しないユニットが選択されました');
-      Effect.damage(stack, stack.processing!, unit, 10000);
-    }
+    if (!units) return;
+
+    await System.show(stack, '破界炎舞・絶華繚乱', '10000ダメージ');
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      owner,
+      unit => unit.owner.id === opponent.id,
+      '10000ダメージを与えるユニットを選択',
+      1
+    );
+    Effect.damage(stack, stack.processing, target, 10000);
   },
 
   handEffect: (core: unknown, self: Unit) => {
@@ -47,5 +51,19 @@ export const effects = {
       if (!self.owner.field.some(unit => unit.catalog.color === Color.RED))
         self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
     }
+  },
+
+  onAttackSelf: async (stack: StackWithCard<Unit>) => {
+    const self = stack.processing;
+    const owner = self.owner;
+
+    await System.show(stack, '破界炎舞・絶華繚乱', 'BP+[【神】×2000]');
+
+    const godUnits = owner.field.filter(unit => unit.catalog.species?.includes('神'));
+
+    Effect.modifyBP(stack, self, self, godUnits.length * 2000, {
+      event: 'turnEnd',
+      count: 1,
+    });
   },
 };
