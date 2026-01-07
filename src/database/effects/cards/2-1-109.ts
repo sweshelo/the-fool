@@ -6,10 +6,10 @@ import { EffectHelper } from '../classes/helper';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
     if (
-      EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) ||
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
       owner.hand.length === 0
     )
       return;

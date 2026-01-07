@@ -1,12 +1,10 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(stack, '焦熱の煌星', '[対戦相手のフィールド×2000]ダメージ');
       const [target] = await EffectHelper.pickUnit(
         stack,

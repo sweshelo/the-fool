@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     // 自分と対戦相手のユニットが存在するか確認
     return (
       EffectHelper.isUnitSelectable(core, 'owns', self.owner) &&
-      EffectHelper.isUnitSelectable(core, 'owns', self.owner)
+      EffectHelper.isUnitSelectable(core, 'opponents', self.owner)
     );
   },
 

@@ -17,7 +17,7 @@ export const effects: CardEffects = {
       const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        'opponents',
+        filter,
         '対象のユニットを選択してください'
       );
       if (life <= 8) await Effect.clone(stack, stack.processing, target, stack.processing.owner);
