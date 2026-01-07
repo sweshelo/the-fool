@@ -4,15 +4,15 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(
       stack,
       '炎王獣の闘気',
       '【スピードムーブ】\n【無我の境地】\n【不屈】\n敵全体のBP-2000'
     );
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '無我の境地');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '不屈');
-    Effect.speedMove(stack, stack.processing as Unit);
+    Effect.keyword(stack, stack.processing, stack.processing, '無我の境地');
+    Effect.keyword(stack, stack.processing, stack.processing, '不屈');
+    Effect.speedMove(stack, stack.processing);
   },
 
   onAttackSelf: async (stack: StackWithCard): Promise<void> => {
@@ -23,7 +23,7 @@ export const effects: CardEffects = {
       const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        'opponents',
+        filter,
         '破壊するユニットを選択して下さい'
       );
       Effect.break(stack, stack.processing, target, 'effect');
