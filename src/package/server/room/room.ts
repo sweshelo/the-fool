@@ -7,6 +7,7 @@ import catalog from '@/database/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
+import { MessageHelper } from '@/package/core/message';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -60,6 +61,11 @@ export class Room {
           },
           exists.id
         );
+
+        // 再接続で自分のターン中の場合は defrost する
+        if (this.core.getTurnPlayer().id === message.payload.player.id) {
+          this.broadcastToPlayer(message.payload.player.id, MessageHelper.defrost());
+        }
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
 
