@@ -11,7 +11,10 @@ export const effects: CardEffects = {
   fieldEffect: (stack: StackWithCard) => {
     const owner = stack.processing.owner;
     owner.field.forEach(unit => {
-      if (unit.catalog.species?.includes('侍')) {
+      if (
+        unit.catalog.species?.includes('侍') &&
+        !unit.delta.some(delta => delta.source?.unit === stack.processing.id)
+      ) {
         // 【不屈】を付与
         Effect.keyword(stack, stack.processing, unit, '不屈', {
           source: { unit: stack.processing.id },
