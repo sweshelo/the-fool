@@ -7,17 +7,19 @@ import type { Core } from '@/package/core/core';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id && stack.processing.id !== unit.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.id && stack.processing.id !== unit.id,
+      targetsFilter,
       stack.processing.owner
     );
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(stack, 'マジカル☆スウィート', '手札に戻す\nコスト-1');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         '手札に戻すユニットを選択してください',
         1
       );
@@ -27,16 +29,15 @@ export const effects: CardEffects = {
   },
 
   isBootable: (core: Core, self: Unit) => {
-    return EffectHelper.candidate(core, () => true, self.owner).length > 0;
+    return EffectHelper.isUnitSelectable(core, 'all', self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const targets = EffectHelper.candidate(stack.core, () => true, stack.processing.owner);
     await System.show(stack, '起動・あま～いイチゴケーキ♪', 'ユニットのレベルを-1');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      targets,
+      'all',
       'レベルを下げるユニットを選択して下さい',
       1
     );

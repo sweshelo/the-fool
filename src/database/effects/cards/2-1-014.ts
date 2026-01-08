@@ -57,13 +57,15 @@ export const effects: CardEffects = {
     const targetLevel = stack.processing.lv >= 2 ? 2 : 3;
 
     // Find opponent units of required level
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.lv >= targetLevel;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id && unit.lv >= targetLevel,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(
         stack,
         '視界良好＆ブルベリフリーズ♪',
@@ -71,10 +73,10 @@ export const effects: CardEffects = {
       );
 
       // Select target unit
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         `破壊するレベル${targetLevel}以上のユニットを選択`
       );
 

@@ -81,23 +81,23 @@ for (const status of statusOrder) {
   const group = statusGroups[status];
   if (!group || group.length === 0) continue;
 
-  let statusLabel: string;
+  let _statusLabel: string;
   let groupTitle: string;
   switch (status) {
     case 'A':
-      statusLabel = '[NEW]     ';
+      _statusLabel = '[NEW]     ';
       groupTitle = '新規追加';
       break;
     case 'M':
-      statusLabel = '[MODIFIED]';
+      _statusLabel = '[MODIFIED]';
       groupTitle = '変更';
       break;
     case 'D':
-      statusLabel = '[DELETED] ';
+      _statusLabel = '[DELETED] ';
       groupTitle = '削除';
       break;
     default:
-      statusLabel = `[${status}]       `;
+      _statusLabel = `[${status}]       `;
       groupTitle = status;
   }
 

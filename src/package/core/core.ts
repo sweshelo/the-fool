@@ -33,7 +33,7 @@ type EffectResponseCallback = Function;
 interface History {
   card: Card;
   generation: number;
-  action: 'drive' | 'boot';
+  action: 'drive' | 'boot' | 'joker';
 }
 
 export class Core {
@@ -223,6 +223,22 @@ export class Core {
         this.round,
         this.turn
       );
+
+      this.room.broadcastToAll(
+        createMessage({
+          action: {
+            handler: 'client',
+            type: 'visual',
+          },
+          payload: {
+            type: 'TurnChange',
+            player: turnPlayer.id,
+            isFirst: (this.turn - 1) % 2 === 0,
+          },
+        })
+      );
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -1051,7 +1067,7 @@ export class Core {
         // Create and resolve joker stack
         this.histories.push({
           card: joker,
-          action: 'drive',
+          action: 'joker',
           generation: joker.generation,
         });
         const jokerStack = new Stack({

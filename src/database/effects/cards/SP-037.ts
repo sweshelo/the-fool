@@ -6,49 +6,35 @@ export const effects: CardEffects = {
   // このユニットがフィールドに出た時、あなたのユニットを1体選ぶ。それの行動権を回復する。対戦相手のユニットを1体選ぶ。それの行動権を消費する。
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
+    const isOwnsSelectable = EffectHelper.isUnitSelectable(stack.core, 'owns', owner);
+    const isOpponentsSelectable = EffectHelper.isUnitSelectable(stack.core, 'opponents', owner);
 
-    // 自分のユニットを選択
-    const selfCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id,
-      owner
-    );
+    if (isOwnsSelectable || isOpponentsSelectable) {
+      await System.show(stack, '流離の演奏', '行動権を回復');
 
-    // 相手のユニットを選択
-    const opponentCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      opponent
-    );
-
-    if (selfCandidates.length === 0 && opponentCandidates.length === 0) return;
-
-    await System.show(stack, '流離の演奏', '行動権を回復');
-    const [selfTarget] =
-      selfCandidates.length > 0
-        ? await EffectHelper.selectUnit(
+      const [selfTarget] = isOwnsSelectable
+        ? await EffectHelper.pickUnit(
             stack,
             owner,
-            selfCandidates,
+            'owns',
             '行動権を回復するユニットを選んでください',
             1
           )
         : [];
 
-    const [opponentTarget] =
-      opponentCandidates.length > 0
-        ? await EffectHelper.selectUnit(
+      const [opponentTarget] = isOpponentsSelectable
+        ? await EffectHelper.pickUnit(
             stack,
             owner,
-            opponentCandidates,
+            'opponents',
             '行動権を消費するユニットを選んでください',
             1
           )
         : [];
 
-    // 選択したユニットの行動権を変更
-    if (selfTarget) Effect.activate(stack, stack.processing, selfTarget, true);
-    if (opponentTarget) Effect.activate(stack, stack.processing, opponentTarget, false);
+      // 選択したユニットの行動権を変更
+      if (selfTarget) Effect.activate(stack, stack.processing, selfTarget, true);
+      if (opponentTarget) Effect.activate(stack, stack.processing, opponentTarget, false);
+    }
   },
 };

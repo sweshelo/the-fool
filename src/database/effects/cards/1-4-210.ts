@@ -1,12 +1,12 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate } from '..';
+import { Effect, EffectHelper, EffectTemplate } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { System } from '../classes/system';
 
 export const effects: CardEffects = {
   // ユニット: ジェネレイト＜ウィルス・費＞
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    if (EffectTemplate.virusInjectable(stack.processing.owner)) {
+    if (EffectHelper.isVirusInjectable(stack.processing.owner)) {
       await System.show(
         stack,
         'ジェネレイト＜ウィルス・費＞',

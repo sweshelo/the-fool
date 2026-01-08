@@ -1,30 +1,26 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System, EffectTemplate } from '..';
+import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
-  checkDrive: (stack: StackWithCard) => {
-    // Cost check
+  //■VIP待遇
+  //あなたのコスト6以上のユニットがフィールドに出た時、あなたはカードを1枚引く。あなたのCPを+1する。
+
+  //インターセプト条件確認
+  checkDrive: (stack: StackWithCard): boolean => {
+    //ユニットかつ、コスト6以上かつ、効果の所有者のユニットであることを確認
     return (
       stack.target instanceof Unit &&
       stack.target.catalog.cost >= 6 &&
-      stack.target.owner.id === stack.processing.owner.id
+      stack.processing.owner.id === stack.target.owner.id
     );
   },
 
-  onDrive: async (stack: StackWithCard): Promise<void> => {
-    const target = stack.target;
+  onDrive: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // Type guard and ownership check
-    if (!(target instanceof Unit)) return;
-
-    await System.show(stack, 'VIP待遇', 'ドロー\nCP+1');
-
-    // Draw 1 card
+    await System.show(stack, 'VIP待遇', 'カードを1枚引く\nCP+1');
     EffectTemplate.draw(owner, stack.core);
-
-    // Increase CP by 1
     Effect.modifyCP(stack, stack.processing, owner, 1);
   },
 };

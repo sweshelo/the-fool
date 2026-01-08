@@ -14,27 +14,21 @@ export const effects: CardEffects = {
     );
 
     // 天使を1体選ぶ
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      (unit: Unit) => {
-        return unit.catalog.species!.includes('天使') && stack.processing.owner.id === owner.id;
-      },
-      stack.processing.owner
-    );
-    if (candidate.length > 0) {
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: '【秩序の盾】を与えるユニットを選択',
-        items: candidate,
-      });
-
-      const unit = candidate.find(unit => unit.id === unitId);
-      if (unit) Effect.keyword(stack, stack.processing, unit, '秩序の盾');
+    const filter = (unit: Unit) => {
+      return unit.catalog.species!.includes('天使') && unit.owner.id === owner.id;
+    };
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '【秩序の盾】を与えるユニットを選択して下さい'
+      );
+      Effect.keyword(stack, stack.processing, target, '秩序の盾');
     }
 
     stack.core.players.forEach(player => {
-      player.deck = [...player.deck, ...player.trash];
-      player.trash = [];
+      player.trash.forEach(card => Effect.move(stack, stack.processing, card, 'deck'));
     });
 
     if (isBouncedMoreThan10Cards) EffectTemplate.draw(owner, stack.core);

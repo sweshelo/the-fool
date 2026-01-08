@@ -39,8 +39,6 @@ export const effects: CardEffects = {
   // ■レーザーシックル
   // このユニットがオーバークロックした時、対戦相手に1ライフダメージを与える。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const opponent = stack.processing.owner.opponent;
-
     await System.show(stack, 'レーザーシックル', '1ライフダメージ');
 
     // 対戦相手に1ライフダメージ

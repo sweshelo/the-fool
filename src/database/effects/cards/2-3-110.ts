@@ -28,21 +28,17 @@ export const effects: CardEffects = {
   // ■アージェント・アンガー
   // このユニットがオーバークロックした時、対戦相手のユニットを1体選ぶ。それを対戦相手のデッキに戻す。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (candidate.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'アージェント・アンガー', 'デッキに戻す');
 
       try {
         // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.selectUnit(
+        const [selected] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidate,
+          filter,
           'アージェント・アンガー'
         );
 
