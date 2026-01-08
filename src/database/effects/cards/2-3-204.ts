@@ -62,16 +62,19 @@ export const effects: CardEffects = {
       const opponent = stack.processing.owner.opponent;
 
       // 対戦相手のトリガーゾーンにカードがない場合
-      if (opponent.trigger.length === 0 && opponent.field.length > 0) {
+      if (
+        opponent.trigger.length === 0 &&
+        EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+      ) {
         await System.show(stack, 'ヘパイストスの炉炎', 'ユニットを破壊');
 
         try {
           // 対戦相手のユニットを選択
-          const [selected] = await EffectHelper.selectUnit(
+          const [selected] = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            opponent.field,
-            'ヘパイストスの炉炎'
+            'opponents',
+            '破壊するユニットを選択して下さい'
           );
 
           // 選択されたユニットを破壊

@@ -21,17 +21,16 @@ export const effects: CardEffects = {
   async onDriveSelf(stack: StackWithCard<Unit>) {
     const self = stack.processing;
     const owner = self.owner;
-    const opponent = owner.opponent;
-    if (opponent.field.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(
         stack,
         'わんわんどりーみん',
         'ユニットを破壊\n自身の基本BP+[破壊したユニットのBP]'
       );
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         owner,
-        opponent.field,
+        'opponents',
         '破壊するユニットを選択'
       );
       const bp = target.currentBP;
