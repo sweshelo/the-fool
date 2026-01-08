@@ -8,8 +8,9 @@ import type {
   PlayerDisconnectedPayload,
   ErrorPayload,
 } from '@/submodule/suit/types/message/payload/client';
-import { ErrorCode, ErrorMessage } from '@/submodule/suit/constant/error';
+import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
+import { MessageHelper } from '../core/message';
 
 class ServerError extends Error {
   constructor(
@@ -229,10 +230,12 @@ export class Server {
           }
           break;
         case 'core':
+          const room = this.getRoom(client);
           // oxlint-disable-next-line no-floating-promises
-          this.getRoom(client)
-            ?.core.handleMessage(message)
-            .catch(e => console.error('メッセージハンドリング中にエラーが発生しました。', e));
+          room?.core.handleMessage(message).catch(e => {
+            console.error('メッセージハンドリング中にエラーが発生しました。', e);
+            room.broadcastToPlayer(room.core.getTurnPlayer().id, MessageHelper.defrost());
+          });
           break;
         case 'server':
         default:

@@ -902,7 +902,6 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
         if (!card || !player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           console.log(payload);
           throw new Error('指定されたCardかPlayerのどちらかが不正でした');
         }
@@ -989,7 +988,6 @@ export class Core {
         // Validate player
         const player = this.players.find(p => p.id === payload.player);
         if (!player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid player');
         }
 
@@ -997,20 +995,17 @@ export class Core {
         const joker = player.joker.card.find(j => j.id === payload.target.id);
 
         if (!joker || joker.catalog.type !== 'joker') {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid joker ability');
         }
 
         // Check if player has enough gauge
         if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient joker gauge');
         }
 
         // check if player has enough cp
         const cost = joker.catalog.cost;
         if (player.cp.current < cost) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient cp');
         }
 
@@ -1018,7 +1013,6 @@ export class Core {
         const canActivate = joker.catalog.checkJoker?.(player, this) ?? false;
 
         if (!canActivate) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Joker conditions not met');
         }
 
