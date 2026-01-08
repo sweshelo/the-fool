@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   // あなたがプレイヤーアタックを受けた時、対戦相手の全てのユニットにターン終了時まで【攻撃禁止】を与える。
   checkPlayerAttack: (stack: StackWithCard<Card>): boolean => {
     // 自分がプレイヤーアタックを受けた場合のみ発動
-    return stack.source.id === stack.processing.owner.opponent.id;
+    return stack.target?.id === stack.processing.owner.id;
   },
 
   onPlayerAttack: async (stack: StackWithCard<Card>): Promise<void> => {
