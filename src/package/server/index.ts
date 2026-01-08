@@ -106,13 +106,20 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
-        // 切断通知を他のプレイヤーに送信（切断する前に）
+        // Roomオブジェクトの内部マップからプレイヤーを削除
+        room.clients.delete(disconnectedUser.id);
+        room.players.delete(disconnectedUser.id);
+
+        // Roomの残りのクライアント数を基に閉じるかどうかを判定
+        const roomWillClose = room.clients.size === 0;
+
+        // 切断通知を他のプレイヤーに送信
         const payload: PlayerDisconnectedPayload = {
           type: 'PlayerDisconnected',
           disconnectedPlayerId: disconnectedUser.id,
           reason: 'connection_lost',
           timestamp: Date.now(),
-          roomWillClose: room.clients.size <= 1,
+          roomWillClose,
         };
 
         room.broadcastToAllExcept(
@@ -122,21 +129,19 @@ export class Server {
           },
           disconnectedUser.id
         );
+
+        // Roomが空になったら削除
+        if (roomWillClose) {
+          this.rooms.delete(roomId);
+          console.log('room %s has been deleted.', roomId);
+        }
       }
 
-      // クリーンアップ
+      // Serverの管理マップからクリーンアップ
       this.clientRooms.delete(ws);
       this.clients.delete(ws);
-
-      // 空になったらroom削除
-      const remainingClientsInRoom = Array.from(this.clientRooms.values()).filter(
-        id => id === roomId
-      ).length;
-      if (remainingClientsInRoom === 0) {
-        this.rooms.delete(roomId);
-        console.log('room %s has been deleted.', roomId);
-      }
     } else {
+      // roomIdまたはdisconnectedUserが存在しない場合もクリーンアップ
       this.clients.delete(ws);
     }
   }
@@ -180,7 +185,7 @@ export class Server {
     const room = this.rooms.get(roomId);
     if (!room) throw new ServerError('ルームが見つかりませんでした。', ErrorCode.ROOM_NOT_FOUND);
 
-    return roomId ? this.rooms.get(roomId) : undefined;
+    return room;
   }
 
   public responseJustBoolean<T extends RequestPayload>(
