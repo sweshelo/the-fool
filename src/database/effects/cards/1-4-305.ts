@@ -14,15 +14,11 @@ export const effects: CardEffects = {
   onAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id) {
       await System.show(stack, '狂姫の闊歩', '【防御禁止】を与える');
-      const candidate = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id,
-        stack.processing.owner
-      );
-      const [target] = await EffectHelper.selectUnit(
+      const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidate,
+        filter,
         '【防御禁止】を与えるユニットを選択して下さい',
         1
       );

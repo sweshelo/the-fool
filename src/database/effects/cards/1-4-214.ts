@@ -3,18 +3,15 @@ import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const targets = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 3,
-    stack.processing.owner
-  );
+  const filter = (unit: Unit) =>
+    unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 3;
 
-  if (targets.length > 0) {
+  if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
     await System.show(stack, '金剛の胆力', '行動権を消費');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      targets,
+      filter,
       '行動権を消費するユニットを選択'
     );
 

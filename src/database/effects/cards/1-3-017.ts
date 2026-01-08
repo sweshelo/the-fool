@@ -9,20 +9,20 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 自分のユニットを選択
-    const selfCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id,
-      owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === owner.id;
     const opponentCandidates = opponent.field.filter(unit => unit.catalog.cost <= 2);
 
-    if (selfCandidates.length === 0 || opponentCandidates.length === 0) return;
+    if (
+      !EffectHelper.isUnitSelectable(stack.core, 'owns', owner) ||
+      opponentCandidates.length === 0
+    )
+      return;
 
     await System.show(stack, 'アイリス・ソング', 'ユニットをデッキに戻す');
-    const [selfTarget] = await EffectHelper.selectUnit(
+    const [selfTarget] = await EffectHelper.pickUnit(
       stack,
       owner,
-      selfCandidates,
+      filter,
       'デッキに戻すユニットを選んでください',
       1
     );
@@ -41,19 +41,13 @@ export const effects: CardEffects = {
       return;
 
     const opponent = stack.processing.owner.opponent;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      opponent
-    );
-
-    if (candidates.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
     await System.show(stack, 'レインボウ・ソング', '行動権を消費');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       opponent,
-      candidates,
+      'opponents',
       '行動権を消費するユニットを選んでください',
       1
     );

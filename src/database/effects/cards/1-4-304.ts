@@ -87,20 +87,16 @@ export const effects: CardEffects = {
       // 相手のユニットが存在する場合のみ処理
       if (opponent.field.length > 0) {
         // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === opponent.id,
-          owner
-        );
+        const filter = (unit: Unit) => unit.owner.id === opponent.id;
 
-        if (targetCandidates.length > 0) {
+        if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
           await System.show(stack, '曲者討伐', '敵に2000ダメージ');
 
           // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            targetCandidates,
+            filter,
             'ダメージを与えるユニットを選択'
           );
 

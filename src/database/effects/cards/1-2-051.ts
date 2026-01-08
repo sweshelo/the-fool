@@ -18,20 +18,16 @@ export const effects: CardEffects = {
       return;
 
     // 自分のフィールドにユニットが存在するか確認
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === self.owner.id,
-      self.owner
-    );
-    if (candidates.length === 0) return;
+    const filter = (unit: Unit) => unit.owner.id === self.owner.id;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, self.owner)) return;
 
     await System.show(stack, '鼓舞のワルツ', '基本BP+5000');
 
     // 自分のユニットを1体選ぶ
-    const [buffTarget] = await EffectHelper.selectUnit(
+    const [buffTarget] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      candidates,
+      filter,
       '基本BP+5000するユニットを選んでください'
     );
 
@@ -49,20 +45,12 @@ export const effects: CardEffects = {
     if (!(stack.source instanceof Unit) || stack.source.owner.id !== opponent.id) return;
 
     // 対戦相手のフィールドにユニットが存在するか確認
-    const opponentCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      owner
-    );
-    const hasOpponentUnit = opponentCandidates.length > 0;
+    const opponentFilter = (unit: Unit) => unit.owner.id === opponent.id;
+    const hasOpponentUnit = EffectHelper.isUnitSelectable(stack.core, opponentFilter, owner);
 
     // 自分のフィールドにユニットが存在するか確認
-    const ownCandidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id,
-      owner
-    );
-    const hasOwnUnit = ownCandidates.length > 0;
+    const ownFilter = (unit: Unit) => unit.owner.id === owner.id;
+    const hasOwnUnit = EffectHelper.isUnitSelectable(stack.core, ownFilter, owner);
 
     // どちらも選択不可の場合は発動しない
     if (!hasOpponentUnit && !hasOwnUnit) return;
@@ -79,10 +67,10 @@ export const effects: CardEffects = {
 
     // 対戦相手のユニットを1体選ぶ
     if (hasOpponentUnit) {
-      const [debuffTarget] = await EffectHelper.selectUnit(
+      const [debuffTarget] = await EffectHelper.pickUnit(
         stack,
         owner,
-        opponentCandidates,
+        opponentFilter,
         '基本BP-1000するユニットを選んでください'
       );
 
@@ -93,10 +81,10 @@ export const effects: CardEffects = {
 
     // 自分のユニットを1体選ぶ
     if (hasOwnUnit) {
-      const [buffTarget] = await EffectHelper.selectUnit(
+      const [buffTarget] = await EffectHelper.pickUnit(
         stack,
         owner,
-        ownCandidates,
+        ownFilter,
         '基本BP+1000するユニットを選んでください'
       );
 

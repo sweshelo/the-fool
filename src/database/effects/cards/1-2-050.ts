@@ -26,19 +26,15 @@ export const effects: CardEffects = {
     if (stack.processing.owner.id !== stack.core.getTurnPlayer().id) {
       // 自身のレベルが2以上の場合
       if (stack.processing.lv >= 2) {
-        const targets = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === stack.processing.owner.id,
-          stack.processing.owner
-        );
+        const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
 
-        if (targets.length > 0) {
+        if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
           await System.show(stack, '争いの追憶', 'ユニットを消滅');
 
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            targets,
+            filter,
             '消滅させるユニットを選択'
           );
 

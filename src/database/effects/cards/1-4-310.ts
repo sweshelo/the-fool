@@ -34,30 +34,21 @@ export const effects: CardEffects = {
     // フィールドのユニットが4体以下か確認
     if (owner.field.length <= 4) {
       // 相手のコスト2以下のユニットを取得
-      const lowCostUnits = opponent.field.filter(unit => unit.catalog.cost <= 2);
+      const filter = (unit: Unit) => unit.owner.id === opponent.id && unit.catalog.cost <= 2;
 
-      if (lowCostUnits.length > 0) {
-        // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === opponent.id && unit.catalog.cost <= 2,
-          owner
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
+        await System.show(stack, '銀翼転身', 'ユニットを【複製】する');
+
+        // ユニットを1体選択
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          owner,
+          filter,
+          '【複製】するユニットを選択'
         );
 
-        if (targetCandidates.length > 0) {
-          await System.show(stack, '銀翼転身', 'ユニットを【複製】する');
-
-          // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
-            stack,
-            owner,
-            targetCandidates,
-            '【複製】するユニットを選択'
-          );
-
-          // 選択したユニットを複製
-          await Effect.clone(stack, stack.processing, target, owner);
-        }
+        // 選択したユニットを複製
+        await Effect.clone(stack, stack.processing, target, owner);
       }
     }
   },

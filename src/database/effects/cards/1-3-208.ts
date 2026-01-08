@@ -4,18 +4,14 @@ import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   async onAttackSelf(stack: StackWithCard<Unit>) {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-    if (candidates.length === 0) return;
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
 
     await System.show(stack, '狂魔神槍・命滅ノ轍', '5000ダメージ');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      candidates,
+      filter,
       'ダメージを与えるユニットを選択して下さい'
     );
     Effect.damage(stack, stack.processing, target, 5000);

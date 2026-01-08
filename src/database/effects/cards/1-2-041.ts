@@ -12,20 +12,15 @@ export const effects: CardEffects = {
   // このユニットがオーバークロックした時、対戦相手のユニットを1体選ぶ。それを破壊する。
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを選択可能か確認
-    const oppUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (oppUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '幽玄乱舞', 'ユニットを破壊');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        oppUnits,
-        '破壊するユニットを選択して下さい',
-        1
+        filter,
+        '破壊するユニットを選択して下さい'
       );
 
       Effect.break(stack, stack.processing, target, 'effect');

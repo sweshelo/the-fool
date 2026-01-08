@@ -5,17 +5,18 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id && unit.catalog.color === Color.GREEN,
-      stack.processing.owner
-    );
-    if (stack.processing.owner.id === stack.source.id) {
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id && unit.catalog.color === Color.GREEN;
+
+    if (
+      stack.processing.owner.id === stack.source.id &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
+    ) {
       await System.show(stack, 'グリーン・クロック', '緑属性ユニットのレベル+1');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         'レベルを+1するユニットを選択して下さい'
       );
       Effect.clock(stack, stack.processing, target, 1);

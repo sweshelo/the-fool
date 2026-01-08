@@ -23,24 +23,26 @@ export const effects: CardEffects = {
     switch (stack.processing.lv) {
       case 3: {
         const opponent = stack.processing.owner.opponent;
-        const candidate = EffectHelper.candidate(
+        const filter = (unit: Unit) => opponent.field.includes(unit);
+
+        const hasTargets = EffectHelper.isUnitSelectable(
           stack.core,
-          (unit: Unit) => opponent.field.includes(unit),
+          filter,
           stack.processing.owner
         );
 
         await System.show(
           stack,
           'スリーピングホロウ',
-          `${candidate.length > 0 ? '相手ユニットを1体選んで破壊\n' : ''}自身のレベル-2`
+          `${hasTargets ? '相手ユニットを1体選んで破壊\n' : ''}自身のレベル-2`
         );
-        if (candidate.length > 0) {
-          const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-            type: 'unit',
-            title: '破壊するユニットを選択',
-            items: candidate,
-          });
-          const unit = candidate.find(unit => unit.id === unitId);
+        if (hasTargets) {
+          const [unit] = await EffectHelper.pickUnit(
+            stack,
+            stack.processing.owner,
+            filter,
+            '破壊するユニットを選択'
+          );
           if (unit) Effect.break(stack, stack.processing, unit, 'effect');
         }
         Effect.clock(stack, stack.processing, stack.processing, -2);
