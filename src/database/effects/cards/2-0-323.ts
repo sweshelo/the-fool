@@ -25,7 +25,7 @@ export const effects: CardEffects = {
     );
 
     switch (choice) {
-      case '1':
+      case '1': {
         const deck = stack.processing.owner.deck.filter(
           card =>
             card.catalog.cost <= 3 &&
@@ -42,7 +42,8 @@ export const effects: CardEffects = {
           if (randomCard) await Effect.summon(stack, stack.processing, randomCard);
         }
         break;
-      case '2':
+      }
+      case '2': {
         const damage =
           stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('魔導士'))
             .length * 1000;
@@ -51,6 +52,7 @@ export const effects: CardEffects = {
           Effect.modifyBP(stack, stack.processing, unit, -damage, { isBaseBP: true });
         });
         break;
+      }
     }
   },
 };
