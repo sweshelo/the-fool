@@ -8,6 +8,12 @@ import { createMessage } from '@/submodule/suit/types';
 
 type UnitPickFilter = ((unit: Unit) => boolean) | 'owns' | 'opponents' | 'all';
 
+interface Choice {
+  id: string;
+  description: string;
+  condition?: () => boolean;
+}
+
 export class EffectHelper {
   /**
    * 『自身以外に』の効果を実行する
@@ -321,5 +327,28 @@ export class EffectHelper {
 
     if (selected.length > 0) return selected as [Unit, ...Unit[]];
     throw new Error('選択すべきユニットが見つかりませんでした');
+  }
+
+  static async choice(
+    stack: Stack,
+    player: Player,
+    title: string,
+    choices: [Choice, Choice]
+  ): Promise<Choice['id'] | undefined> {
+    const availableChoices = choices.filter(choice => choice.condition?.() ?? true); // condition をチェックする。未指定ならば条件無しで呼び出し可
+    switch (availableChoices.length) {
+      case 0:
+        return undefined;
+      case 1:
+        return availableChoices[0]?.id;
+      default: {
+        const [chosen] = await System.prompt(stack, player.id, {
+          type: 'option',
+          title,
+          items: choices,
+        });
+        return chosen;
+      }
+    }
   }
 }
