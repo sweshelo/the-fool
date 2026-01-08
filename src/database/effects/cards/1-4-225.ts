@@ -6,19 +6,20 @@ export const effects: CardEffects = {
   // らいおんぱわー！：フィールドに出た時の効果
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 対戦相手のユニットを選び、強制防御を付与
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(stack, 'らいおんぱわー！', '【強制防御】を付与');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         '【強制防御】を与えるユニットを選択'
       );
 
@@ -38,19 +39,20 @@ export const effects: CardEffects = {
 
       if (roundNumber % 2 === 1) {
         // 奇数ラウンド
-        const targets = EffectHelper.candidate(
+        const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+        const targets_selectable = EffectHelper.isUnitSelectable(
           stack.core,
-          unit => unit.owner.id === stack.processing.owner.opponent.id,
+          targetsFilter,
           stack.processing.owner
         );
 
-        if (targets.length > 0) {
+        if (targets_selectable) {
           await System.show(stack, 'らいおんぱわー！', '【強制防御】を付与');
 
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             stack.processing.owner,
-            targets,
+            targetsFilter,
             '【強制防御】を与えるユニットを選択'
           );
 

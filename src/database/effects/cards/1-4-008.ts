@@ -23,17 +23,16 @@ export const effects = {
     const filter = (unit: Unit) => {
       return opponent.field.some(u => u.id === unit.id);
     };
-    const units = EffectHelper.candidate(stack.core, filter, stack.processing.owner);
 
-    if (Array.isArray(units) && units.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '破界炎舞・絶華繚乱', '10000ダメージ');
       const owner = stack.processing.owner;
-      const [target] = await System.prompt(stack, owner.id, {
-        title: 'ダメージを与えるユニットを選択',
-        type: 'unit',
-        items: units,
-      });
-      const unit = opponent.field.find(unit => unit.id === target);
+      const [unit] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        filter,
+        'ダメージを与えるユニットを選択'
+      );
       if (!unit) throw new Error('存在しないユニットが選択されました');
       Effect.damage(stack, stack.processing!, unit, 10000);
     }

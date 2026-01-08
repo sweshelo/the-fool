@@ -5,19 +5,14 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard) => {
-    const oppCandidate = EffectHelper.candidate(
+    const isChoice1Avail =
+      stack.processing.owner.cp.current >= 1 &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
+    const isChoice2Avail = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      'owns',
       stack.processing.owner
     );
-    const ownCandidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
-
-    const isChoice1Avail = stack.processing.owner.cp.current >= 1 && oppCandidate.length > 0;
-    const isChoice2Avail = ownCandidate.length > 0;
 
     return (
       stack.target instanceof Unit &&
@@ -29,19 +24,14 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const oppCandidate = EffectHelper.candidate(
+    const isChoice1Avail =
+      stack.processing.owner.cp.current >= 1 &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
+    const isChoice2Avail = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      'owns',
       stack.processing.owner
     );
-    const ownCandidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
-
-    const isChoice1Avail = stack.processing.owner.cp.current >= 1 && oppCandidate.length > 0;
-    const isChoice2Avail = ownCandidate.length > 0;
 
     let choice: string | undefined = undefined;
     if (isChoice1Avail && isChoice2Avail) {
@@ -61,10 +51,10 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・モノクローム', 'CP-1\n手札に戻す');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          oppCandidate,
+          'opponents',
           '手札に戻すユニットを選択して下さい'
         );
         Effect.modifyCP(stack, stack.processing, stack.processing.owner, -1);
@@ -74,10 +64,10 @@ export const effects: CardEffects = {
 
       case '2': {
         await System.show(stack, '選略・モノクローム', '【沈黙効果耐性】を与える');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          ownCandidate,
+          'owns',
           '【沈黙効果耐性】を与えるユニットを選択して下さい'
         );
         Effect.keyword(stack, stack.processing, target, '沈黙効果耐性');

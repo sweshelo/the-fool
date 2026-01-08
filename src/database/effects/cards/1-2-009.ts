@@ -18,20 +18,15 @@ export const effects: CardEffects = {
       return;
 
     // 対戦相手のフィールドにユニットが存在するか確認
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-    if (candidates.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
     await System.show(stack, '火弦のソナタ', '8000ダメージ');
 
     // 対戦相手のユニットを1体選ぶ
-    const [damageTarget] = await EffectHelper.selectUnit(
+    const [damageTarget] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      candidates,
+      'opponents',
       '8000ダメージを与えるユニットを選んでください'
     );
 
@@ -53,20 +48,15 @@ export const effects: CardEffects = {
       return;
 
     // 対戦相手のフィールドにユニットが存在するか確認
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-    if (candidates.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
 
     await System.show(stack, '火の守護精霊', '2000ダメージ');
 
     // 対戦相手のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       self.owner,
-      candidates,
+      'opponents',
       '2000ダメージを与えるユニットを選んでください'
     );
 

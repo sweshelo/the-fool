@@ -3,32 +3,23 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const effect = async (stack: StackWithCard<Unit>) => {
-  const myCandidates = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === stack.processing.owner.id,
-    stack.processing.owner
-  );
-
-  const opponentCandidates = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id === stack.processing.owner.opponent.id,
-    stack.processing.owner
-  );
-
-  if (myCandidates.length > 0 && opponentCandidates.length > 0) {
+  if (
+    EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) &&
+    EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+  ) {
     await System.show(stack, 'バニシング・ポイント', 'お互いのユニットを消滅');
 
-    const [myTarget] = await EffectHelper.selectUnit(
+    const [myTarget] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      myCandidates,
+      'owns',
       '消滅させる自分のユニットを選択'
     );
 
-    const [opponentTarget] = await EffectHelper.selectUnit(
+    const [opponentTarget] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentCandidates,
+      'opponents',
       '消滅させる相手のユニットを選択'
     );
 
@@ -52,19 +43,13 @@ export const effects: CardEffects = {
   // ■エリミネイト・ポイント
   // このユニットが消滅した時
   onDeleteSelf: async (stack: StackWithCard): Promise<void> => {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
+      await System.show(stack, 'エリミネイト・ポイント', 'ユニットを消滅');
 
-    if (candidates.length > 0) {
-      await System.show(stack, 'エリミネイト・ポイント', '敵ユニットを消滅');
-
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        'opponents',
         '消滅させる相手のユニットを選択'
       );
 

@@ -13,10 +13,9 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
 
-    // 対戦相手のユニットを取得
-    const opponentUnits = opponent.field;
+    const filter = (unit: Unit) => unit.owner.id === opponent.id;
 
-    if (opponentUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(
         stack,
         '紅蓮の弾舞＆スピードムーブ',
@@ -24,10 +23,10 @@ export const effects: CardEffects = {
       );
 
       // ユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        opponentUnits,
+        filter,
         '1000ダメージを与えるユニットを選択'
       );
 
@@ -47,16 +46,16 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // 対戦相手のコスト2以下のユニットをフィルタリング
-    const lowCostUnits = opponent.field.filter(unit => unit.catalog.cost <= 2);
+    const filter = (unit: Unit) => unit.owner.id === opponent.id && unit.catalog.cost <= 2;
 
-    if (lowCostUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '威嚇突撃', '【防御禁止】を付与');
 
       // ユニットを1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        lowCostUnits,
+        filter,
         '【防御禁止】を与えるユニットを選択'
       );
 

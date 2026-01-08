@@ -223,6 +223,22 @@ export class Core {
         this.round,
         this.turn
       );
+
+      this.room.broadcastToAll(
+        createMessage({
+          action: {
+            handler: 'client',
+            type: 'visual',
+          },
+          payload: {
+            type: 'TurnChange',
+            player: turnPlayer.id,
+            isFirst: (this.turn - 1) % 2 === 0,
+          },
+        })
+      );
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -262,6 +278,8 @@ export class Core {
           delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
         ))
     );
+
+    this.room.sync();
 
     // ターン開始スタックを積み、解決する
     this.histories = [];
@@ -900,7 +918,6 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
         if (!card || !player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           console.log(payload);
           throw new Error('指定されたCardかPlayerのどちらかが不正でした');
         }
@@ -987,7 +1004,6 @@ export class Core {
         // Validate player
         const player = this.players.find(p => p.id === payload.player);
         if (!player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid player');
         }
 
@@ -995,20 +1011,17 @@ export class Core {
         const joker = player.joker.card.find(j => j.id === payload.target.id);
 
         if (!joker || joker.catalog.type !== 'joker') {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid joker ability');
         }
 
         // Check if player has enough gauge
         if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient joker gauge');
         }
 
         // check if player has enough cp
         const cost = joker.catalog.cost;
         if (player.cp.current < cost) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient cp');
         }
 
@@ -1016,7 +1029,6 @@ export class Core {
         const canActivate = joker.catalog.checkJoker?.(player, this) ?? false;
 
         if (!canActivate) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Joker conditions not met');
         }
 

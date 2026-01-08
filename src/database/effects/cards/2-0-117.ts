@@ -6,19 +6,20 @@ import { System } from '../classes/system';
 export const effects: CardEffects = {
   // ユニット: ウィークネス＆ドロー
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(stack, 'ウィークネス＆ドロー', '基本BP-5000\nカードを1枚引く');
 
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         '基本BPを下げるユニットを選択'
       );
 

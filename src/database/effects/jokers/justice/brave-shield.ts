@@ -2,13 +2,15 @@ import { System } from '../../classes/system';
 import { EffectHelper } from '../../classes/helper';
 import { Effect } from '../../classes/effect';
 import type { CardEffects, StackWithCard } from '../../classes/types';
+import type { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   checkJoker: (player, core) => {
     // 行動済みのユニットが存在するか確認
-    return (
-      EffectHelper.candidate(core, unit => !unit.active && unit.owner.id === player.id, player)
-        .length > 0
+    return EffectHelper.isUnitSelectable(
+      core,
+      unit => !unit.active && unit.owner.id === player.id,
+      player
     );
   },
 
@@ -16,19 +18,15 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 行動済みのユニットのみを選択対象にする
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => !unit.active && unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => !unit.active && unit.owner.id === stack.processing.owner.id;
 
     await System.show(stack, 'ブレイブシールド', '行動権回復');
 
     // 自分のユニットを1体選ぶ
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidates,
+      filter,
       '行動権を回復するユニットを選択'
     );
 

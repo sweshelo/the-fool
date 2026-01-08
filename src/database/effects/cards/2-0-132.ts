@@ -9,23 +9,20 @@ export const effects: CardEffects = {
     const self = stack.processing as Unit;
     const owner = self.owner;
 
-    // 対戦相手のフィールドのユニットを取得
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.opponent.id,
-      owner
-    );
-
     // 紫ゲージが4以上 かつ ユニットが選択可能の場合のみ発動
-    if ((owner.purple ?? 0) < 4 || candidate.length <= 0) return;
+    if (
+      (owner.purple ?? 0) < 4 ||
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+    )
+      return;
 
     await System.show(stack, '軍姫砲・えりすびーむ', '手札に戻す');
 
     // 3体まで選択
-    const selected = await EffectHelper.selectUnit(
+    const selected = await EffectHelper.pickUnit(
       stack,
       owner,
-      candidate,
+      'opponents',
       '手札に戻すユニットを選択して下さい',
       3
     );
@@ -38,7 +35,7 @@ export const effects: CardEffects = {
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 紫ゲージが1以上で、対戦相手の手札が7枚の場合のみ発動

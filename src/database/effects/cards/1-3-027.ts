@@ -1,3 +1,4 @@
+import { Unit } from '@/package/core/class/card';
 import { Effect } from '../classes/effect';
 import { EffectHelper } from '../classes/helper';
 import { System } from '../classes/system';
@@ -6,19 +7,15 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
-    if (opponentUnits.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
     await System.show(stack, 'カオスディール', 'ユニットを1体破壊');
 
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentUnits,
+      filter,
       '破壊するユニットを選択して下さい'
     );
     if (!target) return;
@@ -27,46 +24,46 @@ export const effects: CardEffects = {
   },
 
   onAttackSelf: async (stack: StackWithCard) => {
-    const undeadUnits = EffectHelper.candidate(
+    const undeadFilter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('不死') ?? false);
+    const opponentFilter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.opponent.id && unit.lv >= 2;
+
+    const hasUndead = EffectHelper.isUnitSelectable(
       stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('不死') ?? false),
+      undeadFilter,
       stack.processing.owner
     );
-    const opponentUnits = EffectHelper.candidate(
+    const hasOpponent = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id && unit.lv >= 2,
+      opponentFilter,
       stack.processing.owner
     );
 
-    if (undeadUnits.length === 0) return;
+    if (!hasUndead) return;
 
     await System.show(
       stack,
       'カオスディール',
-      `【不死】ユニットを破壊${opponentUnits.length > 0 ? '\nレベル2以上のユニットを破壊' : ''}`
+      `【不死】ユニットを破壊${hasOpponent ? '\nレベル2以上のユニットを破壊' : ''}`
     );
 
-    const [undeadTarget] =
-      undeadUnits.length > 0
-        ? await EffectHelper.selectUnit(
-            stack,
-            stack.processing.owner,
-            undeadUnits,
-            '破壊するユニットを選択して下さい'
-          )
-        : [];
+    const [undeadTarget] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      undeadFilter,
+      '破壊するユニットを選択して下さい'
+    );
 
-    const [opponentTarget] =
-      opponentUnits.length > 0
-        ? await EffectHelper.selectUnit(
-            stack,
-            stack.processing.owner,
-            opponentUnits,
-            '破壊するユニットを選択して下さい'
-          )
-        : [];
+    const [opponentTarget] = hasOpponent
+      ? await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          opponentFilter,
+          '破壊するユニットを選択して下さい'
+        )
+      : [];
 
     if (opponentTarget) Effect.break(stack, stack.processing, opponentTarget, 'effect');
     if (undeadTarget) Effect.break(stack, stack.processing, undeadTarget, 'effect');

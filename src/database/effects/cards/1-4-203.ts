@@ -10,13 +10,9 @@ const activateHousenkaNoMai = async (
   title?: string,
   message?: string
 ): Promise<boolean> => {
-  const opponentUnits = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id !== owner.id,
-    owner
-  );
+  const filter = (unit: Unit) => unit.owner.id !== owner.id;
 
-  if (opponentUnits.length === 0) {
+  if (!EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
     return false;
   }
 
@@ -24,12 +20,11 @@ const activateHousenkaNoMai = async (
     await System.show(stack, title, message);
   }
 
-  const [selectedUnit] = await EffectHelper.selectUnit(
+  const [selectedUnit] = await EffectHelper.pickUnit(
     stack,
     owner,
-    opponentUnits,
-    'ダメージを与えるユニットを選択',
-    1
+    filter,
+    'ダメージを与えるユニットを選択'
   );
 
   if (!selectedUnit) {

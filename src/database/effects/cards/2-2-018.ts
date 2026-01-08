@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Choices } from '@/submodule/suit/types/game/system';
 import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
@@ -13,8 +12,7 @@ export const effects: CardEffects = {
 
   isBootable: (core: Core, self: Unit) => {
     return (
-      self.owner.trash.length > 3 &&
-      EffectHelper.candidate(core, unit => unit.owner.id !== self.owner.id, self.owner).length > 0
+      self.owner.trash.length >= 3 && EffectHelper.isUnitSelectable(core, 'opponents', self.owner)
     );
   },
 
@@ -24,26 +22,18 @@ export const effects: CardEffects = {
       '起動・悪神の判決',
       '捨札を3枚デッキに戻す\nユニットに【沈黙】を与え破壊する'
     );
-    const targets: Unit[] = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      'opponents',
+      '破壊するユニットを選択してください'
     );
-    const choices: Choices = {
-      title: '破壊するユニットを選択してください',
-      type: 'unit',
-      items: targets,
-    };
-
-    const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-    const unit = targets.find(card => card.id === unitId);
-    if (!unit) throw new Error('正しいカードが選択されませんでした');
 
     EffectHelper.random(stack.processing.owner.trash, 3).forEach(card =>
       Effect.move(stack, stack.processing, card, 'deck')
     );
-    Effect.keyword(stack, stack.processing, unit, '沈黙');
-    Effect.break(stack, stack.processing, unit, 'effect');
+    Effect.keyword(stack, stack.processing, target, '沈黙');
+    Effect.break(stack, stack.processing, target, 'effect');
   },
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {

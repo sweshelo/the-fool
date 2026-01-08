@@ -41,18 +41,14 @@ export const effects: CardEffects = {
       return;
 
     const opponent = stack.processing.owner.opponent;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === opponent.id;
 
-    if (candidates.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ロジックなど燃え尽きろォ！', '3000ダメージ');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        candidates,
+        filter,
         'ダメージを与えるユニットを選んでください'
       );
 

@@ -5,7 +5,7 @@ import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   // 起動・フォース＜ウィルス・黙＞
-  isBootable: (core: Core, self: Unit): boolean => {
+  isBootable: (_core: Core, self: Unit): boolean => {
     return EffectHelper.isVirusInjectable(self.owner.opponent);
   },
 
@@ -19,9 +19,10 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
 
     // Find virus units on opponent's field
-    const virusUnits = opponent.field.filter(unit => unit.catalog.species?.includes('ウィルス'));
+    const virusFilter = (unit: Unit) =>
+      unit.owner.id === opponent.id && !!unit.catalog.species?.includes('ウィルス');
 
-    if (virusUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, virusFilter, stack.processing.owner)) {
       await System.show(
         stack,
         'ウィルスクラッシュ',
@@ -29,26 +30,23 @@ export const effects: CardEffects = {
       );
 
       // Select a virus unit to destroy
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        virusUnits,
+        virusFilter,
         '破壊する【ウィルス】ユニットを選択'
       );
 
       // Get all opponent units for second destruction
-      const opponentUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id !== stack.processing.owner.id && unit.id !== target.id,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) =>
+        unit.owner.id !== stack.processing.owner.id && unit.id !== target.id;
 
-      if (opponentUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         // Select a unit to destroy
-        const [secondTarget] = await EffectHelper.selectUnit(
+        const [secondTarget] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          opponentUnits,
+          filter,
           '破壊するユニットを選択'
         );
 
