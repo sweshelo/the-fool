@@ -10,14 +10,7 @@ export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit): boolean => {
     // CPが1以上あるか確認
     const hasSufficientCP = self.owner.cp.current >= 1;
-    // 対戦相手のユニットが存在するか確認
-    const hasOpponentUnits = self.owner.opponent.field.length > 0;
-    // 1ターンに1度の制限をチェック
-    const notUsedThisTurn = !core.histories.some(
-      history => history.card.id === self.id && history.action === 'boot'
-    );
-
-    return hasSufficientCP && hasOpponentUnits && notUsedThisTurn;
+    return hasSufficientCP && EffectHelper.isUnitSelectable(core, 'opponents', self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -30,11 +23,11 @@ export const effects: CardEffects = {
 
       try {
         // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.selectUnit(
+        const [selected] = await EffectHelper.pickUnit(
           stack,
           owner,
-          opponent.field,
-          'カムランの決戦'
+          'opponents',
+          '【強制防御】を与えるユニットを選択して下さい'
         );
 
         // 選んだユニットに【強制防御】を与える

@@ -3,42 +3,36 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Core } from '@/package/core/core';
 
+const getExceptSelfOwnUnitsFilter = (self: Unit) => (unit: Unit) => {
+  return unit.id !== self.id && unit.owner.id === self.owner.id;
+};
+
 export const effects: CardEffects = {
   // ■起動・ニュードチャージ
   // このユニット以外のあなたのユニットを1体選ぶ。それを手札に戻し、あなたのCPを+1する。このユニットの基本BPを+1000する。
   isBootable: (core: Core, self: Unit): boolean => {
     // このユニット以外の自分のユニットが存在するかチェック
-    return self.owner.field.some(unit => unit.id !== self.id);
+    return EffectHelper.isUnitSelectable(core, getExceptSelfOwnUnitsFilter(self), self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // このユニット以外の自分のユニットをフィルタリング
-    const targets = stack.processing.owner.field.filter(unit => unit.id !== stack.processing.id);
+    await System.show(stack, 'ニュードチャージ', 'ユニットを手札に戻す\nCP+1\n自身のBP+1000');
+    // ユニットを選択
+    const [selected] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      getExceptSelfOwnUnitsFilter(stack.processing),
+      'ニュードチャージ'
+    );
 
-    if (targets.length > 0) {
-      await System.show(stack, 'ニュードチャージ', 'ユニットを手札に戻す\nCP+1\n自身のBP+1000');
+    // 選んだユニットを手札に戻す
+    Effect.bounce(stack, stack.processing, selected);
 
-      try {
-        // ユニットを選択
-        const [selected] = await EffectHelper.selectUnit(
-          stack,
-          stack.processing.owner,
-          targets,
-          'ニュードチャージ'
-        );
+    // CPを+1する
+    Effect.modifyCP(stack, stack.processing, stack.processing.owner, 1);
 
-        // 選んだユニットを手札に戻す
-        Effect.bounce(stack, stack.processing, selected);
-
-        // CPを+1する
-        Effect.modifyCP(stack, stack.processing, stack.processing.owner, 1);
-
-        // 自身の基本BPを+1000する
-        Effect.modifyBP(stack, stack.processing, stack.processing, 1000, { isBaseBP: true });
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
-    }
+    // 自身の基本BPを+1000する
+    Effect.modifyBP(stack, stack.processing, stack.processing, 1000, { isBaseBP: true });
   },
 
   // ■ウィーゼル・ディソーダー
