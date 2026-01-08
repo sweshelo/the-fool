@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
 
     // 対戦相手のフィールドにユニットが存在するか確認
-    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
     await System.show(stack, '封印の湖', '【呪縛】を付与');
 
     // 対戦相手のユニットを1体選ぶ
