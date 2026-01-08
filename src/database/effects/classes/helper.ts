@@ -345,7 +345,7 @@ export class EffectHelper {
         const [chosen] = await System.prompt(stack, player.id, {
           type: 'option',
           title,
-          items: choices,
+          items: availableChoices,
         });
         return chosen;
       }
