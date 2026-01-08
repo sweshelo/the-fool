@@ -3,14 +3,22 @@ import { User } from './room/user';
 import { apiRouter } from './apiRouter';
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
-import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
+import type {
+  RoomOpenResponsePayload,
+  MatchingStartRequestPayload,
+  MatchingCancelRequestPayload,
+} from '@/submodule/suit/types/message/payload/server';
 import type {
   PlayerDisconnectedPayload,
   ErrorPayload,
+  MatchingStatusPayload,
 } from '@/submodule/suit/types/message/payload/client';
 import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
 import { MessageHelper } from '../core/message';
+import { createPrismaClient } from './db';
+import { MatchingService } from './matching/MatchingService';
+import type { PrismaClient } from '@prisma/client';
 
 class ServerError extends Error {
   constructor(
@@ -22,14 +30,62 @@ class ServerError extends Error {
   }
 }
 
+// Type guards for payload types
+function isMatchingStartRequestPayload(payload: unknown): payload is MatchingStartRequestPayload {
+  if (!payload || typeof payload !== 'object') return false;
+  return (
+    'type' in payload &&
+    payload.type === 'MatchingStartRequest' &&
+    'userId' in payload &&
+    typeof payload.userId === 'string' &&
+    'mode' in payload &&
+    typeof payload.mode === 'string' &&
+    'criteria' in payload &&
+    typeof payload.criteria === 'object' &&
+    payload.criteria !== null
+  );
+}
+
+function isMatchingCancelRequestPayload(payload: unknown): payload is MatchingCancelRequestPayload {
+  if (!payload || typeof payload !== 'object') return false;
+  return (
+    'type' in payload &&
+    payload.type === 'MatchingCancelRequest' &&
+    'userId' in payload &&
+    typeof payload.userId === 'string' &&
+    'queueId' in payload &&
+    typeof payload.queueId === 'string'
+  );
+}
+
+function isValidMatchingMode(mode: string): mode is 'RANDOM' | 'RATING' | 'RULE' {
+  const upperMode = mode.toUpperCase();
+  return upperMode === 'RANDOM' || upperMode === 'RATING' || upperMode === 'RULE';
+}
+
+function hasErrorCode(error: unknown): error is { errorCode: ErrorCode } {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'errorCode' in error &&
+    typeof error.errorCode === 'string'
+  );
+}
+
 export class Server {
-  private rooms: Map<string, Room> = new Map(); // roomId <-> Room
+  public rooms: Map<string, Room> = new Map(); // roomId <-> Room
   private clientRooms: Map<ServerWebSocket, string> = new Map();
   private clients: Map<ServerWebSocket, User> = new Map();
+  private prisma: PrismaClient;
+  private matchingService: MatchingService;
 
   constructor(port?: number) {
     const serverPort = port || process.env.PORT;
     console.log(`PORT: ${serverPort}`);
+
+    // Prisma Clientとマッチングサービスの初期化
+    this.prisma = createPrismaClient();
+    this.matchingService = new MatchingService(this.prisma, this);
 
     if (process.env.USE_TLS === 'true') {
       console.log('Running server with TLS enabled');
@@ -98,9 +154,27 @@ export class Server {
     this.clients.set(ws, user);
   }
 
-  private onClose(ws: ServerWebSocket) {
+  private async onClose(ws: ServerWebSocket) {
     const roomId = this.clientRooms.get(ws);
     const disconnectedUser = this.clients.get(ws);
+
+    if (disconnectedUser) {
+      // マッチングキューからの自動削除
+      try {
+        const queueEntry = await this.prisma.matchingQueueEntry.findFirst({
+          where: { userId: disconnectedUser.id, status: 'ACTIVE' },
+        });
+
+        if (queueEntry) {
+          await this.matchingService.cancelMatching(disconnectedUser.id, queueEntry.queueId);
+          console.log(
+            `User ${disconnectedUser.id} automatically removed from matching queue on disconnect`
+          );
+        }
+      } catch (error) {
+        console.error('Error removing user from matching queue:', error);
+      }
+    }
 
     if (roomId && disconnectedUser) {
       const room = this.rooms.get(roomId);
@@ -244,6 +318,7 @@ export class Server {
           break;
         case 'server':
         default:
+          // oxlint-disable-next-line no-floating-promises
           this.handleMessageForServer(client, message);
       }
     } catch (e) {
@@ -288,7 +363,7 @@ export class Server {
     }
   }
 
-  private handleMessageForServer(client: ServerWebSocket, message: Message) {
+  private async handleMessageForServer(client: ServerWebSocket, message: Message) {
     const { payload } = message;
     switch (message.action.type) {
       case 'open': {
@@ -310,6 +385,105 @@ export class Server {
             },
           } satisfies Message<RoomOpenResponsePayload>;
           client.send(JSON.stringify(response));
+        }
+        break;
+      }
+      case 'matchingStart': {
+        if (isMatchingStartRequestPayload(payload)) {
+          const matchingPayload = payload;
+          const upperMode = matchingPayload.mode.toUpperCase();
+
+          if (!isValidMatchingMode(upperMode)) {
+            const errorPayload: ErrorPayload = {
+              type: 'Error',
+              errorCode: ErrorCode.MATCHING_INVALID_CRITERIA,
+              message: '無効なマッチングモードです',
+              timestamp: Date.now(),
+            };
+            client.send(
+              JSON.stringify({
+                action: { handler: 'client', type: 'error' },
+                payload: errorPayload,
+              })
+            );
+            break;
+          }
+
+          try {
+            const queueId = await this.matchingService.joinQueue(
+              matchingPayload.userId,
+              client,
+              upperMode,
+              matchingPayload.criteria
+            );
+
+            const statusPayload: MatchingStatusPayload = {
+              type: 'MatchingStatus',
+              queueId,
+              status: 'searching',
+            };
+
+            client.send(
+              JSON.stringify({
+                action: { handler: 'client', type: 'matchingStatus' },
+                payload: statusPayload,
+              })
+            );
+          } catch (error) {
+            console.error('Error starting matching:', error);
+            const errorCode = hasErrorCode(error) ? error.errorCode : ErrorCode.SYS_INTERNAL_ERROR;
+            const errorPayload: ErrorPayload = {
+              type: 'Error',
+              errorCode,
+              message: error instanceof Error ? error.message : 'マッチング開始に失敗しました',
+              timestamp: Date.now(),
+            };
+            client.send(
+              JSON.stringify({
+                action: { handler: 'client', type: 'error' },
+                payload: errorPayload,
+              })
+            );
+          }
+        }
+        break;
+      }
+      case 'matchingCancel': {
+        if (isMatchingCancelRequestPayload(payload)) {
+          const cancelPayload = payload;
+
+          try {
+            await this.matchingService.cancelMatching(cancelPayload.userId, cancelPayload.queueId);
+
+            const statusPayload: MatchingStatusPayload = {
+              type: 'MatchingStatus',
+              queueId: cancelPayload.queueId,
+              status: 'cancelled',
+            };
+
+            client.send(
+              JSON.stringify({
+                action: { handler: 'client', type: 'matchingStatus' },
+                payload: statusPayload,
+              })
+            );
+          } catch (error) {
+            console.error('Error cancelling matching:', error);
+            const errorCode = hasErrorCode(error) ? error.errorCode : ErrorCode.SYS_INTERNAL_ERROR;
+            const errorPayload: ErrorPayload = {
+              type: 'Error',
+              errorCode,
+              message:
+                error instanceof Error ? error.message : 'マッチングキャンセルに失敗しました',
+              timestamp: Date.now(),
+            };
+            client.send(
+              JSON.stringify({
+                action: { handler: 'client', type: 'error' },
+                payload: errorPayload,
+              })
+            );
+          }
         }
         break;
       }

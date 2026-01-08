@@ -1,0 +1,10 @@
+name = "the-fool-matching"
+compatibility_date = "2024-01-01"
+
+# Cloudflare D1 database configuration
+# Run: npx wrangler d1 create the-fool-matching
+# Then replace <YOUR_DATABASE_ID> with the actual ID from the output
+[[d1_databases]]
+binding = "DB"
+database_name = "the-fool-matching"
+database_id = "<YOUR_DATABASE_ID>"  # TODO: Replace with actual database ID

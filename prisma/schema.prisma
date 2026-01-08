@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  rating        Int      @default(1500)
+  gamesPlayed   Int      @default(0)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matchingQueueEntries MatchingQueueEntry[]
+  playerInRooms        PlayerInRoom[]
+}
+
+model MatchingQueue {
+  id              String              @id @default(uuid())
+  mode            String              // 'RANDOM' | 'RATING' | 'RULE'
+  status          String              @default("WAITING") // 'WAITING' | 'MATCHED' | 'CANCELLED' | 'EXPIRED'
+  minRating       Int?
+  maxRating       Int?
+  rulePreference  String?
+  createdAt       DateTime            @default(now())
+  expiresAt       DateTime
+
+  entries         MatchingQueueEntry[]
+
+  @@index([mode, status, createdAt])
+  @@index([status, expiresAt])
+}
+
+model MatchingQueueEntry {
+  id              String         @id @default(uuid())
+  queueId         String
+  userId          String
+  joinedAt        DateTime       @default(now())
+  status          String         @default("ACTIVE") // 'ACTIVE' | 'MATCHED' | 'CANCELLED'
+
+  queue           MatchingQueue  @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@unique([queueId, userId])
+  @@index([userId, status])
+}
+
+model Room {
+  id            String       @id @default(cuid())
+  name          String
+  state         String       @default("WAITING") // 'WAITING' | 'ACTIVE' | 'FINISHED'
+  rule          String
+  winnerId      String?
+  createdAt     DateTime     @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+
+  players       PlayerInRoom[]
+
+  @@index([state, createdAt])
+}
+
+model PlayerInRoom {
+  id            String       @id @default(uuid())
+  roomId        String
+  userId        String
+  joinOrder     Int
+  deckData      String
+  joinedAt      DateTime     @default(now())
+
+  room          Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@unique([roomId, joinOrder])
+}
+

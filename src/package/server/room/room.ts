@@ -9,6 +9,8 @@ import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
 import { MessageHelper } from '@/package/core/message';
 
+export type RoomState = 'WAITING' | 'ACTIVE' | 'FINISHED';
+
 export class Room {
   id = Math.floor(Math.random() * 99999)
     .toString()
@@ -19,11 +21,13 @@ export class Room {
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
   cache: string | undefined;
+  state: RoomState;
 
-  constructor(name: string, rule?: Rule) {
+  constructor(name: string, rule?: Rule, initialState?: RoomState) {
     this.core = new Core(this);
     this.name = name;
     this.cache = undefined;
+    this.state = initialState || 'WAITING'; // デフォルトはWAITING（プライベートルーム）
     if (rule) this.rule = rule;
   }
 
@@ -87,6 +91,12 @@ export class Room {
         this.clients.set(player.id, socket);
         this.core.entry(player);
         this.players.set(player.id, player);
+
+        // 2人目が参加したらACTIVE状態に遷移
+        if (this.core.players.length === 2) {
+          this.state = 'ACTIVE';
+          console.log(`Room ${this.id} is now ACTIVE with 2 players`);
+        }
       }
       this.sync(true);
       return true;

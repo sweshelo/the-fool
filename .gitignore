@@ -36,3 +36,13 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 certs/
 bundle/
 .husky/
+
+# Prisma
+dev.db
+dev.db-journal
+*.db
+*.db-journal
+
+# Wrangler
+.wrangler/
+wrangler.toml.local

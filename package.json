@@ -10,11 +10,15 @@
     "lint": "bunx oxlint --type-aware"
   },
   "dependencies": {
+    "@prisma/adapter-d1": "^7.2.0",
+    "@prisma/client": "5",
+    "better-sqlite3": "^12.5.0",
     "js-yaml": "^4.1.0",
     "nanoid": "^5.1.5",
     "ws": "^8.18.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
     "dependency-cruiser": "^16.10.0",
@@ -22,7 +26,9 @@
     "knip": "^5.46.5",
     "lefthook": "^2.0.13",
     "oxfmt": "^0.20.0",
-    "oxlint-tsgolint": "^0.10.0"
+    "oxlint-tsgolint": "^0.10.0",
+    "prisma": "5",
+    "wrangler": "^4.58.0"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
