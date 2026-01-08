@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     stack.processing.owner.opponent.trigger
       .filter(
         card =>
-          (card.catalog.type === 'trigger' || card.catalog.type === 'intercept') &&
+          card.catalog.type === 'trigger' &&
           !card.delta.find(delta => delta.source?.unit === stack.processing.id)
       )
       .forEach(card =>
