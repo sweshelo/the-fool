@@ -263,6 +263,8 @@ export class Core {
         ))
     );
 
+    this.room.sync();
+
     // ターン開始スタックを積み、解決する
     this.histories = [];
     this.stack = [
