@@ -42,7 +42,7 @@ export class Core {
   round: number = 1;
   turn: number = 1;
   room: Room;
-  stack: Stack[] | undefined = undefined;
+  stack: Stack[] = [];
   histories: History[];
 
   /**
@@ -169,7 +169,7 @@ export class Core {
 
     if (!isFirstTurn) {
       // ターン終了スタックを積み、解決する
-      this.stack?.push(
+      this.stack.push(
         new Stack({
           type: 'turnEnd',
           source: this.getTurnPlayer(),
@@ -193,7 +193,7 @@ export class Core {
           Effect.break(deathCounterCheckStack, unit, unit, 'death');
         }
       });
-      this.stack?.push(deathCounterCheckStack);
+      this.stack.push(deathCounterCheckStack);
       await this.resolveStack();
 
       // ウィルス除外
@@ -283,7 +283,7 @@ export class Core {
 
     // ターン開始スタックを積み、解決する
     this.histories = [];
-    this.stack?.push(
+    this.stack.push(
       new Stack({
         type: 'turnStart',
         source: this.getTurnPlayer(),
@@ -328,7 +328,7 @@ export class Core {
     );
     this.room.soundEffect('decide');
 
-    this.stack?.push(
+    this.stack.push(
       new Stack({
         type: 'attack',
         source: attacker.owner,
@@ -430,7 +430,7 @@ export class Core {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // プレイヤーアタックに成功
-      this.stack?.push(
+      this.stack.push(
         new Stack({
           type: 'playerAttack',
           target: attacker.owner.opponent,
@@ -543,7 +543,7 @@ export class Core {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (blocker) {
-      this.stack?.push(
+      this.stack.push(
         new Stack({
           type: 'block',
           source: attacker,
@@ -563,7 +563,7 @@ export class Core {
    * @param blocker ブロックするユニット
    */
   async preBattle(attacker: Unit, blocker: Unit) {
-    this.stack?.push(
+    this.stack.push(
       new Stack({
         type: 'battle',
         source: attacker,
@@ -635,7 +635,7 @@ export class Core {
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    this.stack?.push(stack);
+    this.stack.push(stack);
     await this.resolveStack();
 
     // 戦闘勝利後の処理
@@ -668,7 +668,7 @@ export class Core {
           core: this,
         });
 
-        this.stack?.push(
+        this.stack.push(
           ...[systemStack, winnerStack].filter((stack): stack is Stack => stack !== undefined)
         );
         await this.resolveStack();
@@ -782,7 +782,7 @@ export class Core {
         target: undefined,
         core: this,
       });
-      this.stack?.push(stackForResolveFieldEffectUnmount);
+      this.stack.push(stackForResolveFieldEffectUnmount);
       this.fieldEffectUnmount(source, stackForResolveFieldEffectUnmount);
 
       card.delta = [];
@@ -815,7 +815,7 @@ export class Core {
       generation: card.generation,
     });
 
-    this.stack?.push(
+    this.stack.push(
       new Stack({
         type: 'drive',
         source: player,
@@ -855,7 +855,7 @@ export class Core {
       !card.overclocked &&
       player.field.find(unit => unit.id === card.id)
     ) {
-      this.stack?.push(
+      this.stack.push(
         new Stack({
           type: 'overclock',
           source: card,
@@ -1089,7 +1089,7 @@ export class Core {
         });
 
         // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
-        this.stack?.push(jokerStack);
+        this.stack.push(jokerStack);
         await this.resolveStack();
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;
@@ -1119,7 +1119,7 @@ export class Core {
           this.room.soundEffect('withdrawal');
           this.room.sync();
 
-          this.stack?.push(stack);
+          this.stack.push(stack);
           await this.resolveStack();
         }
         break;
@@ -1191,7 +1191,7 @@ export class Core {
           target.isBooted = true;
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
-          this.stack?.push(new Stack({ type: 'boot', target, core: this, source: player }));
+          this.stack.push(new Stack({ type: 'boot', target, core: this, source: player }));
           await this.resolveStack();
         }
         break;
@@ -1277,7 +1277,7 @@ export class Core {
       }
     }
 
-    this.stack?.push(
+    this.stack.push(
       new Stack({ type: '_messageReceived', source: this.getTurnPlayer(), core: this })
     );
     await this.resolveStack();
