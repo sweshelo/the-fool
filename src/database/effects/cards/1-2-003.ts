@@ -15,6 +15,7 @@ export const effects: CardEffects = {
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.target.lv === 3 &&
+      stack.processing.owner.id !== stack.target.id &&
       EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     ) {
       await System.show(stack, '紅蓮のオーバーフレア', '4000ダメージ');
