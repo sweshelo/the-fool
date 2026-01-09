@@ -359,7 +359,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-      this.core.fieldEffectUnmount(target);
+      this.core.fieldEffectUnmount(target, this);
       owner[actualDestination].push(target);
     }
   }
