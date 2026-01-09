@@ -631,7 +631,6 @@ export class Core {
     // 破壊が決定したら破壊する
     if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
     if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
-    const isWinnerHasPenetrate = winner.hasKeyword('貫通');
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -639,9 +638,11 @@ export class Core {
     await this.resolveStack();
 
     // 戦闘勝利後の処理
+    const isWinnerHasPenetrate = winner.hasKeyword('貫通');
+    const isWinnerIsAttacker = winner.id === attacker.id;
     if (!isWinnerBreaked && isLoserBreaked) {
       // 【貫通】処理
-      if (isWinnerHasPenetrate) {
+      if (isWinnerHasPenetrate && isWinnerIsAttacker) {
         loser.owner.damage();
       }
 

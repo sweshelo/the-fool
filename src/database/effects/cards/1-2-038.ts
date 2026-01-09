@@ -29,7 +29,8 @@ export const effects: CardEffects = {
         stack,
         owner,
         'opponents',
-        'レベルを+1するユニットを選択'
+        'レベルを+1するユニットを選択',
+        2
       );
 
       selection.forEach(unit => Effect.clock(stack, stack.processing, unit, 1));

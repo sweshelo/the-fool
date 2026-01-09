@@ -14,7 +14,7 @@ export const effects: CardEffects = {
 
       // 対戦相手のトリガーゾーンにカードがあるか確認
       if (opponent.trigger.length > 0) {
-        await System.show(stack, 'トリガーロスト', 'トリガーカードを破壊');
+        await System.show(stack, 'トリガーロスト', 'トリガーゾーンのカードを破壊');
 
         // ランダムで1枚選択して破壊
         EffectHelper.random(opponent.trigger, 1).forEach(card =>

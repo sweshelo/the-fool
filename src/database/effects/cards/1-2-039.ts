@@ -27,14 +27,22 @@ export const effects: CardEffects = {
   onClockupSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const trashUnits = stack.processing.owner.trash.filter(card => card instanceof Unit);
 
-    if (trashUnits.length > 0) {
-      const [randomCard] = EffectHelper.random(trashUnits, 1);
+    const [reviveCard] = EffectHelper.random(trashUnits, 1);
+    const isUnitSelectable = EffectHelper.isUnitSelectable(
+      stack.core,
+      'owns',
+      stack.processing.owner
+    );
 
-      if (EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) && randomCard) {
-        await System.show(stack, '極楽浄土', '捨札から1枚回収\nユニットを1体破壊');
+    const messages = [
+      reviveCard ? '捨札から1枚回収' : undefined,
+      isUnitSelectable ? 'ユニットを1体破壊' : undefined,
+    ].filter(message => !!message);
 
-        Effect.move(stack, stack.processing, randomCard, 'hand');
+    if (messages.length > 0) {
+      await System.show(stack, '極楽浄土', messages.join('\n'));
 
+      if (isUnitSelectable) {
         const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
@@ -42,6 +50,10 @@ export const effects: CardEffects = {
           '破壊するユニットを選択'
         );
         Effect.break(stack, stack.processing, target);
+      }
+
+      if (reviveCard) {
+        Effect.move(stack, stack.processing, reviveCard, 'hand');
       }
     }
   },
