@@ -33,7 +33,11 @@ export const effects: CardEffects = {
     const target = stack.target as Unit;
 
     // このユニット以外の【戦士】ユニットがフィールドに出た時
-    if (target !== self && target.catalog.species?.includes('戦士')) {
+    if (
+      target !== self &&
+      self.owner.id === target.owner.id &&
+      target.catalog.species?.includes('戦士')
+    ) {
       await System.show(stack, '日輪発破の陣', '基本BP+1000');
       Effect.modifyBP(stack, self, target, 1000, { isBaseBP: true });
     }
