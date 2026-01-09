@@ -69,7 +69,7 @@ export class Core {
     // 新しいプレイヤーを追加
     this.players.push(player);
     this.room.broadcastToPlayer(player.id, MessageHelper.freeze());
-    console.log('Player added:', player.id);
+    console.log('Player %s added in room %s', player.id, this.room.id);
 
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
