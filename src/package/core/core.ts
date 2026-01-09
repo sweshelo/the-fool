@@ -774,17 +774,6 @@ export class Core {
       card.active = source.active;
       player.field[index] = card;
 
-      // フィールド効果チェック用のStackを発行
-      // 解決は resolveStack() にて、召喚後に実施される
-      const stackForResolveFieldEffectUnmount = new Stack({
-        type: '_preDrive',
-        source: player,
-        target: undefined,
-        core: this,
-      });
-      this.stack.push(stackForResolveFieldEffectUnmount);
-      this.fieldEffectUnmount(source, stackForResolveFieldEffectUnmount);
-
       card.delta = [];
 
       if (!source.isCopy) {
@@ -808,21 +797,38 @@ export class Core {
     if (typeof card.catalog.onBootSelf === 'function')
       card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
 
-    // Stack追加
+    // 履歴追加
     this.histories.push({
       card: card,
       action: 'drive',
       generation: card.generation,
     });
 
-    this.stack.push(
-      new Stack({
-        type: 'drive',
-        source: player,
-        target: card,
-        core: this,
-      })
-    );
+    // Stack追加
+    // フィールド効果チェック用のStackを発行
+    // 解決は resolveStack() にて、召喚後に実施される
+    const stackForResolveFieldEffectUnmount = new Stack({
+      type: '_preDrive',
+      source: player,
+      target: undefined,
+      core: this,
+    });
+    const driveStack = new Stack({
+      type: 'drive',
+      source: player,
+      target: card,
+      core: this,
+    });
+
+    // フィールド効果の終了に伴う破壊のチェックを実施
+    if (source) this.fieldEffectUnmount(source, stackForResolveFieldEffectUnmount);
+    this.room.sync();
+
+    // CIP後の最初の割り込みとしてフィールド終了に伴う破壊スタックの解決のため、childrenに予めPush
+    driveStack.children.push(stackForResolveFieldEffectUnmount);
+
+    // coreのスタックに積む
+    this.stack.push(driveStack);
 
     this.room.broadcastToAll(
       createMessage({
