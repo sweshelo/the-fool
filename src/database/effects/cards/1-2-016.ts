@@ -15,10 +15,9 @@ export const effects: CardEffects = {
     );
 
     // フィールドにいる【神】ユニットの数をカウント
-    const godCount = stack.core.players
-      .map(p => p.field)
-      .flat()
-      .filter(unit => unit.catalog.species?.includes('神')).length;
+    const godCount = stack.processing.owner.field.filter(unit =>
+      unit.catalog.species?.includes('神')
+    ).length;
 
     // BP増加量を計算
     const bpBoost = godCount * 4000;
