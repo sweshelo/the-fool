@@ -11,6 +11,6 @@ export const effects: CardEffects = {
 
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     await System.show(stack, 'アルカナジェネレーター', 'ジョーカーゲージ20%上昇');
-    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 20);
+    Effect.modifyJokerGauge(stack, stack.processing, stack.processing.owner, 20);
   },
 };

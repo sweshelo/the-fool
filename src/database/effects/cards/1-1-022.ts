@@ -4,7 +4,11 @@ import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
-    await System.show(stack, '援軍／侍', '【侍】ユニットを1枚引く');
+    await System.show(
+      stack,
+      '援軍／侍＆心眼の撫子',
+      '【侍】ユニットを1枚引く\n【侍】に【不屈】を与える'
+    );
     EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '侍' });
   },
 

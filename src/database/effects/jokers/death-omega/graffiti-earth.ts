@@ -5,8 +5,8 @@ import { EffectTemplate } from '../../classes/templates';
 import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
-  checkJoker: (_player, _core) => {
-    return true;
+  checkJoker: (player, core) => {
+    return player.hand.length < core.room.rule.player.max.hand;
   },
 
   onJokerSelf: async (stack: StackWithCard) => {

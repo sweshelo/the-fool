@@ -33,17 +33,18 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
-    const targets = stack.processing.owner.opponent.field.filter(unit => unit.hasKeyword('沈黙'));
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.hasKeyword('沈黙');
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id &&
-      targets.length > 0 &&
-      stack.processing.owner.field.length <= 4
+      stack.processing.owner.field.length <= 4 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
     ) {
       await System.show(stack, 'ギルティー・ロスト', '【沈黙】を持つユニットを【複製】し破壊');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        filter,
         '【複製】して破壊するユニットを選択',
         1
       );

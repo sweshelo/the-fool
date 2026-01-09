@@ -50,7 +50,7 @@ export const effects: CardEffects = {
             );
 
             // 選んだカードを捨てる
-            Effect.move(stack, stack.processing, selectedCard, 'trash');
+            Effect.handes(stack, stack.processing, selectedCard);
 
             // ブロックされない効果を与える（次元干渉/コスト0として実装）
             Effect.keyword(stack, stack.processing, stack.source, '次元干渉', {

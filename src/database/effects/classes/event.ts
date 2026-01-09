@@ -35,6 +35,7 @@ export const internalEvents = [
   '_withdraw',
   '_messageReceived',
   '_deathCounterCheckStack',
+  '_preDrive',
 ] as const;
 
 // Union型として抽出

@@ -4,12 +4,8 @@ import { Effect } from '../../classes/effect';
 import type { CardEffects, StackWithCard } from '../../classes/types';
 
 export const effects: CardEffects = {
-  checkJoker: (player, core) => {
-    return (
-      player.hand.length > 0 &&
-      player.deck.length > 0 &&
-      player.hand.length < core.room.rule.player.max.hand
-    );
+  checkJoker: (player, _core) => {
+    return player.hand.length > 0 && player.deck.length > 0;
   },
 
   onJokerSelf: async (stack: StackWithCard) => {

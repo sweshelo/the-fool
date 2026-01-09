@@ -12,38 +12,36 @@ export const effects: CardEffects = {
 
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
-    const units = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
-
-    if (units.length === 0) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'all', stack.processing.owner)) return;
 
     // 選択肢を提示
-    const [choice] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・操竿トキツリ',
-      items: [
-        { id: '1', description: 'レベル+1' },
-        { id: '2', description: 'レベル-1' },
-      ],
-    });
-
-    // 対象ユニットを選択
-    const [targetId] = await System.prompt(stack, owner.id, {
-      type: 'unit',
-      title: 'レベルを変更するユニットを選択',
-      items: units,
-    });
-
-    const target = owner.field.find(unit => unit.id === targetId);
-    if (!target) return;
+    const choice = await EffectHelper.choice(stack, owner, '選略・操竿トキツリ', [
+      { id: '1', description: 'レベル+1' },
+      { id: '2', description: 'レベル-1' },
+    ]);
 
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・操竿トキツリ', 'レベル+1');
+        // 対象ユニットを選択
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          'all',
+          'レベルを変更するユニットを選択'
+        );
         Effect.clock(stack, stack.processing, target, 1);
         break;
       }
       case '2': {
         await System.show(stack, '選略・操竿トキツリ', 'レベル-1');
+        // 対象ユニットを選択
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          'all',
+          'レベルを変更するユニットを選択'
+        );
         Effect.clock(stack, stack.processing, target, -1);
         break;
       }
@@ -54,7 +52,7 @@ export const effects: CardEffects = {
     if (stack.processing.lv >= 3) {
       stack.processing.owner.opponent.field.forEach(unit => {
         if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-          Effect.modifyBP(stack, stack.processing, unit, -2000, {
+          Effect.modifyBP(stack, stack.processing, unit, -1000, {
             source: { unit: stack.processing.id },
           });
         }

@@ -13,20 +13,17 @@ export const effects: CardEffects = {
     switch (self.lv) {
       // Lv1: 相手ユニット1体選び1000ダメージ→成功時自身にスピードムーブ
       case 1:
-        if (opponent.field.length > 0) {
-          await System.show(
-            stack,
-            'スパイダー×スライサー',
-            '敵ユニット1体に1000ダメージ\n自身に【スピードムーブ】'
-          );
-          const [target] = await EffectHelper.selectUnit(
+        if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
+          await System.show(stack, 'スパイダー×スライサー', '敵ユニット1体に1000ダメージ');
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            opponent.field,
+            'opponents',
             'ダメージを与えるユニットを選択'
           );
           const destroyed = Effect.damage(stack, self, target, 1000, 'effect');
           if (destroyed) {
+            await System.show(stack, 'スパイダー×スライサー', '【スピードムーブ】を得る');
             Effect.speedMove(stack, self);
           }
         }

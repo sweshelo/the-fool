@@ -669,7 +669,7 @@ export class Effect {
         break;
       case '沈黙':
         stack.core.room.soundEffect('silent');
-        stack.core.fieldEffectUnmount(target); // 沈黙付与先がフィールド効果を発動している場合 フィールド効果を unmount する
+        stack.core.fieldEffectUnmount(target, stack); // 沈黙付与先がフィールド効果を発動している場合 フィールド効果を unmount する
         break;
     }
   }
