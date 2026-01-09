@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     if (owner.delete.length === 0) return;
 
-    await System.show(stack, '秘技・エクリプスセイバー', '消滅カード回収');
+    await System.show(stack, '秘技・エクリプスセイバー', '消滅カードを1枚回収');
 
     // 捨札からカードを1枚選んで手札に加える
     const [selectedCard] = await EffectHelper.selectCard(

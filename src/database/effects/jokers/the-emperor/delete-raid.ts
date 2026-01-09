@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     if (opponent.field.length === 0) return;
 
-    await System.show(stack, 'デリートレイド', 'ランダム2体破壊\n1ライフダメージ');
+    await System.show(stack, 'デリートレイド', 'ランダムでユニットを2体破壊\n1ライフダメージ');
 
     // 対戦相手のユニットからランダムで2体まで破壊する
     const targetCount = Math.min(2, opponent.field.length);

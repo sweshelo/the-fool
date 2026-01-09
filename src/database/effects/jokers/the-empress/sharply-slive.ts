@@ -12,7 +12,7 @@ export const effects: CardEffects = {
 
     if (owner.field.length === 0) return;
 
-    await System.show(stack, 'シャープリィスライヴ', '全体オーバークロック');
+    await System.show(stack, 'シャープリィスライヴ', 'オーバークロックさせる');
 
     // 自分の全てのユニットをオーバークロックさせる
     owner.field.forEach(unit => {

@@ -10,7 +10,7 @@ export const effects: CardEffects = {
   onJokerSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
 
-    await System.show(stack, 'トリックフィンガー', 'カード2枚ドロー');
+    await System.show(stack, 'トリックフィンガー', 'カードを2枚引く');
 
     // カードを2枚引く
     EffectTemplate.draw(owner, stack.core);
