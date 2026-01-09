@@ -23,6 +23,16 @@ COPY index.ts ./
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY config.yaml ./
+COPY prisma ./
+
+# 環境変数設定
+ENV DATABASE_URL="file:/usr/src/app/data/app.db"
+
+# データディレクトリを作成
+RUN mkdir -p /usr/src/app/data && chown -R bun:bun /usr/src/app/data
+
+# Prismaクライアントを生成 & データベースを初期化
+RUN bunx prisma generate && bunx prisma db push --skip-generate
 
 # .gitファイルを削除
 RUN rm -rf .git
