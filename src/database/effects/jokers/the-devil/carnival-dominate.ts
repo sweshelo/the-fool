@@ -5,28 +5,25 @@ import { EffectTemplate } from '../../classes/templates';
 import type { CardEffects, StackWithCard } from '../../classes/types';
 
 export const effects: CardEffects = {
-  checkJoker: (_player, _core) => {
-    return true;
+  checkJoker: (player, core) => {
+    return (
+      player.hand.length < core.room.rule.player.max.hand || player.opponent.trigger.length > 0
+    );
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    await System.show(stack, 'カーニバルドミネイト', 'トリガー2枚破壊\nカード2枚ドロー');
+    await System.show(
+      stack,
+      'カーニバルドミネイト',
+      'トリガーゾーンのカードを2枚まで破壊\nカードを2枚引く'
+    );
 
-    // 対戦相手のトリガーゾーンにあるカードを2枚までランダムで破壊する
-    if (opponent.trigger.length > 0) {
-      const destroyCount = Math.min(2, opponent.trigger.length);
-      const targets = EffectHelper.random(opponent.trigger, destroyCount);
-
-      targets.forEach(card => {
-        Effect.handes(stack, stack.processing, card);
-      });
-    }
-
-    // カードを2枚引く
-    EffectTemplate.draw(owner, stack.core);
-    EffectTemplate.draw(owner, stack.core);
+    EffectHelper.random(opponent.trigger, 2).forEach(card =>
+      Effect.move(stack, stack.processing, card, 'trash')
+    );
+    EffectHelper.repeat(2, () => EffectTemplate.draw(owner, stack.core));
   },
 };
