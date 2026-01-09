@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     const isOwnUnit = stack.source.id === stack.processing.owner.id;
     const hasHand = stack.processing.owner.hand.length > 0;
     const isRemainDeck = stack.processing.owner.deck.length > 0;
-    return isOwnUnit && hasHand && isRemainDeck;
+    return isOwnUnit && isRemainDeck && (stack.processing.lv >= 3 || hasHand);
   },
 
   // 実際の効果本体
