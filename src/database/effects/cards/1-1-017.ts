@@ -39,7 +39,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '選ばれし殉葬',
-        isOwnTurn ? 'BP+2000\nユニットを1体破壊' : 'BP+2000\nCP+1'
+        isOwnTurn ? 'BP+2000\nユニットを1体破壊' : 'BP+2000\nCP+1\nユニットを1体破壊'
       );
       const [target] = await EffectHelper.pickUnit(
         stack,
