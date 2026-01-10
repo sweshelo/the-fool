@@ -13,7 +13,11 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const filter = (unit: Unit) => unit.owner.id !== owner.id;
 
-    await System.show(stack, 'チェックメイトアクト', '【防御禁止】付与\nトリガーセット');
+    await System.show(
+      stack,
+      'チェックメイトアクト',
+      '【防御禁止】付与\nトリガーゾーンにカードをセット'
+    );
 
     // 対戦相手のユニットを2体まで選ぶ
     const targets = await EffectHelper.pickUnit(

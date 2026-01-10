@@ -2,7 +2,7 @@ import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
 import master from '@/database/catalog';
 import type { Player } from '../Player';
-import type { Delta } from '../delta';
+import { Delta } from '../delta';
 
 export class Unit extends Card implements IUnit {
   /**
@@ -91,18 +91,22 @@ export class Unit extends Card implements IUnit {
     unit.bp = this.currentBP;
     unit.isCopy = copy;
     unit.delta = this.delta
-      ?.map<Delta>(buff => ({
-        ...buff,
-        checkExpire: buff.checkExpire.bind(unit),
-        event: undefined,
-        source: undefined,
-      }))
       .filter(
         delta =>
           !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限') &&
           !(delta.effect.type === 'bp') &&
-          !(delta.effect.type === 'damage')
-      );
+          !(delta.effect.type === 'damage') &&
+          !(delta.effect.type === 'banned')
+      )
+      .map(delta => {
+        // デスカウンター / 寿命カウンター はそのまま維持、それ以外は永続化
+        const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
+        return new Delta(delta.effect, {
+          ...delta,
+          event: isCounter ? delta.event : undefined,
+          source: isCounter ? delta.source : undefined,
+        });
+      });
     unit.active = this.active;
     unit.lv = this.lv;
     unit.isBooted = this.isBooted;

@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     if (opponent.trigger.length === 0) return;
 
-    await System.show(stack, 'スターインパクト', 'トリガーデッキ戻し');
+    await System.show(stack, 'スターインパクト', 'トリガーゾーンのカードをデッキに戻す');
 
     // 対戦相手のトリガーゾーンにある全てのカードをデッキに戻す
     [...opponent.trigger].forEach(card => {

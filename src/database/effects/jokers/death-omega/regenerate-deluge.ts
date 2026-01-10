@@ -31,7 +31,7 @@ export const effects: CardEffects = {
     );
     const unitsToSummon = EffectHelper.random(candidates, summonCount);
 
-    for await (const unit of unitsToSummon) {
+    for (const unit of unitsToSummon) {
       if (unit instanceof Unit) await Effect.summon(stack, stack.processing, unit);
     }
   },

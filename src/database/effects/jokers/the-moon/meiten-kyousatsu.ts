@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     if (opponent.hand.length === 0) return;
 
-    await System.show(stack, '明天凶殺', '手札全破壊');
+    await System.show(stack, '明天凶殺', '手札を全て破壊');
 
     // 対戦相手の手札を全て破壊する
     [...opponent.hand].forEach((card: Card) => {
