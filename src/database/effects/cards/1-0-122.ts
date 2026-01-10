@@ -11,8 +11,8 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard) => {
     return (
       stack.processing.owner.life.current <= 3 &&
-      stack.source instanceof Unit &&
-      stack.processing.owner.id === stack.source.owner.id
+      stack.target instanceof Unit &&
+      stack.processing.owner.id === stack.target.owner.id
     );
   },
 };
