@@ -243,8 +243,7 @@ export class Player implements IPlayer {
 
   damage(self: boolean = false) {
     this.life.current--;
-    if (!self) this.joker.gauge += 10;
-
+    if (!self) this.joker.gauge = Math.max(this.joker.gauge + 10, 100);
     if (this.life.current <= 0) return true;
   }
 }

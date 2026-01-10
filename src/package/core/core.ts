@@ -204,7 +204,8 @@ export class Core {
         this.getTurnPlayer().field = afterField;
         this.room.soundEffect('leave');
       }
-      this.getTurnPlayer().joker.gauge += 10;
+
+      this.getTurnPlayer().joker.gauge = Math.max(this.getTurnPlayer().joker.gauge + 10, 100);
       this.room.sync();
 
       // ターン開始処理
