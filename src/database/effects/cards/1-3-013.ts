@@ -23,8 +23,10 @@ export const effects: CardEffects = {
 
   onBlockSelf: async (stack: StackWithCard) => {
     await System.show(stack, '開眼の戦女', '味方の【侍】のBP+1000');
-    stack.processing.owner.field.forEach(unit =>
-      Effect.modifyBP(stack, stack.processing, unit, 1000, { event: 'turnEnd', count: 1 })
-    );
+    stack.processing.owner.field
+      .filter(unit => unit.catalog.species?.includes('侍'))
+      .forEach(unit =>
+        Effect.modifyBP(stack, stack.processing, unit, 1000, { event: 'turnEnd', count: 1 })
+      );
   },
 };
