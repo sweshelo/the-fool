@@ -14,7 +14,7 @@ export const effects: CardEffects = {
 
     if (owner.hand.length === 0) return;
 
-    await System.show(stack, 'アナザー×バイザー', '手札レベル+2');
+    await System.show(stack, 'アナザー×バイザー', '手札にあるカードのレベル+2');
 
     // 手札にあるカードを1枚選ぶ
     const [selectedCard] = await EffectHelper.selectCard(

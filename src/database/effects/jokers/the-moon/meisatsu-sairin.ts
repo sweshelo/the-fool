@@ -13,7 +13,7 @@ export const effects: CardEffects = {
 
     if (owner.trash.length === 0) return;
 
-    await System.show(stack, '冥札再臨', '捨札から手札に加える');
+    await System.show(stack, '冥札再臨', '捨札から1枚回収');
 
     // 捨札にあるカードを1枚選んで手札に加える
     const [card] = await EffectHelper.selectCard(

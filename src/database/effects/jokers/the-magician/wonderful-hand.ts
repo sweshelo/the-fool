@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     // 手札が7枚以上ある場合は発動しない
     if (owner.hand.length >= 7) return;
 
-    await System.show(stack, 'ワンダフルハンド', '手札7枚までドロー');
+    await System.show(stack, 'ワンダフルハンド', '手札が7枚になるまでカードを引く');
 
     // 手札が7枚になるまでカードを引く
     const drawCount = 7 - owner.hand.length;

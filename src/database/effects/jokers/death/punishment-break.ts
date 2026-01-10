@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    await System.show(stack, 'パニッシュメントブレイク', '全体に7000ダメージ');
+    await System.show(stack, 'パニッシュメントブレイク', '敵全体に7000ダメージ');
 
     // 対戦相手の全てのユニットに7000ダメージを与える
     opponent.field.forEach(unit => {

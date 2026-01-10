@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    await System.show(stack, 'ティンクル×リンク', 'お互い手札5枚までドロー');
+    await System.show(stack, 'ティンクル×リンク', 'お互いに手札が5枚になるまでカードを引く');
 
     // お互いのプレイヤーは手札が5枚になるようにカードを引く
     [owner, opponent].forEach(player => {

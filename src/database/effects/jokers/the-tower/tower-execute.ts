@@ -9,7 +9,7 @@ export const effects: CardEffects = {
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
-    await System.show(stack, '奥義・タワーエグゼクト', '全体手札戻し');
+    await System.show(stack, '奥義・タワーエグゼクト', '全てのユニットを手札に戻す');
 
     // 全てのユニットを手札に戻す
     stack.core.players.forEach(player => {

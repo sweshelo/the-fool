@@ -14,7 +14,7 @@ export const effects: CardEffects = {
 
     if (opponent.field.length === 0) return;
 
-    await System.show(stack, 'インペリアルクルセイド', '全体破壊');
+    await System.show(stack, 'インペリアルクルセイド', '敵全体のユニットを破壊する');
 
     // 対戦相手の全てのユニットを破壊する
     [...opponent.field].forEach(unit => {

@@ -12,7 +12,7 @@ export const effects: CardEffects = {
 
     if (owner.field.length === 0) return;
 
-    await System.show(stack, 'マッシヴサージ', '基本BP+5000\n【不屈】付与');
+    await System.show(stack, 'マッシヴサージ', '味方全体の基本BP+5000\n【不屈】付与');
 
     // 自分の全てのユニットの基本BPを+5000し、【不屈】を与える
     owner.field.forEach(unit => {
