@@ -6,7 +6,6 @@ import type { CardEffects, StackWithCard } from '../../classes/types';
 export const effects: CardEffects = {
   checkJoker: (player, _core) => {
     // 捨札にカードが存在するか確認
-    // Note: 消滅カードの追跡機能は現在実装されていないため、通常の捨札回収として実装
     return player.delete.length > 0;
   },
 
