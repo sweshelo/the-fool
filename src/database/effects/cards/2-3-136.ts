@@ -30,7 +30,7 @@ export const effects: CardEffects = {
       (stack.processing.owner.purple ?? 0) >= 3 &&
       stack.processing.owner.id !== stack.core.getTurnPlayer().id
     ) {
-      await System.show(stack, 'feat.PURPLE', '行動圏を回復');
+      await System.show(stack, 'feat.PURPLE', '行動権を回復');
       Effect.activate(stack, stack.processing, stack.processing, true);
     }
   },
