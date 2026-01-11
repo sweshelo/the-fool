@@ -9,6 +9,28 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing as Unit, '固着');
   },
 
+  fieldEffect: (stack: StackWithCard<Unit>) => {
+    // 封神太極陣
+    const owner = stack.processing.owner;
+
+    owner.field.forEach(unit => {
+      // 既にこのユニットが発行したDeltaが存在するか確認
+      const delta = unit.delta.find(
+        d => d.source?.unit === stack.processing.id && d.source?.effectCode === '封神太極陣'
+      );
+
+      if (!delta) {
+        // 新しいDeltaを発行
+        Effect.modifyBP(stack, stack.processing, unit, 1000, {
+          source: {
+            unit: stack.processing.id,
+            effectCode: '封神太極陣',
+          },
+        });
+      }
+    });
+  },
+
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '討神義牙', '【貫通】を得る');
     Effect.keyword(stack, stack.processing, stack.processing as Unit, '貫通');
