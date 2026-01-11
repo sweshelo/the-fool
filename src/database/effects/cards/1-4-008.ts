@@ -20,23 +20,14 @@ export const effects = {
   // 味方ユニットであるかの判定などを忘れない
   onOverclockSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
-    /*    const filter = (unit: Unit) => {
-      return opponent.field.some(u => u.id === unit.id);
-    };*/
-    const units = EffectHelper.isUnitSelectable(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      owner
-    );
 
-    if (!units) return;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
     await System.show(stack, '破界炎舞・絶華繚乱', '10000ダメージ');
     const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      unit => unit.owner.id === opponent.id,
+      'opponents',
       '10000ダメージを与えるユニットを選択',
       1
     );
