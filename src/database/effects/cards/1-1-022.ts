@@ -4,14 +4,21 @@ import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
-    await System.show(stack, '援軍／侍', '【侍】ユニットを1枚引く');
+    await System.show(
+      stack,
+      '援軍／侍＆心眼の撫子',
+      '【侍】ユニットを1枚引く\n【侍】に【不屈】を与える'
+    );
     EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '侍' });
   },
 
   fieldEffect: (stack: StackWithCard) => {
     const owner = stack.processing.owner;
     owner.field.forEach(unit => {
-      if (unit.catalog.species?.includes('侍')) {
+      if (
+        unit.catalog.species?.includes('侍') &&
+        !unit.delta.some(delta => delta.source?.unit === stack.processing.id)
+      ) {
         // 【不屈】を付与
         Effect.keyword(stack, stack.processing, unit, '不屈', {
           source: { unit: stack.processing.id },

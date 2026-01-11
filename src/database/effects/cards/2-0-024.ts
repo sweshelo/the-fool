@@ -47,29 +47,20 @@ export const effects: CardEffects = {
     )
       return;
 
-    // 相手フィールドに選択可能なユニットが存在するか
-    const owner = stack.processing.owner;
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      (unit: Unit) => unit.owner.id !== owner.id,
-      stack.processing.owner
-    );
-
     // ユニットが生存していない場合は処理を中断する
     if (
       !stack.processing.owner.field.find(unit => unit.id === stack.processing.id) ||
-      candidate.length === 0
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     )
       return;
 
     await System.show(stack, '風のおしおき', 'お互いにBPダメージ');
-    const [damageUnitId] = await System.prompt(stack, stack.processing.owner.id, {
-      type: 'unit',
-      title: 'ダメージを与えるユニットを選択',
-      items: candidate,
-    });
-    const damageUnit = candidate.find(unit => unit.id === damageUnitId);
-    if (!damageUnit) throw new Error('対象のユニットが見つかりませんでした');
+    const [damageUnit] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      'opponents',
+      'ダメージを与えるユニットを選択して下さい'
+    );
 
     const [damageA, damageB] = [stack.target.currentBP, damageUnit.currentBP];
     Effect.damage(stack, stack.processing, damageUnit, damageA, 'effect');

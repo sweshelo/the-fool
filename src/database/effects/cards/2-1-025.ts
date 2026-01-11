@@ -48,14 +48,13 @@ export const effects: CardEffects = {
   // グレープミスト♪ - ユニット召喚時効果
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
-    const purpleGauge = owner.purple;
 
-    if (purpleGauge) {
-      const amount = stack.processing.lv >= 2 ? 2 : 1;
-      await System.show(stack, 'グレープミスト♪', `紫ゲージ+${amount}`);
-      await Effect.modifyPurple(stack, stack.processing, owner, amount);
-    } else {
-      await System.show(stack, '紫玉の飛沫', '手札の紫属性のコスト-1');
-    }
+    const amount = stack.processing.lv >= 2 ? 2 : 1;
+    await System.show(
+      stack,
+      '紫玉の飛沫＆グレープミスト♪',
+      `手札の紫属性のコスト-1\n紫ゲージ+${amount}`
+    );
+    await Effect.modifyPurple(stack, stack.processing, owner, amount);
   },
 };

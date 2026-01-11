@@ -3,13 +3,6 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const mainEffect = async (stack: StackWithCard<Unit>, exceptSelf: boolean = false) => {
-  // 対戦相手のユニットが存在するか確認
-  const opponentUnits = EffectHelper.candidate(
-    stack.core,
-    unit => unit.owner.id !== stack.processing.owner.id,
-    stack.processing.owner
-  );
-
   if (stack.target instanceof Unit && stack.processing.id === stack.target.id && exceptSelf) return;
 
   if (
@@ -19,14 +12,14 @@ const mainEffect = async (stack: StackWithCard<Unit>, exceptSelf: boolean = fals
   )
     return;
 
-  if (opponentUnits.length > 0) {
+  if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
     await System.show(stack, 'バグ・バースト', '2000ダメージ');
 
     // 対象を1体選択
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      opponentUnits,
+      'opponents',
       'ダメージを与えるユニットを選択'
     );
 

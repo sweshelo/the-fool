@@ -40,7 +40,7 @@ export const effects: CardEffects = {
     const [targetCards] = EffectHelper.random(opponent.hand, 1);
     if (targetCards) {
       // 選んだカードを捨てる
-      Effect.move(stack, stack.processing, targetCards, 'trash');
+      Effect.handes(stack, stack.processing, targetCards);
     }
   },
 };

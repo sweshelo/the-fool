@@ -14,15 +14,11 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
-    const bushiUnits = EffectHelper.candidate(
-      stack.core,
-      unit =>
-        unit.owner.id === stack.processing.owner.id &&
-        (unit.catalog.species?.includes('武身') ?? false),
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id &&
+      (unit.catalog.species?.includes('武身') ?? false);
 
-    if (bushiUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(
         stack,
         '鍛冶神の業物',
@@ -30,10 +26,10 @@ export const effects: CardEffects = {
       );
 
       // 武身ユニットを選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        bushiUnits,
+        filter,
         'デッキに戻すユニットを選択'
       );
 

@@ -15,20 +15,16 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing, '不屈');
 
     // 対戦相手のユニットが存在するか確認
-    const opponentUnits = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
-    if (opponentUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'バースト・カタストロフ', '基本BPを1/2に');
 
       // 対象を1体選択
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        opponentUnits,
+        filter,
         'BPを1/2にするユニットを選択'
       );
 

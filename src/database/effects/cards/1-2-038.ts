@@ -15,35 +15,25 @@ export const effects: CardEffects = {
     if (!(stack.processing instanceof Unit)) return;
 
     const owner = stack.processing.owner;
-    const candidate = EffectHelper.candidate(
+
+    const hasTargets = EffectHelper.isUnitSelectable(
       stack.core,
-      (unit: Unit) => unit.owner.id !== owner.id,
+      'opponents',
       stack.processing.owner
     );
 
-    await System.show(
-      stack,
-      '爆発する寄生魚',
-      `${candidate.length > 0 ? 'レベル+1\n' : ''}自身を破壊`
-    );
-    if (candidate.length > 0) {
+    await System.show(stack, '爆発する寄生魚', `${hasTargets ? 'レベル+1\n' : ''}自身を破壊`);
+    if (hasTargets) {
       // ユニットの選択を実施する
-      const count = Math.min(candidate.length, 2);
-      const selection: string[] = [];
+      const selection: Unit[] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'opponents',
+        'レベルを+1するユニットを選択',
+        2
+      );
 
-      for (let i = 0; i < count; i++) {
-        const [unit] = await System.prompt(stack, owner.id, {
-          type: 'unit',
-          title: 'レベルを+1するユニットを選択',
-          items: candidate.filter(unit => !selection.includes(unit.id)),
-        });
-
-        if (unit) selection.push(unit);
-      }
-
-      candidate
-        .filter(unit => selection.includes(unit.id))
-        .forEach(unit => Effect.clock(stack, stack.processing, unit, 1));
+      selection.forEach(unit => Effect.clock(stack, stack.processing, unit, 1));
     }
 
     Effect.break(stack, stack.processing, stack.processing, 'effect');

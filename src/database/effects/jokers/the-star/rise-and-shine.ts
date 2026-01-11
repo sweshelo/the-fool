@@ -9,7 +9,7 @@ export const effects: CardEffects = {
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
-    await System.show(stack, 'ライズアンドシャイン', '全消滅');
+    await System.show(stack, 'ライズアンドシャイン', '全てのユニットを消滅させる');
 
     // 全てのユニットを消滅させる
     stack.core.players.forEach(player => {

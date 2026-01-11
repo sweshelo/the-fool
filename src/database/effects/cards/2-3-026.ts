@@ -5,25 +5,17 @@ import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit): boolean => {
-    const candidate = EffectHelper.candidate(
-      core,
-      unit => unit.owner.id === self.owner.id,
-      self.owner
-    );
-    return candidate.length > 0;
+    const filter = (unit: Unit) => unit.owner.id === self.owner.id;
+    return EffectHelper.isUnitSelectable(core, filter, self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '起動・月に叢雲、花に風', 'ユニットを破壊\n紫ゲージ+2');
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.id,
-      stack.processing.owner
-    );
-    const [target] = await EffectHelper.selectUnit(
+    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      candidate,
+      filter,
       '破壊するユニットを選択して下さい',
       1
     );

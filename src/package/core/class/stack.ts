@@ -92,7 +92,7 @@ export class Stack implements IStack {
    * ターンプレイヤーのカード、非ターンプレイヤーのカードの順に処理する
    * @param core ゲームのコアインスタンス
    */
-  async resolve(core: Core): Promise<void> {
+  async resolve(core: Core, onlySelfResolve: boolean = false): Promise<void> {
     // Log
     if (!this.type.startsWith('_'))
       console.log(
@@ -178,6 +178,9 @@ export class Stack implements IStack {
         break;
       }
     }
+
+    // ハンデスなど、1度に複数回のイベントが発火する可能性のあるStackについては return する
+    if (onlySelfResolve) return;
 
     // ターンプレイヤーのフィールド上のカードを処理
     for (const unit of field.turnPlayer) {
@@ -306,10 +309,37 @@ export class Stack implements IStack {
   }
 
   private async resolveChild(core: Core): Promise<void> {
+    // 同一のイベントが同時に発生した時、複数回のイベント検知を行わない種別を列挙
+    const isPreventDuplicateEventHandling = (stack: Stack) => {
+      switch (stack.type) {
+        case 'handes':
+        case 'damage':
+          return true;
+        default:
+          return false;
+      }
+    };
+
     if (this.children.length > 0)
       console.log('processing %d child stack(s) of %s stack', this.children.length, this.type);
+
+    // NOTE: ハンデスやダメージ検知など、同時に積まれたStackで複数回反応するのを避けるため、同一のイベントで同一の対象を取る場合は、Stack解決時に本スタック以外を反応させない。
+    // (type, owner.id) の組み合わせでユニークなものを追跡
+    const seen = new Set<string>();
+
     for (const child of this.children) {
-      await child.resolve(core);
+      // target が Card の場合、owner.id を取得してユニーク判定
+      const ownerId = child.target instanceof Card ? child.target.owner.id : undefined;
+      const key = `${child.type}_${ownerId}`;
+
+      if (ownerId === undefined || !seen.has(key) || !isPreventDuplicateEventHandling(child)) {
+        // 最初のヒット: onlySelfResolve = false
+        if (ownerId !== undefined) seen.add(key);
+        await child.resolve(core, false);
+      } else {
+        // 2回目以降または: onlySelfResolve = true
+        await child.resolve(core, true);
+      }
     }
 
     // Stackによって移動が約束されたユニットを移動させる
@@ -359,7 +389,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-      this.core.fieldEffectUnmount(target);
+      this.core.fieldEffectUnmount(target, this);
       owner[actualDestination].push(target);
     }
   }

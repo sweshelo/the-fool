@@ -11,27 +11,22 @@ export const effects: CardEffects = {
   },
 
   onClockup: async (stack: StackWithCard): Promise<void> => {
-    const candidate = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
-      stack.processing.owner
-    );
-
     if (
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.target.lv === 3 &&
-      candidate.length > 0
+      stack.processing.id !== stack.target.id &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     ) {
       await System.show(stack, '紅蓮のオーバーフレア', '4000ダメージ');
-      const [unitId] = await System.prompt(stack, stack.processing.owner.id, {
-        type: 'unit',
-        title: 'ダメージを与えるユニットを選択',
-        items: candidate,
-      });
+      const [unit] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        'ダメージを与えるユニットを選択'
+      );
 
-      const unit = candidate.find(unit => unit.id === unitId);
-      if (unit) Effect.damage(stack, stack.processing, unit, 4000, 'effect');
+      Effect.damage(stack, stack.processing, unit, 4000, 'effect');
     }
   },
 

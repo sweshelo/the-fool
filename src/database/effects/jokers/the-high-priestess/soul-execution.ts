@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     if (opponent.field.length === 0) return;
 
-    await System.show(stack, 'ソウルエクスキューション', 'ランダム2体に【沈黙】');
+    await System.show(stack, 'ソウルエクスキューション', 'ランダムなユニット2体に【沈黙】');
 
     // 対戦相手のユニットからランダムで2体に【沈黙】を与える
     const targetCount = Math.min(2, opponent.field.length);

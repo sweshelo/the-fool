@@ -42,7 +42,7 @@ export class Core {
   round: number = 1;
   turn: number = 1;
   room: Room;
-  stack: Stack[] | undefined = undefined;
+  stack: Stack[] = [];
   histories: History[];
 
   /**
@@ -69,7 +69,7 @@ export class Core {
     // 新しいプレイヤーを追加
     this.players.push(player);
     this.room.broadcastToPlayer(player.id, MessageHelper.freeze());
-    console.log('Player added:', player.id);
+    console.log('Player %s added in room %s', player.id, this.room.id);
 
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
@@ -169,13 +169,13 @@ export class Core {
 
     if (!isFirstTurn) {
       // ターン終了スタックを積み、解決する
-      this.stack = [
+      this.stack.push(
         new Stack({
           type: 'turnEnd',
           source: this.getTurnPlayer(),
           core: this,
-        }),
-      ];
+        })
+      );
       await this.resolveStack();
 
       // ターン終了処理
@@ -193,7 +193,7 @@ export class Core {
           Effect.break(deathCounterCheckStack, unit, unit, 'death');
         }
       });
-      this.stack = [deathCounterCheckStack];
+      this.stack.push(deathCounterCheckStack);
       await this.resolveStack();
 
       // ウィルス除外
@@ -204,7 +204,8 @@ export class Core {
         this.getTurnPlayer().field = afterField;
         this.room.soundEffect('leave');
       }
-      this.getTurnPlayer().joker.gauge += 10;
+
+      this.getTurnPlayer().joker.gauge = Math.min(this.getTurnPlayer().joker.gauge + 10, 100);
       this.room.sync();
 
       // ターン開始処理
@@ -223,6 +224,22 @@ export class Core {
         this.round,
         this.turn
       );
+
+      this.room.broadcastToAll(
+        createMessage({
+          action: {
+            handler: 'client',
+            type: 'visual',
+          },
+          payload: {
+            type: 'TurnChange',
+            player: turnPlayer.id,
+            isFirst: (this.turn - 1) % 2 === 0,
+          },
+        })
+      );
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const max =
         this.room.rule.system.cp.init +
         this.room.rule.system.cp.increase * (this.round - 1) +
@@ -263,15 +280,17 @@ export class Core {
         ))
     );
 
+    this.room.sync();
+
     // ターン開始スタックを積み、解決する
     this.histories = [];
-    this.stack = [
+    this.stack.push(
       new Stack({
         type: 'turnStart',
         source: this.getTurnPlayer(),
         core: this,
-      }),
-    ];
+      })
+    );
     await this.resolveStack();
 
     // 狂戦士 アタックさせる
@@ -310,14 +329,14 @@ export class Core {
     );
     this.room.soundEffect('decide');
 
-    this.stack = [
+    this.stack.push(
       new Stack({
         type: 'attack',
         source: attacker.owner,
         target: attacker,
         core: this,
-      }),
-    ];
+      })
+    );
     await this.resolveStack();
 
     // アタッカー生存チェック
@@ -412,14 +431,14 @@ export class Core {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // プレイヤーアタックに成功
-      this.stack = [
+      this.stack.push(
         new Stack({
           type: 'playerAttack',
           target: attacker.owner.opponent,
           source: attacker,
           core: this,
-        }),
-      ];
+        })
+      );
       await this.resolveStack();
     }
   }
@@ -525,14 +544,14 @@ export class Core {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (blocker) {
-      this.stack = [
+      this.stack.push(
         new Stack({
           type: 'block',
           source: attacker,
           target: blocker,
           core: this,
-        }),
-      ];
+        })
+      );
       await this.resolveStack();
     }
 
@@ -545,14 +564,14 @@ export class Core {
    * @param blocker ブロックするユニット
    */
   async preBattle(attacker: Unit, blocker: Unit) {
-    this.stack = [
+    this.stack.push(
       new Stack({
         type: 'battle',
         source: attacker,
         target: blocker,
         core: this,
-      }),
-    ];
+      })
+    );
     console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
     await this.resolveStack();
   }
@@ -613,17 +632,18 @@ export class Core {
     // 破壊が決定したら破壊する
     if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
     if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
-    const isWinnerHasPenetrate = winner.hasKeyword('貫通');
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    this.stack = [stack];
+    this.stack.push(stack);
     await this.resolveStack();
 
     // 戦闘勝利後の処理
+    const isWinnerHasPenetrate = winner.hasKeyword('貫通');
+    const isWinnerIsAttacker = winner.id === attacker.id;
     if (!isWinnerBreaked && isLoserBreaked) {
       // 【貫通】処理
-      if (isWinnerHasPenetrate) {
+      if (isWinnerHasPenetrate && isWinnerIsAttacker) {
         loser.owner.damage();
       }
 
@@ -650,8 +670,8 @@ export class Core {
           core: this,
         });
 
-        this.stack = [systemStack, winnerStack].filter(
-          (stack): stack is Stack => stack !== undefined
+        this.stack.push(
+          ...[systemStack, winnerStack].filter((stack): stack is Stack => stack !== undefined)
         );
         await this.resolveStack();
       }
@@ -691,7 +711,7 @@ export class Core {
     if (this.stack !== undefined) {
       try {
         while (this.stack.length > 0) {
-          const stackItem = this.stack.shift();
+          const stackItem = this.stack.pop();
           await stackItem?.resolve(this);
           this.room.sync();
 
@@ -755,7 +775,7 @@ export class Core {
       // 進化元の行動権を継承
       card.active = source.active;
       player.field[index] = card;
-      this.fieldEffectUnmount(source);
+
       card.delta = [];
 
       if (!source.isCopy) {
@@ -779,21 +799,38 @@ export class Core {
     if (typeof card.catalog.onBootSelf === 'function')
       card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
 
-    // Stack追加
+    // 履歴追加
     this.histories.push({
       card: card,
       action: 'drive',
       generation: card.generation,
     });
 
-    this.stack = [
-      new Stack({
-        type: 'drive',
-        source: player,
-        target: card,
-        core: this,
-      }),
-    ];
+    // Stack追加
+    // フィールド効果チェック用のStackを発行
+    // 解決は resolveStack() にて、召喚後に実施される
+    const stackForResolveFieldEffectUnmount = new Stack({
+      type: '_preDrive',
+      source: player,
+      target: undefined,
+      core: this,
+    });
+    const driveStack = new Stack({
+      type: 'drive',
+      source: player,
+      target: card,
+      core: this,
+    });
+
+    // フィールド効果の終了に伴う破壊のチェックを実施
+    if (source) this.fieldEffectUnmount(source, stackForResolveFieldEffectUnmount);
+    this.room.sync();
+
+    // CIP後の最初の割り込みとしてフィールド終了に伴う破壊スタックの解決のため、childrenに予めPush
+    driveStack.children.push(stackForResolveFieldEffectUnmount);
+
+    // coreのスタックに積む
+    this.stack.push(driveStack);
 
     this.room.broadcastToAll(
       createMessage({
@@ -826,14 +863,14 @@ export class Core {
       !card.overclocked &&
       player.field.find(unit => unit.id === card.id)
     ) {
-      this.stack = [
+      this.stack.push(
         new Stack({
           type: 'overclock',
           source: card,
           target: card,
           core: this,
-        }),
-      ];
+        })
+      );
       await this.resolveStack();
     }
   }
@@ -900,7 +937,6 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
         if (!card || !player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           console.log(payload);
           throw new Error('指定されたCardかPlayerのどちらかが不正でした');
         }
@@ -987,7 +1023,6 @@ export class Core {
         // Validate player
         const player = this.players.find(p => p.id === payload.player);
         if (!player) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid player');
         }
 
@@ -995,20 +1030,17 @@ export class Core {
         const joker = player.joker.card.find(j => j.id === payload.target.id);
 
         if (!joker || joker.catalog.type !== 'joker') {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Invalid joker ability');
         }
 
         // Check if player has enough gauge
         if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient joker gauge');
         }
 
         // check if player has enough cp
         const cost = joker.catalog.cost;
         if (player.cp.current < cost) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Insufficient cp');
         }
 
@@ -1016,7 +1048,6 @@ export class Core {
         const canActivate = joker.catalog.checkJoker?.(player, this) ?? false;
 
         if (!canActivate) {
-          this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
           throw new Error('Joker conditions not met');
         }
 
@@ -1066,7 +1097,7 @@ export class Core {
         });
 
         // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
-        this.stack = [jokerStack];
+        this.stack.push(jokerStack);
         await this.resolveStack();
         this.room.broadcastToPlayer(this.getTurnPlayer().id, MessageHelper.defrost());
         break;
@@ -1084,9 +1115,6 @@ export class Core {
           player.field = player.field.filter(u => u.id !== target.id);
           player.trash.push(target);
           target.reset();
-          this.fieldEffectUnmount(target);
-          this.room.soundEffect('withdrawal');
-          this.room.sync();
 
           // フィールド効果呼び出し
           const stack = new Stack({
@@ -1094,7 +1122,12 @@ export class Core {
             core: this,
             source: target,
           });
-          this.stack = [stack];
+          this.fieldEffectUnmount(target, stack);
+
+          this.room.soundEffect('withdrawal');
+          this.room.sync();
+
+          this.stack.push(stack);
           await this.resolveStack();
         }
         break;
@@ -1166,7 +1199,7 @@ export class Core {
           target.isBooted = true;
           this.room.soundEffect('recover');
           await new Promise(resolve => setTimeout(resolve, 900));
-          this.stack = [new Stack({ type: 'boot', target, core: this, source: player })];
+          this.stack.push(new Stack({ type: 'boot', target, core: this, source: player }));
           await this.resolveStack();
         }
         break;
@@ -1252,21 +1285,32 @@ export class Core {
       }
     }
 
-    this.stack = [
-      new Stack({ type: '_messageReceived', source: this.getTurnPlayer(), core: this }),
-    ];
+    this.stack.push(
+      new Stack({ type: '_messageReceived', source: this.getTurnPlayer(), core: this })
+    );
     await this.resolveStack();
   }
 
   // フィールド効果を掃除する
   // フィールドを離れるカードに起因する効果を取り除く
-  fieldEffectUnmount(target: Unit) {
+  fieldEffectUnmount(target: Unit, stack: Stack) {
+    const unmount = (card: Card) =>
+      (card.delta = card.delta.filter(delta => delta.source?.unit !== target.id));
+
+    // フィールド
+    this.players
+      .flatMap(player => player.field)
+      .forEach(unit => {
+        unmount(unit);
+        if (unit.currentBP <= 0 && unit.destination === undefined)
+          Effect.break(stack, unit, unit, 'system'); // システムによってユニットが自壊した扱いにする
+      });
+
+    // 非フィールド
     [
       ...this.players.flatMap(player => player.field),
       ...this.players.flatMap(player => player.hand),
       ...this.players.flatMap(player => player.trigger),
-    ].forEach(card => {
-      card.delta = card.delta.filter(delta => delta.source?.unit !== target.id);
-    });
+    ].forEach(unmount);
   }
 }

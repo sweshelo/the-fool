@@ -19,7 +19,7 @@ export const effects: CardEffects = {
 
     if (targets.length === 0) return;
 
-    await System.show(stack, '月花熾滅', 'Lv2以上破壊');
+    await System.show(stack, '月花熾滅', '敵全体のLv2以上のユニットを破壊する');
 
     // 対戦相手のレベル2以上のユニットを全て破壊する
     targets.forEach((unit: Unit) => {

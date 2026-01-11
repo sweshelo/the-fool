@@ -16,20 +16,16 @@ export const effects: CardEffects = {
     // 自分のターン開始時に発動
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
       // 自分のユニットを取得
-      const ownUnits = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === stack.processing.owner.id,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
 
-      if (ownUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '大いなる母の恵み', '【貫通】を付与');
 
         // ユニットを1体選択
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          ownUnits,
+          filter,
           '【貫通】を与えるユニットを選択'
         );
 

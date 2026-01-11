@@ -21,18 +21,14 @@ export const effects: CardEffects = {
   // 連撃の鎖：オーバークロック時に相手ユニットに【防御禁止】
   onOverclockSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
-    const targets = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      stack.processing.owner
-    );
+    const filter = (unit: Unit) => unit.owner.id === opponent.id;
 
-    if (targets.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, '連撃の鎖', '【防御禁止】付与');
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        filter,
         '【防御禁止】を与えるユニットを選択'
       );
       Effect.keyword(stack, stack.processing, target, '防御禁止');

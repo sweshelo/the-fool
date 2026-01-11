@@ -3,29 +3,20 @@ import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
-  const filter = (unit: Unit) => {
-    return stack.processing.owner.opponent.field.some(u => u.id === unit.id);
-  };
-  const units = EffectHelper.candidate(stack.core, filter, stack.processing.owner);
-
-  if (Array.isArray(units) && units.length > 0) {
+  if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
     await System.show(stack, '聖槍の瞬撃', '手札に戻す');
-    const owner = stack.processing.owner;
-    const [target] = await System.prompt(stack, owner.id, {
-      title: '手札に戻すユニットを選択',
-      type: 'unit',
-      items: units,
-    });
-    const unit = stack.processing.owner.opponent.field.find(unit => unit.id === target);
-    if (!unit) throw new Error('存在しないユニットが選択されました');
-    Effect.bounce(stack, stack.processing, unit, 'hand');
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      'opponents',
+      '手札に戻すユニットを選んで下さい'
+    );
+    Effect.bounce(stack, stack.processing, target, 'hand');
   }
 };
 
 export const effects: CardEffects = {
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    await ability(stack);
-  },
+  onDriveSelf: ability,
 
   onTurnStart: async (stack: StackWithCard): Promise<void> => {
     // 対戦相手のターン開始時は、自フィールドに武身が4体以上いる場合に限る

@@ -48,13 +48,14 @@ export const effects: CardEffects = {
   // ビタミン供給 - ユニット召喚時効果
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     // Find opponent units of required level
-    const targets = EffectHelper.candidate(
+    const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const targets_selectable = EffectHelper.isUnitSelectable(
       stack.core,
-      unit => unit.owner.id !== stack.processing.owner.id,
+      targetsFilter,
       stack.processing.owner
     );
 
-    if (targets.length > 0) {
+    if (targets_selectable) {
       await System.show(
         stack,
         'ビタミン供給＆レモンフラッシュ♪',
@@ -62,10 +63,10 @@ export const effects: CardEffects = {
       );
 
       // Select target unit
-      const [target] = await EffectHelper.selectUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
-        targets,
+        targetsFilter,
         `行動権を消費するユニットを選択して下さい`,
         stack.processing.lv >= 2 ? 2 : 1
       );

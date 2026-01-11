@@ -18,40 +18,24 @@ export const effects: CardEffects = {
 
   // あなたの【精霊】ユニットがアタックした時、対戦相手のユニットを1体選ぶ。それの行動権を消費する。
   checkAttack: (stack: StackWithCard) => {
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === stack.processing.owner.opponent.id,
-      stack.processing.owner
-    );
-
     return (
       (stack.target instanceof Unit &&
         stack.target.owner.id === stack.processing.owner.id &&
         stack.target.catalog.species?.includes('精霊') &&
-        candidates.length > 0) ??
+        EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) ??
       false
     );
   },
 
   onAttack: async (stack: StackWithCard) => {
-    const opponent = stack.processing.owner.opponent;
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === opponent.id,
-      stack.processing.owner
-    );
-
-    if (candidates.length === 0) return;
-
     await System.show(stack, '世界樹の恵み', '行動権を消費');
-    const [target] = await EffectHelper.selectUnit(
+    const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      candidates,
+      'opponents',
       '行動権を消費するユニットを選んでください',
       1
     );
-    if (!target) return;
 
     Effect.activate(stack, stack.processing, target, false);
   },

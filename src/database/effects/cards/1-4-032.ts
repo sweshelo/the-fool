@@ -57,30 +57,23 @@ export const effects: CardEffects = {
       stack.target.owner.id === owner.id
     ) {
       // 相手のユニットが存在する場合のみ処理
-      if (opponent.field.length > 0) {
-        // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === opponent.id,
-          owner
+      const filter = (unit: Unit) => unit.owner.id === opponent.id;
+
+      if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
+        await System.show(stack, '安寧なる世のために', '敵の基本BPを-3000');
+
+        // ユニットを1体選択
+        const [target] = await EffectHelper.pickUnit(
+          stack,
+          owner,
+          filter,
+          '基本BPを-3000するユニットを選択'
         );
 
-        if (targetCandidates.length > 0) {
-          await System.show(stack, '安寧なる世のために', '敵の基本BPを-3000');
-
-          // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
-            stack,
-            owner,
-            targetCandidates,
-            '基本BPを-3000するユニットを選択'
-          );
-
-          // 基本BPを-3000する
-          Effect.modifyBP(stack, stack.processing, target, -3000, {
-            isBaseBP: true,
-          });
-        }
+        // 基本BPを-3000する
+        Effect.modifyBP(stack, stack.processing, target, -3000, {
+          isBaseBP: true,
+        });
       }
     }
   },

@@ -9,7 +9,7 @@ export const effects: CardEffects = {
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
-    await System.show(stack, 'ボルカニックディザスター', '全体に7000ダメージ');
+    await System.show(stack, 'ボルカニックディザスター', '全てのユニットに7000ダメージ');
 
     // 全てのユニットに7000ダメージを与える
     stack.core.players.forEach(player => {

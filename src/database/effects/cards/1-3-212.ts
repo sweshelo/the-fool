@@ -24,7 +24,7 @@ export const effects: CardEffects = {
         await System.show(
           stack,
           '失われた翼の対価',
-          'トリガーカードを捨て、【スピードムーブ】を付与'
+          '手札からトリガーカードを捨てる\n【スピードムーブ】を得る'
         );
         Effect.move(stack, stack.processing, selectedCard, 'trash');
         Effect.speedMove(stack, stack.processing);
@@ -66,18 +66,15 @@ export const effects: CardEffects = {
         );
 
         // 対象を選択可能なユニットを取得
-        const targetCandidates = EffectHelper.candidate(
-          stack.core,
-          unit => unit.owner.id === owner.id && unit.id !== stack.processing.id,
-          owner
-        );
+        const filter = (unit: Unit) =>
+          unit.owner.id === owner.id && unit.id !== stack.processing.id;
 
-        if (targetCandidates.length > 0) {
+        if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
           // ユニットを1体選択
-          const [target] = await EffectHelper.selectUnit(
+          const [target] = await EffectHelper.pickUnit(
             stack,
             owner,
-            targetCandidates,
+            filter,
             '破壊するユニットを選択'
           );
 
@@ -93,7 +90,7 @@ export const effects: CardEffects = {
 
             if (selectedCard) {
               // 捨て札に移動
-              Effect.move(stack, stack.processing, selectedCard, 'trash');
+              Effect.handes(stack, stack.processing, selectedCard);
             }
           }
 

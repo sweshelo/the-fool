@@ -4,9 +4,23 @@ import { apiRouter } from './apiRouter';
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
 import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
+import type {
+  PlayerDisconnectedPayload,
+  ErrorPayload,
+} from '@/submodule/suit/types/message/payload/client';
+import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
+import { MessageHelper } from '../core/message';
 
-class ServerError extends Error {}
+class ServerError extends Error {
+  constructor(
+    message: string,
+    public errorCode: ErrorCode = ErrorCode.SYS_INTERNAL_ERROR
+  ) {
+    super(message);
+    this.name = 'ServerError';
+  }
+}
 
 export class Server {
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
@@ -86,21 +100,50 @@ export class Server {
 
   private onClose(ws: ServerWebSocket) {
     const roomId = this.clientRooms.get(ws);
-    if (roomId) {
-      // ルームからの退出処理などを実装
+    const disconnectedUser = this.clients.get(ws);
+
+    if (roomId && disconnectedUser) {
+      const room = this.rooms.get(roomId);
+
+      if (room) {
+        // Roomオブジェクトの内部マップからプレイヤーを削除
+        room.clients.delete(disconnectedUser.id);
+        room.players.delete(disconnectedUser.id);
+
+        // Roomの残りのクライアント数を基に閉じるかどうかを判定
+        const roomWillClose = room.clients.size === 0;
+
+        // 切断通知を他のプレイヤーに送信
+        const payload: PlayerDisconnectedPayload = {
+          type: 'PlayerDisconnected',
+          disconnectedPlayerId: disconnectedUser.id,
+          reason: 'connection_lost',
+          timestamp: Date.now(),
+          roomWillClose,
+        };
+
+        room.broadcastToAllExcept(
+          {
+            action: { handler: 'client', type: 'disconnected' },
+            payload,
+          },
+          disconnectedUser.id
+        );
+
+        // Roomが空になったら削除
+        if (roomWillClose) {
+          this.rooms.delete(roomId);
+          console.log('room %s has been deleted.', roomId);
+        }
+      }
+
+      // Serverの管理マップからクリーンアップ
       this.clientRooms.delete(ws);
       this.clients.delete(ws);
-
-      const remainingClientsInRoom = Array.from(this.clientRooms.values()).filter(
-        id => id === roomId
-      ).length;
-      // 接続ユーザが居なくなったらルームを削除
-      if (remainingClientsInRoom === 0) {
-        this.rooms.delete(roomId);
-        console.log('room %s has been deleted.', roomId);
-      }
+    } else {
+      // roomIdまたはdisconnectedUserが存在しない場合もクリーンアップ
+      this.clients.delete(ws);
     }
-    this.clients.delete(ws);
   }
 
   private onMessage(ws: ServerWebSocket, data: string) {
@@ -109,17 +152,40 @@ export class Server {
       this.handleMessage(ws, message);
     } catch (error) {
       console.error('Invalid message format:', error);
+
+      // JSONパースエラーの場合は適切なエラーコードを送信
+      const errorPayload: ErrorPayload = {
+        type: 'Error',
+        errorCode: ErrorCode.CONN_INVALID_MESSAGE,
+        message: '無効なメッセージ形式です',
+        details: error instanceof Error ? { error: error.message } : undefined,
+        timestamp: Date.now(),
+      };
+
+      ws.send(
+        JSON.stringify({
+          action: {
+            handler: 'client',
+            type: 'error',
+          },
+          payload: errorPayload,
+        })
+      );
     }
   }
 
   private getRoom(client: ServerWebSocket) {
     const roomId = this.clientRooms.get(client);
-    if (!roomId) throw new ServerError('参加していないルームに対する操作が試みられました。');
+    if (!roomId)
+      throw new ServerError(
+        '参加していないルームに対する操作が試みられました。',
+        ErrorCode.ROOM_NOT_FOUND
+      );
 
     const room = this.rooms.get(roomId);
-    if (!room) throw new ServerError('ルームが見つかりませんでした。');
+    if (!room) throw new ServerError('ルームが見つかりませんでした。', ErrorCode.ROOM_NOT_FOUND);
 
-    return roomId ? this.rooms.get(roomId) : undefined;
+    return room;
   }
 
   public responseJustBoolean<T extends RequestPayload>(
@@ -148,7 +214,11 @@ export class Server {
           if ('roomId' in payload && typeof payload.roomId === 'string') {
             // FIXME: action.handlerがroomならpayload.roomIdが必ず存在するような型定義にすれば良いのでは?
             const room = this.rooms.get(payload.roomId);
-            if (!room) throw new Error(`ルームが見つかりませんでした: ${payload.roomId}`);
+            if (!room)
+              throw new ServerError(
+                `ルームが見つかりませんでした: ${payload.roomId}`,
+                ErrorCode.ROOM_NOT_FOUND
+              );
 
             // 参加処理だけServer側で登録処理を走らせる
             if (message.payload.type === 'PlayerEntry') {
@@ -157,7 +227,7 @@ export class Server {
                 this.clientRooms.delete(client);
                 this.clientRooms.set(client, room.id);
               } else {
-                throw new Error('ルームの参加に失敗しました');
+                throw new ServerError('ルームの参加に失敗しました', ErrorCode.ROOM_FULL);
               }
             } else {
               room.handleMessage(client, message);
@@ -165,41 +235,56 @@ export class Server {
           }
           break;
         case 'core':
+          const room = this.getRoom(client);
           // oxlint-disable-next-line no-floating-promises
-          this.getRoom(client)
-            ?.core.handleMessage(message)
-            .catch(e => console.error('メッセージハンドリング中にエラーが発生しました。', e));
+          room?.core.handleMessage(message).catch(e => {
+            console.error('メッセージハンドリング中にエラーが発生しました。', e);
+            room.broadcastToPlayer(room.core.getTurnPlayer().id, MessageHelper.defrost());
+          });
           break;
         case 'server':
         default:
           this.handleMessageForServer(client, message);
       }
     } catch (e) {
-      if (e instanceof Error) {
-        console.error(e);
-        client.send(
-          JSON.stringify({
-            action: {
-              type: 'error',
-            },
-            payload: {
-              error: e.message,
-            },
-          })
-        );
+      console.error(e);
+
+      let errorCode: ErrorCode;
+      let message: string;
+      let details: Record<string, unknown> | undefined;
+
+      if (e instanceof ServerError) {
+        // ServerErrorの場合は指定されたエラーコードを使用
+        errorCode = e.errorCode;
+        message = e.message;
+      } else if (e instanceof Error) {
+        // 通常のErrorの場合はInternal Error
+        errorCode = ErrorCode.SYS_INTERNAL_ERROR;
+        message = e.message;
       } else {
-        client.send(
-          JSON.stringify({
-            action: {
-              type: 'error',
-            },
-            payload: {
-              error: '想定外の事象が発生しました。',
-              body: e,
-            },
-          })
-        );
+        // その他の場合はUnknown Error
+        errorCode = ErrorCode.SYS_UNKNOWN_ERROR;
+        message = '想定外の事象が発生しました。';
+        details = { body: e };
       }
+
+      const errorPayload: ErrorPayload = {
+        type: 'Error',
+        errorCode,
+        message,
+        details,
+        timestamp: Date.now(),
+      };
+
+      client.send(
+        JSON.stringify({
+          action: {
+            handler: 'client',
+            type: 'error',
+          },
+          payload: errorPayload,
+        })
+      );
     }
   }
 

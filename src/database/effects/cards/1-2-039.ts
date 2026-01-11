@@ -7,18 +7,14 @@ export const effects: CardEffects = {
   // あなたがプレイヤーアタックを受けるたび
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.target?.id === stack.processing.owner.id) {
-      const candidates = EffectHelper.candidate(
-        stack.core,
-        unit => unit.lv < 3,
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) => unit.lv < 3;
 
-      if (candidates.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'カウンター・クロック', 'レベル+1');
-        const [target] = await EffectHelper.selectUnit(
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidates,
+          filter,
           'レベルを上げるユニットを選択'
         );
         Effect.clock(stack, stack.processing, target, 1);
@@ -31,27 +27,33 @@ export const effects: CardEffects = {
   onClockupSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const trashUnits = stack.processing.owner.trash.filter(card => card instanceof Unit);
 
-    if (trashUnits.length > 0) {
-      const [randomCard] = EffectHelper.random(trashUnits, 1);
+    const [reviveCard] = EffectHelper.random(trashUnits, 1);
+    const isUnitSelectable = EffectHelper.isUnitSelectable(
+      stack.core,
+      'owns',
+      stack.processing.owner
+    );
 
-      const candidates = EffectHelper.candidate(
-        stack.core,
-        unit => unit.owner.id === stack.processing.owner.id,
-        stack.processing.owner
-      );
+    const messages = [
+      reviveCard ? '捨札から1枚回収' : undefined,
+      isUnitSelectable ? 'ユニットを1体破壊' : undefined,
+    ].filter(message => !!message);
 
-      if (candidates.length > 0 && randomCard) {
-        await System.show(stack, '極楽浄土', '捨札から1枚回収\nユニットを1体破壊');
+    if (messages.length > 0) {
+      await System.show(stack, '極楽浄土', messages.join('\n'));
 
-        Effect.move(stack, stack.processing, randomCard, 'hand');
-
-        const [target] = await EffectHelper.selectUnit(
+      if (isUnitSelectable) {
+        const [target] = await EffectHelper.pickUnit(
           stack,
           stack.processing.owner,
-          candidates,
+          'owns',
           '破壊するユニットを選択'
         );
         Effect.break(stack, stack.processing, target);
+      }
+
+      if (reviveCard) {
+        Effect.move(stack, stack.processing, reviveCard, 'hand');
       }
     }
   },

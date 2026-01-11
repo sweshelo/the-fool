@@ -24,18 +24,15 @@ export const effects: CardEffects = {
           break;
         }
         case 3: {
-          const candidate = EffectHelper.candidate(
-            stack.core,
-            unit => unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2,
-            stack.processing.owner
-          );
+          const filter = (unit: Unit) =>
+            unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2;
 
-          if (candidate.length > 0) {
+          if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
             await System.show(stack, 'サイド・エフェクト', 'コスト2以下を消滅');
-            const [target] = await EffectHelper.selectUnit(
+            const [target] = await EffectHelper.pickUnit(
               stack,
               stack.processing.owner,
-              candidate,
+              filter,
               '消滅させるユニットを選択して下さい'
             );
             Effect.delete(stack, stack.processing, target);

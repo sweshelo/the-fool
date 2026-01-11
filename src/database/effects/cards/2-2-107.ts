@@ -34,23 +34,19 @@ export const effects: CardEffects = {
 
     if (hasFieldSpace) {
       // コスト3以下の機械ユニットを検索
-      const machineUnits = EffectHelper.candidate(
-        stack.core,
-        unit =>
-          unit instanceof Unit &&
-          unit.catalog.cost <= 3 &&
-          (unit.catalog.species?.includes('機械') ?? false),
-        stack.processing.owner
-      );
+      const filter = (unit: Unit) =>
+        unit instanceof Unit &&
+        unit.catalog.cost <= 3 &&
+        (unit.catalog.species?.includes('機械') ?? false);
 
-      if (machineUnits.length > 0) {
+      if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, '救援部隊投入', 'コスト3以下の【機械】を【複製】');
 
         // ユーザーに選択させる
-        const [choice] = await EffectHelper.selectUnit(
+        const [choice] = await EffectHelper.pickUnit(
           stack,
           owner,
-          machineUnits,
+          filter,
           '【複製】する【機械】ユニットを選択'
         );
 

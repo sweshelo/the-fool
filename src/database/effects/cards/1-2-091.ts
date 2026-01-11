@@ -10,13 +10,13 @@ export const effects: CardEffects = {
   // インターセプトカード用チェッカー実装
   checkDrive(stack: StackWithCard): boolean {
     const owner = stack.processing.owner;
-    const ownUnits = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
+    const filter = (unit: Unit) => unit.owner.id === owner.id;
 
     // 相手のユニットが召喚された時かつ自分のフィールドにユニットがいる場合に発動
     return (
       stack.target instanceof Unit &&
       stack.target.owner.id === owner.opponent.id &&
-      ownUnits.length > 0
+      EffectHelper.isUnitSelectable(stack.core, filter, owner)
     );
   },
 
@@ -27,16 +27,16 @@ export const effects: CardEffects = {
     const summonedUnit = stack.target as Unit;
 
     // 自分のユニットの選択肢を作成
-    const ownUnits = EffectHelper.candidate(stack.core, unit => unit.owner.id === owner.id, owner);
+    const filter = (unit: Unit) => unit.owner.id === owner.id;
 
-    if (ownUnits.length > 0) {
+    if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
       await System.show(stack, '冥土の献上品', '自ユニットを破壊\n相手ユニットを破壊');
 
       // 自分のユニットを1体選択
-      const [selectedUnit] = await EffectHelper.selectUnit(
+      const [selectedUnit] = await EffectHelper.pickUnit(
         stack,
         owner,
-        ownUnits,
+        filter,
         '破壊する自分のユニットを選択'
       );
 
