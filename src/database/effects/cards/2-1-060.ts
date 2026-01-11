@@ -3,7 +3,7 @@ import { Effect } from '../classes/effect';
 import { System } from '../classes/system';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
-const summonUnitId = 'クンフーマスター';
+const summonUnitId = '改造人機フランケンR';
 
 const condition = (stack: StackWithCard) =>
   stack.processing.owner.id !== stack.source.id && stack.processing.owner.field.length <= 4;
