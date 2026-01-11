@@ -35,8 +35,8 @@ export const effects: CardEffects = {
           stack,
           '神剣フラガラッハ',
           isSelectable
-            ? '10000ダメージ\n1ライフダメージ\nトリガーゾーンのカードを2枚まで破壊'
-            : '1ライフダメージ\nトリガーゾーンのカードを2枚まで破壊'
+            ? '10000ダメージ\n1ライフダメージ\nトリガーゾーンのカードを1枚破壊'
+            : '1ライフダメージ\nトリガーゾーンのカードを1枚破壊'
         );
         const [target] = isSelectable
           ? await EffectHelper.pickUnit(
