@@ -16,8 +16,7 @@ export const effects = {
     EffectHelper.exceptSelf(stack.core, stack.processing as Unit, effect);
   },
 
-  // 自身以外が召喚された時に発動する効果を記述
-  // 味方ユニットであるかの判定などを忘れない
+  // 自身がオーバークロックした時に発動する効果を記述
   onOverclockSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
 
@@ -34,6 +33,20 @@ export const effects = {
     Effect.damage(stack, stack.processing, target, 10000);
   },
 
+  // アタック時：あなたの【神】ユニット1体につき自身のBP+2000（ターン終了時まで）
+  onAttackSelf: async (stack: StackWithCard<Unit>) => {
+    const owner = stack.processing.owner;
+    const godCount = owner.field.filter(unit => unit.catalog.species?.includes('神')).length;
+    if (godCount <= 0) return;
+    const bpBoost = godCount * 2000;
+    await System.show(stack, '破界炎舞・絶華繚乱', `BP+[【神】×2000]`);
+    Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
+      event: 'turnEnd',
+      count: 1,
+    });
+  },
+
+  // 手札効果：自分の赤のユニットが場にいる場合、このユニットのコスト-1
   handEffect: (core: unknown, self: Unit) => {
     if (!self.delta.some(delta => delta.source?.unit === self.id)) {
       if (self.owner.field.some(unit => unit.catalog.color === Color.RED))
@@ -42,19 +55,5 @@ export const effects = {
       if (!self.owner.field.some(unit => unit.catalog.color === Color.RED))
         self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
     }
-  },
-
-  onAttackSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing;
-    const owner = self.owner;
-
-    await System.show(stack, '破界炎舞・絶華繚乱', 'BP+[【神】×2000]');
-
-    const godUnits = owner.field.filter(unit => unit.catalog.species?.includes('神'));
-
-    Effect.modifyBP(stack, self, self, godUnits.length * 2000, {
-      event: 'turnEnd',
-      count: 1,
-    });
   },
 };
