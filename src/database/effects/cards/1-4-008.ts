@@ -38,13 +38,13 @@ export const effects = {
   },
 
   // アタック時：あなたの【神】ユニット1体につき自身のBP+2000（ターン終了時まで）
-  onAttackSelf: async (stack: StackWithCard) => {
+  onAttackSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
     const godCount = owner.field.filter(unit => unit.catalog.species?.includes('神')).length;
     if (godCount <= 0) return;
     const bpBoost = godCount * 2000;
-    await System.show(stack, '破界炎舞・絶華繚乱', `BP+[【神】×2000）]`);
-    Effect.modifyBP(stack, stack.processing, stack.processing as Unit, bpBoost, {
+    await System.show(stack, '破界炎舞・絶華繚乱', `BP+[【神】×2000]`);
+    Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
       event: 'turnEnd',
       count: 1,
     });
