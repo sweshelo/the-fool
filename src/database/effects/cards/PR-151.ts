@@ -25,7 +25,6 @@ export const effects: CardEffects = {
       await System.show(stack, '天魔二断討', 'BP+2000');
     }
     Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
-      source: { unit: stack.processing.id, effectCode: '天魔二断討' },
       event: 'turnEnd',
       count: 1,
     });

@@ -63,7 +63,7 @@ export const effects: CardEffects = {
   },
 
   // プレイヤーアタック成功時の効果
-  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
     const opponentUnits = opponent.field;
 
