@@ -9,11 +9,11 @@ export const effects: CardEffects = {
     const targets = stack.core.players
       .flatMap(player => player.field)
       .filter(unit => unit.id !== stack.processing.id);
-    if (targets.length > 0) {
+    const totalLifeDamage = stack.core.players.reduce((sum, player) => {
+      return sum + (player.life.max - player.life.current);
+    }, 0);
+    if (targets.length > 0 && totalLifeDamage > 0) {
       await System.show(stack, '魔香の愛', `2000ダメージ×[お互いのライフダメージ]`);
-      const totalLifeDamage = stack.core.players.reduce((sum, player) => {
-        return sum + (player.life.max - player.life.current);
-      }, 0);
       EffectHelper.repeat(totalLifeDamage, () =>
         EffectHelper.random(targets).forEach(unit =>
           Effect.damage(stack, stack.processing, unit, 2000)
