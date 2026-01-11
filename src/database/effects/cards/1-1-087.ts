@@ -64,7 +64,7 @@ export const effects: CardEffects = {
     } else {
       // キーワード能力を剥奪
       ownSamurai.forEach(unit => {
-        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
+        if (unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
           Effect.removeKeyword(stack, unit, '不屈', {
             source: { unit: stack.processing.id, effectCode: '五輪書' },
           });
