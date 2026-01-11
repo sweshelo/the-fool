@@ -3,7 +3,7 @@ import { Player, type CardArrayKeys } from './Player';
 import type { Core } from '../core';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
-import { Card, Unit } from './card';
+import { Card, Intercept, Unit } from './card';
 import { Effect, System } from '@/database/effects';
 import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/database/effects/classes/types';
@@ -401,7 +401,7 @@ export class Stack implements IStack {
    */
   private async processUserInterceptInteract(core: Core, player: Player): Promise<boolean> {
     // 使用可能なカードを列挙
-    const targets = player.trigger.filter(card => {
+    const targets = player.trigger.filter((card): card is Intercept => {
       const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
       const catalog = master.get(card.catalogId);
       if (!catalog) throw new Error('不正なカードが指定されました');
@@ -425,6 +425,7 @@ export class Stack implements IStack {
       this.processing = card;
 
       return (
+        card instanceof Intercept &&
         isOnFieldSameColor &&
         isEnoughCP &&
         !hasBanned &&
@@ -444,7 +445,7 @@ export class Stack implements IStack {
     });
 
     if (selected) {
-      const card = player.trigger.find(c => c.id === selected);
+      const card = targets.find(c => c.id === selected);
       if (!card) throw new Error('対象がトリガーゾーンに存在しません');
 
       const effectHandler = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
@@ -470,8 +471,14 @@ export class Stack implements IStack {
           })
         );
 
-        player.trigger = player.trigger.filter(c => c.id !== card.id);
-        player.called.push(card);
+        // Intercept を使用した判定にする
+        card.remain--;
+        if (card.remain <= 0) {
+          player.trigger = player.trigger.filter(c => c.id !== card.id);
+          player.called.push(card);
+        } else {
+          card.revealed = true;
+        }
 
         const cost =
           card.catalog.cost +
@@ -486,11 +493,15 @@ export class Stack implements IStack {
         await catalog[effectHandler](this);
         this.processing = undefined;
 
-        // 発動したインターセプトカードを捨札に送る
+        // card.reset() を呼び出すと 呼び出し時点でのLv情報が失われるので、interceptスタックの付加情報用に確保する
         const lv = card.lv;
-        card.reset();
-        player.called = player.called.filter(c => c.id !== card.id);
-        player.trash.push(card);
+
+        // 発動したインターセプトカードを捨札に送る
+        if (card.remain <= 0) {
+          card.reset();
+          player.called = player.called.filter(c => c.id !== card.id);
+          player.trash.push(card);
+        }
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
