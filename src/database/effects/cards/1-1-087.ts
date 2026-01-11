@@ -40,7 +40,12 @@ export const effects: CardEffects = {
     if (hasMoreThanTwoSamurai) {
       // キーワード能力を付与
       ownSamurai.forEach(unit => {
-        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
+        if (
+          !unit.delta.some(
+            delta =>
+              delta.source?.unit === stack.processing.id && delta.source.effectCode === '五輪書'
+          )
+        ) {
           Effect.keyword(stack, stack.processing, unit, '不屈', {
             source: { unit: stack.processing.id, effectCode: '五輪書' },
           });
