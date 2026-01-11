@@ -14,7 +14,6 @@ export class Intercept extends Card implements ICard {
     const [match, count] =
       this.catalog.ability?.match(/このインターセプト(?:カード)?は(\d+)回使用すると捨札にいく/) ??
       [];
-    console.log(this.catalog.name, count);
     this.#originalRemain = match && count ? parseInt(count, 10) : 1;
     this.remain = this.#originalRemain;
   }
