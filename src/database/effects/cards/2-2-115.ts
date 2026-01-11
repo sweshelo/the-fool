@@ -17,32 +17,37 @@ export const effects: CardEffects = {
     const lvTwoOrHigherUnits = opponentUnits.filter(unit => unit.lv >= 2);
     const lvOneUnits = opponentUnits.filter(unit => unit.lv === 1);
 
-    // 効果テキスト表示
-    let effectText = '敵Lv2以上のユニットを全て破壊\n敵Lv1のユニットのレベル+1';
-
     // 捨札の青属性カードをチェック
     const blueCardsInTrash = stack.processing.owner.trash.filter(
       card => card.catalog.color === Color.BLUE
     );
+
+    // 効果テキストを組み立て（相手のフィールドにユニットがいない場合、スピードムーブのみ表示）
+    let effectText = '';
+    if (opponentUnits.length > 0) {
+      effectText = '敵Lv2以上のユニットを全て破壊\n敵Lv1のユニットのレベル+1';
+    }
     if (blueCardsInTrash.length >= 10) {
-      effectText += '\n【スピードムーブ】を得る';
+      effectText += (effectText ? '\n' : '') + '【スピードムーブ】を得る';
     }
 
-    await System.show(stack, '呑舟の大海嘯', effectText);
+    if (effectText) {
+      await System.show(stack, '呑舟の大海嘯', effectText);
 
-    // レベル2以上のユニットを破壊
-    lvTwoOrHigherUnits.forEach(unit => {
-      Effect.break(stack, stack.processing, unit);
-    });
+      // レベル2以上のユニットを破壊
+      lvTwoOrHigherUnits.forEach(unit => {
+        Effect.break(stack, stack.processing, unit);
+      });
 
-    // レベル1のユニットのレベルを+1
-    lvOneUnits.forEach(unit => {
-      Effect.clock(stack, stack.processing, unit, 1);
-    });
+      // レベル1のユニットのレベルを+1
+      lvOneUnits.forEach(unit => {
+        Effect.clock(stack, stack.processing, unit, 1);
+      });
 
-    // 条件を満たせば【スピードムーブ】を与える
-    if (blueCardsInTrash.length >= 10) {
-      Effect.speedMove(stack, stack.processing);
+      // 条件を満たせば【スピードムーブ】を与える
+      if (blueCardsInTrash.length >= 10) {
+        Effect.speedMove(stack, stack.processing);
+      }
     }
   },
 
@@ -64,6 +69,10 @@ export const effects: CardEffects = {
 
   // プレイヤーアタック成功時の効果
   onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
+    const attacker = stack.source as Unit;
+    // このユニットがプレイヤーアタックに成功した時のみ処理
+    if (attacker.id !== stack.processing.id) return;
+
     const opponent = stack.processing.owner.opponent;
     const opponentUnits = opponent.field;
 

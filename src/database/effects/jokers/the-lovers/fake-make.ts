@@ -1,12 +1,11 @@
 import { System } from '../../classes/system';
 import { EffectHelper } from '../../classes/helper';
-import { Effect } from '../../classes/effect';
-import { Unit } from '@/package/core/class/card';
+import { Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../../classes/types';
 
 export const effects: CardEffects = {
-  checkJoker: (player, _core) => {
-    return player.hand.length > 0;
+  checkJoker: (player, core) => {
+    return player.hand.length > 0 && player.hand.length < core.room.rule.player.max.hand;
   },
 
   onJokerSelf: async (stack: StackWithCard) => {
@@ -25,10 +24,8 @@ export const effects: CardEffects = {
     );
 
     // 選んだカードを手札に作成する（コピー）
-    // Note: cloneはフィールド上のユニットのみに対応しているため、手札のカードには使用不可
-    // ユニットカードの場合のみcloneを試みる
-    if (selectedCard instanceof Unit) {
-      await Effect.clone(stack, stack.processing, selectedCard, owner);
+    if (selectedCard instanceof Card) {
+      stack.processing.owner.hand.push(selectedCard.clone(stack.processing.owner));
     }
   },
 };
