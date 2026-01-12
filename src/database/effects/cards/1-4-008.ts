@@ -6,14 +6,14 @@ import { Delta } from '@/package/core/class/delta';
 
 export const effects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard) => {
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const opponent = stack.processing.owner.opponent;
     if (opponent.field.length <= 0) return;
     const damage = opponent.field.length * 1000;
     await System.show(stack, '破界炎舞・絶華繚乱', '相手フィールドのユニット数×1000ダメージ');
 
-    const effect = (unit: Unit) => Effect.damage(stack, stack.processing!, unit, damage);
-    EffectHelper.exceptSelf(stack.core, stack.processing as Unit, effect);
+    const effect = (unit: Unit) => Effect.damage(stack, stack.processing, unit, damage);
+    EffectHelper.exceptSelf(stack.core, stack.processing, effect);
   },
 
   // 自身がオーバークロックした時に発動する効果を記述

@@ -6,7 +6,7 @@ import { System } from '../classes/system';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 紫ゲージが4以上 かつ ユニットが選択可能の場合のみ発動

@@ -49,7 +49,7 @@ export const effects: CardEffects = {
       const [target] = await EffectHelper.selectCard(
         stack,
         stack.processing.owner,
-        targets as Unit[],
+        targets,
         '捨てる【侍】ユニットを選択'
       );
 

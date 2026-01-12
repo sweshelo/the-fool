@@ -21,10 +21,10 @@ export const effects: CardEffects = {
     }
   },
 
-  onTurnStart: async (stack: StackWithCard): Promise<void> => {
+  onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
       await System.show(stack, '成長する戦士', '基本BP+1000');
-      Effect.modifyBP(stack, stack.processing, stack.processing as Unit, 1000, { isBaseBP: true });
+      Effect.modifyBP(stack, stack.processing, stack.processing, 1000, { isBaseBP: true });
     }
   },
 };

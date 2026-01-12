@@ -1,4 +1,4 @@
-import { Card, Unit } from '@/package/core/class/card';
+import { Card, Evolve, Unit } from '@/package/core/class/card';
 import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
 import { System } from './system';
@@ -6,7 +6,7 @@ import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { createMessage } from '@/submodule/suit/types';
 
-type UnitPickFilter = ((unit: Unit) => boolean) | 'owns' | 'opponents' | 'all';
+type UnitPickFilter = ((unit: Unit) => unknown) | 'owns' | 'opponents' | 'all';
 
 interface Choice {
   id: string;
@@ -135,6 +135,7 @@ export class EffectHelper {
       selected.push(chosen);
     }
 
+    // oxlint-disable-next-line no-unsafe-type-assertion
     if (selected.length > 0) return selected as [Unit, ...Unit[]];
     throw new Error('選択すべきユニットが見つかりませんでした');
   }
@@ -149,13 +150,13 @@ export class EffectHelper {
    * @param count 選択するユニット数
    * @returns Promise。 最低1つのCardを含む Card[] が得られる。
    */
-  static async selectCard(
+  static async selectCard<T extends Card = Card>(
     stack: Stack,
     player: Player,
-    targets: Card[],
+    targets: T[],
     title: string,
     count: number = 1
-  ): Promise<[Card, ...Card[]]> {
+  ): Promise<[T, ...T[]]> {
     const choices: Choices = {
       title,
       type: 'card',
@@ -165,7 +166,8 @@ export class EffectHelper {
     const response = await System.prompt(stack, player.id, choices);
     const result = targets.filter(card => response.includes(card.id));
 
-    if (result.length > 0) return result as [Card, ...Card[]];
+    // oxlint-disable-next-line no-unsafe-type-assertion
+    if (result.length > 0) return result as [T, ...T[]];
     throw new Error('選択すべきカードが見つかりませんでした');
   }
 
@@ -325,6 +327,7 @@ export class EffectHelper {
       selected.push(chosen);
     }
 
+    // oxlint-disable-next-line no-unsafe-type-assertion
     if (selected.length > 0) return selected as [Unit, ...Unit[]];
     throw new Error('選択すべきユニットが見つかりませんでした');
   }
@@ -350,5 +353,13 @@ export class EffectHelper {
         return chosen;
       }
     }
+  }
+
+  static isUnit(card: unknown, strict: boolean = false): card is Unit {
+    return card instanceof Unit && (strict ? card.catalog.type === 'unit' : true);
+  }
+
+  static isEvolve(card: unknown): card is Evolve {
+    return card instanceof Evolve;
   }
 }

@@ -7,9 +7,9 @@ export const effects: CardEffects = {
     await System.show(stack, '神速の一閃', 'レベル1の時ブロックされない');
   },
 
-  onPlayerAttackSelf: async (stack: StackWithCard): Promise<void> => {
+  onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '無我夢中の鍛錬', 'レベル+1');
-    Effect.clock(stack, stack.processing, stack.processing as Unit, 1);
+    Effect.clock(stack, stack.processing, stack.processing, 1);
   },
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {

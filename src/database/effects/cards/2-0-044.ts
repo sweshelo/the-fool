@@ -1,5 +1,3 @@
-// TODO: 特殊召喚効果・アタック時効果を実装する
-
 import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
@@ -10,7 +8,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const purpleGauge = owner.purple ?? 0;
     const trashCards = owner.trash.filter(
-      card =>
+      (card): card is Unit =>
         card.catalog.color === Color.PURPLE &&
         card.catalog.cost <= 3 &&
         card.catalog.type === 'unit'
@@ -34,7 +32,7 @@ export const effects: CardEffects = {
         // 特殊召喚を順番に実行
         (async () => {
           for (const card of selectedCards) {
-            await Effect.summon(stack, stack.processing, card as Unit);
+            await Effect.summon(stack, stack.processing, card);
           }
         })(),
         // 紫ゲージを減少

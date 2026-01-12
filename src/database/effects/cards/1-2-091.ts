@@ -24,12 +24,12 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 対戦相手の召喚したユニット
-    const summonedUnit = stack.target as Unit;
+    const summonedUnit = stack.target;
 
     // 自分のユニットの選択肢を作成
     const filter = (unit: Unit) => unit.owner.id === owner.id;
 
-    if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
+    if (summonedUnit instanceof Unit && EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
       await System.show(stack, '冥土の献上品', '自ユニットを破壊\n相手ユニットを破壊');
 
       // 自分のユニットを1体選択

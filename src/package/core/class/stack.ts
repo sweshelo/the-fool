@@ -275,7 +275,8 @@ export class Stack implements IStack {
     const player: Player[] = [turnPlayer, nonTurnPlayer].filter(p => p !== undefined);
     index = 0;
     do {
-      if (await this.processUserInterceptInteract(core, player[index % player.length]!)) {
+      const targetPlayer = player[index % player.length];
+      if (targetPlayer && (await this.processUserInterceptInteract(core, targetPlayer))) {
         canceled += 1;
       } else {
         canceled = 0;
@@ -295,6 +296,7 @@ export class Stack implements IStack {
       this.processing = card;
       card.delta = card.delta.filter(
         delta =>
+          // oxlint-disable-next-line no-unsafe-type-assertion
           !delta.checkExpire(this as StackWithCard) ||
           delta.effect.type === 'death' ||
           delta.effect.type === 'life'
@@ -350,20 +352,21 @@ export class Stack implements IStack {
     // Stackによって移動が約束されたユニットを移動させる
     if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
     const isProcessed = this.children.map(stack => {
-      const target = stack.target as Unit;
-
-      switch (stack.type) {
-        case 'break':
-          this.moveUnit(target, 'trash');
-          return true;
-        case 'delete':
-          this.moveUnit(target, 'delete', 'deleted');
-          return true;
-        case 'bounce':
-          if (stack.option?.type === 'bounce') {
-            this.moveUnit(target, stack.option?.location, 'bounce');
-          }
-          return true;
+      const target = stack.target;
+      if (target instanceof Unit) {
+        switch (stack.type) {
+          case 'break':
+            this.moveUnit(target, 'trash');
+            return true;
+          case 'delete':
+            this.moveUnit(target, 'delete', 'deleted');
+            return true;
+          case 'bounce':
+            if (stack.option?.type === 'bounce') {
+              this.moveUnit(target, stack.option?.location, 'bounce');
+            }
+            return true;
+        }
       }
     });
 

@@ -4,12 +4,12 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '王の治癒力', '自身のBP未満のダメージを受けない');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '王の治癒力');
+    Effect.keyword(stack, stack.processing, stack.processing, '王の治癒力');
   },
 
-  onBattle: async (stack: StackWithCard): Promise<void> => {
+  onBattle: async (stack: StackWithCard<Unit>): Promise<void> => {
     switch (stack.processing.lv) {
       case 1:
       case 2: {
@@ -25,7 +25,7 @@ export const effects: CardEffects = {
         stack.processing.owner.opponent.field.forEach(unit =>
           Effect.modifyBP(stack, stack.processing, unit, -3000, { isBaseBP: true })
         );
-        Effect.clock(stack, stack.processing, stack.processing as Unit, -2);
+        Effect.clock(stack, stack.processing, stack.processing, -2);
         break;
       }
     }

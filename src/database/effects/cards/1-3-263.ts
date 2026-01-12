@@ -14,10 +14,10 @@ export const effects: CardEffects = {
     await System.show(stack, '鏡合わせの祈り', 'お互いに【特殊召喚】');
 
     const [ownerUnit] = EffectHelper.random(ownerTrash, 1);
-    await Effect.summon(stack, stack.processing, ownerUnit as Unit);
+    if (ownerUnit instanceof Unit) await Effect.summon(stack, stack.processing, ownerUnit);
 
     const [opponentUnit] = EffectHelper.random(opponentTrash, 1);
-    await Effect.summon(stack, stack.processing, opponentUnit as Unit);
+    if (opponentUnit instanceof Unit) await Effect.summon(stack, stack.processing, opponentUnit);
   },
 
   // checkDriveメソッド

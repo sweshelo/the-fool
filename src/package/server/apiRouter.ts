@@ -22,8 +22,7 @@ export async function apiRouter(req: Request): Promise<Response | undefined> {
   return undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getCardsHandler(req: Request): Promise<Response> {
+async function getCardsHandler(_req: Request): Promise<Response> {
   // src/database/effects/cards/ 配下の .ts ファイル名一覧を取得
   const cardsDir = path.resolve(process.cwd(), 'src/database/effects/cards');
   let files: string[] = [];

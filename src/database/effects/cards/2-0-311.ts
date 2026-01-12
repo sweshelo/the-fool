@@ -1,13 +1,12 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { KeywordEffect } from '@/submodule/suit/types';
 
 export const effects: CardEffects = {
   // 召喚時に【神託】を付与
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     await System.show(stack, '神託', '奇跡を発動すると【神託】は取り除かれる');
-    Effect.keyword(stack, stack.processing, stack.processing, '神託' as KeywordEffect);
+    Effect.keyword(stack, stack.processing, stack.processing, '神託');
   },
 
   // アタック時に【神託】がある場合、「ブロックされない」効果を付与し、【神託】を除去

@@ -21,8 +21,8 @@ export const effects: CardEffects = {
   // 対戦相手のユニットがアタックした時の効果
   onAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
     // アタックしているユニットが相手のユニットかチェック
-    const attacker = stack.target as Unit;
-    if (attacker.owner.id === stack.processing.owner.opponent.id) {
+    const attacker = stack.target;
+    if (attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id) {
       // 自分のトリガーゾーンにカードがあるか確認
       const triggerCards = stack.processing.owner.trigger;
 

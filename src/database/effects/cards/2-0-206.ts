@@ -6,7 +6,7 @@ import { EffectHelper } from '../classes/helper';
 
 export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     if (stack.core.getTurnPlayer().id === owner.id) {

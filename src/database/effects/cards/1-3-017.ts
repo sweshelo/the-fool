@@ -31,7 +31,7 @@ export const effects: CardEffects = {
 
     // 選択したユニットをデッキに戻す
     Effect.bounce(stack, stack.processing, selfTarget, 'deck');
-    Effect.bounce(stack, stack.processing, opponentTarget as Unit, 'deck');
+    if (opponentTarget) Effect.bounce(stack, stack.processing, opponentTarget, 'deck');
   },
 
   // 対戦相手のトリガーカードの効果が発動するたび、対戦相手のユニットを1体選ぶ。それの行動権を消費する。

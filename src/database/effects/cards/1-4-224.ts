@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
@@ -17,7 +17,7 @@ export const effects: CardEffects = {
 
     if (opponentUnits.length >= 4) {
       await System.show(stack, '惰世の黒冥球', '自身以外の全てのユニットを破壊');
-      EffectHelper.exceptSelf(stack.core, stack.processing as Unit, (unit: Unit) =>
+      EffectHelper.exceptSelf(stack.core, stack.processing, (unit: Unit) =>
         Effect.break(stack, stack.processing, unit, 'effect')
       );
     } else {

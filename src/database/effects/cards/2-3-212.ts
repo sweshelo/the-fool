@@ -5,7 +5,7 @@ import { System } from '../classes/system';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 自身以外のユニットのBPの合計を計算
@@ -34,7 +34,7 @@ export const effects: CardEffects = {
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     if (stack.core.getTurnPlayer().id !== owner.opponent.id) return;
@@ -64,7 +64,7 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 手札の上限チェック

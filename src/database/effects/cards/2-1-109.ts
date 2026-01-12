@@ -63,7 +63,7 @@ export const effects: CardEffects = {
   },
 
   onTrigger: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     if (stack.source instanceof Card && stack.source.owner.id !== owner.id) return;

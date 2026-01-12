@@ -34,7 +34,7 @@ export const effects: CardEffects = {
   },
 
   onAttackSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const opponent = self.owner.opponent;
 
     // アクティブな相手ユニットをランダムに1体選んで8000ダメージ
@@ -49,7 +49,7 @@ export const effects: CardEffects = {
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
     await System.show(stack, 'ペイン・オブ・デッド', '【不死】を破壊\n基本BP-2000\n行動権を回復');
 

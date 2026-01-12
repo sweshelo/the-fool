@@ -195,7 +195,7 @@ export class Room {
         hand: player.hand.map(card => ({ id: card.id })),
         trigger: player.trigger.map(card => ({
           id: card.id,
-          color: colorMap[card.catalog.color as number] ?? 'none',
+          color: colorMap[card.catalog.color] ?? 'none',
         })),
       };
     });
@@ -263,7 +263,7 @@ export class Room {
                         ? card
                         : {
                             id: card.id,
-                            color: colorMap[card.catalog.color as number] ?? 'none',
+                            color: colorMap[card.catalog.color] ?? 'none',
                           }
                     ),
             };

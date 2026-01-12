@@ -23,6 +23,7 @@ export class EffectTemplate {
 
     if (action) {
       core.room.soundEffect('draw');
+      // oxlint-disable-next-line no-unsafe-type-assertion
       return action.source as Card;
     } else {
       return;

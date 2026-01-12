@@ -24,13 +24,14 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         await System.show(stack, '選略・ヒロイック・レイ', '自身を緑属性の【英雄】に進化');
-        const evolveUnit = stack.processing.owner.deck.find(
-          card =>
+        const evolveUnit = stack.processing.owner.deck.find((card): card is Evolve => {
+          return (
             card instanceof Evolve &&
             card.catalog.color === Color.GREEN &&
             card.catalog.cost <= 4 &&
-            card.catalog.species?.includes('英雄')
-        ) as Evolve;
+            (card.catalog.species?.includes('英雄') ?? false)
+          );
+        });
         if (evolveUnit) {
           stack.processing.owner.deck = stack.processing.owner.deck.filter(
             card => card !== evolveUnit

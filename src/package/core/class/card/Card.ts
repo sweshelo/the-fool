@@ -20,7 +20,6 @@ export abstract class Card extends Atom implements ICard {
     // 遅延ロードを使用して循環依存を回避
     // Lazy load to avoid circular dependency
     const getCatalog = () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { default: master } = require('@/database/catalog');
       return master;
     };

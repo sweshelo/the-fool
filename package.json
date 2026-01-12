@@ -7,7 +7,7 @@
     "preinstall": "git submodule update --init --recursive",
     "dev": "bun --hot run index.ts",
     "prepare": "lefthook install",
-    "lint": "bunx oxlint --type-aware"
+    "lint": "bunx oxlint --type-aware && bunx eslint --fix"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
@@ -17,12 +17,16 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
     "dependency-cruiser": "^16.10.0",
+    "eslint": "^9.39.2",
     "globals": "^16.0.0",
     "knip": "^5.46.5",
     "lefthook": "^2.0.13",
     "oxfmt": "^0.20.0",
-    "oxlint-tsgolint": "^0.10.0"
+    "oxlint-tsgolint": "^0.10.0",
+    "typescript-eslint": "^8.52.0"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"

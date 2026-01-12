@@ -32,9 +32,9 @@ export const effects: CardEffects = {
     }
   },
 
-  onDriveSelf: async (stack: StackWithCard) => {
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const targets = stack.processing.owner.opponent.field.filter(
-      unit => unit.currentBP >= (stack.processing as Unit).currentBP
+      unit => unit.currentBP >= stack.processing.currentBP
     );
 
     if (targets.length > 0) {
