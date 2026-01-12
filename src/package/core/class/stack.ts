@@ -114,7 +114,12 @@ export class Stack implements IStack {
     };
 
     if (this.type === 'overclock') {
-      if (this.target instanceof Unit && this.target.lv === 3) {
+      if (
+        this.target instanceof Unit &&
+        this.target.lv === 3 &&
+        !this.target.overclocked &&
+        this.target.owner.field.some(unit => unit.id === this.target?.id)
+      ) {
         this.target.overclocked = true;
         this.target.active = true;
         this.target.delta = this.target.delta.filter(
