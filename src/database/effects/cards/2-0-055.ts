@@ -25,12 +25,9 @@ export const effects: CardEffects = {
       );
 
       // それ以外の全てのユニットの行動権を消費
-      const allUnits = stack.core.players.flatMap(p => p.field);
-      const targets = allUnits.filter(unit => unit.id !== keepUnit.id);
-
-      for (const unit of targets) {
-        Effect.activate(stack, stack.processing, unit, false);
-      }
+      EffectHelper.exceptSelf(stack.core, keepUnit, unit =>
+        Effect.activate(stack, stack.processing, unit, false)
+      );
     }
   },
 };

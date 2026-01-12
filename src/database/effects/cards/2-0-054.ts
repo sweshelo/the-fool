@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     // 攻撃イベントの対象（attacker）がユニットである場合
     if (!(stack.target instanceof Unit)) return false;
 
-    const attacker = stack.target as Unit;
+    const attacker = stack.target;
     const owner = stack.processing.owner;
 
     // 相手が攻撃した場合は常に発動可能

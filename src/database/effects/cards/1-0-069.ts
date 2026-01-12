@@ -21,9 +21,7 @@ export const effects: CardEffects = {
         'レベルを3にするユニットを選択'
       );
 
-      if (target) {
-        Effect.clock(stack, stack.processing, target, 2, true);
-      }
+      Effect.clock(stack, stack.processing, target, 2, true);
     }
   },
 };
