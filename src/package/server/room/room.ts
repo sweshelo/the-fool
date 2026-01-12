@@ -204,6 +204,8 @@ export class Room {
       game: {
         round: this.core.round,
         turn: this.core.turn,
+        turnPlayer: this.core.players.length >= 2 ? this.core.getTurnPlayer().id : undefined,
+        firstPlayer: this.core.players.length >= 2 ? this.core.players[this.core.firstPlayerIndex].id : undefined,
       },
       players: playersState,
     });
@@ -292,6 +294,8 @@ export class Room {
             game: {
               round: this.core.round,
               turn: this.core.turn,
+              turnPlayer: this.core.players.length >= 2 ? this.core.getTurnPlayer().id : undefined,
+              firstPlayer: this.core.players.length >= 2 ? this.core.players[this.core.firstPlayerIndex].id : undefined,
             },
             players,
           },
