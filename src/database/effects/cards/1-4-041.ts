@@ -17,7 +17,7 @@ export const effects = {
     const colors = new Set(
       player.field
         .map(unit => master.get(unit.catalogId)?.color)
-        .filter(color => color !== Color.NONE)
+        .filter(color => color !== Color.NONE && color != null)
     ).size;
     const isGreaterThan4Colors = colors >= 4;
 
