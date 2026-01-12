@@ -893,6 +893,7 @@ export class Effect {
     locationKey: 'hand' | 'trigger' = 'hand'
   ) {
     const location = player[locationKey];
+    if (location.length >= stack.core.room.rule.player.max[locationKey]) return;
     switch (locationKey) {
       case 'hand': {
         stack.core.room.soundEffect('draw');
@@ -906,7 +907,7 @@ export class Effect {
 
     if (typeof target === 'string') {
       const catalog = master.get(target);
-      if (catalog && location.length < stack.core.room.rule.player.max[locationKey]) {
+      if (catalog) {
         switch (catalog.type) {
           case 'unit': {
             const card = new Unit(player, catalog.id);
