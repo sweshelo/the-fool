@@ -15,6 +15,7 @@ export const effects: CardEffects = {
       // デッキから進化ユニット以外のコスト2以下の天使ユニットを検索
       const candidates = owner.deck.filter(
         (card): card is Unit =>
+          card instanceof Unit &&
           card.catalog.type === 'unit' &&
           card.catalog.cost <= 2 &&
           (card.catalog.species?.includes('天使') ?? false) // 天使ユニット
