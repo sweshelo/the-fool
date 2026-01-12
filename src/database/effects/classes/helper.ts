@@ -177,7 +177,7 @@ export class EffectHelper {
    * @param callback 繰り返す関数
    */
   static repeat(times: number, callback: () => unknown) {
-    [...Array(times)].forEach(callback);
+    [...Array(Math.max(times, 0))].forEach(callback);
   }
 
   /**
