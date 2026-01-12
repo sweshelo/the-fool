@@ -8,6 +8,7 @@ import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
 import { MessageHelper } from '@/package/core/message';
+import { Intercept } from '@/package/core/class/card';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -256,10 +257,15 @@ export class Room {
               trigger:
                 this.rule.debug?.enable && this.rule.debug.reveal.opponent.trigger
                   ? player.trigger
-                  : player.trigger.map(card => ({
-                      id: card.id,
-                      color: colorMap[card.catalog.color as number] ?? 'none',
-                    })),
+                  : // Interceptが revealed (= 複数回使用可能で、既に使用済み) であれば公開する
+                    player.trigger.map(card =>
+                      card instanceof Intercept && card.revealed
+                        ? card
+                        : {
+                            id: card.id,
+                            color: colorMap[card.catalog.color as number] ?? 'none',
+                          }
+                    ),
             };
           }
 
