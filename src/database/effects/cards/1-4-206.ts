@@ -8,7 +8,7 @@ export const effects: CardEffects = {
   onAttackSelf: async (stack: StackWithCard) => {
     const damage =
       stack.processing.owner.trash.filter(card => card.catalog.species?.includes('侍')).length *
-      1000;
+      1500;
     if (
       EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) &&
       damage > 0
