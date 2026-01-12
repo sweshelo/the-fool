@@ -1,4 +1,4 @@
-import { Effect, EffectHelper, System } from '..';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
