@@ -24,7 +24,7 @@ export const effects: CardEffects = {
       '究極の極み',
       'BP+5000\n【オーバーヒート】を得る\n全ての効果を発動できない'
     );
-    Effect.modifyBP(stack, stack.processing, stack.processing as Unit, 5000, {
+    Effect.modifyBP(stack, stack.processing, stack.processing, 5000, {
       event: 'turnEnd',
       count: 1,
     });

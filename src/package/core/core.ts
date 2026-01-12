@@ -27,7 +27,6 @@ import { Intercept } from './class/card/Intercept';
 import { Trigger } from './class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
 
 interface History {

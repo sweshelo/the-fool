@@ -3,6 +3,9 @@ pre-commit:
     - name: lint
       run: bunx oxlint {staged_files} --type-aware
 
+    - name: ban as
+      run: bunx eslint
+
     - name: format
       run: bunx oxfmt {staged_files}
 

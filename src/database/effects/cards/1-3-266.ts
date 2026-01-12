@@ -4,8 +4,8 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  checkBattle: (stack: StackWithCard) => {
+
+  checkBattle: (_stack: StackWithCard) => {
     return true;
   },
 
