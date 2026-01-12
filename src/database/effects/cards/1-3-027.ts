@@ -57,14 +57,12 @@ export const effects: CardEffects = {
       '破壊するユニットを選択して下さい'
     );
 
-    const [opponentTarget] = hasOpponent
-      ? await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          opponentFilter,
-          '破壊するユニットを選択して下さい'
-        )
-      : [];
+    const [opponentTarget] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      opponentFilter,
+      '破壊するユニットを選択して下さい'
+    );
 
     if (opponentTarget) Effect.break(stack, stack.processing, opponentTarget, 'effect');
     if (undeadTarget) Effect.break(stack, stack.processing, undeadTarget, 'effect');
