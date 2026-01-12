@@ -37,7 +37,6 @@ export const effects: CardEffects = {
     }
 
     // 手札に蠅魔王ベルゼブブを1枚作成
-    const newCard = new Unit(stack.processing.owner, '1-2-010');
-    stack.processing.owner.hand.push(newCard);
+    Effect.make(stack, stack.processing.owner, '1-2-010');
   },
 };

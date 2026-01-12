@@ -51,8 +51,7 @@ export const effects: CardEffects = {
         case '1': {
           await System.show(stack, '選略・狂い狂えどお戯れを', 'ランダムで2体作成し消滅');
           EffectHelper.random(stack.processing.owner.opponent.field, 2).forEach(unit => {
-            if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand)
-              stack.processing.owner.hand.push(unit.clone(stack.processing.owner, false));
+            Effect.make(stack, stack.processing.owner, unit);
             Effect.delete(stack, stack.processing, unit);
           });
           break;

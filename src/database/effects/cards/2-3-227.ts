@@ -78,9 +78,7 @@ export const effects: CardEffects = {
     }
 
     // [黄龍]を1枚作成する
-    if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand) {
-      stack.processing.owner.hand.push(new Unit(stack.processing.owner, '1-3-215'));
-    }
+    Effect.make(stack, stack.processing.owner, '1-3-215');
   },
 
   // あなたのターン開始時、あなたのフィールドに［ブラック四聖獣］が全ている場合、対戦相手の手札、フィールド、トリガーゾーンからランダムで4枚消滅させる。

@@ -73,7 +73,6 @@ export const effects: CardEffects = {
     await System.show(stack, 'ブリトンの守護神', '[聖剣・エクスカリバー]を手札に作成');
 
     // エクスカリバーを作成
-    const excalibur = new Unit(owner, '2-0-312');
-    owner.hand.push(excalibur);
+    Effect.make(stack, stack.processing.owner, '2-0-312');
   },
 };

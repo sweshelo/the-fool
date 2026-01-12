@@ -1,6 +1,5 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Intercept } from '@/package/core/class/card/Intercept';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -41,7 +40,7 @@ export const effects: CardEffects = {
       stack.processing.owner.id === stack.source.id
     ) {
       await System.show(stack, '魔夜の太陽', '[魔導の書]を手札に作成');
-      stack.processing.owner.hand.push(new Intercept(stack.processing.owner, 'PR-027'));
+      Effect.make(stack, stack.processing.owner, 'PR-027');
     }
   },
 

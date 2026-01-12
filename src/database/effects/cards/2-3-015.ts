@@ -52,11 +52,8 @@ export const effects: CardEffects = {
     const candidate: string[] = Array.from(master.values())
       .filter(catalog => catalog.species?.includes('機械'))
       .map(catalog => catalog.id);
-    EffectHelper.random(
-      candidate,
-      Math.min(stack.core.room.rule.player.max.hand - stack.processing.owner.hand.length, 3)
-    ).forEach(id => {
-      stack.processing.owner.hand.push(new Unit(stack.processing.owner, id));
+    EffectHelper.random(candidate, 3).forEach(id => {
+      Effect.make(stack, stack.processing.owner, id);
     });
 
     EffectHelper.random(stack.processing.owner.trash, 3).forEach(card =>

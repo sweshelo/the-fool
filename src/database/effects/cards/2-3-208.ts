@@ -19,10 +19,7 @@ export const effects: CardEffects = {
         '手札に作成するユニットを選んでください',
         1
       );
-      if (!target || stack.processing.owner.hand.length >= stack.core.room.rule.player.max.hand)
-        return;
-      const clonedCard = target.clone(stack.processing.owner);
-      stack.processing.owner.hand.push(clonedCard);
+      Effect.make(stack, stack.processing.owner, target);
     } else {
       await System.show(stack, '神託', '奇跡を発動すると【神託】は取り除かれる');
     }
