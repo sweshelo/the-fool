@@ -33,6 +33,7 @@ export const effects: CardEffects = {
         const [target] = EffectHelper.random(owner.opponent.field.filter(unit => !unit.active));
         await System.show(stack, '選略・妖艶の夜光', '【呪縛】を与える');
         if (target) Effect.keyword(stack, self, target, '呪縛');
+        break;
       }
     }
   },
