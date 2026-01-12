@@ -31,6 +31,7 @@ export const effects: CardEffects = {
 
     switch (choice) {
       case '1': {
+        await System.show(stack, '選略・暗器調達', '手札を1枚消滅\nトリガーカードを2枚回収');
         const [sacrifice] = await EffectHelper.selectCard(
           stack,
           stack.processing.owner,
@@ -45,6 +46,7 @@ export const effects: CardEffects = {
         break;
       }
       case '2': {
+        await System.show(stack, '選略・暗器調達', 'トリガーカードを1枚引く');
         EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['trigger'] });
         break;
       }
