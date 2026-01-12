@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     const isOpponentUnitDriven = stack.source.id === opponent.id;
 
     if (isOpponentUnitDriven && hasGreenCardAtLeast5InTrash && stack.target instanceof Unit) {
-      await System.show(stack, '＜ウィルス・貫＞', '基本BP+1000\n【貫通】付与');
+      await System.show(stack, '＜ウィルス・貫＞', '基本BP+1000\n【貫通】を付与');
       Effect.modifyBP(stack, stack.processing, stack.target, 1000, { isBaseBP: true });
       Effect.keyword(stack, stack.processing, stack.target, '貫通');
     }

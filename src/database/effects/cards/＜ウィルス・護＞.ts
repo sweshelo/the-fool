@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     const isOpponentUnitDriven = stack.source.id === opponent.id;
 
     if (isOpponentUnitDriven && hasYellowCardAtLeast5InTrash && stack.target instanceof Unit) {
-      await System.show(stack, '＜ウィルス・護＞', '【加護】付与');
+      await System.show(stack, '＜ウィルス・護＞', '【加護】を付与');
       Effect.keyword(stack, stack.processing, stack.target, '加護');
     }
   },
