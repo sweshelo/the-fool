@@ -11,8 +11,7 @@ export const effects: CardEffects = {
     ) {
       await System.show(stack, 'イリシットレジャー', '対戦相手の手札を1枚作成');
       EffectHelper.random(stack.processing.owner.opponent.hand, 1).forEach(card => {
-        const target = card.clone(stack.processing.owner);
-        stack.processing.owner.hand.push(target);
+        Effect.make(stack, stack.processing.owner, card);
       });
     }
   },

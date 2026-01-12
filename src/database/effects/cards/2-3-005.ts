@@ -1,4 +1,4 @@
-import { Evolve, Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import master from '@/submodule/suit/catalog/catalog';
@@ -46,14 +46,8 @@ export const effects: CardEffects = {
       const [target] = EffectHelper.random(
         Array.from(master.values()).filter(catalog => catalog.species?.includes('魔導士'))
       );
-      switch (target?.type) {
-        case 'unit':
-          stack.processing.owner.hand.push(new Unit(stack.processing.owner, target.id));
-          break;
-        case 'advanced_unit':
-          stack.processing.owner.hand.push(new Evolve(stack.processing.owner, target.id));
-          break;
-      }
+
+      if (target) Effect.make(stack, stack.processing.owner, target.id);
     }
   },
 };

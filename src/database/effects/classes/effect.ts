@@ -1,9 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
-import { Evolve, Unit, type Card } from '@/package/core/class/card';
+import { Evolve, Intercept, Trigger, Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
+import master from '@/database/catalog';
 
 const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   // クライアントにエフェクトを送信
@@ -874,6 +875,66 @@ export class Effect {
       case '沈黙':
         stack.core.room.soundEffect('grow');
         break;
+    }
+  }
+
+  /**
+   * 作成する
+   * @param stack スタック
+   * @param player 作成するカードの所有者
+   * @param target 作成するカードのオリジナル または カードID
+   * @param locationKey 作成する場所
+   * @example const copiedCard = EffectHelper.make(stack, stack.processing.owner, '1-0-001')
+   */
+  static make(
+    stack: Stack,
+    player: Player,
+    target: Card | string,
+    locationKey: 'hand' | 'trigger' = 'hand'
+  ) {
+    const location = player[locationKey];
+    if (location.length >= stack.core.room.rule.player.max[locationKey]) return;
+    switch (locationKey) {
+      case 'hand': {
+        stack.core.room.soundEffect('draw');
+        break;
+      }
+      case 'trigger': {
+        stack.core.room.soundEffect('trigger');
+        break;
+      }
+    }
+
+    if (typeof target === 'string') {
+      const catalog = master.get(target);
+      if (catalog) {
+        switch (catalog.type) {
+          case 'unit': {
+            const card = new Unit(player, catalog.id);
+            location.push(card);
+            return card;
+          }
+          case 'advanced_unit': {
+            const card = new Evolve(player, catalog.id);
+            location.push(card);
+            return card;
+          }
+          case 'intercept': {
+            const card = new Intercept(player, catalog.id);
+            location.push(card);
+            return card;
+          }
+          case 'trigger': {
+            const card = new Trigger(player, catalog.id);
+            location.push(card);
+            return card;
+          }
+        }
+      }
+    } else {
+      const clone = target.clone(player);
+      location.push(clone);
+      return clone;
     }
   }
 }

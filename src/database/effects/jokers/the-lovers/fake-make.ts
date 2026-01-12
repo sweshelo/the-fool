@@ -1,7 +1,7 @@
 import { System } from '../../classes/system';
 import { EffectHelper } from '../../classes/helper';
-import { Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../../classes/types';
+import { Effect } from '../../classes/effect';
 
 export const effects: CardEffects = {
   checkJoker: (player, core) => {
@@ -24,8 +24,6 @@ export const effects: CardEffects = {
     );
 
     // 選んだカードを手札に作成する（コピー）
-    if (selectedCard instanceof Card) {
-      stack.processing.owner.hand.push(selectedCard.clone(stack.processing.owner));
-    }
+    Effect.make(stack, stack.processing.owner, selectedCard);
   },
 };
