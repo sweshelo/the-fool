@@ -370,7 +370,22 @@ export class Stack implements IStack {
       }
     });
 
-    this.children = [];
+    // 移動によってアンマウントされたフィールド効果によって発生したスタックを解決する
+    for (const child of this.children) {
+      // target が Card の場合、owner.id を取得してユニーク判定
+      const ownerId = child.target instanceof Card ? child.target.owner.id : undefined;
+      const key = `${child.type}_${ownerId}`;
+
+      if (ownerId === undefined || !seen.has(key) || !isPreventDuplicateEventHandling(child)) {
+        // 最初のヒット: onlySelfResolve = false
+        if (ownerId !== undefined) seen.add(key);
+        await child.resolve(core, false);
+      } else {
+        // 2回目以降または: onlySelfResolve = true
+        await child.resolve(core, true);
+      }
+    }
+
     if (isProcessed.includes(true)) {
       this.core.room.sync();
       await new Promise(resolve => setTimeout(resolve, 1000));
