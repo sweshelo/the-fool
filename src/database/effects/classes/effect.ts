@@ -596,6 +596,8 @@ export class Effect {
         } else {
           stack.addChildStack('overclock', source, target);
         }
+      } else {
+        if (value < 0) target.overclocked = false;
       }
     }
   }
