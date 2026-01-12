@@ -11,7 +11,7 @@ export const effects: CardEffects = {
       stack.processing.owner.id !== stack.source.id &&
       stack.processing.owner.purple &&
       stack.processing.owner.purple >= 5 &&
-      stack.processing.owner.field.length <= stack.core.room.rule.player.max.field
+      stack.processing.owner.field.length < stack.core.room.rule.player.max.field
     ) {
       // oxlint-disable-next-line no-floating-promises
       Effect.summon(stack, stack.processing, stack.processing);
