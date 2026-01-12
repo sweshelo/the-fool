@@ -590,8 +590,14 @@ export class Effect {
 
       if (target.currentBP <= 0) {
         Effect.break(stack, target, target, 'system');
-      } else if (target.lv === 3 && !withoutOverClock) {
-        stack.addChildStack('overclock', source, target);
+      } else if (target.lv === 3) {
+        if (withoutOverClock) {
+          target.overclocked = true;
+        } else {
+          stack.addChildStack('overclock', source, target);
+        }
+      } else {
+        if (value < 0) target.overclocked = false;
       }
     }
   }
