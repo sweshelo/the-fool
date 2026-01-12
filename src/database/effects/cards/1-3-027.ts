@@ -41,7 +41,8 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    if (!hasUndead) return;
+    //【不死】とレベル2以上のユニットのいずれかが存在しない場合は処理を終了
+    if (!hasUndead || !hasOpponent) return;
 
     await System.show(
       stack,
