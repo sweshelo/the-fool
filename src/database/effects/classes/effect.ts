@@ -1,9 +1,10 @@
 import type { Stack } from '@/package/core/class/stack';
-import { Evolve, Unit, type Card } from '@/package/core/class/card';
+import { Evolve, Intercept, Trigger, Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
+import master from '@/database/catalog';
 
 const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   // クライアントにエフェクトを送信
@@ -874,6 +875,30 @@ export class Effect {
       case '沈黙':
         stack.core.room.soundEffect('grow');
         break;
+    }
+  }
+
+  static make(stack: Stack, player: Player, target: Card | string) {
+    if (typeof target === 'string') {
+      const catalog = master.get(target);
+      if (catalog && player.hand.length < stack.core.room.rule.player.max.hand) {
+        switch (catalog.type) {
+          case 'unit':
+            player.hand.push(new Unit(player, catalog.id));
+            break;
+          case 'advanced_unit':
+            player.hand.push(new Evolve(player, catalog.id));
+            break;
+          case 'intercept':
+            player.hand.push(new Intercept(player, catalog.id));
+            break;
+          case 'trigger':
+            player.hand.push(new Trigger(player, catalog.id));
+            break;
+        }
+      }
+    } else {
+      player.hand.push(target.clone(player));
     }
   }
 }
