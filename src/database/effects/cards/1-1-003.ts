@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
       { id: '1', description: '【悪魔】ユニットを1枚引く' },
@@ -29,7 +29,7 @@ export const effects: CardEffects = {
           'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く'
         );
         Effect.modifyCP(stack, stack.processing, stack.processing.owner, -1);
-        Effect.speedMove(stack, stack.processing as Unit);
+        Effect.speedMove(stack, stack.processing);
         EffectTemplate.reinforcements(stack, owner, { species: '悪魔' });
         break;
       }

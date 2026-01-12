@@ -6,13 +6,13 @@ export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
+    const [singleTarget] = opponent.field;
 
     if (opponent.field.length === 0) {
       return;
-    } else if (opponent.field.length === 1) {
+    } else if (opponent.field.length === 1 && singleTarget) {
       await System.show(stack, '蠅魔王剣・滅亡ノ瞳', '10000ダメージ');
-      const [target] = opponent.field;
-      Effect.damage(stack, stack.processing, target as Unit, 10000, 'effect');
+      Effect.damage(stack, stack.processing, singleTarget, 10000, 'effect');
     } else {
       await System.show(stack, '蠅魔王剣・滅亡ノ瞳', 'ランダムで2体に5000ダメージ');
       const targets = EffectHelper.random(opponent.field, 2);
@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onAttackSelf: async (stack: StackWithCard): Promise<void> => {
+  onAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
     // 昆虫ユニット
@@ -49,7 +49,7 @@ export const effects: CardEffects = {
 
     // BP増加
     const numberDaemons = owner.field.filter(unit => unit.catalog.species?.includes('悪魔')).length;
-    Effect.modifyBP(stack, stack.processing, stack.processing as Unit, numberDaemons * 2000, {
+    Effect.modifyBP(stack, stack.processing, stack.processing, numberDaemons * 2000, {
       event: 'turnEnd',
       count: 1,
     });

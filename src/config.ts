@@ -11,4 +11,5 @@ interface Config {
   game: Rule;
 }
 
+// oxlint-disable-next-line no-unsafe-type-assertion
 export const config = load(yaml) as Config;

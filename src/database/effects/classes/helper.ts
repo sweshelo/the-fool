@@ -1,4 +1,4 @@
-import { Card, Unit } from '@/package/core/class/card';
+import { Card, Evolve, Unit } from '@/package/core/class/card';
 import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
 import { System } from './system';
@@ -353,5 +353,13 @@ export class EffectHelper {
         return chosen;
       }
     }
+  }
+
+  static isUnit(card: unknown, strict: boolean = false): card is Unit {
+    return card instanceof Unit && (strict ? card.catalog.type === 'unit' : true);
+  }
+
+  static isEvolve(card: unknown): card is Evolve {
+    return card instanceof Evolve;
   }
 }

@@ -4,9 +4,9 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '胎動＆固着', '手札に戻らない\nコスト3以下に【狂戦士】を与える');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '固着');
+    Effect.keyword(stack, stack.processing, stack.processing, '固着');
   },
 
   onWinSelf: async (stack: StackWithCard): Promise<void> => {
@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onClockup: async (stack: StackWithCard): Promise<void> => {
+  onClockup: async (stack: StackWithCard<Unit>): Promise<void> => {
     const targets = stack.processing.owner.opponent.field;
 
     if (stack.processing.lv === 3) {
@@ -39,7 +39,7 @@ export const effects: CardEffects = {
       } else {
         await System.show(stack, '剪定', '自身のレベル-2');
       }
-      Effect.clock(stack, stack.processing, stack.processing as Unit, -2);
+      Effect.clock(stack, stack.processing, stack.processing, -2);
     }
   },
 

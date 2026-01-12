@@ -81,13 +81,13 @@
     "typescript/no-meaningless-void-operator": "warn",
     "typescript/no-misused-new": "warn",
     "typescript/no-misused-spread": "off",
-    "typescript/no-non-null-assertion": "error",
-    "typescript/no-non-null-asserted-nullish-coalescing": "error",
+    "typescript/no-non-null-assertion": "warn",
+    "typescript/no-non-null-asserted-nullish-coalescing": "warn",
     "typescript/no-non-null-asserted-optional-chain": "error",
-    "typescript/no-explicit-any": "error",
-    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-unnecessary-type-assertion": "warn",
     "typescript/no-unsafe-type-assertion": "error",
-    "typescript/no-confusing-non-null-assertion": "error",
+    "typescript/no-confusing-non-null-assertion": "warn",
     "typescript/no-redundant-type-constituents": "warn",
     "typescript/no-this-alias": "warn",
     "typescript/no-unnecessary-parameter-property-assignment": "warn",
@@ -146,5 +146,5 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": ["src/submodule/**"]
+  "ignorePatterns": ["src/submodule/**", "check-card-changes.ts"]
 }

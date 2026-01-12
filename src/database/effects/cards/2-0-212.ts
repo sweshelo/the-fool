@@ -4,17 +4,17 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 
 const mainEffect = async (stack: StackWithCard<Unit>) => {
   const candidate = stack.processing.owner.trash.filter(
-    card =>
+    (card): card is Unit =>
       card instanceof Unit &&
       !(card instanceof Evolve) &&
       card.catalog.cost <= 3 &&
-      card.catalog.species?.includes('侍')
-  ) as Unit[];
+      (card.catalog.species?.includes('侍') ?? false)
+  );
+  const [target] = EffectHelper.random(candidate);
 
-  if (stack.processing.owner.field.length <= 4 && candidate.length > 0) {
+  if (stack.processing.owner.field.length <= 4 && target) {
     await System.show(stack, '戦友と共に', '捨札から【侍】を【特殊召喚】');
-    const [target] = EffectHelper.random(candidate);
-    await Effect.summon(stack, stack.processing, target!);
+    await Effect.summon(stack, stack.processing, target);
   }
 };
 
@@ -37,13 +37,11 @@ export const effects: CardEffects = {
     const samuraiCount = stack.processing.owner.field.filter(unit =>
       unit.catalog.species?.includes('侍')
     ).length;
+    // 戦闘中の相手ユニットを特定
+    const opponent = stack.target;
 
-    if (isAttacking && samuraiCount >= 3) {
+    if (isAttacking && samuraiCount >= 3 && opponent instanceof Unit) {
       await System.show(stack, '壬生の鬼', '【沈黙】を与え破壊する');
-
-      // 戦闘中の相手ユニットを特定
-      const opponent = stack.target as Unit;
-
       if (opponent) {
         Effect.keyword(stack, stack.processing, opponent, '沈黙');
         Effect.break(stack, stack.processing, opponent, 'effect');

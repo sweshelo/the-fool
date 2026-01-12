@@ -1027,7 +1027,7 @@ export class Core {
         }
 
         // Check if player has enough gauge
-        if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
+        if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
           throw new Error('Insufficient joker gauge');
         }
 
@@ -1131,7 +1131,8 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const target = player?.find(payload.target);
         const isOnHand = target?.place?.name === 'hand';
-        const isEnoughTriggerZone = player!.trigger.length < this.room.rule.player.max.trigger;
+        const isEnoughTriggerZone =
+          (player?.trigger.length ?? 0) < this.room.rule.player.max.trigger;
 
         if (target && target.card && player && isEnoughTriggerZone && isOnHand) {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);

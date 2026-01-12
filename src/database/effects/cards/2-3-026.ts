@@ -5,17 +5,15 @@ import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit): boolean => {
-    const filter = (unit: Unit) => unit.owner.id === self.owner.id;
-    return EffectHelper.isUnitSelectable(core, filter, self.owner);
+    return EffectHelper.isUnitSelectable(core, 'opponents', self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '起動・月に叢雲、花に風', 'ユニットを破壊\n紫ゲージ+2');
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
     const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      filter,
+      'opponents',
       '破壊するユニットを選択して下さい',
       1
     );
@@ -24,30 +22,30 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    if (
-      stack.processing.owner.opponent.field.length > 0 &&
-      stack.processing.owner.purple !== undefined
-    ) {
+    const purple = stack.processing.owner.purple;
+    if (stack.processing.owner.opponent.field.length > 0 && purple !== undefined) {
       await System.show(stack, '月に叢雲、花に風', '敵全体に[紫ゲージ×1000]ダメージ');
       stack.processing.owner.opponent.field.forEach(unit =>
-        Effect.damage(stack, stack.processing, unit, stack.processing.owner.purple! * 1000)
+        Effect.damage(stack, stack.processing, unit, purple * 1000)
       );
     }
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (stack.processing.owner.purple && stack.processing.owner.purple >= 4) {
-      const [choice] =
-        stack.processing.owner.field.length === 0
-          ? ['2']
-          : await System.prompt(stack, stack.processing.owner.id, {
-              type: 'option',
-              title: '選略・狂い狂えどお戯れを',
-              items: [
-                { id: '1', description: 'ランダムで2体作成し消滅' },
-                { id: '2', description: '味方全体の基本BP+5000\n【不屈】を与える' },
-              ],
-            });
+      const choice = await EffectHelper.choice(
+        stack,
+        stack.processing.owner,
+        '選略・狂い狂えどお戯れを',
+        [
+          {
+            id: '1',
+            description: 'ランダムで2体作成し消滅',
+            condition: () => stack.processing.owner.opponent.field.length >= 2,
+          },
+          { id: '2', description: '味方全体の基本BP+5000\n【不屈】を与える' },
+        ]
+      );
 
       switch (choice) {
         case '1': {

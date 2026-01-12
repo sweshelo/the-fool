@@ -1,7 +1,8 @@
-import { EffectTemplate, System } from '..';
+import { EffectHelper, EffectTemplate, System } from '..';
 import master from '@/database/catalog';
 import type { StackWithCard } from '../classes/types';
 import { Card } from '@/package/core/class/card';
+import { Color } from '@/submodule/suit/constant';
 
 export const effects = {
   checkDrive: (stack: StackWithCard): boolean => {
@@ -13,7 +14,11 @@ export const effects = {
     const isSamePlayer = driver.id === player.id;
 
     // 召喚者のフィールドに4属性揃っているか確認する
-    const colors = new Set(player.field.map(unit => master.get(unit.catalogId)!.color)).size;
+    const colors = new Set(
+      player.field
+        .map(unit => master.get(unit.catalogId)?.color)
+        .filter(color => color !== Color.NONE)
+    ).size;
     const isGreaterThan4Colors = colors >= 4;
 
     return isSamePlayer && isGreaterThan4Colors;
@@ -22,6 +27,6 @@ export const effects = {
   onDrive: async (stack: StackWithCard) => {
     const player = stack.processing.owner;
     await System.show(stack, 'フラワーアレンジメント', 'カードを2枚引く');
-    [...Array(2)].forEach(() => EffectTemplate.draw(player, stack.core));
+    EffectHelper.repeat(2, () => EffectTemplate.draw(player, stack.core));
   },
 };

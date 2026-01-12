@@ -1,4 +1,4 @@
-import { Evolve, Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
@@ -14,23 +14,19 @@ export const effects: CardEffects = {
     if (owner.field.length <= 4) {
       // デッキから進化ユニット以外のコスト2以下の天使ユニットを検索
       const candidates = owner.deck.filter(
-        card =>
-          card instanceof Unit &&
-          !(card instanceof Evolve) && // 進化ユニット以外
+        (card): card is Unit =>
+          card.catalog.type === 'unit' &&
           card.catalog.cost <= 2 &&
-          card.catalog.species?.includes('天使') // 天使ユニット
+          (card.catalog.species?.includes('天使') ?? false) // 天使ユニット
       );
 
       if (candidates.length > 0) {
         await System.show(stack, 'エンジェル・コール', '【天使】ユニットを特殊召喚');
 
         // ランダムで1体選ぶ
-        const randomUnits = EffectHelper.random(candidates, 1);
-        if (randomUnits.length > 0) {
-          const targetUnit = randomUnits[0] as Unit;
-
-          // 特殊召喚
-          await Effect.summon(stack, stack.processing, targetUnit, false);
+        const [target] = EffectHelper.random(candidates, 1);
+        if (target) {
+          await Effect.summon(stack, stack.processing, target, false);
         }
       }
     }

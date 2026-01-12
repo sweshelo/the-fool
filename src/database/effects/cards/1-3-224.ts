@@ -43,9 +43,7 @@ export const effects: CardEffects = {
       stack.target.owner.id === stack.processing.owner.opponent.id
     ) {
       // 捨札のユニットカード
-      const unitsInTrash = stack.processing.owner.trash.filter(
-        card => card instanceof Unit
-      ) as Unit[];
+      const unitsInTrash = stack.processing.owner.trash.filter(card => card instanceof Unit);
 
       if (unitsInTrash.length > 0) {
         await System.show(stack, '幽冥の神威', '捨札からユニットを1枚回収');

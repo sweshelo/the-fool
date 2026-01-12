@@ -1,12 +1,10 @@
-import type { Card } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard): boolean => {
-    const isOwnUnit = stack.processing.owner.id === (stack.target as Card).owner.id;
-    return isOwnUnit;
+    return stack.processing.owner.id === stack.source.id;
   },
 
   // 実際の効果本体

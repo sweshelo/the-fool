@@ -6,8 +6,8 @@ export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = stack.processing.owner.delete.filter(
-      card => card.catalog.type === 'unit'
-    ) as Unit[];
+      (card): card is Unit => card.catalog.type === 'unit'
+    );
     if (targets.length > 0) {
       await System.show(stack, '禁呪の代償', '消滅から特殊召喚');
       await Promise.all(
@@ -27,8 +27,8 @@ export const effects: CardEffects = {
 
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = stack.processing.owner.trash.filter(
-      card => card.catalog.type === 'unit' && card.catalog.cost <= 2
-    ) as Unit[];
+      (card): card is Unit => card.catalog.type === 'unit' && card.catalog.cost <= 2
+    );
     if (
       stack.option?.type === 'break' &&
       stack.option.cause !== 'battle' &&

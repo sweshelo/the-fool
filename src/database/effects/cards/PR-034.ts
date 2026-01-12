@@ -1,17 +1,18 @@
-import type { Card, Unit } from '@/package/core/class/card';
-import { EffectTemplate, System } from '..';
+import { Unit } from '@/package/core/class/card';
+import { EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
   checkDrive: (stack: StackWithCard): boolean => {
     const owner = stack.processing.owner;
-    const unitOwner = (stack.target as Card).owner;
+    const target = stack.target instanceof Unit ? stack.target : undefined;
+    const unitOwner = target?.owner;
 
-    const isOwnersUnit = owner.id === unitOwner.id;
-    const isOceanUnit = (stack.target as Unit).catalog.species!.includes('海洋');
+    const isOwnersUnit = owner.id === unitOwner?.id;
+    const isOceanUnit = target?.catalog.species?.includes('海洋');
 
-    return isOwnersUnit && isOceanUnit;
+    return (isOwnersUnit && isOceanUnit) ?? false;
   },
 
   // 実際の効果本体
@@ -19,6 +20,6 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '海底の楽園', 'カードを2枚引く');
     const owner = stack.processing.owner;
-    [...Array(2)].forEach(() => EffectTemplate.draw(owner, stack.core));
+    EffectHelper.repeat(2, () => EffectTemplate.draw(owner, stack.core));
   },
 };

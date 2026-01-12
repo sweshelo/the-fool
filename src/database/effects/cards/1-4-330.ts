@@ -15,12 +15,12 @@ export const effects: CardEffects = {
     await System.show(stack, '魔女の口づけ', 'デッキから2体【特殊召喚】');
     const targets = EffectHelper.random(
       stack.processing.owner.deck.filter(
-        card => card.catalog.type === 'unit' && card.catalog.cost <= 2
+        (card): card is Unit => card.catalog.type === 'unit' && card.catalog.cost <= 2
       ),
       2
     );
     for (const unit of targets) {
-      await Effect.summon(stack, stack.processing, unit as Unit);
+      await Effect.summon(stack, stack.processing, unit);
     }
   },
 };
