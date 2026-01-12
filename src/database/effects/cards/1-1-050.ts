@@ -19,5 +19,6 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
     Effect.keyword(stack, stack.processing, clone, '沈黙');
+    Effect.break(stack, stack.processing, stack.processing);
   },
 };
