@@ -5,7 +5,7 @@ import type { Core } from '@/package/core/core';
 
 export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit): boolean => {
-    return EffectHelper.isUnitSelectable(core, 'opponents', self.owner);
+    return EffectHelper.isUnitSelectable(core, 'owns', self.owner);
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     const [target] = await EffectHelper.pickUnit(
       stack,
       stack.processing.owner,
-      'opponents',
+      'owns',
       '破壊するユニットを選択して下さい',
       1
     );

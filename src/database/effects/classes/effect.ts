@@ -758,13 +758,14 @@ export class Effect {
    * @param target 複製対象
    * @param owner 複製先のフィールド(プレイヤー)
    */
-  static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<void> {
+  static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<Unit> {
     const unit = target.clone(owner, true);
     stack.core.room.soundEffect('copying');
     sendSelectedVisualEffect(stack, target);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     await Effect.summon(stack, source, unit, true);
+    return unit;
   }
 
   /**
