@@ -23,11 +23,15 @@ class ServerError extends Error {
 }
 
 export class Server {
+  /** Static instance reference for sandbox API access */
+  private static instance: Server | null = null;
+
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
   private clientRooms: Map<ServerWebSocket, string> = new Map();
   private clients: Map<ServerWebSocket, User> = new Map();
 
   constructor(port?: number) {
+    Server.instance = this;
     const serverPort = port || process.env.PORT;
     console.log(`PORT: ${serverPort}`);
 
@@ -315,5 +319,33 @@ export class Server {
       }
       case 'list':
     }
+  }
+
+  /**
+   * Register a room in the server's rooms map (for sandbox)
+   */
+  static registerRoom(room: Room): boolean {
+    if (!Server.instance) {
+      console.error('[Server] No server instance available');
+      return false;
+    }
+    Server.instance.rooms.set(room.id, room);
+    console.log(`[Server] Room ${room.id} registered`);
+    return true;
+  }
+
+  /**
+   * Unregister a room from the server's rooms map (for sandbox)
+   */
+  static unregisterRoom(roomId: string): boolean {
+    if (!Server.instance) {
+      console.error('[Server] No server instance available');
+      return false;
+    }
+    const deleted = Server.instance.rooms.delete(roomId);
+    if (deleted) {
+      console.log(`[Server] Room ${roomId} unregistered`);
+    }
+    return deleted;
   }
 }
