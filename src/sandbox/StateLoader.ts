@@ -5,7 +5,7 @@
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
 import type { IPlayer } from '@/submodule/suit/types/game/player';
 import type { IAtom, ICard, IUnit } from '@/submodule/suit/types/game/card';
-import type { Player } from '@/package/core/class/Player';
+import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
 import type { Card } from '@/package/core/class/card/Card';
 import { Unit, Evolve } from '@/package/core/class/card/Unit';
@@ -75,7 +75,8 @@ function restoreUnit(owner: Player, data: IUnit): Unit | DummyUnit {
   const master = catalog.get(data.catalogId);
 
   if (master && (master.type === 'unit' || master.type === 'advanced_unit')) {
-    const unit = master.type === 'unit' ? new Unit(owner, data.catalogId) : new Evolve(owner, data.catalogId);
+    const unit =
+      master.type === 'unit' ? new Unit(owner, data.catalogId) : new Evolve(owner, data.catalogId);
 
     // プロパティを復元
     unit.lv = data.lv;
@@ -103,6 +104,27 @@ function restoreUnit(owner: Player, data: IUnit): Unit | DummyUnit {
 }
 
 /**
+ * サンドボックス用のプレイヤーを作成する
+ * デッキ検証をスキップして空のデッキでプレイヤーを作成後、状態を復元する
+ */
+function createSandboxPlayer(playerId: string, data: IPlayer, core: Core): Player {
+  // 空のデッキでプレイヤーを作成（デッキ検証をスキップ）
+  const player = new Player(
+    {
+      id: playerId,
+      name: data.name,
+      deck: [], // 空のデッキで作成
+    },
+    core
+  );
+
+  // 状態を復元
+  restorePlayerState(player, data);
+
+  return player;
+}
+
+/**
  * SyncPayload の body からゲーム状態を復元する
  * @param core Core インスタンス
  * @param syncBody SyncPayload の body 部分
@@ -114,16 +136,28 @@ export function loadState(core: Core, syncBody: SyncPayload['body']): void {
   core.round = game.round;
   core.turn = game.turn;
 
-  // 各プレイヤーの状態を復元
-  core.players.forEach(player => {
-    const playerData = playersData[player.id];
-    if (!playerData) {
-      console.warn(`Player data not found for ${player.id}`);
-      return;
+  // プレイヤーが存在しない場合は新規作成
+  if (core.players.length === 0) {
+    // SyncPayloadのプレイヤーデータから新しいプレイヤーを作成
+    for (const [playerId, playerData] of Object.entries(playersData)) {
+      if (playerData) {
+        const player = createSandboxPlayer(playerId, playerData as IPlayer, core);
+        core.players.push(player);
+        console.log(`[StateLoader] Created player: ${player.name} (${player.id})`);
+      }
     }
+  } else {
+    // 既存のプレイヤーの状態を復元
+    core.players.forEach(player => {
+      const playerData = playersData[player.id];
+      if (!playerData) {
+        console.warn(`Player data not found for ${player.id}`);
+        return;
+      }
 
-    restorePlayerState(player, playerData);
-  });
+      restorePlayerState(player, playerData);
+    });
+  }
 
   // sync を実行して状態を同期
   core.room.sync(true);

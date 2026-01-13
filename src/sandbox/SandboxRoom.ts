@@ -8,9 +8,12 @@
  */
 
 import { Room } from '@/package/server/room/room';
+import { Player } from '@/package/core/class/Player';
 import { SandboxCore } from './SandboxCore';
 import type { Rule } from '@/submodule/suit/types';
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
+import type { Message } from '@/submodule/suit/types/message/message';
+import type { ServerWebSocket } from 'bun';
 import { getSandboxConfig } from './config';
 import { loadState } from './StateLoader';
 
@@ -47,5 +50,40 @@ export class SandboxRoom extends Room {
   loadState(syncBody: SyncPayload['body']) {
     console.log('[Sandbox] Loading state from SyncPayload');
     loadState(this.core, syncBody);
+  }
+
+  /**
+   * サンドボックス用のプレイヤー参加処理
+   * loadStateで既にプレイヤーが設定されている場合、WebSocketクライアントのみを関連付ける
+   */
+  override join(socket: ServerWebSocket, message: Message): boolean {
+    if (message.payload.type !== 'PlayerEntry') {
+      return false;
+    }
+
+    const playerId = message.payload.player.id;
+    const playerName = message.payload.player.name;
+
+    // loadStateで設定されたプレイヤーを探す
+    const existingPlayer = this.core.players.find(p => p.id === playerId);
+
+    if (existingPlayer) {
+      // 既存プレイヤーにWebSocketクライアントを関連付ける
+      this.clients.set(existingPlayer.id, socket);
+      this.players.set(existingPlayer.id, existingPlayer);
+      console.log(`[Sandbox] Player ${playerName} (${playerId}) connected to existing session`);
+    } else {
+      // loadStateで設定されていないプレイヤーの場合、新規プレイヤーを作成
+      console.log(`[Sandbox] New player ${playerName} (${playerId}) joining sandbox`);
+
+      const player = new Player(message.payload.player, this.core);
+      this.clients.set(player.id, socket);
+      this.core.entry(player);
+      this.players.set(player.id, player);
+    }
+
+    // 同期メッセージを送信
+    this.sync(true);
+    return true;
   }
 }

@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { isSandboxEnabled, getSandboxConfig, SandboxRoom } from '@/sandbox';
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
+import { Server } from './index';
 
 type Handler = (req: Request, params: Record<string, string>) => Promise<Response> | Response;
 
@@ -119,8 +120,10 @@ function createSandboxRoomHandler(_req: Request): Response {
     );
   }
 
-  const config = getSandboxConfig();
   sandboxRoom = new SandboxRoom('Sandbox Room');
+
+  // Register the sandbox room in the server's rooms map
+  Server.registerRoom(sandboxRoom);
 
   console.log(`[Sandbox] Room created with ID: ${sandboxRoom.id}`);
 
@@ -138,10 +141,10 @@ function createSandboxRoomHandler(_req: Request): Response {
  */
 async function loadSandboxStateHandler(req: Request): Promise<Response> {
   if (!isSandboxEnabled()) {
-    return new Response(
-      JSON.stringify({ error: 'Sandbox mode is disabled' }),
-      { status: 403, headers: CORS_HEADERS }
-    );
+    return new Response(JSON.stringify({ error: 'Sandbox mode is disabled' }), {
+      status: 403,
+      headers: CORS_HEADERS,
+    });
   }
 
   if (sandboxRoom === null) {
@@ -190,17 +193,17 @@ async function loadSandboxStateHandler(req: Request): Promise<Response> {
  */
 function startSandboxGameHandler(_req: Request): Response {
   if (!isSandboxEnabled()) {
-    return new Response(
-      JSON.stringify({ error: 'Sandbox mode is disabled' }),
-      { status: 403, headers: CORS_HEADERS }
-    );
+    return new Response(JSON.stringify({ error: 'Sandbox mode is disabled' }), {
+      status: 403,
+      headers: CORS_HEADERS,
+    });
   }
 
   if (sandboxRoom === null) {
-    return new Response(
-      JSON.stringify({ error: 'Sandbox room does not exist' }),
-      { status: 404, headers: CORS_HEADERS }
-    );
+    return new Response(JSON.stringify({ error: 'Sandbox room does not exist' }), {
+      status: 404,
+      headers: CORS_HEADERS,
+    });
   }
 
   sandboxRoom.startSandbox();
@@ -220,20 +223,24 @@ function startSandboxGameHandler(_req: Request): Response {
  */
 function destroySandboxRoomHandler(_req: Request): Response {
   if (!isSandboxEnabled()) {
-    return new Response(
-      JSON.stringify({ error: 'Sandbox mode is disabled' }),
-      { status: 403, headers: CORS_HEADERS }
-    );
+    return new Response(JSON.stringify({ error: 'Sandbox mode is disabled' }), {
+      status: 403,
+      headers: CORS_HEADERS,
+    });
   }
 
   if (sandboxRoom === null) {
-    return new Response(
-      JSON.stringify({ error: 'Sandbox room does not exist' }),
-      { status: 404, headers: CORS_HEADERS }
-    );
+    return new Response(JSON.stringify({ error: 'Sandbox room does not exist' }), {
+      status: 404,
+      headers: CORS_HEADERS,
+    });
   }
 
   const roomId = sandboxRoom.id;
+
+  // Unregister the sandbox room from the server's rooms map
+  Server.unregisterRoom(roomId);
+
   sandboxRoom = null;
 
   console.log(`[Sandbox] Room ${roomId} destroyed`);
