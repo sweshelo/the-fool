@@ -19,8 +19,9 @@ import catalog from '@/database/catalog';
 /**
  * IAtomまたはICard型のデータからカードオブジェクトを復元する
  * catalogIdが存在する場合は実際のカードを、存在しない場合はダミーカードを生成
+ * DummyCard は Card を継承しているため、戻り値は Card 型として統一される
  */
-function restoreCard(owner: Player, data: IAtom | ICard): Card | DummyCard {
+function restoreCard(owner: Player, data: IAtom | ICard): Card {
   // catalogIdが存在するかチェック
   if ('catalogId' in data && data.catalogId) {
     const master = catalog.get(data.catalogId);
@@ -79,8 +80,9 @@ function restoreCard(owner: Player, data: IAtom | ICard): Card | DummyCard {
 
 /**
  * IUnit型のデータからユニットオブジェクトを復元する
+ * DummyUnit は Unit を継承しているため、戻り値は Unit 型として統一される
  */
-function restoreUnit(owner: Player, data: IUnit): Unit | DummyUnit {
+function restoreUnit(owner: Player, data: IUnit): Unit {
   const master = catalog.get(data.catalogId);
 
   if (master && (master.type === 'unit' || master.type === 'advanced_unit')) {
@@ -193,22 +195,22 @@ function restorePlayerState(player: Player, data: IPlayer): void {
 
   // 各カード領域を復元
   // デッキ: IAtom[] または ICard[]
-  player.deck = data.deck.map(cardData => restoreCard(player, cardData)) as Card[];
+  player.deck = data.deck.map(cardData => restoreCard(player, cardData));
 
   // 手札: IAtom[] または ICard[]
-  player.hand = data.hand.map(cardData => restoreCard(player, cardData)) as Card[];
+  player.hand = data.hand.map(cardData => restoreCard(player, cardData));
 
   // トリガー: IAtom[]
-  player.trigger = data.trigger.map(cardData => restoreCard(player, cardData)) as Card[];
+  player.trigger = data.trigger.map(cardData => restoreCard(player, cardData));
 
   // トラッシュ: ICard[]
-  player.trash = data.trash.map(cardData => restoreCard(player, cardData)) as Card[];
+  player.trash = data.trash.map(cardData => restoreCard(player, cardData));
 
   // 消滅: ICard[]
-  player.delete = data.delete.map(cardData => restoreCard(player, cardData)) as Card[];
+  player.delete = data.delete.map(cardData => restoreCard(player, cardData));
 
   // フィールド: IUnit[]
-  player.field = data.field.map(unitData => restoreUnit(player, unitData)) as Unit[];
+  player.field = data.field.map(unitData => restoreUnit(player, unitData));
 
   // ジョーカー
   player.joker.gauge = data.joker.gauge;

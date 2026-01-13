@@ -4,9 +4,11 @@
  * 効果を持たない純粋なプレースホルダーとして機能する
  */
 
-import type { IAtom, ICard, IUnit } from '@/submodule/suit/types/game/card';
+import type { IAtom, IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import type { Catalog } from '@/submodule/suit/types/game/card';
-import type { Delta } from '@/package/core/class/delta';
+import type { CatalogWithHandler } from '@/database/factory';
+import { Card } from '@/package/core/class/card/Card';
+import { Unit } from '@/package/core/class/card/Unit';
 import type { Player } from '@/package/core/class/Player';
 
 /**
@@ -32,38 +34,22 @@ export const DUMMY_CATALOG: Catalog = {
 /**
  * サンドボックス用ダミーカードクラス
  * 相手の非公開情報（hand, deck, trigger）を表現するために使用
+ * Card クラスを継承することで、instanceof Card のチェックが正しく動作する
  */
-export class DummyCard implements ICard {
-  id: string;
-  catalogId: string;
-  lv: number;
-  delta: Delta[];
-  generation: number = 1;
-  #owner: Player;
-
+export class DummyCard extends Card {
   constructor(owner: Player, atom: IAtom, catalogId?: string) {
-    this.#owner = owner;
+    super(owner, catalogId ?? 'DUMMY');
+    // Atom の自動生成 UUID を上書きして元の ID を保持する
     this.id = atom.id;
-    this.catalogId = catalogId ?? 'DUMMY';
-    this.lv = 1;
-    this.delta = [];
   }
 
-  get owner(): Player {
-    return this.#owner;
+  override get catalog(): CatalogWithHandler {
+    // DUMMY_CATALOG を CatalogWithHandler として返す
+    // CatalogWithHandler の追加プロパティは全てオプショナルなので安全
+    return DUMMY_CATALOG as CatalogWithHandler;
   }
 
-  get catalog(): Catalog {
-    return DUMMY_CATALOG;
-  }
-
-  reset() {
-    this.delta = [];
-    this.lv = 1;
-    this.generation++;
-  }
-
-  clone(owner: Player): DummyCard {
+  override clone(owner: Player): DummyCard {
     return new DummyCard(owner, { id: crypto.randomUUID() }, this.catalogId);
   }
 }
@@ -71,25 +57,20 @@ export class DummyCard implements ICard {
 /**
  * サンドボックス用ダミーユニットクラス
  * フィールド上の相手ユニットを表現するために使用
- * IUnit のすべてのプロパティを持つ
+ * Unit クラスを継承することで、instanceof Unit のチェックが正しく動作する
  *
  * NOTE: DummyUnit は相手の非公開情報を表現するプレースホルダーであり、
  * Delta インスタンスのメソッド（checkExpire() 等）は呼び出されない前提で設計されている。
  * そのため、unit.delta の IDelta[] を Delta[] として扱わず、空配列で初期化する。
  */
-export class DummyUnit extends DummyCard implements IUnit {
-  bp: number;
-  currentBP: number;
-  active: boolean;
-  isCopy: boolean;
-  hasBootAbility: boolean | undefined;
-  isBooted: boolean;
-
+export class DummyUnit extends Unit {
   constructor(owner: Player, unit: IUnit) {
-    super(owner, unit, unit.catalogId);
+    super(owner, unit.catalogId);
+    // Atom の自動生成 UUID を上書きして元の ID を保持する
+    this.id = unit.id;
+    // Unit コンストラクタで設定された値を IUnit データで上書き
     this.lv = unit.lv;
     this.bp = unit.bp;
-    this.currentBP = unit.currentBP;
     this.active = unit.active;
     this.isCopy = unit.isCopy;
     this.hasBootAbility = unit.hasBootAbility;
@@ -99,11 +80,19 @@ export class DummyUnit extends DummyCard implements IUnit {
     this.delta = [];
   }
 
-  hasKeyword(): boolean {
+  override get catalog(): CatalogWithHandler {
+    // DUMMY_CATALOG を CatalogWithHandler として返す
+    // Unit コンストラクタ内で catalog.bp にアクセスされるが、
+    // DUMMY_CATALOG には bp がないため 0 が使われる（その後 constructor で上書きされる）
+    return DUMMY_CATALOG as CatalogWithHandler;
+  }
+
+  override hasKeyword(_keyword: KeywordEffect): boolean {
+    // ダミーユニットはキーワード効果を持たない
     return false;
   }
 
-  clone(owner: Player): DummyUnit {
-    return new DummyUnit(owner, this as IUnit);
+  override clone(owner: Player): DummyUnit {
+    return new DummyUnit(owner, this);
   }
 }
