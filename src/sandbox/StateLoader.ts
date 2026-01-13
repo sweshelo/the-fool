@@ -4,7 +4,7 @@
 
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
 import type { IPlayer } from '@/submodule/suit/types/game/player';
-import type { IAtom, ICard, IUnit } from '@/submodule/suit/types/game/card';
+import type { IAtom, ICard, IUnit, IDelta } from '@/submodule/suit/types/game/card';
 import { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core/core';
 import type { Card } from '@/package/core/class/card/Card';
@@ -50,14 +50,23 @@ function restoreCard(owner: Player, data: IAtom | ICard): Card | DummyCard {
       }
 
       // deltaを復元
+      // シリアライズされたdeltaにはIDeltaの基本プロパティに加え、
+      // source, onlyForOwnersTurn, permanentが含まれている可能性がある
       if ('delta' in data && data.delta) {
-        card.delta = data.delta.map(
-          d =>
-            new Delta(d.effect, {
-              count: d.count,
-              event: d.event,
-            })
-        );
+        card.delta = data.delta.map(d => {
+          const serialized = d as IDelta & {
+            source?: Delta['source'];
+            onlyForOwnersTurn?: boolean;
+            permanent?: boolean;
+          };
+          return new Delta(serialized.effect, {
+            count: serialized.count,
+            event: serialized.event,
+            source: serialized.source,
+            onlyForOwnersTurn: serialized.onlyForOwnersTurn,
+            permanent: serialized.permanent,
+          });
+        });
       }
 
       return card;
@@ -86,14 +95,23 @@ function restoreUnit(owner: Player, data: IUnit): Unit | DummyUnit {
     unit.isBooted = data.isBooted;
 
     // deltaを復元
+    // シリアライズされたdeltaにはIDeltaの基本プロパティに加え、
+    // source, onlyForOwnersTurn, permanentが含まれている可能性がある
     if (data.delta) {
-      unit.delta = data.delta.map(
-        d =>
-          new Delta(d.effect, {
-            count: d.count,
-            event: d.event,
-          })
-      );
+      unit.delta = data.delta.map(d => {
+        const serialized = d as IDelta & {
+          source?: Delta['source'];
+          onlyForOwnersTurn?: boolean;
+          permanent?: boolean;
+        };
+        return new Delta(serialized.effect, {
+          count: serialized.count,
+          event: serialized.event,
+          source: serialized.source,
+          onlyForOwnersTurn: serialized.onlyForOwnersTurn,
+          permanent: serialized.permanent,
+        });
+      });
     }
 
     return unit;

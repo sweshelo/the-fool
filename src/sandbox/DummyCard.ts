@@ -4,7 +4,7 @@
  * 効果を持たない純粋なプレースホルダーとして機能する
  */
 
-import type { IAtom, ICard, IUnit, IDelta } from '@/submodule/suit/types/game/card';
+import type { IAtom, ICard, IUnit } from '@/submodule/suit/types/game/card';
 import type { Catalog } from '@/submodule/suit/types/game/card';
 import type { Delta } from '@/package/core/class/delta';
 import type { Player } from '@/package/core/class/Player';
@@ -72,6 +72,10 @@ export class DummyCard implements ICard {
  * サンドボックス用ダミーユニットクラス
  * フィールド上の相手ユニットを表現するために使用
  * IUnit のすべてのプロパティを持つ
+ *
+ * NOTE: DummyUnit は相手の非公開情報を表現するプレースホルダーであり、
+ * Delta インスタンスのメソッド（checkExpire() 等）は呼び出されない前提で設計されている。
+ * そのため、unit.delta の IDelta[] を Delta[] として扱わず、空配列で初期化する。
  */
 export class DummyUnit extends DummyCard implements IUnit {
   bp: number;
@@ -90,8 +94,9 @@ export class DummyUnit extends DummyCard implements IUnit {
     this.isCopy = unit.isCopy;
     this.hasBootAbility = unit.hasBootAbility;
     this.isBooted = unit.isBooted;
-    // deltaをコピー（ただしDelta型ではなくIDelta型として）
-    this.delta = (unit.delta ?? []) as unknown as Delta[];
+    // DummyUnit では Delta インスタンスのメソッドは呼び出されないため、空配列で初期化する
+    // unit.delta の IDelta[] を Delta[] にキャストするのは unsafe（checkExpire() 等のメソッドがない）
+    this.delta = [];
   }
 
   hasKeyword(): boolean {
