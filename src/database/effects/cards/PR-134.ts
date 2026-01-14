@@ -2,14 +2,15 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 
+const getClownFilter = (self: Unit) => (unit: Unit) =>
+  unit.id !== self.id && unit.catalog.species?.includes('道化師');
+
 export const effects: CardEffects = {
   // ■起動・結びリバーブ
   // このユニットを破壊する。そうした場合、あなたの【道化師】ユニットを1体選ぶ。それの行動権を回復する
-  isBootable: (core, self) => {
+  isBootable: (_core, self) => {
     // 自分以外の【道化師】ユニットがいるか確認
-    const clowns = self.owner.field.filter(
-      unit => unit.id !== self.id && unit.catalog.species?.includes('道化師')
-    );
+    const clowns = self.owner.field.filter(getClownFilter(self));
     return clowns.length > 0;
   },
 
@@ -17,9 +18,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 自分以外の【道化師】ユニット
-    const clowns = owner.field.filter(
-      unit => unit.id !== stack.processing.id && unit.catalog.species?.includes('道化師')
-    );
+    const clowns = owner.field.filter(getClownFilter(stack.processing));
 
     if (clowns.length === 0) return;
 
@@ -32,7 +31,7 @@ export const effects: CardEffects = {
     const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
-      unit => unit.catalog.species?.includes('道化師') === true && unit.owner.id === owner.id,
+      getClownFilter(stack.processing),
       '行動権を回復するユニットを選択'
     );
 
