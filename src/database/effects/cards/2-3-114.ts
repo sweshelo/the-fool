@@ -21,8 +21,7 @@ export const effects: CardEffects = {
         '対象のユニットを選択してください'
       );
       if (life <= 8) await Effect.clone(stack, stack.processing, target, stack.processing.owner);
-      if (life <= 6 && stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand)
-        stack.processing.owner.hand.push(target.clone(stack.processing.owner, false));
+      if (life <= 6) Effect.make(stack, stack.processing.owner, target);
       if (life <= 4) Effect.delete(stack, stack.processing, target);
     }
 

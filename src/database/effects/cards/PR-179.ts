@@ -15,7 +15,7 @@ export const effects: CardEffects = {
 
     // 天使を1体選ぶ
     const filter = (unit: Unit) => {
-      return unit.catalog.species!.includes('天使') && unit.owner.id === owner.id;
+      return (unit.catalog.species?.includes('天使') && unit.owner.id === owner.id) ?? false;
     };
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       const [target] = await EffectHelper.pickUnit(

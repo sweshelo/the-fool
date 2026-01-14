@@ -27,8 +27,9 @@ export const effects: CardEffects = {
   // ユニットがフィールドに出た時の効果
   onDrive: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のユニットがフィールドに出た時
-    const summonedUnit = stack.target as Unit;
+    const summonedUnit = stack.target;
     if (
+      summonedUnit instanceof Unit &&
       summonedUnit.owner.id === stack.processing.owner.id &&
       summonedUnit.id !== stack.processing.id
     ) {

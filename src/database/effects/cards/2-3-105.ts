@@ -14,8 +14,8 @@ export const effects: CardEffects = {
     });
   },
 
-  onBreakSelf: async (stack: StackWithCard): Promise<void> => {
+  onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, 'おにさんこちら！', 'トリガーゾーンにセット');
-    Effect.bounce(stack, stack.processing, stack.processing as Unit, 'trigger');
+    Effect.bounce(stack, stack.processing, stack.processing, 'trigger');
   },
 };

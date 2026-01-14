@@ -11,16 +11,15 @@ export const effects: CardEffects = {
     ) {
       await System.show(stack, 'イリシットレジャー', '対戦相手の手札を1枚作成');
       EffectHelper.random(stack.processing.owner.opponent.hand, 1).forEach(card => {
-        const target = card.clone(stack.processing.owner);
-        stack.processing.owner.hand.push(target);
+        Effect.make(stack, stack.processing.owner, card);
       });
     }
   },
 
   onPlayerAttackSelf: async (stack: StackWithCard): Promise<void> => {
     const targets = stack.processing.owner.opponent.hand.filter(
-      card => card.catalog.type === 'unit'
-    ) as Unit[];
+      (card): card is Unit => card.catalog.type === 'unit'
+    );
     if (targets.length > 0) {
       await System.show(stack, 'ギルティー・ロスト', '手札から【特殊召喚】\n【沈黙】を与える');
       await Promise.all(

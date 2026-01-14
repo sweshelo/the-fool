@@ -6,7 +6,7 @@ import { EffectHelper } from '../classes/helper';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
     const unitsToDestroy = stack.processing.owner.opponent.field.filter(
       unit => unit.currentBP > unit.bp

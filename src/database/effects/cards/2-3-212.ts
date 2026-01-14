@@ -5,7 +5,7 @@ import { System } from '../classes/system';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 自身以外のユニットのBPの合計を計算
@@ -34,7 +34,7 @@ export const effects: CardEffects = {
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     if (stack.core.getTurnPlayer().id !== owner.opponent.id) return;
@@ -64,7 +64,7 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 手札の上限チェック
@@ -73,7 +73,6 @@ export const effects: CardEffects = {
     await System.show(stack, 'ブリトンの守護神', '[聖剣・エクスカリバー]を手札に作成');
 
     // エクスカリバーを作成
-    const excalibur = new Unit(owner, '2-0-312');
-    owner.hand.push(excalibur);
+    Effect.make(stack, stack.processing.owner, '2-0-312');
   },
 };

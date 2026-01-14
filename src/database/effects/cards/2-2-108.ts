@@ -6,7 +6,7 @@ import { EffectHelper } from '../classes/helper';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const self = stack.processing as Unit;
+    const self = stack.processing;
     const owner = self.owner;
 
     // 手札が6枚以下の場合

@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { KeywordEffect } from '@/submodule/suit/types';
 
 export const effects: CardEffects = {
   // 召喚時に【神託】を付与し、相手ユニットを1体選んで手札に作成
@@ -20,10 +19,7 @@ export const effects: CardEffects = {
         '手札に作成するユニットを選んでください',
         1
       );
-      if (!target || stack.processing.owner.hand.length >= stack.core.room.rule.player.max.hand)
-        return;
-      const clonedCard = target.clone(stack.processing.owner);
-      stack.processing.owner.hand.push(clonedCard);
+      Effect.make(stack, stack.processing.owner, target);
     } else {
       await System.show(stack, '神託', '奇跡を発動すると【神託】は取り除かれる');
     }
@@ -36,7 +32,7 @@ export const effects: CardEffects = {
     if (!(stack.target instanceof Unit)) return;
     if (stack.target.owner.id === stack.processing.owner.id) return;
     await System.show(stack, '奇跡・光輝なる天罰', '【呪縛】を付与\n【神託】を除去');
-    Effect.keyword(stack, stack.processing, stack.target, '呪縛' as KeywordEffect);
-    Effect.removeKeyword(stack, stack.processing, '神託' as KeywordEffect);
+    Effect.keyword(stack, stack.processing, stack.target, '呪縛');
+    Effect.removeKeyword(stack, stack.processing, '神託');
   },
 };

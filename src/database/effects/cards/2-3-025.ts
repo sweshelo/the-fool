@@ -1,25 +1,18 @@
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import { Intercept } from '@/package/core/class/card/Intercept';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
-    const owner = stack.processing.owner;
-
-    const [choice] =
-      !stack.processing.owner.purple ||
-      stack.processing.owner.purple < 2 ||
-      stack.processing.owner.opponent.field.length <= 0
-        ? ['1']
-        : await System.prompt(stack, owner.id, {
-            type: 'option',
-            title: '選略・魔夜の太陽',
-            items: [
-              { id: '1', description: '紫ゲージ+1' },
-              { id: '2', description: '[紫ゲージ×1000]ダメージ\n紫ゲージ-2' },
-            ],
-          });
+    const purple = stack.processing.owner.purple;
+    const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔夜の太陽', [
+      { id: '1', description: '紫ゲージ+1' },
+      {
+        id: '2',
+        description: '[紫ゲージ×1000]ダメージ\n紫ゲージ-2',
+        condition: () => (purple ?? 0) >= 2,
+      },
+    ]);
 
     switch (choice) {
       case '1': {
@@ -31,13 +24,7 @@ export const effects: CardEffects = {
       case '2': {
         await System.show(stack, '選略・魔夜の太陽', '[紫ゲージ×1000]ダメージ\n紫ゲージ-2');
         stack.processing.owner.opponent.field.forEach(unit =>
-          Effect.damage(
-            stack,
-            stack.processing,
-            unit,
-            stack.processing.owner.purple! * 1000,
-            'effect'
-          )
+          Effect.damage(stack, stack.processing, unit, (purple ?? 0) * 1000, 'effect')
         );
         await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -2);
         break;
@@ -53,7 +40,7 @@ export const effects: CardEffects = {
       stack.processing.owner.id === stack.source.id
     ) {
       await System.show(stack, '魔夜の太陽', '[魔導の書]を手札に作成');
-      stack.processing.owner.hand.push(new Intercept(stack.processing.owner, 'PR-027'));
+      Effect.make(stack, stack.processing.owner, 'PR-027');
     }
   },
 

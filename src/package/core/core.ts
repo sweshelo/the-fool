@@ -27,7 +27,6 @@ import { Intercept } from './class/card/Intercept';
 import { Trigger } from './class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type EffectResponseCallback = Function;
 
 interface History {
@@ -792,9 +791,6 @@ export class Core {
     this.room.soundEffect(source !== undefined ? 'evolve' : 'drive');
     this.room.sync();
 
-    // 召喚時点でのLv
-    const lv = card.lv;
-
     // 起動アイコン
     if (typeof card.catalog.onBootSelf === 'function')
       card.delta.unshift(new Delta({ type: 'keyword', name: '起動' }));
@@ -806,7 +802,7 @@ export class Core {
       generation: card.generation,
     });
 
-    // Stack追加
+    /* Stack追加 */
     // フィールド効果チェック用のStackを発行
     // 解決は resolveStack() にて、召喚後に実施される
     const stackForResolveFieldEffectUnmount = new Stack({
@@ -815,12 +811,26 @@ export class Core {
       target: undefined,
       core: this,
     });
+
+    // 召喚
     const driveStack = new Stack({
       type: 'drive',
       source: player,
       target: card,
       core: this,
     });
+
+    // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
+    if (card.lv === 3) {
+      this.stack.push(
+        new Stack({
+          type: 'overclock',
+          source: card,
+          target: card,
+          core: this,
+        })
+      );
+    }
 
     // フィールド効果の終了に伴う破壊のチェックを実施
     if (source) this.fieldEffectUnmount(source, stackForResolveFieldEffectUnmount);
@@ -855,24 +865,6 @@ export class Core {
 
     // スタックの解決処理を開始
     await this.resolveStack();
-
-    // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
-    if (
-      lv === 3 &&
-      card.lv === 3 &&
-      !card.overclocked &&
-      player.field.find(unit => unit.id === card.id)
-    ) {
-      this.stack.push(
-        new Stack({
-          type: 'overclock',
-          source: card,
-          target: card,
-          core: this,
-        })
-      );
-      await this.resolveStack();
-    }
   }
 
   async handleMessage(message: Message) {
@@ -1034,7 +1026,7 @@ export class Core {
         }
 
         // Check if player has enough gauge
-        if (player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge!]) {
+        if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
           throw new Error('Insufficient joker gauge');
         }
 
@@ -1138,7 +1130,8 @@ export class Core {
         const player = this.players.find(p => p.id === payload.player);
         const target = player?.find(payload.target);
         const isOnHand = target?.place?.name === 'hand';
-        const isEnoughTriggerZone = player!.trigger.length < this.room.rule.player.max.trigger;
+        const isEnoughTriggerZone =
+          (player?.trigger.length ?? 0) < this.room.rule.player.max.trigger;
 
         if (target && target.card && player && isEnoughTriggerZone && isOnHand) {
           player.hand = player.hand.filter(c => c.id !== target.card?.id);

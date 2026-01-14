@@ -13,7 +13,8 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const target = stack.target as Unit;
+    const target = stack.target;
+    if (!(target instanceof Unit)) return;
 
     switch (stack.processing.lv) {
       case 1: {
@@ -35,9 +36,7 @@ export const effects: CardEffects = {
         Effect.keyword(stack, stack.processing, target, '沈黙');
         Effect.break(stack, stack.processing, target, 'effect');
         const [salvage] = EffectHelper.random(
-          stack.processing.owner.trash.filter(
-            card => card.catalog.type === 'advanced_unit' || card.catalog.type === 'unit'
-          )
+          stack.processing.owner.trash.filter(card => card instanceof Unit)
         );
 
         if (salvage) Effect.move(stack, stack.processing, salvage, 'hand');

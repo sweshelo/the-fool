@@ -27,11 +27,11 @@ export const effects: CardEffects = {
     switch (choice) {
       case '1': {
         const deck = stack.processing.owner.deck.filter(
-          card =>
+          (card): card is Unit =>
             card.catalog.cost <= 3 &&
-            card.catalog.species?.includes('魔導士') &&
+            (card.catalog.species?.includes('魔導士') ?? false) &&
             card.catalog.type === 'unit'
-        ) as Unit[];
+        );
         if (deck.length > 0) {
           const [randomCard] = EffectHelper.random(deck, 1);
           await System.show(

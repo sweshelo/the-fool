@@ -8,7 +8,7 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾');
   },
 
-  onIntercept: async (stack: StackWithCard<Card>): Promise<void> => {
+  onIntercept: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (
       stack.target instanceof Card &&
       stack.target.owner.id === stack.processing.owner.id &&
@@ -18,7 +18,7 @@ export const effects: CardEffects = {
       switch (stack.option.value) {
         case 2: {
           await System.show(stack, 'サイド・エフェクト', '基本BP+1000');
-          Effect.modifyBP(stack, stack.processing, stack.processing as Unit, 1000, {
+          Effect.modifyBP(stack, stack.processing, stack.processing, 1000, {
             isBaseBP: true,
           });
           break;

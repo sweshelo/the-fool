@@ -40,8 +40,8 @@ export const effects: CardEffects = {
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
     const candidate = stack.processing.owner.delete.filter(
-      card => card instanceof Unit && card.catalog.cost <= 3
-    ) as Unit[];
+      (card): card is Unit => card.catalog.type === 'unit' && card.catalog.cost <= 3
+    );
     if (
       stack.processing.owner.id === stack.core.getTurnPlayer().id &&
       stack.processing.owner.field.length <= 4 &&

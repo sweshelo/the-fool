@@ -24,14 +24,14 @@ export const effects: CardEffects = {
     }
   },
 
-  fieldEffect: (stack: StackWithCard) => {
+  fieldEffect: (stack: StackWithCard<Unit>) => {
     const targetDelta = stack.processing.delta.find(
       delta => delta.source?.unit === stack.processing.id
     );
     if (targetDelta && targetDelta.effect.type === 'bp') {
       targetDelta.effect.diff = stack.core.round * 1000;
     } else {
-      Effect.modifyBP(stack, stack.processing, stack.processing as Unit, stack.core.round * 1000, {
+      Effect.modifyBP(stack, stack.processing, stack.processing, stack.core.round * 1000, {
         source: { unit: stack.processing.id },
       });
     }

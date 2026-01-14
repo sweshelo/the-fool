@@ -1,7 +1,6 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import { Unit } from '@/package/core/class/card';
-import type { KeywordEffect } from '@/submodule/suit/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -40,7 +39,7 @@ export const effects: CardEffects = {
     // カードを手札に加える
     Effect.move(stack, stack.processing, selectedCard, 'hand');
     // 【神託】を取り除く
-    Effect.removeKeyword(stack, stack.processing, '神託' as KeywordEffect);
+    Effect.removeKeyword(stack, stack.processing, '神託');
   },
 
   onBattleSelf: async (stack: StackWithCard<Unit>) => {

@@ -17,7 +17,7 @@ export const effects: CardEffects = {
           !(card instanceof Evolve) &&
           card.catalog.color === Color.BLUE &&
           card.catalog.cost <= 7
-      ) as Unit[];
+      );
 
       if (candidates.length > 0) {
         await System.show(stack, '冥霊の目醒め', '捨札から【特殊召喚】\nレベル+2');

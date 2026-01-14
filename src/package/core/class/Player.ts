@@ -198,15 +198,17 @@ export class Player implements IPlayer {
     }
 
     if (this.#core.room.rule.player.max.hand > this.hand.length || allowOverflow) {
-      const source = this.deck.shift() as Card;
-      this.hand.push(source!);
-      return {
-        action: {
-          role: 'system',
-          type: 'draw',
-          source: source,
-        },
-      };
+      const source = this.deck.shift();
+      if (source instanceof Card) {
+        this.hand.push(source);
+        return {
+          action: {
+            role: 'system',
+            type: 'draw',
+            source: source,
+          },
+        };
+      }
     }
   }
 

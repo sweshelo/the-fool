@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     );
 
     if (isOpponentUnitAttacked && targets.length > 0) {
-      await System.show(stack, '＜ウィルス・縛＞', '【呪縛】を与える');
+      await System.show(stack, '＜ウィルス・縛＞', '【呪縛】を付与');
       EffectHelper.random(targets, 1).forEach(unit =>
         Effect.keyword(stack, stack.processing, unit, '呪縛')
       );

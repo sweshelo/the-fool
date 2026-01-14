@@ -5,9 +5,9 @@ import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
-  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '秩序の盾', '対戦相手の効果によるダメージを受けない');
-    Effect.keyword(stack, stack.processing, stack.processing as Unit, '秩序の盾');
+    Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾');
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {

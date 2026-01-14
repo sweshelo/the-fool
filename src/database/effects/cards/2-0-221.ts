@@ -21,9 +21,11 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    const target = stack.target as Unit;
+    const target = stack.target;
+    if (!(target instanceof Unit)) return;
     const candidate = stack.processing.owner.deck.filter(
-      unit => unit.catalog.cost === target.catalog.cost && unit.catalog.type === 'unit'
+      (unit): unit is Unit =>
+        unit.catalog.cost === target.catalog.cost && unit.catalog.type === 'unit'
     );
 
     await System.show(
@@ -32,9 +34,7 @@ export const effects: CardEffects = {
       'フィールドに出たユニットを破壊\n同じコストのユニットを【特殊召喚】'
     );
     await Promise.all(
-      EffectHelper.random(candidate, 1).map(unit =>
-        Effect.summon(stack, stack.processing, unit as Unit)
-      )
+      EffectHelper.random(candidate, 1).map(unit => Effect.summon(stack, stack.processing, unit))
     );
     Effect.break(stack, stack.processing, target, 'effect');
   },

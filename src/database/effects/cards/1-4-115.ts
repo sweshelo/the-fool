@@ -28,13 +28,10 @@ export const effects: CardEffects = {
         await System.show(stack, '清き水の導き', '青属性コスト3のユニットを特殊召喚');
 
         // ランダムで1体選ぶ
-        const randomUnits = EffectHelper.random(candidates, 1);
-        if (randomUnits.length > 0) {
-          const targetUnit = randomUnits[0] as Unit;
-
-          // 特殊召喚
-          await Effect.summon(stack, stack.processing, targetUnit, false);
-        }
+        const [randomUnit] = EffectHelper.random(candidates, 1);
+        // 特殊召喚
+        if (randomUnit instanceof Unit)
+          await Effect.summon(stack, stack.processing, randomUnit, false);
       }
     }
   },

@@ -45,9 +45,10 @@ export const effects: CardEffects = {
   // バグ・ジャミング：【昆虫】ユニットが破壊されるたびに発動
   onBreak: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 破壊されたユニットが自分の【昆虫】ユニットかチェック
-    const brokenUnit = stack.target as Unit;
+    const brokenUnit = stack.target;
 
     if (
+      brokenUnit instanceof Unit &&
       brokenUnit.owner.id === stack.processing.owner.id &&
       brokenUnit.id !== stack.processing.id &&
       (brokenUnit.catalog.species?.includes('昆虫') || false)
