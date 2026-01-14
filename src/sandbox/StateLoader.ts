@@ -161,7 +161,7 @@ export function loadState(core: Core, syncBody: SyncPayload['body']): void {
     // SyncPayloadのプレイヤーデータから新しいプレイヤーを作成
     for (const [playerId, playerData] of Object.entries(playersData)) {
       if (playerData) {
-        const player = createSandboxPlayer(playerId, playerData as IPlayer, core);
+        const player = createSandboxPlayer(playerId, playerData, core);
         core.players.push(player);
         console.log(`[StateLoader] Created player: ${player.name} (${player.id})`);
       }

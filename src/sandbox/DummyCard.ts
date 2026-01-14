@@ -5,7 +5,6 @@
  */
 
 import type { IAtom, IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
-import type { Catalog } from '@/submodule/suit/types/game/card';
 import type { CatalogWithHandler } from '@/database/factory';
 import { Card } from '@/package/core/class/card/Card';
 import { Unit } from '@/package/core/class/card/Unit';
@@ -14,8 +13,9 @@ import type { Player } from '@/package/core/class/Player';
 /**
  * ダミーカード用のカタログ情報
  * 効果を持たない最小限の情報のみを含む
+ * CatalogWithHandler の追加プロパティは全てオプショナルなので、基本プロパティのみで定義可能
  */
-export const DUMMY_CATALOG: Catalog = {
+export const DUMMY_CATALOG: CatalogWithHandler = {
   id: 'DUMMY',
   name: 'Unknown Card',
   rarity: 'c',
@@ -44,9 +44,7 @@ export class DummyCard extends Card {
   }
 
   override get catalog(): CatalogWithHandler {
-    // DUMMY_CATALOG を CatalogWithHandler として返す
-    // CatalogWithHandler の追加プロパティは全てオプショナルなので安全
-    return DUMMY_CATALOG as CatalogWithHandler;
+    return DUMMY_CATALOG;
   }
 
   override clone(owner: Player): DummyCard {
@@ -81,10 +79,7 @@ export class DummyUnit extends Unit {
   }
 
   override get catalog(): CatalogWithHandler {
-    // DUMMY_CATALOG を CatalogWithHandler として返す
-    // Unit コンストラクタ内で catalog.bp にアクセスされるが、
-    // DUMMY_CATALOG には bp がないため 0 が使われる（その後 constructor で上書きされる）
-    return DUMMY_CATALOG as CatalogWithHandler;
+    return DUMMY_CATALOG;
   }
 
   override hasKeyword(_keyword: KeywordEffect): boolean {

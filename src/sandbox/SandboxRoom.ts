@@ -18,6 +18,8 @@ import { getSandboxConfig } from './config';
 import { loadState } from './StateLoader';
 
 export class SandboxRoom extends Room {
+  override core: SandboxCore;
+
   constructor(name: string, rule?: Rule) {
     super(name, rule);
 
@@ -40,7 +42,7 @@ export class SandboxRoom extends Room {
 
     console.log(`[Sandbox] Starting game with ${this.core.players.length} player(s)`);
     // oxlint-disable-next-line no-floating-promises
-    (this.core as SandboxCore).startSandbox();
+    this.core.startSandbox();
   }
 
   /**
