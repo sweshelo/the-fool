@@ -1,6 +1,6 @@
 import { Card } from './Card';
 import type { Player } from '../Player';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 export class Joker extends Card {

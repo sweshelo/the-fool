@@ -5,7 +5,7 @@
  */
 
 import type { IAtom, IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
-import type { CatalogWithHandler } from '@/database/factory';
+import type { CatalogWithHandler } from '@/game-data/factory';
 import { Card } from '@/package/core/class/card/Card';
 import { Unit } from '@/package/core/class/card/Unit';
 import type { Player } from '@/package/core/class/Player';

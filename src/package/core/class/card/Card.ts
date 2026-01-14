@@ -2,7 +2,7 @@ import type { ICard } from '@/submodule/suit/types/game/card';
 import { Atom } from './Atom';
 import type { Player } from '../Player';
 import type { Delta } from '../delta';
-import type { CatalogWithHandler } from '@/database/factory';
+import type { CatalogWithHandler } from '@/game-data/factory';
 
 export abstract class Card extends Atom implements ICard {
   catalogId: string;
@@ -20,7 +20,7 @@ export abstract class Card extends Atom implements ICard {
     // 遅延ロードを使用して循環依存を回避
     // Lazy load to avoid circular dependency
     const getCatalog = () => {
-      const { default: master } = require('@/database/catalog');
+      const { default: master } = require('@/game-data/catalog');
       return master;
     };
 
