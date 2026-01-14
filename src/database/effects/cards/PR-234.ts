@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { Color } from '@/submodule/suit/constant/color';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
@@ -12,7 +12,8 @@ export const effects: CardEffects = {
   checkDamage: (stack: StackWithCard): boolean => {
     // 自分がダメージを与えた側であり、対象が対戦相手のユニットであることを確認
     return (
-      stack.source.id === stack.processing.owner.id &&
+      stack.source instanceof Card &&
+      stack.source.owner.id === stack.processing.owner.id &&
       stack.target instanceof Unit &&
       stack.target.owner.id !== stack.processing.owner.id
     );
@@ -24,7 +25,7 @@ export const effects: CardEffects = {
     // 対戦相手のフィールドにユニットがいるか確認
     if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
-    await System.show(stack, '神慌意乱', '2000ダメージ\n赤インターセプトをセット');
+    await System.show(stack, '神慌意乱', '2000ダメージ\n赤属性のインターセプトカードをセット');
 
     // 対戦相手のユニットを1体選ぶ
     const [target] = await EffectHelper.pickUnit(
