@@ -39,7 +39,7 @@ bun dev
 主要なディレクトリ：
 
 - `src/package/core/` - ゲームロジック
-- `src/database/effects/` - カード効果実装
+- `src/game-data/effects/` - カード効果実装
 - `src/package/server/` - WebSocket サーバー
 
 ### 3. カード効果の実装
@@ -57,7 +57,7 @@ bun dev
 ### 主要コンポーネント
 
 - **コアシステム** (`src/package/core`) - ゲームロジックとルール実装
-- **データベース** (`src/database`) - カードデータと効果実装
+- **ゲームデータ** (`src/game-data`) - カードデータと効果実装
 - **サーバー** (`src/package/server`) - WebSocket サーバーとルーム管理
 
 ## コーディング規約
@@ -68,7 +68,12 @@ bun dev
 - **フォーマッター**: oxfmt
 - **Git フック**: lefthook（コミット時に自動実行）
 
-### 重要なルール
+### コーディング規約
+
+- アサーションなど、型の安全性を損なう記述は禁止です。
+- 変数名はキャメルケースを使用します
+
+### カード効果実装 重要なルール
 
 1. **ゲームオブジェクトを直接操作しない** - Effect、EffectHelper、System クラスを使用する
 2. **永続効果は Delta を使用する** - 効果の重複を防ぐため
