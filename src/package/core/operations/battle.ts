@@ -331,9 +331,7 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
       ? false
       : winner.lv >= 3 || loser.hasKeyword('不滅')
         ? Effect.damage(stack, loser, winner, winnerDamage, 'battle') // Lv3の場合、キーワード効果を持たない限り勝っても負けてもダメージを負う
-        : winnerDamage === loserDamage
-          ? true
-          : false;
+        : winnerDamage === loserDamage;
 
   // 破壊が決定したら破壊する
   if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
