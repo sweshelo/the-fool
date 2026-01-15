@@ -58,8 +58,7 @@ export const effects: CardEffects = {
       const opponent = stack.processing.owner.opponent;
 
       // 選択可能なユニットを確認（沈黙状態の相手ユニット）
-      const filter = (unit: Unit) =>
-        unit.owner.id === opponent.id && unit.hasKeyword('沈黙') ? true : false;
+      const filter = (unit: Unit) => unit.owner.id === opponent.id && unit.hasKeyword('沈黙');
       if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'ガンマレイ', '【沈黙】状態の敵ユニット1体を破壊');
 
