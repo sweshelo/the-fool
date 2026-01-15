@@ -1,7 +1,7 @@
 import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { Delta } from '@/package/core/class/delta';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数

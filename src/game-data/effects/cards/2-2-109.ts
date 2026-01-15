@@ -2,7 +2,7 @@ import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Delta } from '@/package/core/class/delta';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述

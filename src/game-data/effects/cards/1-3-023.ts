@@ -1,4 +1,4 @@
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';

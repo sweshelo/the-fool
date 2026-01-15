@@ -1,4 +1,4 @@
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import type { Catalog, ICard } from '../submodule/suit/types/game/card';
 import type { Stack } from '@/package/core/class/stack';
 import { getCardEffect } from './effects';

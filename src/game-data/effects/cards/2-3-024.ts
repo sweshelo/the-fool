@@ -1,7 +1,7 @@
 import { Card, type Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   isBootable: (core: Core, self: Unit) => {
