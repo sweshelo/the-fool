@@ -3,7 +3,7 @@ import type { Unit } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Parry } from '../class/parry';
-import { Effect } from '@/database/effects';
+import { Effect } from '@/game-data/effects';
 import { resolveStack } from './stack-resolver';
 import { setEffectDisplayHandler } from './effect-handler';
 

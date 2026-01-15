@@ -3,7 +3,7 @@ import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/pa
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core';
 import { Joker } from '../../core/class/card/Joker';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';

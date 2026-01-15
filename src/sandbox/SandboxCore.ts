@@ -76,7 +76,7 @@ export class SandboxCore extends Core {
       await this.resolveStack();
 
       // ターン終了処理（通常のturnChangeと同じ）
-      const { Effect } = await import('@/database/effects');
+      const { Effect } = await import('@/game-data/effects');
       const deathCounterCheckStack = new Stack({
         type: '_deathCounterCheckStack',
         source: this.getTurnPlayer(),

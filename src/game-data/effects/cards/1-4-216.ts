@@ -1,0 +1,70 @@
+import { Effect, EffectHelper, System } from '..';
+import type { CardEffects, StackWithCard } from '../schema/types';
+import { Unit } from '@/package/core/class/card';
+import { Delta } from '@/package/core/class/delta';
+
+export const effects: CardEffects = {
+  // 自身が召喚された時に発動する効果を記述
+  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+    const filter = (unit: Unit) =>
+      unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 3;
+    if (
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner) &&
+      stack.processing.owner.field.length < stack.core.room.rule.player.max.field
+    ) {
+      await System.show(
+        stack,
+        '醒命の光矢&神制の耀矢',
+        'コスト3以下を【複製】\nコスト7以上をフィールドに出せない'
+      );
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '【複製】するユニットを選択してください'
+      );
+      await Effect.clone(stack, stack.processing, target, stack.processing.owner);
+    } else {
+      await System.show(stack, '神制の耀矢', 'コスト7以上をフィールドに出せない');
+    }
+  },
+
+  onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+    if (
+      stack.processing.owner.id !== stack.core.getTurnPlayer().id ||
+      !(stack.processing instanceof Unit) ||
+      stack.processing.owner.trash.length <= 0
+    )
+      return;
+
+    await System.show(stack, '醒命の光矢', '捨札を消滅させる');
+    const [target] = EffectHelper.random(stack.processing.owner.trash);
+    if (target) Effect.move(stack, stack.processing, target, 'delete');
+  },
+
+  onBreakSelf: async (stack: StackWithCard): Promise<void> => {
+    if (stack.processing.owner.delete.length <= 0) return;
+
+    await System.show(stack, '醒命の光矢', '消滅から1枚回収');
+    const [card] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      stack.processing.owner.delete,
+      '手札に加えるカードを選択してください'
+    );
+    Effect.move(stack, stack.processing, card, 'hand');
+  },
+
+  fieldEffect: async (stack: StackWithCard): Promise<void> => {
+    stack.processing.owner.opponent.hand.forEach(card => {
+      if (
+        !card.delta.some(
+          delta => delta.effect.type === 'banned' && delta.source?.unit === stack.processing.id
+        ) &&
+        card.catalog.cost >= 7
+      ) {
+        card.delta.push(new Delta({ type: 'banned' }, { source: { unit: stack.processing.id } }));
+      }
+    });
+  },
+};

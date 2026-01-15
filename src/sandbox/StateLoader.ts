@@ -14,7 +14,7 @@ import { Trigger } from '@/package/core/class/card/Trigger';
 import { Joker } from '@/package/core/class/card/Joker';
 import { Delta } from '@/package/core/class/delta';
 import { DummyCard, DummyUnit } from './DummyCard';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 
 /**
  * IAtomまたはICard型のデータからカードオブジェクトを復元する

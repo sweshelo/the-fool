@@ -18,8 +18,9 @@ console.log('Checking card changes between current branch and main...');
 console.log('================================================================\n');
 
 // mainブランチとの差分を取得
+// core.quotepath=false で日本語ファイル名のエスケープを防ぐ
 const gitDiff = execSync(
-  'git diff origin/release --name-status -- "src/database/effects/cards/*.ts"',
+  'git -c core.quotepath=false diff origin/release --name-status -- "src/database/effects/cards/*.ts"',
   {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'ignore'], // stderrを無視してwarningを非表示に

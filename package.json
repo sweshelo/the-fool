@@ -5,7 +5,7 @@
   "module": "index.ts",
   "scripts": {
     "preinstall": "git submodule update --init --recursive",
-    "dev": "bun --hot run index.ts",
+    "dev": "bun --hot run src/index.ts",
     "prepare": "lefthook install",
     "lint": "bunx oxlint --type-aware && bunx eslint --fix"
   },
@@ -30,14 +30,5 @@
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ]
   }
 }

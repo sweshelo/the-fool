@@ -4,7 +4,7 @@ import type { Unit, Card } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Delta } from '../class/delta';
-import { Effect } from '@/database/effects';
+import { Effect } from '@/game-data/effects';
 import { resolveStack } from './stack-resolver';
 
 /**

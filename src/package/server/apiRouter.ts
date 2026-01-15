@@ -54,7 +54,7 @@ export async function apiRouter(req: Request): Promise<Response | undefined> {
 
 async function getCardsHandler(_req: Request): Promise<Response> {
   // src/database/effects/cards/ 配下の .ts ファイル名一覧を取得
-  const cardsDir = path.resolve(process.cwd(), 'src/database/effects/cards');
+  const cardsDir = path.resolve(process.cwd(), 'src/game-data/effects/cards');
   let files: string[] = [];
   try {
     files = await fs.readdir(cardsDir);

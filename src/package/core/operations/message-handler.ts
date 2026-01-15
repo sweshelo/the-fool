@@ -14,10 +14,10 @@ import type {
   DebugDrivePayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import { Stack } from '../class/stack';
 import { Card, Evolve, Unit } from '../class/card';
-import { Effect } from '@/database/effects';
+import { Effect } from '@/game-data/effects';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
