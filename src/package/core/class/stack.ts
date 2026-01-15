@@ -1,14 +1,14 @@
 import { createMessage } from '@/submodule/suit/types';
 import { Player, type CardArrayKeys } from './Player';
 import type { Core } from '../core';
-import type { CatalogWithHandler } from '@/database/factory';
-import master from '@/database/catalog';
+import type { CatalogWithHandler } from '@/game-data/factory';
+import master from '@/game-data/catalog';
 import { Card, Intercept, Unit } from './card';
-import { Effect, System } from '@/database/effects';
+import { Effect, System } from '@/game-data/effects';
 import { Color } from '@/submodule/suit/constant/color';
-import type { StackWithCard } from '@/database/effects/classes/types';
+import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
-import type { GameEvent } from '@/database/effects/classes/event';
+import type { GameEvent } from '@/game-data/effects/schema/events';
 
 interface IStack {
   /**

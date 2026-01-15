@@ -21,7 +21,7 @@
 ```typescript
 import type { Unit } from '@/package/core/class/card';
 import { Effect, System, EffectHelper } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // イベントハンドラを実装
@@ -38,7 +38,7 @@ export const effects: CardEffects = {
 カード効果実装ファイルは、以下の命名規則に従います：
 
 ```
-src/database/effects/cards/[カードID].ts
+src/game-data/effects/cards/[カードID].ts
 ```
 
 例：
@@ -72,7 +72,7 @@ export const effects: CardEffects = {
 | `overclock`    | オーバークロックした           | `onOverclock`    |
 | `playerAttack` | プレイヤーアタックに成功した   | `onPlayerAttack` |
 
-詳細なイベント定義は `src/database/effects/classes/event.ts` と `eventHandlers.ts` を参照してください。
+詳細なイベント定義は `src/game-data/effects/schema/events.ts` と `handlers.ts` を参照してください。
 
 ### Suffix の活用
 
@@ -111,6 +111,19 @@ export const effects: CardEffects = {
 | `source`     | イベントの発生源             | 召喚したプレイヤー、アタックを宣言したプレイヤーなど |
 | `target`     | イベントの対象               | 召喚されたユニット、アタックするユニットなど         |
 | `core`       | ゲームのコアオブジェクト     | ゲーム全体の状態参照                                 |
+
+### source と target の詳細
+
+各イベントにおける `source` と `target` の具体例：
+
+| イベント       | source                       | target               |
+| -------------- | ---------------------------- | -------------------- |
+| 召喚（drive）  | 召喚したプレイヤー           | 召喚されたユニット   |
+| 破壊（break）  | 破壊効果を発動したカード     | 破壊されたユニット   |
+| アタック       | アタックを宣言したプレイヤー | アタックするユニット |
+| 戦闘（battle） | アタッカー                   | ブロッカー           |
+
+プレイヤーの操作が介在するイベントでは、概ね `source` にプレイヤーが指定されます。
 
 ### 使用例
 
@@ -217,6 +230,37 @@ fieldEffect: (stack: StackWithCard<Unit>) => {
 - 効果元のユニットに【沈黙】が付与された時、Delta が無効化される
 - 効果元のユニットがフィールドから離れた時、Delta が除去される
 
+#### 例：条件付きキーワード付与（Lv1 の時に【秩序の盾】を付与）
+
+複数種類の効果を永続効果で提供する場合、`effectCode` で識別します。
+
+```typescript
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  const self = stack.processing;
+
+  // effectCode で特定の効果を識別
+  const delta = self.delta.find(
+    d => d.source.unit === self.id && d.source.effectCode === 'Lv1_秩序の盾'
+  );
+
+  if (delta) {
+    // Lv1 以外になったら効果を除去
+    if (self.lv !== 1) {
+      self.delta = self.delta.filter(
+        d => !(d.source.unit === self.id && d.source.effectCode === 'Lv1_秩序の盾')
+      );
+    }
+  } else {
+    // Lv1 の時のみ【秩序の盾】を付与
+    if (self.lv === 1) {
+      Effect.keyword(stack, self, self, '秩序の盾', {
+        source: { unit: self.id, effectCode: 'Lv1_秩序の盾' }
+      });
+    }
+  }
+}
+```
+
 ### 3. 起動効果
 
 プレイヤーが任意のタイミングで発動できる効果です。
@@ -298,6 +342,17 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
   // 【不屈】を付与
   Effect.keyword(stack, stack.processing, stack.processing, '不屈');
 }
+```
+
+#### 特殊なキーワード効果
+
+**「ブロックされない」効果**
+
+「ブロックされない」効果は、`'次元干渉'` キーワードを `cost: 0` で付与します。
+
+```typescript
+// ブロックされない（次元干渉コスト0）
+Effect.keyword(stack, self, self, '次元干渉', { cost: 0 });
 ```
 
 ### ユニットの選択

@@ -1,6 +1,6 @@
 import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
-import master from '@/database/catalog';
+import master from '@/game-data/catalog';
 import type { Player } from '../Player';
 import { Delta } from '../delta';
 
