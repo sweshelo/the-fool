@@ -17,7 +17,7 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 対戦相手のフィールドにユニットが4体以下かつウィルス召喚可能な場合
-    if (EffectHelper.isVirusInjectable(opponent)) {
+  EffectHelper.isVirusInjectable(opponent) {
       await System.show(
         stack,
         '黙想の薔薇',
