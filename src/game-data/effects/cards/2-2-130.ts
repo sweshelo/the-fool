@@ -14,7 +14,7 @@ export const effects: CardEffects = {
   },
   onTurnEnd: async (stack: StackWithCard) => {
     await System.show(stack, '謎の来訪者', '消滅カードを2枚回収');
-    EffectHelper.random(stack.processing.owner.delete).forEach(card =>
+    EffectHelper.random(stack.processing.owner.delete, 2).forEach(card =>
       Effect.move(stack, stack.processing, card, 'hand')
     );
   },
