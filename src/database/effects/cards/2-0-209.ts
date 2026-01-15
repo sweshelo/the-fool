@@ -7,28 +7,18 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 選択肢1：インターセプトカードを1枚引く
-    const isChoice1Avail = owner.deck.some(card => card.catalog.type === 'intercept');
-
-    // 選択肢2：捨札にユニットカードがある
-    const isChoice2Avail = owner.trash.some(card => card instanceof Unit);
-
-    // 両方の選択肢が利用可能な場合、プレイヤーに選択させる
-    let choice: string | undefined = undefined;
-    if (isChoice1Avail && isChoice2Avail) {
-      [choice] = await System.prompt(stack, owner.id, {
-        title: '選略・慈恵の精',
-        type: 'option',
-        items: [
-          { id: '1', description: 'インターセプトカードを1枚引く' },
-          { id: '2', description: '捨札からユニットカードを1枚手札に加える' },
-        ],
-      });
-    } else {
-      // どちらか一方しか利用できない場合は自動選択
-      if (isChoice1Avail) choice = '1';
-      if (isChoice2Avail) choice = '2';
-    }
+    const choice = await EffectHelper.choice(stack, owner, '選略・慈恵の精', [
+      {
+        id: '1',
+        description: 'インターセプトカードを1枚引く',
+        condition: () => owner.deck.some(card => card.catalog.type === 'intercept'),
+      },
+      {
+        id: '2',
+        description: '捨札からユニットカードを1枚手札に加える',
+        condition: () => owner.trash.some(card => card instanceof Unit),
+      },
+    ]);
 
     switch (choice) {
       case '1': {
