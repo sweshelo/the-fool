@@ -16,8 +16,7 @@ import type {
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
 import { Stack } from '../class/stack';
-import { Card, Evolve, Unit } from '../class/card';
-import { Effect } from '@/game-data/effects';
+import { Evolve, Unit } from '../class/card';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
@@ -129,9 +128,7 @@ export async function handleMessage(core: Core, message: Message) {
       const isEvolve = message.payload.type === 'EvolveDrive' && 'source' in payload;
 
       // フィールドのユニット数が規定未満
-      const hasFieldSpace = isEvolve
-        ? true
-        : player.field.length < core.room.rule.player.max.field;
+      const hasFieldSpace = isEvolve ? true : player.field.length < core.room.rule.player.max.field;
 
       const source = isEvolve
         ? player.field.find(unit => unit.id === payload.source.id)
@@ -147,6 +144,7 @@ export async function handleMessage(core: Core, message: Message) {
 
         if (!source) {
           console.error('進化ユニットが召喚されようとしましたが source が不正でした');
+          return;
         }
       }
 
@@ -307,8 +305,7 @@ export async function handleMessage(core: Core, message: Message) {
       const player = core.players.find(p => p.id === payload.player);
       const target = player?.find(payload.target);
       const isOnHand = target?.place?.name === 'hand';
-      const isEnoughTriggerZone =
-        (player?.trigger.length ?? 0) < core.room.rule.player.max.trigger;
+      const isEnoughTriggerZone = (player?.trigger.length ?? 0) < core.room.rule.player.max.trigger;
 
       if (target && target.card && player && isEnoughTriggerZone && isOnHand) {
         player.hand = player.hand.filter(c => c.id !== target.card?.id);
