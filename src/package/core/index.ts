@@ -2,7 +2,7 @@ import type { Message } from '@/submodule/suit/types/message/message';
 import type { Player } from './class/Player';
 import type { Room } from '../server/room/room';
 import { Stack } from './class/stack';
-import type { Unit } from './class/card';
+import type { Card, Unit } from './class/card';
 
 // Import operations
 import * as effectHandler from './operations/effect-handler';
@@ -13,7 +13,7 @@ import * as gameFlow from './operations/game-flow';
 import * as messageHandler from './operations/message-handler';
 
 interface History {
-  card: any;
+  card: Card;
   generation: number;
   action: 'drive' | 'boot' | 'joker';
 }
@@ -113,15 +113,15 @@ export class Core {
   }
 
   // Effect handler methods
-  setEffectDisplayHandler(promptId: string, handler: Function): void {
+  setEffectDisplayHandler(promptId: string, handler: Function) {
     return effectHandler.setEffectDisplayHandler(this, promptId, handler);
   }
 
-  handleEffectResponse(promptId: string, response: string[] | undefined): void {
+  handleEffectResponse(promptId: string, response: string[] | undefined) {
     return effectHandler.handleEffectResponse(this, promptId, response);
   }
 
-  handleContinue(promptId: string): void {
+  handleContinue(promptId: string) {
     return effectHandler.handleContinue(this, promptId);
   }
 
