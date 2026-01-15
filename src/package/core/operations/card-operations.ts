@@ -143,7 +143,6 @@ export function fieldEffectUnmount(core: Core, target: Unit, stack: Stack) {
 
   // 非フィールド
   [
-    ...core.players.flatMap(player => player.field),
     ...core.players.flatMap(player => player.hand),
     ...core.players.flatMap(player => player.trigger),
   ].forEach(unmount);
