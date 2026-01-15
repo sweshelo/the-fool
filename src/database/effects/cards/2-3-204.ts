@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {

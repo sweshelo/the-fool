@@ -5,10 +5,10 @@
  * - プレイヤーが1人でもゲーム開始可能
  */
 
-import { Core } from '@/package/core/core';
+import { Core } from '@/package/core';
 import type { Room } from '@/package/server/room/room';
 import type { Player } from '@/package/core/class/Player';
-import { MessageHelper } from '@/package/core/message';
+import { MessageHelper } from '@/package/core/helpers/message';
 import { createMessage } from '@/submodule/suit/types/message/message';
 import { Stack } from '@/package/core/class/stack';
 

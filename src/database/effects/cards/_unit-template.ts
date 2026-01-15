@@ -1,7 +1,7 @@
 import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 // 共通処理は別関数に切り出すとよい。
 const subEffect = async (stack: StackWithCard<Unit>) => {

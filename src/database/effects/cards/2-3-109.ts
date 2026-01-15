@@ -1,7 +1,7 @@
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Unit } from '@/package/core/class/card';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // 【加護】（召喚時付与）

@@ -1,6 +1,6 @@
 import { createMessage } from '@/submodule/suit/types';
 import { Player, type CardArrayKeys } from './Player';
-import type { Core } from '../core';
+import type { Core } from '../index';
 import type { CatalogWithHandler } from '@/database/factory';
 import master from '@/database/catalog';
 import { Card, Intercept, Unit } from './card';

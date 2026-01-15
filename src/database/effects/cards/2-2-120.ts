@@ -2,7 +2,7 @@ import { Delta } from '@/package/core/class/delta';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../classes/types';
 import type { Unit } from '@/package/core/class/card';
-import { Core } from '@/package/core/core';
+import { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // コスト減少（手札効果）

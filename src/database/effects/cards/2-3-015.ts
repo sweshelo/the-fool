@@ -1,6 +1,6 @@
 import { Unit, type Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../classes/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { Delta } from '@/package/core/class/delta';
 import { Effect } from '../classes/effect';
 import { System } from '../classes/system';

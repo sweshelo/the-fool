@@ -1,7 +1,7 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card/Card';
 import type { Unit } from '@/package/core/class/card';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import type { Player } from '@/package/core/class/Player';
 import type {
   EventCheckHandlers,
