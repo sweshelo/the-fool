@@ -6,9 +6,7 @@ import { Color } from '@/submodule/suit/constant/color';
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
-      stack.processing.owner.id === stack.source.id &&
-      stack.target instanceof Unit &&
-      stack.target.catalog.color === Color.RED
+      stack.processing.owner.id === stack.source.id
     );
   },
   // あなたのユニットがフィールドに出た時

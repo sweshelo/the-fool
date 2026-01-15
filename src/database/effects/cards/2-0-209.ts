@@ -11,7 +11,6 @@ export const effects: CardEffects = {
       {
         id: '1',
         description: 'インターセプトカードを1枚引く',
-        condition: () => owner.deck.some(card => card.catalog.type === 'intercept'),
       },
       {
         id: '2',

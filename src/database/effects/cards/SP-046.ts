@@ -8,7 +8,7 @@ export const effects: CardEffects = {
 
     // デッキから赤属性のインターセプトカードを抽出
     const redIntercepts = owner.deck.filter(
-      card => card.catalog.type === 'intercept' && card.catalog.color === 1
+      card => card.catalog.type === 'intercept' && card.catalog.color === Color.RED
     );
 
     // トリガーゾーンに空きがあり、対象カードが存在する場合

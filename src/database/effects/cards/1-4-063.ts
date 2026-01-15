@@ -7,8 +7,7 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
       stack.processing.owner.id === stack.source.id &&
-      stack.target instanceof Unit &&
-      stack.target.catalog.color === Color.BLUE
+      EffectHelper.isVirusInjectable(stack.processing.owner.opponent)
     );
   },
 
