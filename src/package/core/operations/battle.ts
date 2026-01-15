@@ -190,7 +190,7 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
   const candidate = forceBlock.length > 0 ? forceBlock : blockable;
 
   // ブロックさせる
-  const promptId = `${attacker.id}_attack_${Date.now()}`;
+  const promptId = `${core.id}_block_${crypto.randomUUID()}`;
   if (candidate.length > 0) {
     core.room.broadcastToPlayer(
       blockerOwner.id,

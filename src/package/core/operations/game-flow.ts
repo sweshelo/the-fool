@@ -62,8 +62,8 @@ export async function mulligan(core: Core, player: Player): Promise<void> {
   // マリガンループ
   return new Promise<void>(resolve => {
     const processMulligan = () => {
-      // 毎回ユニークなプロンプトIDを生成
-      const promptId = `mulligan_${player.id}_${Date.now()}`;
+      // 毎回ユニークなプロンプトIDを生成（player.id を含めることで検索可能にする）
+      const promptId = `${core.id}_mulligan_${player.id}_${crypto.randomUUID()}`;
 
       // マリガンの開始を通知
       core.room.broadcastToPlayer(

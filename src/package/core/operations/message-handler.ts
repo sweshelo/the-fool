@@ -21,7 +21,7 @@ import { Effect } from '@/database/effects';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
-import { handleEffectResponse, handleContinue, effectResponses } from './effect-handler';
+import { handleEffectResponse, handleContinue } from './effect-handler';
 import { turnChange } from './game-flow';
 import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
@@ -393,16 +393,16 @@ export async function handleMessage(core: Core, message: Message) {
 
     case 'Mulligan': {
       const payload = message.payload;
-      // Find the correct mulligan promptId from our map
-      // The promptId now contains a timestamp, so we need to find the one that starts with mulligan_${player.id}_
-      const mulliganPromptId = Array.from(effectResponses.keys()).find(id =>
-        id.startsWith(`mulligan_${payload.player}_`)
+      // Core インスタンス固有の effectResponses から mulligan ハンドラを検索
+      // promptId の形式: ${core.id}_mulligan_${player.id}_${uuid}
+      const mulliganPromptId = Array.from(core.effectResponses.keys()).find(id =>
+        id.startsWith(`${core.id}_mulligan_${payload.player}_`)
       );
 
       if (mulliganPromptId) {
         handleEffectResponse(core, mulliganPromptId, [payload.action]);
       } else {
-        console.warn(`No mulligan handler found for player ${payload.player}`);
+        console.warn(`[Core ${core.id}] No mulligan handler found for player ${payload.player}`);
       }
       break;
     }

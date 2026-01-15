@@ -26,6 +26,8 @@ export class Core {
   room: Room;
   stack: Stack[] = [];
   histories: History[];
+  /** Core インスタンス固有の効果応答ハンドラマップ */
+  effectResponses: Map<string, Function> = new Map();
 
   constructor(room: Room) {
     this.id = crypto.randomUUID();
