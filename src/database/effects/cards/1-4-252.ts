@@ -6,7 +6,8 @@ import { Color } from '@/submodule/suit/constant/color';
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
-      stack.processing.owner.id === stack.source.id
+      stack.processing.owner.id === stack.source.id &&
+      stack.processing.owner.opponent.field.length > 0 
     );
   },
   // あなたのユニットがフィールドに出た時
@@ -15,7 +16,7 @@ export const effects: CardEffects = {
     const opponent = owner.opponent;
 
     // 対戦相手のユニットが存在する場合
-    if (opponent.field.length > 0) {
+   
       // 捨札の赤属性のカードの枚数をカウント
       const redCardsCount = owner.trash.filter(card => card.catalog.color === Color.RED).length;
 
@@ -35,6 +36,6 @@ export const effects: CardEffects = {
           Effect.damage(stack, stack.processing, target, damage);
         }
       }
-    }
+    
   },
 };
