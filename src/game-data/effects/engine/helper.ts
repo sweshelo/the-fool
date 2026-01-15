@@ -1,6 +1,6 @@
 import { Card, Evolve, Unit } from '@/package/core/class/card';
 import { Player } from '@/package/core/class/Player';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { System } from './system';
 import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';

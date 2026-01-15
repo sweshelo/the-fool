@@ -1,7 +1,7 @@
 import { Evolve, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 const getExceptSelfOwnUnitsFilter = (self: Unit) => (unit: Unit) => {
   return unit.id !== self.id && unit.owner.id === self.owner.id;
