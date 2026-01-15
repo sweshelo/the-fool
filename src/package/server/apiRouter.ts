@@ -54,7 +54,7 @@ export async function apiRouter(req: Request): Promise<Response | undefined> {
 
 async function getCardsHandler(_req: Request): Promise<Response> {
   // src/database/effects/cards/ 配下の .ts ファイル名一覧を取得
-  const cardsDir = path.resolve(process.cwd(), 'src/database/effects/cards');
+  const cardsDir = path.resolve(process.cwd(), 'src/game-data/effects/cards');
   let files: string[] = [];
   try {
     files = await fs.readdir(cardsDir);
@@ -82,6 +82,19 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
 };
+
+/**
+ * SyncPayload の body 部分かどうかを検証する型ガード
+ */
+function isSyncPayloadBody(body: unknown): body is SyncPayload['body'] {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'rule' in body &&
+    'game' in body &&
+    'players' in body
+  );
+}
 
 /**
  * サンドボックスモードの状態を取得
@@ -155,24 +168,23 @@ async function loadSandboxStateHandler(req: Request): Promise<Response> {
   }
 
   try {
-    const body = await req.json();
-    const syncBody = body as SyncPayload['body'];
+    const body: unknown = await req.json();
 
-    if (!syncBody || !syncBody.game || !syncBody.players) {
+    if (!isSyncPayloadBody(body)) {
       return new Response(
         JSON.stringify({ error: 'Invalid state format. Expected SyncPayload body.' }),
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    sandboxRoom.loadState(syncBody);
+    sandboxRoom.loadState(body);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'State loaded successfully',
-        round: syncBody.game.round,
-        turn: syncBody.game.turn,
+        round: body.game.round,
+        turn: body.game.turn,
       }),
       { status: 200, headers: CORS_HEADERS }
     );

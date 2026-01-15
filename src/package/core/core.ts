@@ -15,12 +15,12 @@ import type {
   DebugDrivePayload,
 } from '@/submodule/suit/types';
 import type { Room } from '../server/room/room';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import { Stack } from './class/stack';
 import { Card, Evolve, Unit } from './class/card';
 import { MessageHelper } from './message';
-import { Effect } from '@/database/effects';
-import { EffectHelper } from '@/database/effects/classes/helper';
+import { Effect } from '@/game-data/effects';
+import { EffectHelper } from '@/game-data/effects/engine/helper';
 import { Delta } from './class/delta';
 import { Parry } from './class/parry';
 import { Intercept } from './class/card/Intercept';
