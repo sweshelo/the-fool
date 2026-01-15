@@ -23,13 +23,7 @@ export const effects: CardEffects = {
     EffectTemplate.draw(opponent, stack.core);
 
     // 対戦相手の手札を2枚ランダムで捨てる
-    const discardCount = Math.min(2, opponent.hand.length);
-    for (let i = 0; i < discardCount; i++) {
-      const [target] = EffectHelper.random(opponent.hand, 1);
-      if (target) {
-        Effect.handes(stack, self, target);
-      }
-    }
+    EffectHelper.random(opponent.hand, 2).forEach(target => Effect.handes(stack, self, target));
   },
 
   // このユニットがアタックした時、あなたは手札を1枚選んで捨てる。そうした場合、あなたはカードを2枚引く。
