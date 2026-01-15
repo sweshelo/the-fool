@@ -98,15 +98,6 @@ export const effects: CardEffects = {
   onBootSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
 
-    /*     //【獣】ユニットをフィルタリング
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id && (unit.catalog.species?.includes('獣') ?? false),
-      owner
-    );
-
-    if (candidates.length === 0) return; */
-
     await System.show(
       stack,
       '起動・霊猫の王',
