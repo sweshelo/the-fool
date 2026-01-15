@@ -449,6 +449,7 @@ export async function handleMessage(core: Core, message: Message) {
             throw new Error('召喚できないカードが指定されました');
         }
       }
+      break;
     }
   }
 
