@@ -8,7 +8,7 @@ export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard<Card>): boolean => {
     return (
       stack.source.id === stack.processing.owner.opponent.id &&
-      stack.processing.owner.life < stack.processing.owner.opponent.life
+      stack.processing.owner.life.current < stack.processing.owner.opponent.life.current
     );
   },
 
