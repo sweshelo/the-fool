@@ -4,6 +4,13 @@ import type { CardEffects, StackWithCard } from '../classes/types';
 import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
+  checkDrive: (stack: StackWithCard): boolean => {
+    return (
+      stack.processing.owner.id === stack.source.id &&
+      stack.target instanceof Unit &&
+      stack.target.catalog.color === Color.RED
+    );
+  },
   // あなたのユニットがフィールドに出た時
   onDrive: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
