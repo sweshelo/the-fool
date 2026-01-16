@@ -16,7 +16,7 @@ export const effects: CardEffects = {
 
       if (stack.core.turn !== 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await stack.core.attack(stack.processing);
+        await stack.core.attack(stack.processing, stack);
       }
     }
   },

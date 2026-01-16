@@ -87,8 +87,8 @@ export class Core {
   }
 
   // Battle methods
-  async attack(attacker: Unit) {
-    return battle.attack(this, attacker);
+  async attack(attacker: Unit, parentStack?: Stack) {
+    return battle.attack(this, attacker, parentStack);
   }
 
   async block(attacker: Unit): Promise<Unit | undefined> {
