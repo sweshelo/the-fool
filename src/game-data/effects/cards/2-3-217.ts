@@ -22,11 +22,9 @@ export const effects: CardEffects = {
       count: 1,
     });
 
-    // 可能なら即時アタック（ターン1でない場合）
-    if (stack.core.turn !== 1) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await stack.core.attack(stack.processing);
-    }
+    // 可能なら即時アタック
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await stack.core.attack(stack.processing);
   },
 
   // ■ダブルスピンアタック
