@@ -24,8 +24,8 @@ export const effects: CardEffects = {
 
     // 可能なら即時アタック（ターン1でない場合）
     if (stack.core.turn !== 1) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await stack.core.attack(stack.processing);
+      await System.sleep(1000);
+      await stack.core.attack(stack.processing, stack);
     }
   },
 

@@ -1,5 +1,6 @@
 import type { Core } from '../index';
 import { Parry } from '../class/parry';
+import { System } from '@/game-data/effects';
 
 /**
  * 現在のスタックを解決する
@@ -16,7 +17,7 @@ export async function resolveStack(core: Core): Promise<void> {
 
         // 後続のStackがある場合は待たせる
         if (core.stack.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 750));
+          await System.sleep(750);
         }
       }
 
