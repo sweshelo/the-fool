@@ -15,7 +15,6 @@ export const effects: CardEffects = {
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
       stack.target.lv === 3 &&
-      stack.processing.id !== stack.target.id &&
       EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     ) {
       await System.show(stack, '紅蓮のオーバーフレア', '4000ダメージ');
@@ -36,7 +35,5 @@ export const effects: CardEffects = {
       await System.show(stack, '紅蓮のグロウバーン', '敵全体のレベル3以上のユニットに5000ダメージ');
       targets.forEach(unit => Effect.damage(stack, stack.processing, unit, 5000, 'effect'));
     }
-
-    await effects.onClockup?.(stack);
   },
 };
