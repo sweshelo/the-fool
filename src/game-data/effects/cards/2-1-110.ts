@@ -14,7 +14,7 @@ export const effects: CardEffects = {
       Effect.keyword(stack, stack.processing, stack.processing, '次元干渉', { cost: 3 });
       Effect.speedMove(stack, stack.processing);
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await System.sleep(1000);
       await stack.core.attack(stack.processing);
     }
   },

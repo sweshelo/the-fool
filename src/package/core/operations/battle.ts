@@ -3,16 +3,16 @@ import type { Unit } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Parry } from '../class/parry';
-import { Effect } from '@/game-data/effects';
-import { resolveStack } from './stack-resolver';
+import { Effect, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
 
 /**
  * アタック
  * @param core Coreインスタンス
  * @param attacker 攻撃するユニット
+ * @param parentStack 親スタック（カード効果から呼ばれた場合に指定）
  */
-export async function attack(core: Core, attacker: Unit) {
+export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
   // アタックが可能かチェックする
   if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止') || !attacker.active) {
     console.error(
@@ -58,15 +58,22 @@ export async function attack(core: Core, attacker: Unit) {
   );
   core.room.soundEffect('decide');
 
-  core.stack.push(
-    new Stack({
-      type: 'attack',
-      source: attacker.owner,
-      target: attacker,
-      core: core,
-    })
-  );
-  await resolveStack(core);
+  const attackStack = new Stack({
+    type: 'attack',
+    source: attacker.owner,
+    target: attacker,
+    core: core,
+    parent: parentStack,
+  });
+
+  // 親スタックが指定された場合、children として追加
+  if (parentStack) {
+    parentStack.children.push(attackStack);
+  }
+
+  // attack Stack を直接 resolve（resolveStack(core) は使わない）
+  await attackStack.resolve(core);
+  core.room.sync();
 
   // アタッカー生存チェック
   if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
@@ -157,18 +164,17 @@ export async function attack(core: Core, attacker: Unit) {
     await postBattle(core, attacker, blocker);
   } else {
     attacker.owner.opponent.damage();
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await System.sleep(1000);
 
     // プレイヤーアタックに成功
-    core.stack.push(
-      new Stack({
-        type: 'playerAttack',
-        target: attacker.owner.opponent,
-        source: attacker,
-        core: core,
-      })
-    );
-    await resolveStack(core);
+    const playerAttackStack = new Stack({
+      type: 'playerAttack',
+      target: attacker.owner.opponent,
+      source: attacker,
+      core: core,
+    });
+    await playerAttackStack.resolve(core);
+    core.room.sync();
   }
 }
 
@@ -271,18 +277,17 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
       })
     );
   }
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await System.sleep(1000);
 
   if (blocker) {
-    core.stack.push(
-      new Stack({
-        type: 'block',
-        source: attacker,
-        target: blocker,
-        core: core,
-      })
-    );
-    await resolveStack(core);
+    const blockStack = new Stack({
+      type: 'block',
+      source: attacker,
+      target: blocker,
+      core: core,
+    });
+    await blockStack.resolve(core);
+    core.room.sync();
   }
 
   return blocker;
@@ -295,16 +300,15 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
  * @param blocker ブロックするユニット
  */
 export async function preBattle(core: Core, attacker: Unit, blocker: Unit) {
-  core.stack.push(
-    new Stack({
-      type: 'battle',
-      source: attacker,
-      target: blocker,
-      core: core,
-    })
-  );
+  const battleStack = new Stack({
+    type: 'battle',
+    source: attacker,
+    target: blocker,
+    core: core,
+  });
   console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
-  await resolveStack(core);
+  await battleStack.resolve(core);
+  core.room.sync();
 }
 
 /**
@@ -363,10 +367,10 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
   if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
   if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
 
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await System.sleep(1000);
 
-  core.stack.push(stack);
-  await resolveStack(core);
+  await stack.resolve(core);
+  core.room.sync();
 
   // 戦闘勝利後の処理
   const isWinnerHasPenetrate = winner.hasKeyword('貫通');
@@ -400,10 +404,13 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
         core: core,
       });
 
-      core.stack.push(
-        ...[systemStack, winnerStack].filter((stack): stack is Stack => stack !== undefined)
-      );
-      await resolveStack(core);
+      // 各スタックを直接 resolve
+      if (systemStack) {
+        await systemStack.resolve(core);
+        core.room.sync();
+      }
+      await winnerStack.resolve(core);
+      core.room.sync();
     }
   }
 
