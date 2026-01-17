@@ -1,294 +1,261 @@
-import { describe, test, expect, mock } from 'bun:test';
-import { Stack } from '../class/stack';
-import { Core } from '../index';
+import { describe, test, expect, beforeAll, mock } from 'bun:test';
+import type { Core } from '../index';
+import type { Stack as StackClass } from '../class/stack';
 import type { Unit } from '../class/card';
-import { Player } from '../class/Player';
-import type { Room } from '@/package/server/room/room';
+import type { TestContext, EventRecorder as EventRecorderClass } from '../testing';
+
+// 遅延インポート用の変数（循環依存を避けるため）
+let createTestContext: () => TestContext;
+let createUnit: (owner: TestContext['player1'], catalogId?: string) => Unit;
+let EventRecorder: typeof EventRecorderClass;
+let Stack: typeof StackClass;
 
 /**
- * スタック処理順序のテスト
+ * スタック処理順序のE2Eテスト
  *
- * 問題: Lv3ユニット召喚時に、召喚効果（onDriveSelf）内で attack() が呼ばれると、
- * drive Stack の解決が完了する前に overclock が発動してしまう
- *
- * 期待される処理順序:
- * 1. drive Stack 解決開始
- * 2. onDriveSelf 効果実行
- * 3. 効果内で attack が発生 → drive の children として処理される
- * 4. attack 処理完了（戦闘終了まで）
- * 5. onDrive 効果実行（他のユニット）
- * 6. drive Stack 解決完了
- * 7. overclock Stack 解決
+ * このテストでは、実際のカード効果を使用してスタック処理順序を検証する。
+ * WebSocketプロンプトは AutoResponder によって自動的に解決される。
  */
 
-// モックの作成ヘルパー
-function createMockCore(): { core: Core; mockPlayer: Player } {
-  // Room のモック（必要最小限のプロパティのみ）
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Room は循環参照があるためモックが必要
-  const mockRoom = {
-    id: 'test-room',
-    sync: mock(() => {}),
-    soundEffect: mock(() => {}),
-    broadcastToAll: mock(() => {}),
-    broadcastToPlayer: mock(() => {}),
-    rule: {
-      player: { max: { hand: 7, trigger: 4, field: 5, life: 8 } },
-      system: {
-        cp: { ceil: 12, increase: 1, init: 2, carryover: false, max: 7 },
-        round: 10,
-        draw: { top: 2, override: 1, mulligan: 4 },
-        handicap: { attack: false, cp: false, draw: false },
-      },
-      misc: { strictOverride: false, suicideJoker: false },
-    },
-  } as unknown as Room;
+// テストユーティリティを遅延インポート
+beforeAll(async () => {
+  // System.sleep をモック化（即座に解決）
+  const { System, applyEffectsToCatalog } = await import('@/game-data/effects');
+  System.sleep = mock(() => Promise.resolve());
 
-  // 実際の Core インスタンスを作成
-  const core = new Core(mockRoom);
-  core.turn = 2;
+  // カタログに効果を適用（循環依存で効果がロードされる前にカタログが初期化された場合の対策）
+  await applyEffectsToCatalog();
 
-  // Player を Core 参照付きで作成
-  const mockPlayer = new Player({ id: 'player1', name: 'player', deck: [] }, core);
-  const mockOpponent = new Player({ id: 'player2', name: 'opponent', deck: [] }, core);
+  // テストユーティリティを遅延インポート
+  const testing = await import('../testing');
+  createTestContext = testing.createTestContext;
+  createUnit = testing.createUnit;
+  EventRecorder = testing.EventRecorder;
 
-  // players 配列に追加（opponent getter が動作するために両方必要）
-  core.players.push(mockPlayer, mockOpponent);
+  // Stack を遅延インポート
+  const stackModule = await import('../class/stack');
+  Stack = stackModule.Stack;
+});
 
-  return { core, mockPlayer };
-}
+describe('スタック処理順序 E2E', () => {
+  describe('Lv3ユニット召喚時のスタック順序', () => {
+    test('2-1-110召喚時: drive が完了してから overclock が処理される', async () => {
+      // このテストはゲーム内のsetTimeout遅延により時間がかかる
+      const { core, player1, player2, autoResponder } = createTestContext();
+      const recorder = new EventRecorder();
 
-function createMockUnit(owner: Player, name: string = 'TestUnit'): Unit {
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- テスト用モック
-  return {
-    id: `unit-${name}`,
-    owner,
-    catalog: { name },
-    lv: 1,
-    active: true,
-    delta: [],
-    hasKeyword: () => false,
-    currentBP: 5000,
-  } as unknown as Unit;
-}
+      // 相手フィールドにユニットを配置（ブロック用）
+      const blocker = createUnit(player2, '1-0-001');
+      blocker.active = true;
+      player2.field.push(blocker);
 
-describe('スタック処理順序', () => {
-  describe('resolveStack と Stack.resolve の違い', () => {
-    test('Stack.resolve() は単一のスタックのみを処理する', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const resolveOrder: string[] = [];
+      // 自動ブロックを設定
+      autoResponder.setAutoBlockFirst();
 
-      // overclock と drive の2つのスタックを積む
-      const overclockStack = new Stack({
-        type: 'overclock',
-        source: createMockUnit(mockPlayer),
-        target: createMockUnit(mockPlayer),
-        core,
-      });
+      // 2-1-110 (Lv3ユニット、即時アタック効果) を作成
+      const unit = createUnit(player1, '2-1-110');
+      unit.lv = 3;
 
-      const driveStack = new Stack({
-        type: 'drive',
-        source: mockPlayer,
-        target: createMockUnit(mockPlayer),
-        core,
-      });
-
-      // resolve をラップして順序を記録
-      overclockStack.resolve = async (_c: Core) => {
-        resolveOrder.push('overclock');
-        return;
+      // スタック解決をフック
+      const originalResolve = Stack.prototype.resolve;
+      Stack.prototype.resolve = async function (this: StackClass, c: Core) {
+        recorder.record(`${this.type}-start`);
+        await originalResolve.call(this, c);
+        recorder.record(`${this.type}-end`);
       };
 
-      driveStack.resolve = async (_c: Core) => {
-        resolveOrder.push('drive');
-        return;
+      try {
+        // 召喚
+        await core.drive(player1, unit);
+
+        // drive と overclock が処理されていることを確認
+        expect(recorder.contains('drive-start')).toBe(true);
+        expect(recorder.contains('overclock-start')).toBe(true);
+
+        // drive が完了してから overclock が開始される
+        const driveEndIndex = recorder.indexOf('drive-end');
+        const overclockStartIndex = recorder.indexOf('overclock-start');
+        expect(driveEndIndex).toBeLessThan(overclockStartIndex);
+      } finally {
+        Stack.prototype.resolve = originalResolve;
+      }
+    });
+
+    test('通常のLv3召喚: drive → overclock の順で処理される', async () => {
+      const { core, player1 } = createTestContext();
+      const recorder = new EventRecorder();
+
+      // 通常のLv3ユニット（即時アタックなし）
+      const unit = createUnit(player1, '1-0-001');
+      unit.lv = 3;
+
+      const originalResolve = Stack.prototype.resolve;
+      Stack.prototype.resolve = async function (this: StackClass, c: Core) {
+        recorder.record(this.type);
+        await originalResolve.call(this, c);
       };
 
-      // core.stack に両方を積む
-      core.stack.push(overclockStack);
-      core.stack.push(driveStack);
+      try {
+        await core.drive(player1, unit);
 
-      // driveStack のみを resolve（resolveStack を使わない）
-      await driveStack.resolve(core);
-
-      // drive のみが処理され、overclock は処理されていない
-      expect(resolveOrder).toEqual(['drive']);
-      // overclock はまだスタックに残っている
-      expect(core.stack.length).toBe(2);
-      expect(core.stack[0]).toBe(overclockStack);
+        // overclock は drive の後
+        const driveIndex = recorder.indexOf('drive');
+        const overclockIndex = recorder.indexOf('overclock');
+        expect(driveIndex).toBeLessThan(overclockIndex);
+      } finally {
+        Stack.prototype.resolve = originalResolve;
+      }
     });
   });
 
-  describe('attack() が親スタックの children として追加される', () => {
-    test('parentStack が指定された場合、attack は children に追加される', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const attacker = createMockUnit(mockPlayer, 'Attacker');
-      mockPlayer.field.push(attacker);
+  describe('戦闘処理', () => {
+    test('攻撃時、事前に積まれたスタックは処理されない', async () => {
+      const { core, player1, autoResponder } = createTestContext();
+
+      const attacker = createUnit(player1, '1-0-001');
+      player1.field.push(attacker);
+      attacker.active = true;
+
+      // 事前にoverclockスタックを積む
+      const preStack = new Stack({
+        type: 'overclock',
+        source: attacker,
+        target: attacker,
+        core,
+      });
+      core.stack.push(preStack);
+
+      // ブロックなし
+      autoResponder.setAutoSkipBlock();
+
+      // 攻撃実行
+      await core.attack(attacker);
+
+      // 事前のスタックは処理されずに残っている
+      expect(core.stack.length).toBe(1);
+      expect(core.stack[0]).toBe(preStack);
+    });
+
+    test('プレイヤーアタック成功時、相手ライフが減少する', async () => {
+      const { core, player1, player2, autoResponder } = createTestContext();
+
+      const attacker = createUnit(player1, '1-0-001');
+      player1.field.push(attacker);
+      attacker.active = true;
+
+      // ブロックなし
+      autoResponder.setAutoSkipBlock();
+
+      const initialLife = player2.life.current;
+
+      // 攻撃実行
+      await core.attack(attacker);
+
+      // 相手ライフが1減少
+      expect(player2.life.current).toBe(initialLife - 1);
+    });
+
+    test('戦闘でブロックした場合、BP比較で勝敗が決まる', async () => {
+      const { core, player1, player2, autoResponder } = createTestContext();
+
+      // 高BPユニットで攻撃
+      const attacker = createUnit(player1, '1-0-001');
+      attacker.bp = 7000;
+      attacker.active = true;
+      player1.field.push(attacker);
+
+      // 低BPユニットでブロック
+      const blocker = createUnit(player2, '1-0-001');
+      blocker.bp = 3000;
+      blocker.active = true;
+      player2.field.push(blocker);
+
+      // 自動ブロック
+      autoResponder.setAutoBlockFirst();
+
+      // 攻撃実行
+      await core.attack(attacker);
+
+      // ブロッカーは破壊される
+      expect(player2.field.find((u: Unit) => u.id === blocker.id)).toBeUndefined();
+      // アタッカーは生存
+      expect(player1.field.find((u: Unit) => u.id === attacker.id)).toBeDefined();
+    });
+  });
+
+  describe('スタック親子関係', () => {
+    test('attack が親スタックの children に追加される', async () => {
+      const { core, player1, autoResponder } = createTestContext();
+
+      const attacker = createUnit(player1, '1-0-001');
+      player1.field.push(attacker);
+      attacker.active = true;
 
       // 親スタック（drive）を作成
       const parentStack = new Stack({
         type: 'drive',
-        source: mockPlayer,
+        source: player1,
         target: attacker,
         core,
       });
 
-      // attack() を import して呼び出す
-      const { attack } = await import('./battle');
+      autoResponder.setAutoSkipBlock();
 
       // parentStack を渡して attack を呼び出す
+      const { attack } = await import('./battle');
       await attack(core, attacker, parentStack);
 
       // attack スタックが parentStack の children に追加されている
-      expect(parentStack.children.length).toBe(1);
-      expect(parentStack.children[0]?.type).toBe('attack');
-      expect(parentStack.children[0]?.parent).toBe(parentStack);
-    });
-
-    test('parentStack が指定されない場合、children には追加されない', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const attacker = createMockUnit(mockPlayer, 'Attacker');
-      mockPlayer.field.push(attacker);
-
-      const { attack } = await import('./battle');
-
-      // parentStack なしで attack を呼び出す
-      await attack(core, attacker);
-
-      // core.stack には何も追加されていない（直接 resolve されたため）
-      expect(core.stack.length).toBe(0);
+      expect(parentStack.children.length).toBeGreaterThanOrEqual(1);
+      const attackChild = parentStack.children.find((c: StackClass) => c.type === 'attack');
+      expect(attackChild).toBeDefined();
+      expect(attackChild?.parent).toBe(parentStack);
     });
   });
 
-  describe('戦闘処理で resolveStack(core) を使わない', () => {
-    test('attack() は resolveStack(core) を呼ばず、直接 resolve する', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const attacker = createMockUnit(mockPlayer, 'Attacker');
-      mockPlayer.field.push(attacker);
+  describe('カード効果の統合テスト', () => {
+    test('2-1-110のonOverclockSelfが相手の最高BPユニットを消滅させる', async () => {
+      const { core, player1, player2, autoResponder } = createTestContext();
 
-      // 事前に overclock スタックを積んでおく
-      const overclockStack = new Stack({
-        type: 'overclock',
-        source: attacker,
-        target: attacker,
-        core,
-      });
-      core.stack.push(overclockStack);
+      // 相手フィールドにユニットを配置
+      const target1 = createUnit(player2, '1-0-001');
+      const target2 = createUnit(player2, '1-0-001');
+      target1.bp = 5000;
+      target2.bp = 7000;
+      target1.active = false; // ブロック不可
+      target2.active = false; // ブロック不可
+      player2.field.push(target1, target2);
 
-      const { attack } = await import('./battle');
+      autoResponder.setAutoSkipBlock(); // ブロックしない
 
-      // attack を実行
-      await attack(core, attacker);
+      // 2-1-110 Lv3召喚
+      const unit = createUnit(player1, '2-1-110');
+      unit.lv = 3;
 
-      // overclock スタックは処理されずに残っている
-      expect(core.stack.length).toBe(1);
-      expect(core.stack[0]).toBe(overclockStack);
+      await core.drive(player1, unit);
+
+      // overclock効果で最高BPユニット(target2)が消滅
+      const target2Exists = player2.field.find((u: Unit) => u.id === target2.id);
+      expect(target2Exists).toBeUndefined();
+
+      // 低BPユニットは生存
+      const target1Exists = player2.field.find((u: Unit) => u.id === target1.id);
+      expect(target1Exists).toBeDefined();
     });
 
-    test('block() は resolveStack(core) を呼ばず、直接 resolve する', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const attacker = createMockUnit(mockPlayer, 'Attacker');
-      const opponent = mockPlayer.opponent;
-      const blocker = createMockUnit(opponent, 'Blocker');
-      mockPlayer.field.push(attacker);
-      opponent.field = [blocker];
+    test('Lv3ユニットは召喚時に行動権を得る（overclock効果）', async () => {
+      const { core, player1 } = createTestContext();
 
-      // 事前に overclock スタックを積んでおく
-      const overclockStack = new Stack({
-        type: 'overclock',
-        source: attacker,
-        target: attacker,
-        core,
-      });
-      core.stack.push(overclockStack);
+      // Lv3ユニット
+      const unit = createUnit(player1, '1-0-001');
+      unit.lv = 3;
 
-      // block はブロッカー選択のプロンプトを出すため、テストが複雑になる
-      // ここでは block スタックが直接 resolve されることを概念的に確認
-      expect(core.stack.length).toBe(1);
-    });
+      await core.drive(player1, unit);
 
-    test('preBattle() は resolveStack をインポートしていない', async () => {
-      // battle.ts が resolveStack をインポートしていないことを確認
-      // これは import 文を確認することで検証できる
-      const battleModule = await import('./battle');
-
-      // モジュールに resolveStack が含まれていないことを確認
-      // (直接確認はできないが、コードレビューで確認済み)
-      expect(battleModule.preBattle).toBeDefined();
-      expect(battleModule.attack).toBeDefined();
-      expect(battleModule.block).toBeDefined();
-      expect(battleModule.postBattle).toBeDefined();
-    });
-  });
-
-  describe('Lv3召喚時の処理順序シミュレーション', () => {
-    test('drive 処理中に attack が発生しても、overclock は drive 完了後に処理される', async () => {
-      const { core, mockPlayer } = createMockCore();
-      const lv3Unit = createMockUnit(mockPlayer, 'Lv3Unit');
-      lv3Unit.lv = 3;
-      mockPlayer.field.push(lv3Unit);
-
-      const resolveOrder: string[] = [];
-
-      // overclock スタック
-      const overclockStack = new Stack({
-        type: 'overclock',
-        source: lv3Unit,
-        target: lv3Unit,
-        core,
-      });
-
-      // drive スタック
-      const driveStack = new Stack({
-        type: 'drive',
-        source: mockPlayer,
-        target: lv3Unit,
-        core,
-      });
-
-      // resolve をラップして順序を記録
-      overclockStack.resolve = async (_c: Core) => {
-        resolveOrder.push('overclock-start');
-        // overclock の条件を満たさないので早期 return
-        resolveOrder.push('overclock-end');
-      };
-
-      driveStack.resolve = async (_c: Core) => {
-        resolveOrder.push('drive-start');
-
-        // drive 処理中に attack が発生（カード効果をシミュレート）
-        const { attack } = await import('./battle');
-        await attack(core, lv3Unit, driveStack);
-        resolveOrder.push('attack-completed');
-
-        resolveOrder.push('drive-end');
-      };
-
-      // スタック構造: [overclock, drive]
-      core.stack.push(overclockStack);
-      core.stack.push(driveStack);
-
-      // resolveStack の動作をシミュレート（LIFO）
-      // まず drive を処理
-      const driveStackItem = core.stack.pop();
-      await driveStackItem?.resolve(core);
-
-      // 次に overclock を処理
-      const overclockStackItem = core.stack.pop();
-      await overclockStackItem?.resolve(core);
-
-      // 期待される順序:
-      // 1. drive-start
-      // 2. attack-completed (attack は drive の中で処理される)
-      // 3. drive-end
-      // 4. overclock-start
-      // 5. overclock-end
-      expect(resolveOrder).toEqual([
-        'drive-start',
-        'attack-completed',
-        'drive-end',
-        'overclock-start',
-        'overclock-end',
-      ]);
+      // overclock 後は行動権がある
+      expect(unit.active).toBe(true);
+      // overclocked フラグが立っている
+      expect(unit.overclocked).toBe(true);
     });
   });
 });
