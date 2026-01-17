@@ -166,6 +166,15 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
     attacker.owner.opponent.damage();
     await System.sleep(1000);
 
+    // 戦闘終了としてマークする
+    const postBattleStack = new Stack({
+      type: '_postBattle',
+      target: attacker,
+      source: attacker.owner,
+      core: core,
+    });
+    await postBattleStack.resolve(core);
+
     // プレイヤーアタックに成功
     const playerAttackStack = new Stack({
       type: 'playerAttack',
@@ -174,7 +183,6 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
       core: core,
     });
     await playerAttackStack.resolve(core);
-    core.room.sync();
   }
 }
 

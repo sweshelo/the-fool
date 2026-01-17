@@ -313,6 +313,8 @@ export class Stack implements IStack {
         this.source instanceof Card ? this.source.catalog.name : this.source.id,
         this.target instanceof Card ? this.target.catalog.name : this.target?.id
       );
+
+    core.room.sync();
   }
 
   private async resolveChild(core: Core): Promise<void> {
