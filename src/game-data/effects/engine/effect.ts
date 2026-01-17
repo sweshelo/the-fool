@@ -398,7 +398,7 @@ export class Effect {
 
     // 可操作領域から不可操作領域への転送は強制的に reset を実施する
     const controllableArea = ['field', 'hand', 'trigger'];
-    target.reset(controllableArea.includes(origin) && controllableArea.includes(location));
+    target.reset(controllableArea.includes(origin) && !controllableArea.includes(location));
 
     // Add card to destination location
     switch (location) {
