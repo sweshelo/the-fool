@@ -1,8 +1,9 @@
 import { describe, test, expect, mock } from 'bun:test';
 import { Stack } from '../class/stack';
-import type { Core } from '../index';
+import { Core } from '../index';
 import type { Unit } from '../class/card';
-import type { Player } from '../class/Player';
+import { Player } from '../class/Player';
+import type { Room } from '@/package/server/room/room';
 
 /**
  * スタック処理順序のテスト
@@ -22,43 +23,36 @@ import type { Player } from '../class/Player';
 
 // モックの作成ヘルパー
 function createMockCore(): { core: Core; mockPlayer: Player } {
-  const mockOpponent = {
-    id: 'player2',
-    field: [] as Unit[],
-    damage: mock(() => {}),
-  };
-
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- テスト用モック
-  const mockPlayer = {
-    id: 'player1',
-    field: [] as Unit[],
-    hand: [],
-    trigger: [],
-    trash: [],
-    cp: { current: 5 },
-    opponent: mockOpponent,
-  } as unknown as Player;
-
+  // Room のモック（必要最小限のプロパティのみ）
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Room は循環参照があるためモックが必要
   const mockRoom = {
+    id: 'test-room',
     sync: mock(() => {}),
     soundEffect: mock(() => {}),
     broadcastToAll: mock(() => {}),
     broadcastToPlayer: mock(() => {}),
     rule: {
-      player: { max: { hand: 7, trigger: 4, field: 5 } },
-      system: { cp: { ceil: 12 } },
+      player: { max: { hand: 7, trigger: 4, field: 5, life: 8 } },
+      system: {
+        cp: { ceil: 12, increase: 1, init: 2, carryover: false, max: 7 },
+        round: 10,
+        draw: { top: 2, override: 1, mulligan: 4 },
+        handicap: { attack: false, cp: false, draw: false },
+      },
+      misc: { strictOverride: false, suicideJoker: false },
     },
-  };
+  } as unknown as Room;
 
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- テスト用モック
-  const core = {
-    id: 'test-core',
-    stack: [] as Stack[],
-    room: mockRoom,
-    players: [mockPlayer],
-    turn: 2,
-    getTurnPlayer: () => mockPlayer,
-  } as unknown as Core;
+  // 実際の Core インスタンスを作成
+  const core = new Core(mockRoom);
+  core.turn = 2;
+
+  // Player を Core 参照付きで作成
+  const mockPlayer = new Player({ id: 'player1', name: 'player', deck: [] }, core);
+  const mockOpponent = new Player({ id: 'player2', name: 'opponent', deck: [] }, core);
+
+  // players 配列に追加（opponent getter が動作するために両方必要）
+  core.players.push(mockPlayer, mockOpponent);
 
   return { core, mockPlayer };
 }
