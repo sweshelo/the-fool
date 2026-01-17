@@ -3,11 +3,11 @@ import { config } from '../../../config';
 import type { Action } from './action';
 import { Card } from './card/Card';
 import { Unit, Evolve } from './card/Unit';
-import master from '@/database/catalog';
+import master from '@/game-data/catalog';
 import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
 import { Joker } from './card/Joker';
-import type { Core } from '../core';
+import type { Core } from '../index';
 
 export interface PlayerAction {
   action: Action;

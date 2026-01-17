@@ -5,10 +5,10 @@
  * - プレイヤーが1人でもゲーム開始可能
  */
 
-import { Core } from '@/package/core/core';
+import { Core } from '@/package/core';
 import type { Room } from '@/package/server/room/room';
 import type { Player } from '@/package/core/class/Player';
-import { MessageHelper } from '@/package/core/message';
+import { MessageHelper } from '@/package/core/helpers/message';
 import { createMessage } from '@/submodule/suit/types/message/message';
 import { Stack } from '@/package/core/class/stack';
 
@@ -76,7 +76,7 @@ export class SandboxCore extends Core {
       await this.resolveStack();
 
       // ターン終了処理（通常のturnChangeと同じ）
-      const { Effect } = await import('@/database/effects');
+      const { Effect } = await import('@/game-data/effects');
       const deathCounterCheckStack = new Stack({
         type: '_deathCounterCheckStack',
         source: this.getTurnPlayer(),

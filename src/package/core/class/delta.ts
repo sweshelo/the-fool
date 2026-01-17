@@ -1,5 +1,5 @@
 import type { DeltaEffect, IDelta, IUnit } from '@/submodule/suit/types';
-import type { StackWithCard } from '@/database/effects/classes/types';
+import type { StackWithCard } from '@/game-data/effects/schema/types';
 
 export interface DeltaSource {
   unit: IUnit['id'];

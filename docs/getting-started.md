@@ -128,7 +128,7 @@ the-fool/
 │   ├── package/
 │   │   ├── core/        # ゲームコアロジック
 │   │   └── server/      # WebSocket サーバー
-│   ├── database/
+│   ├── game-data/
 │   │   ├── effects/     # カード効果実装
 │   │   └── catalog.ts   # カードカタログ
 │   ├── submodule/

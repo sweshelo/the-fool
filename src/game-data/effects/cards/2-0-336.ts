@@ -1,0 +1,15 @@
+import { Effect } from '../engine/effect';
+import { System } from '../engine/system';
+import type { CardEffects, StackWithCard } from '../schema/types';
+
+export const effects: CardEffects = {
+  checkTurnStart: (stack: StackWithCard) => {
+    return stack.processing.owner.id === stack.source.id;
+  },
+
+  onTurnStart: async (stack: StackWithCard) => {
+    const uniqueColors = new Set(stack.processing.owner.field.map(unit => unit.catalog.color)).size;
+    await System.show(stack, '虹の架け橋', `CP+[フィールドの属性数]`);
+    Effect.modifyCP(stack, stack.processing, stack.processing.owner, uniqueColors);
+  },
+};

@@ -20,7 +20,7 @@
 
 ```typescript
 import { EffectTemplate, System } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -48,7 +48,7 @@ export const effects: CardEffects = {
 ```typescript
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -67,7 +67,7 @@ export const effects: CardEffects = {
 ```typescript
 import { Unit } from '@/package/core/class/card';
 import { Effect, System, EffectHelper } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -296,7 +296,7 @@ export const effects: CardEffects = {
 ```typescript
 import { Unit } from '@/package/core/class/card';
 import { EffectTemplate, System } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // ユニット召喚時（他のユニットの召喚も含む）

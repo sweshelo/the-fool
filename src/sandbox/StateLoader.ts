@@ -6,7 +6,7 @@ import type { SyncPayload } from '@/submodule/suit/types/message/payload/client'
 import type { IPlayer } from '@/submodule/suit/types/game/player';
 import type { IAtom, ICard, IUnit, IDelta } from '@/submodule/suit/types/game/card';
 import { Player } from '@/package/core/class/Player';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import type { Card } from '@/package/core/class/card/Card';
 import { Unit, Evolve } from '@/package/core/class/card/Unit';
 import { Intercept } from '@/package/core/class/card/Intercept';
@@ -14,7 +14,7 @@ import { Trigger } from '@/package/core/class/card/Trigger';
 import { Joker } from '@/package/core/class/card/Joker';
 import { Delta } from '@/package/core/class/delta';
 import { DummyCard, DummyUnit } from './DummyCard';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 
 /**
  * IAtomまたはICard型のデータからカードオブジェクトを復元する

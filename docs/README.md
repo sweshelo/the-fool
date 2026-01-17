@@ -25,7 +25,7 @@ CODE OF JOKER のシミュレータを WebSocket サーバの形で提供する�
 ### 主要な構成要素
 
 - **コアシステム** (`src/package/core`) - ゲームロジックとルール実装
-- **データベース** (`src/database`) - カードデータと効果実装
+- **ゲームデータ** (`src/game-data`) - カードデータと効果実装
 - **サーバー** (`src/package/server`) - WebSocket サーバーとルーム管理
 
 ### 関連リポジトリ
