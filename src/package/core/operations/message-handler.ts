@@ -329,8 +329,6 @@ export async function handleMessage(core: Core, message: Message) {
         .find(player => player.id === payload.player)
         ?.field.find(unit => unit.id === payload.target.id);
       if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
-      if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止'))
-        throw new Error('攻撃できないユニットがアタッカーとして指定されました');
 
       await attack(core, attacker);
       break;

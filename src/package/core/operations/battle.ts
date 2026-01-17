@@ -13,7 +13,33 @@ import { setEffectDisplayHandler } from './effect-handler';
  * @param parentStack 親スタック（カード効果から呼ばれた場合に指定）
  */
 export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
-  if (!attacker.owner.field.find(unit => unit.id === attacker.id)) return;
+  // アタックが可能かチェックする
+  if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止') || !attacker.active) {
+    console.error(
+      '攻撃できないユニットがアタッカーとして指定されました: %s',
+      attacker.catalog.name
+    );
+    console.error(attacker.id);
+    return;
+  }
+
+  if (!attacker.owner.field.find(unit => unit.id === attacker.id)) {
+    console.error(
+      'ユニットのアタックが宣言されましたが、対象のユニットがフィールドに存在しません: %s',
+      attacker.catalog.name
+    );
+    console.error(attacker.id);
+    return;
+  }
+
+  if (core.room.rule.system.handicap.attack && core.round === 1 && core.turn === 1) {
+    console.error(
+      'ルール上アタックできない状況でアタックが宣言されました: %s',
+      attacker.catalog.name
+    );
+    console.error(attacker.id);
+    return;
+  }
 
   core.room.broadcastToAll(
     createMessage({
