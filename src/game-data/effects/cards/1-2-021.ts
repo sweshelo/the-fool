@@ -17,7 +17,7 @@ export const effects: CardEffects = {
   // あなたのターン終了時、このユニットのレベルを-1する
   onTurnEnd: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 自分のターンの終了時に発動
-    if (stack.processing.owner.id === stack.core.getTurnPlayer().id) {
+    if (stack.processing.owner.id === stack.core.getTurnPlayer().id && stack.processing.lv > 1) {
       await System.show(stack, '永久の苦しみ', 'レベル-1');
       Effect.clock(stack, stack.processing, stack.processing, -1);
     }
