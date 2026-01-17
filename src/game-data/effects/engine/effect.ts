@@ -936,6 +936,12 @@ export class Effect {
       }
     } else {
       const clone = target.clone(player);
+
+      // フィールド領域からコピーした場合はDeltaにリセットを掛ける
+      if (stack.core.players.flatMap(player => player.field).some(unit => unit.id === target.id)) {
+        clone.reset();
+      }
+
       location.push(clone);
       return clone;
     }
