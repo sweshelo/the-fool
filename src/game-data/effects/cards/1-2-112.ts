@@ -8,6 +8,9 @@ export const effects: CardEffects = {
   },
 
   onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
+    //すでにレベルが最大の場合は発動しない
+    if (stack.processing.lv >= 3) return;
+
     await System.show(stack, '無我夢中の鍛錬', 'レベル+1');
     Effect.clock(stack, stack.processing, stack.processing, 1);
   },
