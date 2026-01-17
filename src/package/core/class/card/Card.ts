@@ -30,8 +30,8 @@ export abstract class Card extends Atom implements ICard {
     return c;
   }
 
-  reset() {
-    this.delta = this.delta.filter(delta => delta.permanent);
+  reset(forceReset: boolean = false) {
+    this.delta = this.delta.filter(delta => delta.permanent && !forceReset);
     this.lv = 1;
     this.generation++;
   }
