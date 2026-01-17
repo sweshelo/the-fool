@@ -4,7 +4,7 @@ import type { Unit, Card } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Delta } from '../class/delta';
-import { Effect } from '@/game-data/effects';
+import { Effect, System } from '@/game-data/effects';
 import { resolveStack } from './stack-resolver';
 
 /**
@@ -115,7 +115,7 @@ export async function drive(
   );
 
   // wait
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await System.sleep(1500);
 
   // スタックの解決処理を開始
   await resolveStack(core);

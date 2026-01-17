@@ -350,7 +350,7 @@ export class Stack implements IStack {
     }
 
     // Stackによって移動が約束されたユニットを移動させる
-    if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
+    if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
       const target = stack.target;
       if (target instanceof Unit) {
@@ -373,7 +373,7 @@ export class Stack implements IStack {
     this.children = [];
     if (isProcessed.includes(true)) {
       this.core.room.sync();
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await System.sleep(1000);
     }
   }
 
@@ -537,7 +537,7 @@ export class Stack implements IStack {
     if (typeof effectHandler === 'function') {
       try {
         // 効果を実行
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await System.sleep(500);
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;

@@ -3,7 +3,7 @@ import type { Unit } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Parry } from '../class/parry';
-import { Effect } from '@/game-data/effects';
+import { Effect, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
 
 /**
@@ -138,7 +138,7 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
     await postBattle(core, attacker, blocker);
   } else {
     attacker.owner.opponent.damage();
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await System.sleep(1000);
 
     // プレイヤーアタックに成功
     const playerAttackStack = new Stack({
@@ -251,7 +251,7 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
       })
     );
   }
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await System.sleep(1000);
 
   if (blocker) {
     const blockStack = new Stack({
@@ -341,7 +341,7 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
   if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
   if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
 
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await System.sleep(1000);
 
   await stack.resolve(core);
   core.room.sync();
