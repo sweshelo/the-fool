@@ -52,7 +52,6 @@ export const effects: CardEffects = {
 
     // BPを増加（ターン終了まで）
     Effect.modifyBP(stack, stack.processing, stack.processing, bpIncrease, {
-      source: { unit: stack.processing.id, effectCode: 'アームズ・バトルシフト' },
       event: 'turnEnd',
       count: 1,
     });
