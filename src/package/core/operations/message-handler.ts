@@ -25,6 +25,7 @@ import { turnChange } from './game-flow';
 import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
+import { MessageHelper } from '../helpers/message';
 
 /**
  * クライアントからのメッセージを処理する
@@ -88,10 +89,7 @@ export async function handleMessage(core: Core, message: Message) {
     }
     case 'EvolveDrive':
     case 'UnitDrive': {
-      core.room.broadcastToAll({
-        action: { type: 'operation', handler: 'client' },
-        payload: { type: 'Operation', action: 'freeze' },
-      });
+      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
       const player = core.players.find(p => p.id === payload.player);
       const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
@@ -170,18 +168,12 @@ export async function handleMessage(core: Core, message: Message) {
         await drive(core, player, card, source);
       }
 
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, {
-        action: { type: 'operation', handler: 'client' },
-        payload: { type: 'Operation', action: 'defrost' },
-      });
+      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
       break;
     }
 
     case 'JokerDrive': {
-      core.room.broadcastToAll({
-        action: { type: 'operation', handler: 'client' },
-        payload: { type: 'Operation', action: 'freeze' },
-      });
+      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: JokerDrivePayload = message.payload;
 
       // Validate player
@@ -263,10 +255,7 @@ export async function handleMessage(core: Core, message: Message) {
       // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
       core.stack.push(jokerStack);
       await resolveStack(core);
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, {
-        action: { type: 'operation', handler: 'client' },
-        payload: { type: 'Operation', action: 'defrost' },
-      });
+      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
       break;
     }
 
@@ -322,6 +311,7 @@ export async function handleMessage(core: Core, message: Message) {
     }
 
     case 'Attack': {
+      core.room.broadcastToAll(MessageHelper.freeze());
       const { payload } = message;
 
       // IUnit -> Unitに変換
@@ -331,10 +321,13 @@ export async function handleMessage(core: Core, message: Message) {
       if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
 
       await attack(core, attacker);
+      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
       break;
     }
 
     case 'Boot': {
+      core.room.broadcastToAll(MessageHelper.freeze());
+
       const payload = message.payload;
       const player = core.players.find(p => p.id === payload.player);
       const target = player?.field.find(unit => unit.id === payload.target.id);
@@ -367,6 +360,7 @@ export async function handleMessage(core: Core, message: Message) {
         core.stack.push(new Stack({ type: 'boot', target, core: core, source: player }));
         await resolveStack(core);
       }
+      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
       break;
     }
 
