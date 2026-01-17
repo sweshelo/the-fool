@@ -19,7 +19,6 @@ COPY .gitmodules ./.gitmodules
 RUN git submodule init && git submodule update
 
 # 必要なファイルのみをコピー
-COPY index.ts ./
 COPY src/ ./src/
 COPY tsconfig.json ./
 COPY config.yaml ./
@@ -30,4 +29,4 @@ RUN rm -rf .git
 # 実行設定
 USER bun
 EXPOSE 5000/tcp
-ENTRYPOINT [ "bun", "run", "index.ts" ]
+ENTRYPOINT [ "bun", "run", "src/index.ts" ]
