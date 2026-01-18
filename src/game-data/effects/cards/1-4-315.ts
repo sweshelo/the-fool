@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     );
 
     for (const card of selectedCards) {
-      Effect.move(stack, stack.processing, card, 'trash');
+      Effect.handes(stack, stack.processing, card);
     }
   },
 
