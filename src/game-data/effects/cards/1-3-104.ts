@@ -19,7 +19,7 @@ export const effects: CardEffects = {
       )
     ) {
       await System.show(stack, '口伝・真如剣', 'トリガーゾーンにあるカードを1枚破壊');
-      const [target] = EffectHelper.random(stack.processing.owner.trigger);
+      const [target] = EffectHelper.random(stack.processing.owner.opponent.trigger);
       if (target) Effect.move(stack, stack.processing, target, 'trash');
     }
   },
