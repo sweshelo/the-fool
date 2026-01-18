@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Unit, Card } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -24,7 +24,7 @@ export const effects: CardEffects = {
   // 劣化した魔術鉄鎖：効果によって対戦相手が手札を捨てた時に行動権を回復
   onHandes: async (stack: StackWithCard<Unit>): Promise<void> => {
     // targetとsourceがCardオブジェクトであることを確認
-    if (!(stack.source instanceof Unit && stack.target instanceof Unit)) {
+    if (!(stack.source instanceof Card && stack.target instanceof Card)) {
       return;
     }
 
