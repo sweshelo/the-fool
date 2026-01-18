@@ -2,6 +2,19 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
+async function overFlare(stack: StackWithCard): Promise<void> {
+  await System.show(stack, '紅蓮のオーバーフレア', '4000ダメージ');
+
+  const [unit] = await EffectHelper.pickUnit(
+    stack,
+    stack.processing.owner,
+    'opponents',
+    'ダメージを与えるユニットを選択'
+  );
+
+  Effect.damage(stack, stack.processing, unit, 4000, 'effect');
+}
+
 export const effects: CardEffects = {
   onAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.target instanceof Unit && stack.processing.owner.id === stack.target.owner.id) {
@@ -10,7 +23,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onClockup: async (stack: StackWithCard): Promise<void> => {
+  onClockup: async (stack: StackWithCard<Unit>): Promise<void> => {
     if (
       stack.target instanceof Unit &&
       stack.processing.owner.id === stack.target.owner.id &&
@@ -18,15 +31,7 @@ export const effects: CardEffects = {
       stack.processing.id !== stack.target.id &&
       EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     ) {
-      await System.show(stack, '紅蓮のオーバーフレア', '4000ダメージ');
-      const [unit] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        'opponents',
-        'ダメージを与えるユニットを選択'
-      );
-
-      Effect.damage(stack, stack.processing, unit, 4000, 'effect');
+      await overFlare(stack);
     }
   },
 
@@ -37,6 +42,13 @@ export const effects: CardEffects = {
       targets.forEach(unit => Effect.damage(stack, stack.processing, unit, 5000, 'effect'));
     }
 
-    await effects.onClockup?.(stack);
+    if (
+      stack.target instanceof Unit &&
+      stack.processing.owner.id === stack.target.owner.id &&
+      stack.target.lv === 3 &&
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+    ) {
+      await overFlare(stack);
+    }
   },
 };
