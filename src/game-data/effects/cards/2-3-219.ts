@@ -8,9 +8,10 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(
       stack,
-      '北斗玄天＆翠檄黒叡智',
-      '四聖獣ユニットに【秩序の盾】を付与\nカードを1枚引きコスト-2'
+      '北斗玄天',
+      '【固着】\n四聖獣ユニットに【秩序の盾】を付与\nカードを1枚引きコスト-2'
     );
+    Effect.keyword(stack, stack.processing, stack.processing, '固着');
 
     // カードを1枚引く
     const card = EffectTemplate.draw(stack.processing.owner, stack.core);
