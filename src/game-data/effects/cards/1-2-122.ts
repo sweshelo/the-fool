@@ -28,10 +28,10 @@ export const effects: CardEffects = {
         'BPを1/2にするユニットを選択'
       );
 
-      // 対象のBPを取得して半分に
-      const currentBP = target.currentBP;
-      const halfBP = Math.floor(currentBP / 2);
-      const bpReduction = currentBP - halfBP; // 減少量を計算
+      // 対象の基本BPを取得して半分に（端数切り上げ）
+      const baseBP = target.bp;
+      const halfBP = Math.ceil(baseBP / 2);
+      const bpReduction = baseBP - halfBP; // 減少量を計算
 
       // BPを減少させる
       Effect.modifyBP(stack, stack.processing, target, -bpReduction, {
