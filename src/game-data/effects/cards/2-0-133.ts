@@ -7,9 +7,9 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
     const purple = stack.processing.owner.purple;
     if (purple && purple > 0) {
-      await System.show(stack, '無限の混沌', '敵全体に[紫ゲージ×1000]ダメージ');
+      await System.show(stack, '無限の混沌', '敵全体に[紫ゲージ×2000]ダメージ');
       stack.processing.owner.opponent.field.forEach(unit =>
-        Effect.damage(stack, stack.processing, unit, 1000 * purple)
+        Effect.damage(stack, stack.processing, unit, 2000 * purple)
       );
       await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -purple);
     }
