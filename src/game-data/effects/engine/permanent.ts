@@ -69,9 +69,9 @@ export class PermanentEffect {
       } else {
         // 効果剥奪
         if (delta)
-          card.delta.filter(
+          card.delta = card.delta.filter(
             delta =>
-              delta.source?.effectCode !== details.effectCode && delta.source?.unit !== source.id
+              !(delta.source?.effectCode === details.effectCode && delta.source?.unit === source.id)
           );
       }
     });
