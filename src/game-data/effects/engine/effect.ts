@@ -238,8 +238,10 @@ export class Effect {
     const isOnField = exists.result && exists.place?.name === 'field';
     if (!isOnField) throw new Error('対象が見つかりませんでした');
 
-    target.delta.push(new Delta({ type: 'dynamic-bp' }, { source: option.source, calculator }));
     const value = calculator(target);
+    target.delta.push(
+      new Delta({ type: 'dynamic-bp', diff: value }, { source: option.source, calculator })
+    );
 
     stack.core.room.broadcastToAll(
       createMessage({

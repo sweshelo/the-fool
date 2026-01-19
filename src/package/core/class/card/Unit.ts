@@ -50,8 +50,8 @@ export class Unit extends Card implements IUnit {
       this.bp +
       this.delta
         .map(delta => {
-          if (delta.effect.type === 'bp') return delta.effect.diff;
-          if (delta.effect.type === 'dynamic-bp') return delta.calculator?.(this) ?? 0;
+          if (delta.effect.type === 'bp' || delta.effect.type === 'dynamic-bp')
+            return delta.effect.diff;
           if (delta.effect.type === 'damage') return -delta.effect.value;
           return 0;
         })

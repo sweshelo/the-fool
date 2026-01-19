@@ -705,10 +705,17 @@ export class Stack implements IStack {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
-
-          // このフィールド効果による影響を確認
-          this.breakCheck(unit);
         }
+
+        // フィールド効果による dynamic-bp を計算
+        unit.delta.forEach(delta => {
+          if (delta.effect.type === 'dynamic-bp') {
+            delta.effect.diff = delta.calculator?.(unit) ?? 0;
+          }
+        });
+
+        // このフィールド効果による影響を確認
+        this.breakCheck(unit);
       });
 
     this.core.players
