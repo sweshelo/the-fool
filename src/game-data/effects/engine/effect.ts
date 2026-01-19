@@ -165,6 +165,7 @@ export class Effect {
    * @param source BPを変動させる効果を発動したカード
    * @param target BPが変動するユニット
    * @param value 操作量
+   * @param option 基本BPの操作や効果の発生源オブジェクトを指定
    * @returns この効果で相手を破壊した時は true を返す
    */
   static modifyBP(stack: Stack, source: Card, target: Unit, value: number, option: ModifyBPOption) {
@@ -200,6 +201,57 @@ export class Effect {
           body: {
             effect: 'status',
             type: 'isBaseBP' in option ? 'base-bp' : 'bp',
+            value,
+            unitId: target.id,
+          },
+        },
+      })
+    );
+
+    stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
+
+    if (target.currentBP <= 0) {
+      Effect.break(stack, source, target, 'modifyBp');
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 対象のBPを動的に操作する
+   * @param stack 親スタック
+   * @param source BPを変動させる効果を発動したカード
+   * @param target BPが変動するユニット
+   * @param calculator BPを計算する関数
+   * @param option フィールド効果の発生源オブジェクトを指定
+   */
+  static dynamicBP(
+    stack: Stack,
+    source: Card,
+    target: Unit,
+    calculator: (self: Card) => number,
+    option: { source: DeltaSource }
+  ) {
+    // 対象がフィールド上に存在するか確認
+    const exists = target.owner.find(target);
+    const isOnField = exists.result && exists.place?.name === 'field';
+    if (!isOnField) throw new Error('対象が見つかりませんでした');
+
+    target.delta.push(new Delta({ type: 'dynamic-bp' }, { source: option.source, calculator }));
+    const value = calculator(target);
+
+    stack.core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'effect',
+          handler: 'client',
+        },
+        payload: {
+          type: 'VisualEffect',
+          body: {
+            effect: 'status',
+            type: 'bp',
             value,
             unitId: target.id,
           },
