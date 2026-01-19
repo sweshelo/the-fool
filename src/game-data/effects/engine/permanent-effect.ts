@@ -1,5 +1,5 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import { Unit, type Card } from '@/package/core/class/card';
 import type { DeltaSource } from '@/package/core/class/delta';
 
 /**
@@ -9,11 +9,6 @@ import type { DeltaSource } from '@/package/core/class/delta';
 export type DeltaSourceOption = {
   source: DeltaSource;
 };
-
-/**
- * 対象の所有者を指定
- */
-type TargetOwner = 'self' | 'owns' | 'opponents';
 
 /**
  * 対象の領域を指定
@@ -34,6 +29,10 @@ type TargetZone = 'field' | 'hand' | 'trigger';
  * - ['opponents', 'field']: 相手のフィールド（明示的）
  * - ['opponents', 'hand']: 相手の手札
  * - ['opponents', 'trigger']: 相手のトリガーゾーン
+ * - ['both']: 両方のプレイヤーのフィールド（デフォルト）
+ * - ['both', 'field']: 両方のプレイヤーのフィールド（明示的）
+ * - ['both', 'hand']: 両方のプレイヤーの手札
+ * - ['both', 'trigger']: 両方のプレイヤーのトリガーゾーン
  */
 export type EffectDetails =
   | {
@@ -47,8 +46,14 @@ export type EffectDetails =
       effectCode: string;
     }
   | {
-      /** 自分または相手のフィールド上のユニットを対象とする（第2要素省略時は 'field' がデフォルト） */
-      targets: ['owns'] | ['opponents'] | ['owns', 'field'] | ['opponents', 'field'];
+      /** 自分、相手、または両方のフィールド上のユニットを対象とする（第2要素省略時は 'field' がデフォルト） */
+      targets:
+        | ['owns']
+        | ['opponents']
+        | ['both']
+        | ['owns', 'field']
+        | ['opponents', 'field']
+        | ['both', 'field'];
       /** 効果を適用する関数 */
       effect: (unit: Unit, option: DeltaSourceOption) => void;
       /** 効果を適用する条件（省略時は常に適用） */
@@ -57,12 +62,14 @@ export type EffectDetails =
       effectCode: string;
     }
   | {
-      /** 自分または相手の手札/トリガーゾーンを対象とする */
+      /** 自分、相手、または両方の手札/トリガーゾーンを対象とする */
       targets:
         | ['owns', 'hand']
         | ['opponents', 'hand']
+        | ['both', 'hand']
         | ['owns', 'trigger']
-        | ['opponents', 'trigger'];
+        | ['opponents', 'trigger']
+        | ['both', 'trigger'];
       /** 効果を適用する関数 */
       effect: (card: Card, option: DeltaSourceOption) => void;
       /** 効果を適用する条件（省略時は常に適用） */
@@ -123,16 +130,33 @@ export class PermanentEffect {
     // 対象を取得
     const targets = this.getTargets(stack, source, details.targets);
 
+    // targets の型を判定（Unit期待 vs Card期待）
+    const isUnitTarget =
+      details.targets[0] === 'self' ||
+      details.targets.length === 1 ||
+      (details.targets.length === 2 && details.targets[1] === 'field');
+
     // 各対象に対して効果を適用または除去
     targets.forEach(target => {
       // 既存の Delta を検索
       const existingDelta = target.delta.find(
-        delta =>
-          delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode
+        delta => delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode
       );
 
-      // 条件を評価
-      const conditionMet = !details.condition || details.condition(target as any);
+      // 条件を評価（型安全に）
+      let conditionMet = true;
+      if (details.condition) {
+        if (isUnitTarget) {
+          // Unit型を期待
+          if (!(target instanceof Unit)) return; // ランタイムガード
+          // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+          conditionMet = (details.condition as unknown as (unit: Unit) => boolean)(target);
+        } else {
+          // Card型を期待
+          // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+          conditionMet = (details.condition as unknown as (card: Card) => boolean)(target);
+        }
+      }
 
       if (existingDelta) {
         // Delta が既に存在する場合
@@ -147,8 +171,21 @@ export class PermanentEffect {
       } else {
         // Delta が存在しない場合
         if (conditionMet) {
-          // 条件が満たされている → 効果を適用
-          details.effect(target as any, option);
+          // 条件が満たされている → 効果を適用（型安全に）
+          if (isUnitTarget) {
+            if (!(target instanceof Unit)) return; // ランタイムガード
+            // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+            (details.effect as unknown as (unit: Unit, option: DeltaSourceOption) => void)(
+              target,
+              option
+            );
+          } else {
+            // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+            (details.effect as unknown as (card: Card, option: DeltaSourceOption) => void)(
+              target,
+              option
+            );
+          }
         }
         // 条件が満たされていない場合は何もしない
       }
@@ -165,17 +202,32 @@ export class PermanentEffect {
    *
    * @private
    */
-  private static getTargets(
-    stack: Stack,
-    source: Unit,
-    targets: EffectDetails['targets']
-  ): Card[] {
+  private static getTargets(stack: Stack, source: Unit, targets: EffectDetails['targets']): Card[] {
     // 第1要素: 所有者、第2要素: 領域（デフォルトは 'field'）
-    const [owner, zone = 'field'] = targets as [TargetOwner, TargetZone?];
+    const owner = targets[0];
+    const zone: TargetZone = targets.length === 2 ? (targets[1] as TargetZone) : 'field';
 
     // 'self' の場合は自分自身のみ
     if (owner === 'self') {
       return [source];
+    }
+
+    // 'both' の場合は両方のプレイヤー
+    if (owner === 'both') {
+      const result: Card[] = [];
+      // 領域に応じて対象を追加
+      switch (zone) {
+        case 'field':
+          result.push(...source.owner.field, ...source.owner.opponent.field);
+          break;
+        case 'hand':
+          result.push(...source.owner.hand, ...source.owner.opponent.hand);
+          break;
+        case 'trigger':
+          result.push(...source.owner.trigger, ...source.owner.opponent.trigger);
+          break;
+      }
+      return result;
     }
 
     // プレイヤーを取得

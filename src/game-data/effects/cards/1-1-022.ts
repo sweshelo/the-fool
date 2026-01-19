@@ -1,4 +1,4 @@
-import { Effect, EffectTemplate, PermanentEffect, System } from '..';
+import { Effect, EffectTemplate, PermanentEffect, System, type DeltaSourceOption } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -16,8 +16,9 @@ export const effects: CardEffects = {
     // 【侍】ユニットに【不屈】を付与
     PermanentEffect.mount(stack, stack.processing, {
       targets: ['owns'],
-      effect: (unit, option) => Effect.keyword(stack, stack.processing, unit, '不屈', option),
-      condition: unit => unit.catalog.species?.includes('侍') ?? false,
+      effect: (unit: Unit, option: DeltaSourceOption) =>
+        Effect.keyword(stack, stack.processing, unit, '不屈', option),
+      condition: (unit: Unit) => unit.catalog.species?.includes('侍') ?? false,
       effectCode: '心眼の撫子',
     });
   },

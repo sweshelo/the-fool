@@ -1,5 +1,5 @@
-import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, PermanentEffect, System } from '..';
+import { Unit, type Card } from '@/package/core/class/card';
+import { Effect, EffectHelper, PermanentEffect, System, type DeltaSourceOption } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
 import { Delta } from '@/package/core/class/delta';
@@ -20,12 +20,12 @@ export const effects: CardEffects = {
     // 手札の赤属性ユニットのコストを-1
     PermanentEffect.mount(stack, stack.processing, {
       targets: ['owns', 'hand'],
-      effect: (card, option) => {
+      effect: (card: Card, option: DeltaSourceOption) => {
         if (card instanceof Unit) {
           card.delta.push(new Delta({ type: 'cost', value: -1 }, option));
         }
       },
-      condition: card =>
+      condition: (card: Card) =>
         card.catalog.color === Color.RED && card instanceof Unit && hasNotSummonedUnits,
       effectCode: '甘い誘い',
     });

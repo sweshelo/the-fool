@@ -910,13 +910,13 @@ type EffectDetails =
       effectCode: string
     }
   | {
-      targets: ['owns'] | ['opponents'] | ['owns', 'field'] | ['opponents', 'field']
+      targets: ['owns'] | ['opponents'] | ['both'] | ['owns', 'field'] | ['opponents', 'field'] | ['both', 'field']
       effect: (unit: Unit, option: DeltaSourceOption) => void
       condition?: (unit: Unit) => boolean
       effectCode: string
     }
   | {
-      targets: ['owns', 'hand'] | ['opponents', 'hand'] | ['owns', 'trigger'] | ['opponents', 'trigger']
+      targets: ['owns', 'hand'] | ['opponents', 'hand'] | ['both', 'hand'] | ['owns', 'trigger'] | ['opponents', 'trigger'] | ['both', 'trigger']
       effect: (card: Card, option: DeltaSourceOption) => void
       condition?: (card: Card) => boolean
       effectCode: string
@@ -930,6 +930,7 @@ type EffectDetails =
     - `'self'` - 自分自身のみ（特殊ケース）
     - `'owns'` - 自分
     - `'opponents'` - 対戦相手
+    - `'both'` - 両方のプレイヤー
   - **第2要素**: 領域を指定（省略時は `'field'` がデフォルト）
     - `'field'` - フィールド上のユニット
     - `'hand'` - 手札
@@ -938,6 +939,8 @@ type EffectDetails =
     - `['owns']` → 自分のフィールド（デフォルト）
     - `['owns', 'hand']` → 自分の手札
     - `['opponents', 'trigger']` → 対戦相手のトリガーゾーン
+    - `['both']` → 両方のプレイヤーのフィールド
+    - `['both', 'hand']` → 両方のプレイヤーの手札
 
 - `effect` - 効果を適用する関数（必須）
   - 第1引数: 対象のカード（`targets` に応じて `Unit` または `Card` 型）
@@ -1052,6 +1055,35 @@ fieldEffect: (stack: StackWithCard<Unit>) => {
       Effect.keyword(stack, stack.processing, unit, '加護', option),
     condition: (_unit) => stack.processing.lv === 3,  // 効果源のレベルを参照
     effectCode: '火遠理の加護',
+  });
+}
+```
+
+#### 両方のプレイヤーへの効果の例
+
+```typescript
+// 全てのユニットのBPを-1000（両方のプレイヤー）
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['both'],  // 両方のプレイヤーのフィールド
+    effect: (unit, option) =>
+      Effect.modifyBP(stack, stack.processing, unit, -1000, option),
+    effectCode: '全体弱体',
+  });
+}
+```
+
+```typescript
+// 全てのプレイヤーの手札のコストを+1
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['both', 'hand'],  // 両方のプレイヤーの手札
+    effect: (card, option) => {
+      if (card instanceof Unit) {
+        card.delta.push(new Delta({ type: 'cost', value: 1 }, option));
+      }
+    },
+    effectCode: '全体コスト増加',
   });
 }
 ```
