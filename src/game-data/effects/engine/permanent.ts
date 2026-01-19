@@ -6,10 +6,39 @@ const targetKeys = ['self', 'owns', 'opponents', 'both', 'hand', 'trigger'] as c
 type TargetKeys = (typeof targetKeys)[number];
 
 interface EffectDetails {
+  /**
+   * フィールド効果の対象をAND条件で指定します。
+   * 効果の対象がフィールド上のユニットではない場合、'owns' / 'opponents' / 'both' のいずれかに続けて、 'hand' または 'trigger' のように指定します。
+   * @example
+   * const targets = ['owns'] // 自フィールド
+   * const targets = ['opponents', 'trigger'] // 敵トリガーゾーン
+   */
   targets: TargetKeys[];
-  effect: (card: Card, deltaSource: DeltaSource) => void;
+  /**
+   * フィールド効果の内容を記述
+   * @param target フィールド効果の影響を受ける対象。具体的な対象はtargets[]に渡したキーに応じて確定します。
+   * @param deltaSource 自動的に生成されて渡されます。これを modifyBP() や keyword() に渡します。
+   * @example
+   * // 一律 BPを+2000する場合
+   * const effect = (target, deltaSource) => {
+   *   // 現在のところ、targetsにUnitしか指定され得ない領域を指定した場合も
+   *   // instanceof Unit による型チェックが必要です
+   *   if (target instanceof Unit) {
+   *     Effect.modifyBP(stack, stack.processing, target, 2000, { source: deltaSource })
+   *   }
+   * }
+   */
+  effect: (target: Card, deltaSource: DeltaSource) => void;
+  /**
+   * 効果の種別を一意に識別するためのコードです。1つのユニットが複数のフィールド効果を発動するケースがあるため、必須パラメータです。
+   */
   effectCode: string;
-  condition?: (card: Card) => unknown;
+  /**
+   * 対象のフィールド効果を発動できるかどうかを個別に判定する
+   * @param target フィールド効果の影響を受ける対象。具体的な対象はtargets[]に渡したキーに応じて確定します。
+   * @returns booleanにキャスト可能な値
+   */
+  condition?: (target: Card) => unknown;
 }
 
 interface Targets {
@@ -18,6 +47,12 @@ interface Targets {
 }
 
 export class PermanentEffect {
+  /**
+   * フィールド効果を登録します。
+   * @param stack Stack
+   * @param source フィールド効果の発生源
+   * @param details フィールド効果詳細
+   */
   static mount(stack: StackWithCard, source: Card, details: EffectDetails) {
     const { units = [], cards = [] } = this.getTargets(stack, source, details.targets);
 
