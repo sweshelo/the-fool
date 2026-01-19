@@ -243,25 +243,26 @@ export class Effect {
       new Delta({ type: 'dynamic-bp', diff: value }, { source: option.source, calculator })
     );
 
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'status',
-            type: 'bp',
-            value,
-            unitId: target.id,
+    if (value !== 0) {
+      stack.core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'effect',
+            handler: 'client',
           },
-        },
-      })
-    );
-
-    stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
+          payload: {
+            type: 'VisualEffect',
+            body: {
+              effect: 'status',
+              type: 'bp',
+              value,
+              unitId: target.id,
+            },
+          },
+        })
+      );
+      stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
+    }
 
     if (target.currentBP <= 0) {
       Effect.break(stack, source, target, 'modifyBp');
