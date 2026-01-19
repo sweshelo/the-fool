@@ -197,67 +197,40 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 #### 重要な注意点
 
-永続効果は何度も呼び出されるため、**冪等性**を保つ必要があります。
-状態を変更する際は **Delta** を使用します。
+永続効果は何度も呼び出されるため、PermanentEffectクラスを利用した実装を行って下さい。
 
 #### 例：自身の BP を +1000 する
 
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  const self = stack.processing;
-
-  // 既に発行した Delta が存在するか確認
-  const delta = self.delta.find(
-    d => d.source.unit === self.id && d.effect.type === 'bp'
-  );
-
-  if (delta) {
-    // Delta を更新
-    delta.effect.diff = 1000;
-  } else {
-    // Delta を新規作成
-    Effect.modifyBP(stack, self, self, 1000, {
-      source: { unit: self.id }
-    });
-  }
+  PermanentEffect.mount(stack, stack.processing, {
+    effect: (target, source) => {
+      // 型チェックを実施
+      // ※それ以外の条件は condition に実装します
+      if (target instanceof Unit)
+        Effect.modifyBP(stack, stack.processing, target, 1000, { source })
+      },
+      effectCode: '効果名'
+      targets: ['self'], // 対象が自身のみならば 'self'
+  })
 }
 ```
 
-#### Delta の source について
-
-`source: { unit: self.id }` を指定することで、以下が自動的に処理されます：
-
-- 効果元のユニットに【沈黙】が付与された時、Delta が無効化される
-- 効果元のユニットがフィールドから離れた時、Delta が除去される
-
 #### 例：条件付きキーワード付与（Lv1 の時に【秩序の盾】を付与）
-
-複数種類の効果を永続効果で提供する場合、`effectCode` で識別します。
 
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  const self = stack.processing;
-
-  // effectCode で特定の効果を識別
-  const delta = self.delta.find(
-    d => d.source.unit === self.id && d.source.effectCode === 'Lv1_秩序の盾'
-  );
-
-  if (delta) {
-    // Lv1 以外になったら効果を除去
-    if (self.lv !== 1) {
-      self.delta = self.delta.filter(
-        d => !(d.source.unit === self.id && d.source.effectCode === 'Lv1_秩序の盾')
-      );
-    }
-  } else {
-    // Lv1 の時のみ【秩序の盾】を付与
-    if (self.lv === 1) {
-      Effect.keyword(stack, self, self, '秩序の盾', {
-        source: { unit: self.id, effectCode: 'Lv1_秩序の盾' }
-      });
-    }
-  }
+  PermanentEffect.mount(stack, stack.processing, {
+    effect: (target, source) => {
+      // 型チェックを実施
+      // ※それ以外の条件は condition に実装します
+      if (target instanceof Unit)
+        Effect.keyword(stack, stack.processing, target, '秩序の盾')
+      },
+      effectCode: '効果名'
+      targets: ['self'], // 対象が自身のみならば 'self'
+      condition: (target) => target.lv === 1,
+  })
 }
 ```
 

@@ -159,27 +159,24 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const self = stack.processing;
-
-    // 既存のDeltaを確認
-    const delta = self.delta.find(
-      d => d.source?.unit === self.id && d.effect.type === 'bp'
-    );
-
-    if (delta) {
-      // Deltaを更新
-      delta.effect.diff = 1000;
-    } else {
-      // Deltaを新規作成
-      Effect.modifyBP(stack, self, self, 1000, {
-        source: { unit: self.id }
-      });
-    }
-  },
+    PermanentEffect.mount(stack, stack.processing, {
+      effect: (target, source) => {
+        // 型チェックを実施
+        // ※それ以外の条件は condition に実装します
+        if (target instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, target, 1000, { source })
+        }
+      },
+      effectCode: '効果名'
+      targets: ['self'], // 対象が自身のみならば 'self'
+    })
+  }
 };
 ```
 
 ### 例8: フィールドの【神】1体につき自身のBPを+4000
+
+フィールドの状況に応じて効果量が変動する場合、`Effect.modifyBP` の代わりに `Effect.dynamicBP` を利用し、計算式を登録します。
 
 ```typescript
 export const effects: CardEffects = {
@@ -188,33 +185,18 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    // すでに自身が発行したDeltaがあるか確認
-    const delta = stack.processing.delta.find(
-      delta => delta.source?.unit === stack.processing.id && delta.source?.effectCode === '闘士／神'
-    );
-
-    // フィールドにいる【神】ユニットの数をカウント
-    const godCount = stack.core.players
-      .map(p => p.field)
-      .flat()
-      .filter(unit => unit.catalog.species?.includes('神')).length;
-
-    // BP増加量を計算
-    const bpBoost = godCount * 4000;
-
-    if (delta && delta.effect.type === 'bp') {
-      // Deltaを更新
-      delta.effect.diff = bpBoost;
-    } else {
-      // 新規にDeltaを生成
-      Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-        source: {
-          unit: stack.processing.id,
-          effectCode: '闘士／神',
-        },
-      });
-    }
-  },
+    PermanentEffect.mount(stack, stack.processing, {
+      effect: (target, source) => {
+        // 型チェックを実施
+        // ※それ以外の条件は condition に実装します
+        if (target instanceof Unit) {
+          Effect.dynamicBP(stack, stack.processing, target, target.owner.field.filter(unit => unit.catalog.species.includes('神')).length * 4000, { source })
+        }
+      },
+      effectCode: '闘士／神'
+      targets: ['self'], // 対象が自身のみならば 'self'
+    })
+  }
 };
 ```
 
