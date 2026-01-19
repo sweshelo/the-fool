@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // ■大天使の加護
@@ -22,33 +23,15 @@ export const effects: CardEffects = {
 
   // フィールド効果：天使ユニットのBPを+1000する
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 自分の天使ユニットを対象にする
-    owner.field.forEach(unit => {
-      // 天使ユニットか確認
-      if (unit.catalog.species?.includes('天使')) {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          d => d.source?.unit === stack.processing.id && d.source?.effectCode === 'サポーター／天使'
-        );
-
-        if (delta && delta.effect.type === 'bp') {
-          // 既存のDeltaを更新
-          delta.effect.diff = 1000;
-        } else {
-          // 新しいDeltaを発行
-          Effect.modifyBP(stack, stack.processing, unit, 1000, {
-            source: { unit: stack.processing.id, effectCode: 'サポーター／天使' },
-          });
+    PermanentEffect.mount(stack, stack.processing, {
+      targets: ['owns'],
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, unit, 1000, { source });
         }
-      } else {
-        // 天使でなくなった場合、このユニットが付与したBP上昇を削除
-        unit.delta = unit.delta.filter(
-          d =>
-            !(d.source?.unit === stack.processing.id && d.source?.effectCode === 'サポーター／天使')
-        );
-      }
+      },
+      effectCode: 'サポーター／天使',
+      condition: target => target.catalog.species?.includes('天使') ?? false,
     });
   },
 };
