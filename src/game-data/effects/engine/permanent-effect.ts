@@ -109,7 +109,61 @@ export type EffectDetails =
  */
 export class PermanentEffect {
   /**
-   * 永続効果をマウントする
+   * 永続効果をマウントする（自分自身のみ対象）
+   */
+  static mount(
+    stack: Stack,
+    source: Unit,
+    details: {
+      targets: ['self'];
+      effect: (unit: Unit, option: DeltaSourceOption) => void;
+      condition?: (unit: Unit) => boolean;
+      effectCode: string;
+    }
+  ): void;
+
+  /**
+   * 永続効果をマウントする（フィールド上のユニット対象）
+   */
+  static mount(
+    stack: Stack,
+    source: Unit,
+    details: {
+      targets:
+        | ['owns']
+        | ['opponents']
+        | ['both']
+        | ['owns', 'field']
+        | ['opponents', 'field']
+        | ['both', 'field'];
+      effect: (unit: Unit, option: DeltaSourceOption) => void;
+      condition?: (unit: Unit) => boolean;
+      effectCode: string;
+    }
+  ): void;
+
+  /**
+   * 永続効果をマウントする（手札・トリガーゾーン対象）
+   */
+  static mount(
+    stack: Stack,
+    source: Unit,
+    details: {
+      targets:
+        | ['owns', 'hand']
+        | ['opponents', 'hand']
+        | ['both', 'hand']
+        | ['owns', 'trigger']
+        | ['opponents', 'trigger']
+        | ['both', 'trigger'];
+      effect: (card: Card, option: DeltaSourceOption) => void;
+      condition?: (card: Card) => boolean;
+      effectCode: string;
+    }
+  ): void;
+
+  /**
+   * 永続効果をマウントする（実装）
    *
    * 指定された対象に対して効果を適用し、条件が満たされなくなった場合は自動的に除去します。
    * 同じ effectCode の効果が既に適用されている場合は重複しません。
@@ -137,26 +191,78 @@ export class PermanentEffect {
       (details.targets.length === 2 && details.targets[1] === 'field');
 
     // 各対象に対して効果を適用または除去
+    if (isUnitTarget) {
+      // Unit型の処理
+      if (this.isUnitEffectDetails(details)) {
+        this.processUnitTargets(targets, source, details, option);
+      }
+    } else {
+      // Card型の処理
+      if (this.isCardEffectDetails(details)) {
+        this.processCardTargets(targets, source, details, option);
+      }
+    }
+  }
+
+  /**
+   * EffectDetailsがUnit型を期待するかチェック
+   * @private
+   */
+  private static isUnitEffectDetails(
+    details: EffectDetails
+  ): details is Extract<
+    EffectDetails,
+    { effect: (unit: Unit, option: DeltaSourceOption) => void }
+  > {
+    // effect関数の第1引数がUnit型を期待する場合はtrue
+    // 実際の判定はtargetsで行う
+    const targets = details.targets;
+    return (
+      targets[0] === 'self' ||
+      targets.length === 1 ||
+      (targets.length === 2 && targets[1] === 'field')
+    );
+  }
+
+  /**
+   * EffectDetailsがCard型を期待するかチェック
+   * @private
+   */
+  private static isCardEffectDetails(
+    details: EffectDetails
+  ): details is Extract<
+    EffectDetails,
+    { effect: (card: Card, option: DeltaSourceOption) => void }
+  > {
+    // effect関数の第1引数がCard型を期待する場合はtrue
+    const targets = details.targets;
+    return targets.length === 2 && (targets[1] === 'hand' || targets[1] === 'trigger');
+  }
+
+  /**
+   * Unit型の対象に対する処理
+   * @private
+   */
+  private static processUnitTargets(
+    targets: Card[],
+    source: Unit,
+    details: {
+      effect: (unit: Unit, option: DeltaSourceOption) => void;
+      condition?: (unit: Unit) => boolean;
+      effectCode: string;
+    },
+    option: DeltaSourceOption
+  ): void {
     targets.forEach(target => {
+      if (!(target instanceof Unit)) return; // ランタイムガード
+
       // 既存の Delta を検索
       const existingDelta = target.delta.find(
         delta => delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode
       );
 
-      // 条件を評価（型安全に）
-      let conditionMet = true;
-      if (details.condition) {
-        if (isUnitTarget) {
-          // Unit型を期待
-          if (!(target instanceof Unit)) return; // ランタイムガード
-          // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-          conditionMet = (details.condition as unknown as (unit: Unit) => boolean)(target);
-        } else {
-          // Card型を期待
-          // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-          conditionMet = (details.condition as unknown as (card: Card) => boolean)(target);
-        }
-      }
+      // 条件を評価
+      const conditionMet = !details.condition || details.condition(target);
 
       if (existingDelta) {
         // Delta が既に存在する場合
@@ -167,27 +273,54 @@ export class PermanentEffect {
               !(delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode)
           );
         }
-        // 条件が満たされている場合は何もしない（既に適用済み）
       } else {
         // Delta が存在しない場合
         if (conditionMet) {
-          // 条件が満たされている → 効果を適用（型安全に）
-          if (isUnitTarget) {
-            if (!(target instanceof Unit)) return; // ランタイムガード
-            // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-            (details.effect as unknown as (unit: Unit, option: DeltaSourceOption) => void)(
-              target,
-              option
-            );
-          } else {
-            // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-            (details.effect as unknown as (card: Card, option: DeltaSourceOption) => void)(
-              target,
-              option
-            );
-          }
+          // 条件が満たされている → 効果を適用
+          details.effect(target, option);
         }
-        // 条件が満たされていない場合は何もしない
+      }
+    });
+  }
+
+  /**
+   * Card型の対象に対する処理
+   * @private
+   */
+  private static processCardTargets(
+    targets: Card[],
+    source: Unit,
+    details: {
+      effect: (card: Card, option: DeltaSourceOption) => void;
+      condition?: (card: Card) => boolean;
+      effectCode: string;
+    },
+    option: DeltaSourceOption
+  ): void {
+    targets.forEach(target => {
+      // 既存の Delta を検索
+      const existingDelta = target.delta.find(
+        delta => delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode
+      );
+
+      // 条件を評価
+      const conditionMet = !details.condition || details.condition(target);
+
+      if (existingDelta) {
+        // Delta が既に存在する場合
+        if (!conditionMet) {
+          // 条件が満たされなくなった → Delta を除去
+          target.delta = target.delta.filter(
+            delta =>
+              !(delta.source?.unit === source.id && delta.source?.effectCode === details.effectCode)
+          );
+        }
+      } else {
+        // Delta が存在しない場合
+        if (conditionMet) {
+          // 条件が満たされている → 効果を適用
+          details.effect(target, option);
+        }
       }
     });
   }
