@@ -19,7 +19,7 @@ export const effects: CardEffects = {
 
     // 手札の赤属性ユニットのコストを-1
     PermanentEffect.mount(stack, stack.processing, {
-      targets: ['hand'],
+      targets: ['owns', 'hand'],
       effect: (card, option) => {
         if (card instanceof Unit) {
           card.delta.push(new Delta({ type: 'cost', value: -1 }, option));

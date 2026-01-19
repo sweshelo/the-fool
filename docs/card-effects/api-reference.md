@@ -910,13 +910,13 @@ type EffectDetails =
       effectCode: string
     }
   | {
-      targets: Array<'owns' | 'opponents'>
+      targets: ['owns'] | ['opponents'] | ['owns', 'field'] | ['opponents', 'field']
       effect: (unit: Unit, option: DeltaSourceOption) => void
       condition?: (unit: Unit) => boolean
       effectCode: string
     }
   | {
-      targets: Array<'hand' | 'trigger'>
+      targets: ['owns', 'hand'] | ['opponents', 'hand'] | ['owns', 'trigger'] | ['opponents', 'trigger']
       effect: (card: Card, option: DeltaSourceOption) => void
       condition?: (card: Card) => boolean
       effectCode: string
@@ -926,11 +926,18 @@ type EffectDetails =
 **フィールド:**
 
 - `targets` - 効果の対象を指定する配列（必須）
-  - `'self'` - 自分自身のみ
-  - `'owns'` - 自分のフィールド上のユニット
-  - `'opponents'` - 相手のフィールド上のユニット
-  - `'hand'` - 自分の手札
-  - `'trigger'` - 自分のトリガーゾーン
+  - **第1要素**: 所有者を指定
+    - `'self'` - 自分自身のみ（特殊ケース）
+    - `'owns'` - 自分
+    - `'opponents'` - 対戦相手
+  - **第2要素**: 領域を指定（省略時は `'field'` がデフォルト）
+    - `'field'` - フィールド上のユニット
+    - `'hand'` - 手札
+    - `'trigger'` - トリガーゾーン
+  - **例**:
+    - `['owns']` → 自分のフィールド（デフォルト）
+    - `['owns', 'hand']` → 自分の手札
+    - `['opponents', 'trigger']` → 対戦相手のトリガーゾーン
 
 - `effect` - 効果を適用する関数（必須）
   - 第1引数: 対象のカード（`targets` に応じて `Unit` または `Card` 型）
@@ -1019,7 +1026,7 @@ fieldEffect: (stack: StackWithCard<Unit>) => {
   );
 
   PermanentEffect.mount(stack, stack.processing, {
-    targets: ['hand'],
+    targets: ['owns', 'hand'],  // 自分の手札
     effect: (card, option) => {
       if (card instanceof Unit) {
         card.delta.push(new Delta({ type: 'cost', value: -1 }, option));

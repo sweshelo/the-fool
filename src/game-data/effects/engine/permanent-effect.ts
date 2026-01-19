@@ -11,8 +11,29 @@ export type DeltaSourceOption = {
 };
 
 /**
+ * 対象の所有者を指定
+ */
+type TargetOwner = 'self' | 'owns' | 'opponents';
+
+/**
+ * 対象の領域を指定
+ */
+type TargetZone = 'field' | 'hand' | 'trigger';
+
+/**
  * PermanentEffect.mount() の details パラメータの型定義
  * discriminated union により、targets に応じた型推論を実現
+ *
+ * targets の構造:
+ * - ['self']: 自分自身のみ
+ * - ['owns']: 自分のフィールド（デフォルト）
+ * - ['owns', 'field']: 自分のフィールド（明示的）
+ * - ['owns', 'hand']: 自分の手札
+ * - ['owns', 'trigger']: 自分のトリガーゾーン
+ * - ['opponents']: 相手のフィールド（デフォルト）
+ * - ['opponents', 'field']: 相手のフィールド（明示的）
+ * - ['opponents', 'hand']: 相手の手札
+ * - ['opponents', 'trigger']: 相手のトリガーゾーン
  */
 export type EffectDetails =
   | {
@@ -26,8 +47,8 @@ export type EffectDetails =
       effectCode: string;
     }
   | {
-      /** 自分または相手のユニットを対象とする */
-      targets: Array<'owns' | 'opponents'>;
+      /** 自分または相手のフィールド上のユニットを対象とする（第2要素省略時は 'field' がデフォルト） */
+      targets: ['owns'] | ['opponents'] | ['owns', 'field'] | ['opponents', 'field'];
       /** 効果を適用する関数 */
       effect: (unit: Unit, option: DeltaSourceOption) => void;
       /** 効果を適用する条件（省略時は常に適用） */
@@ -36,8 +57,12 @@ export type EffectDetails =
       effectCode: string;
     }
   | {
-      /** 手札またはトリガーゾーンのカードを対象とする */
-      targets: Array<'hand' | 'trigger'>;
+      /** 自分または相手の手札/トリガーゾーンを対象とする */
+      targets:
+        | ['owns', 'hand']
+        | ['opponents', 'hand']
+        | ['owns', 'trigger']
+        | ['opponents', 'trigger'];
       /** 効果を適用する関数 */
       effect: (card: Card, option: DeltaSourceOption) => void;
       /** 効果を適用する条件（省略時は常に適用） */
@@ -55,11 +80,24 @@ export type EffectDetails =
  * @example
  * // Lv2以上の味方ユニットに BP+2000 を付与
  * PermanentEffect.mount(stack, stack.processing, {
- *   targets: ['owns'],
+ *   targets: ['owns'],  // 自分のフィールド（デフォルト）
  *   effect: (unit, option) =>
  *     Effect.modifyBP(stack, stack.processing, unit, 2000, option),
  *   condition: (unit) => unit.lv >= 2,
  *   effectCode: '豊穣の女神_Lv2',
+ * })
+ *
+ * @example
+ * // 自分の手札の赤属性ユニットのコストを-1
+ * PermanentEffect.mount(stack, stack.processing, {
+ *   targets: ['owns', 'hand'],  // 自分の手札
+ *   effect: (card, option) => {
+ *     if (card instanceof Unit) {
+ *       card.delta.push(new Delta({ type: 'cost', value: -1 }, option));
+ *     }
+ *   },
+ *   condition: (card) => card.catalog.color === Color.RED && card instanceof Unit,
+ *   effectCode: '甘い誘い',
  * })
  */
 export class PermanentEffect {
@@ -119,6 +157,12 @@ export class PermanentEffect {
 
   /**
    * targets 指定に基づいて対象のカードリストを取得
+   *
+   * targets の形式:
+   * - ['self']: 自分自身
+   * - [owner]: owner のフィールド（デフォルト）
+   * - [owner, zone]: owner の zone
+   *
    * @private
    */
   private static getTargets(
@@ -126,37 +170,27 @@ export class PermanentEffect {
     source: Unit,
     targets: EffectDetails['targets']
   ): Card[] {
-    const result: Card[] = [];
+    // 第1要素: 所有者、第2要素: 領域（デフォルトは 'field'）
+    const [owner, zone = 'field'] = targets as [TargetOwner, TargetZone?];
 
-    for (const target of targets) {
-      switch (target) {
-        case 'self':
-          // 自分自身のみ
-          result.push(source);
-          break;
-
-        case 'owns':
-          // 自分のフィールド上のユニット
-          result.push(...source.owner.field);
-          break;
-
-        case 'opponents':
-          // 相手のフィールド上のユニット
-          result.push(...source.owner.opponent.field);
-          break;
-
-        case 'hand':
-          // 自分の手札
-          result.push(...source.owner.hand);
-          break;
-
-        case 'trigger':
-          // 自分のトリガーゾーン
-          result.push(...source.owner.trigger);
-          break;
-      }
+    // 'self' の場合は自分自身のみ
+    if (owner === 'self') {
+      return [source];
     }
 
-    return result;
+    // プレイヤーを取得
+    const player = owner === 'owns' ? source.owner : source.owner.opponent;
+
+    // 領域に応じて対象を返す
+    switch (zone) {
+      case 'field':
+        return player.field;
+      case 'hand':
+        return player.hand;
+      case 'trigger':
+        return player.trigger;
+      default:
+        return [];
+    }
   }
 }
