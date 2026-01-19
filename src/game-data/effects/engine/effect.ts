@@ -5,6 +5,7 @@ import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 import master from '@/game-data/catalog';
+import type { DeltaSourceOption } from './permanent-effect';
 
 const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   // クライアントにエフェクトを送信
@@ -25,6 +26,10 @@ const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   );
 };
 
+/**
+ * Effect.keyword() で使用する Option パラメータ
+ * DeltaSourceOption (source のみ) も受け入れ可能
+ */
 interface KeywordOptionParams {
   event?: string;
   count?: number;
@@ -33,6 +38,10 @@ interface KeywordOptionParams {
   source?: DeltaSource;
 }
 
+/**
+ * Effect.modifyBP() で使用する Option パラメータ
+ * DeltaSourceOption (source のみ) も受け入れ可能
+ */
 type ModifyBPOption =
   | {
       isBaseBP: true;
@@ -41,9 +50,7 @@ type ModifyBPOption =
       event: Delta['event'];
       count: Delta['count'];
     }
-  | {
-      source: Delta['source'];
-    };
+  | DeltaSourceOption;
 
 export class Effect {
   /**

@@ -1,4 +1,4 @@
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectTemplate, PermanentEffect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -12,18 +12,13 @@ export const effects: CardEffects = {
     EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '侍' });
   },
 
-  fieldEffect: (stack: StackWithCard) => {
-    const owner = stack.processing.owner;
-    owner.field.forEach(unit => {
-      if (
-        unit.catalog.species?.includes('侍') &&
-        !unit.delta.some(delta => delta.source?.unit === stack.processing.id)
-      ) {
-        // 【不屈】を付与
-        Effect.keyword(stack, stack.processing, unit, '不屈', {
-          source: { unit: stack.processing.id },
-        });
-      }
+  fieldEffect: (stack: StackWithCard<Unit>) => {
+    // 【侍】ユニットに【不屈】を付与
+    PermanentEffect.mount(stack, stack.processing, {
+      targets: ['owns'],
+      effect: (unit, option) => Effect.keyword(stack, stack.processing, unit, '不屈', option),
+      condition: unit => unit.catalog.species?.includes('侍') ?? false,
+      effectCode: '心眼の撫子',
     });
   },
 

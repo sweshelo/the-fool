@@ -8,6 +8,7 @@
 2. [EffectHelper クラス](#effecthelper-クラス)
 3. [System クラス](#system-クラス)
 4. [EffectTemplate クラス](#effecttemplate-クラス)
+5. [PermanentEffect クラス](#permanenteffect-クラス) 🆕
 
 ---
 
@@ -809,6 +810,269 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
   }
 }
 ```
+
+---
+
+## PermanentEffect クラス
+
+`PermanentEffect` クラスは、フィールド効果や手札効果などの**永続的な効果**を簡潔に記述するためのヘルパークラスです。
+
+### 概要
+
+従来のフィールド効果の実装では、以下のような煩雑なコードが必要でした:
+
+```typescript
+// 従来の実装（煩雑）
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  stack.processing.owner.field.forEach(unit => {
+    // 既存Deltaの存在チェック
+    const existingDelta = unit.delta.find(d =>
+      d.source?.unit === stack.processing.id &&
+      d.source?.effectCode === '効果コード'
+    );
+
+    // 条件評価
+    const conditionMet = unit.lv >= 2;
+
+    if (existingDelta) {
+      if (!conditionMet) {
+        // 条件が外れた → 削除
+        unit.delta = unit.delta.filter(d =>
+          !(d.source?.unit === stack.processing.id &&
+            d.source?.effectCode === '効果コード')
+        );
+      }
+    } else {
+      if (conditionMet) {
+        // 条件が満たされた → 追加
+        Effect.keyword(stack, stack.processing, unit, '不屈', {
+          source: { unit: stack.processing.id, effectCode: '効果コード' }
+        });
+      }
+    }
+  });
+}
+```
+
+`PermanentEffect.mount()` を使うと、これを以下のように簡潔に記述できます:
+
+```typescript
+// PermanentEffect使用（簡潔）
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) => Effect.keyword(stack, stack.processing, unit, '不屈', option),
+    condition: unit => unit.lv >= 2,
+    effectCode: '不屈付与',
+  });
+}
+```
+
+### 自動処理される内容
+
+`PermanentEffect.mount()` は以下の処理を自動的に行います:
+
+1. **冪等性の保証**: 同じ `effectCode` の Delta が既に存在する場合は追加しない
+2. **条件評価**: `condition` 関数で条件を評価し、満たされた場合のみ効果を適用
+3. **自動削除**: 条件が満たされなくなった場合、自動的に Delta を除去
+4. **source 情報の管理**: `unit.id` と `effectCode` から一意な source 情報を自動生成
+
+### メソッド
+
+#### `PermanentEffect.mount()`
+
+永続効果をマウント（適用）します。
+
+```typescript
+static mount(
+  stack: Stack,
+  source: Unit,
+  details: EffectDetails
+): void
+```
+
+**パラメータ:**
+
+- `stack` - 現在のスタック
+- `source` - 効果の発動元ユニット（通常は `stack.processing`）
+- `details` - 効果の詳細設定（後述）
+
+### EffectDetails 型
+
+`details` パラメータは以下の型を持ちます:
+
+```typescript
+type EffectDetails =
+  | {
+      targets: ['self']
+      effect: (unit: Unit, option: DeltaSourceOption) => void
+      condition?: (unit: Unit) => boolean
+      effectCode: string
+    }
+  | {
+      targets: Array<'owns' | 'opponents'>
+      effect: (unit: Unit, option: DeltaSourceOption) => void
+      condition?: (unit: Unit) => boolean
+      effectCode: string
+    }
+  | {
+      targets: Array<'hand' | 'trigger'>
+      effect: (card: Card, option: DeltaSourceOption) => void
+      condition?: (card: Card) => boolean
+      effectCode: string
+    }
+```
+
+**フィールド:**
+
+- `targets` - 効果の対象を指定する配列（必須）
+  - `'self'` - 自分自身のみ
+  - `'owns'` - 自分のフィールド上のユニット
+  - `'opponents'` - 相手のフィールド上のユニット
+  - `'hand'` - 自分の手札
+  - `'trigger'` - 自分のトリガーゾーン
+
+- `effect` - 効果を適用する関数（必須）
+  - 第1引数: 対象のカード（`targets` に応じて `Unit` または `Card` 型）
+  - 第2引数: `DeltaSourceOption` オブジェクト（`Effect.keyword()` 等に渡す）
+
+- `condition` - 効果を適用する条件（省略時は常に適用）
+  - 引数: 対象のカード
+  - 戻り値: `boolean`（`true` の場合のみ効果を適用）
+
+- `effectCode` - 効果を識別するためのコード（必須）
+  - 同じユニットが複数の異なる効果を持つ場合、それぞれ異なる `effectCode` を指定
+
+### 使用例
+
+#### 基本的な使用例
+
+```typescript
+// Lv2以上の味方ユニットにBP+2000
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) =>
+      Effect.modifyBP(stack, stack.processing, unit, 2000, option),
+    condition: unit => unit.lv >= 2,
+    effectCode: 'BP強化',
+  });
+}
+```
+
+#### 複数の効果を持つカード（Demeter の例）
+
+```typescript
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  // 効果1: Lv3以上の味方に【不屈】
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) =>
+      Effect.keyword(stack, stack.processing, unit, '不屈', option),
+    condition: unit => unit.lv >= 3,
+    effectCode: '豊穣の女神_Lv3',
+  });
+
+  // 効果2: Lv2以上の味方にBP+2000
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) =>
+      Effect.modifyBP(stack, stack.processing, unit, 2000, option),
+    condition: unit => unit.lv >= 2,
+    effectCode: '豊穣の女神_Lv2',
+  });
+
+  // 効果3: Lv1の自分自身に【秩序の盾】
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['self'],
+    effect: (unit, option) =>
+      Effect.keyword(stack, stack.processing, unit, '秩序の盾', option),
+    condition: unit => unit.lv === 1,
+    effectCode: '大地の掟',
+  });
+}
+```
+
+#### 種族条件の例
+
+```typescript
+// 【侍】ユニットに【不屈】を付与
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) =>
+      Effect.keyword(stack, stack.processing, unit, '不屈', option),
+    condition: unit => unit.catalog.species?.includes('侍') ?? false,
+    effectCode: '心眼の撫子',
+  });
+}
+```
+
+#### 手札への効果の例
+
+```typescript
+// 手札の赤属性ユニットのコストを-1
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  const owner = stack.processing.owner;
+  const hasNotSummonedUnits = !stack.core.histories.some(
+    h => h.action === 'drive' && h.card.owner.id === owner.id
+  );
+
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['hand'],
+    effect: (card, option) => {
+      if (card instanceof Unit) {
+        card.delta.push(new Delta({ type: 'cost', value: -1 }, option));
+      }
+    },
+    condition: card =>
+      card.catalog.color === Color.RED &&
+      card instanceof Unit &&
+      hasNotSummonedUnits,
+    effectCode: '甘い誘い',
+  });
+}
+```
+
+#### 効果源に依存する条件の例
+
+```typescript
+// 自分がLv3の時のみ、味方ユニットに効果を付与
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    targets: ['owns'],
+    effect: (unit, option) =>
+      Effect.keyword(stack, stack.processing, unit, '加護', option),
+    condition: (_unit) => stack.processing.lv === 3,  // 効果源のレベルを参照
+    effectCode: '火遠理の加護',
+  });
+}
+```
+
+### 注意事項
+
+1. **effectCode は必須**: 同じユニットが複数の効果を持つ場合、それぞれに異なる `effectCode` を指定してください
+
+2. **effect 関数内での Delta 追加**: `Effect.keyword()` や `Effect.modifyBP()` は内部で Delta を追加します。手動で Delta を追加する場合は、`option` を渡してください
+
+3. **condition の評価タイミング**: `processFieldEffect()` が呼ばれるたびに評価されます
+
+4. **自動アンマウント**: ユニットがフィールドを離れた場合、そのユニットの `source` を持つ Delta は自動的に除去されます（Core 層で処理）
+
+### DeltaSourceOption 型
+
+`effect` 関数の第2引数として渡される型です:
+
+```typescript
+type DeltaSourceOption = {
+  source: {
+    unit: string;      // 効果の発動元ユニットのID
+    effectCode: string; // 効果を識別するコード
+  }
+}
+```
+
+この `option` を `Effect.keyword()` や `Effect.modifyBP()` に渡すことで、Delta に正しい source 情報が付与されます。
 
 ---
 

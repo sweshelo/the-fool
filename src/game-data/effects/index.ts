@@ -23,6 +23,8 @@ export { System } from './engine/system';
 export { Effect } from './engine/effect';
 export { EffectHelper } from './engine/helper';
 export { EffectTemplate } from './engine/templates';
+export { PermanentEffect } from './engine/permanent-effect';
+export type { DeltaSourceOption, EffectDetails } from './engine/permanent-effect';
 
 // ESモジュールでの__dirnameの代替
 const __filename = fileURLToPath(import.meta.url);
