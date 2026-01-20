@@ -7,7 +7,7 @@ import { Effect } from '../engine/effect';
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
     const filter = (unit: Unit) =>
-      unit.owner.id === stack.processing.owner.id && unit.catalog.cost <= 2;
+      unit.owner.id === stack.processing.owner.opponent.id && unit.catalog.cost <= 2;
     if (
       stack.processing.owner.field.length > 4 ||
       !EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
