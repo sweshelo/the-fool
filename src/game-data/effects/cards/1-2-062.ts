@@ -16,9 +16,9 @@ export const effects: CardEffects = {
       await System.show(stack, '人の業', '行動権を消費');
       Effect.activate(stack, stack.processing, stack.target, false);
     } else {
-      await System.show(stack, '人の業', 'フィールドに出たユニットを破壊\n1ライフダメージ');
+      await System.show(stack, '人の業', 'フィールドに出たユニットを破壊\n2ライフダメージ');
       Effect.break(stack, stack.processing, stack.target);
-      Effect.modifyLife(stack, stack.processing, stack.target.owner, -1);
+      Effect.modifyLife(stack, stack.processing, stack.target.owner, -2);
     }
   },
 };

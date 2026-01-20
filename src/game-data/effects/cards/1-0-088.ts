@@ -3,7 +3,13 @@ import { System } from '../engine/system';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  checkAttack: stack => stack.processing.owner.field.length > 0,
+  checkAttack: (stack: StackWithCard) => {
+    //相手のユニットが存在しない場合、falseを返す
+    if (stack.processing.owner.opponent.field.length === 0) return false;
+
+    //自プレイヤーが攻撃宣言した時のみ発動可能
+    return stack.processing.owner.id === stack.source.id;
+  },
   onAttack: async (stack: StackWithCard) => {
     switch (stack.processing.lv) {
       case 1:

@@ -8,32 +8,22 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing;
     const owner = self.owner;
-    if (
-      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) ||
-      owner.hand.length === 0
-    )
-      return;
-
-    // 選択肢を表示
-    const choices = [
+    const choice = await EffectHelper.choice(stack, owner, '選略・聖銀の神弾', [
       { id: '1', description: '効果なし' },
       {
         id: '2',
-        description: '手札を1枚消滅\nユニットを1体手札に戻す\n対戦相手のユニットを1体消滅',
+        description: '手札を1枚消滅\nユニットを手札に戻す\n相手のユニットを消滅',
+        condition: () =>
+          EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) &&
+          owner.hand.length > 0,
       },
-    ];
+    ]);
 
-    const [response] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・聖銀の神弾',
-      items: choices,
-    });
-
-    if (response === '2') {
+    if (choice === '2') {
       await System.show(
         stack,
         '選略・聖銀の神弾',
-        '手札を1枚消滅\nユニットを1体手札に戻す\n対戦相手のユニットを1体消滅'
+        '手札を1枚消滅\nユニットを手札に戻す\n相手のユニットを消滅'
       );
 
       // 手札を1枚ランダムで消滅
@@ -66,10 +56,10 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
 
-    if (stack.source instanceof Card && stack.source.owner.id !== owner.id) return;
+    if (stack.target instanceof Card && stack.target.owner.id === owner.id) return;
 
     // 捨札にある消滅しているカードを探す
-    const deletedCards = owner.trash.filter(card => owner.delete.includes(card));
+    const deletedCards = owner.delete;
     if (deletedCards.length > 0) {
       await System.show(stack, '銀弾装填', '消滅から1枚回収');
 

@@ -12,13 +12,13 @@ export const effects: CardEffects = {
     if (
       isOpponentUnitDriven &&
       hasRedCardAtLeast5InTrash &&
-      EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner)
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner.opponent)
     ) {
       await System.show(stack, '＜ウィルス・焔＞', '1000ダメージ');
       const [target] = await EffectHelper.pickUnit(
         stack,
-        stack.processing.owner,
-        'owns',
+        stack.processing.owner.opponent,
+        'opponents',
         'ダメージを与えるユニットを選択'
       );
       if (target) {

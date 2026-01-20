@@ -28,7 +28,8 @@ export const effects: CardEffects = {
     if (
       !(stack.target instanceof Unit) ||
       stack.target.owner.id !== stack.processing.owner.id ||
-      stack.target.id === stack.processing.id
+      stack.target.id === stack.processing.id ||
+      !stack.target.catalog.species?.includes('忍者')
     )
       return;
     await System.show(stack, '夜陰にまぎれて', '紫ゲージ+1');

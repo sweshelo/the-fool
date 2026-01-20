@@ -23,7 +23,7 @@ export const effects: CardEffects = {
 
     // 敵全体の基本BPを1/2にする（基本BPの半分を減算）
     opponentUnits.forEach(unit => {
-      Effect.modifyBP(stack, stack.processing, unit, -Math.floor(unit.bp / 2), {
+      Effect.modifyBP(stack, stack.processing, unit, -(unit.bp / 2), {
         isBaseBP: true,
       });
     });

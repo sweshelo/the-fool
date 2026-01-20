@@ -41,6 +41,9 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+    // 自分のターン終了時のみ発動
+    if (stack.processing.owner.id !== stack.core.getTurnPlayer().id) return;
+
     if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand) {
       await System.show(stack, '笑顔のハートフルキッチン♪', 'ランダムな【魔導士】を1枚作成');
       const [target] = EffectHelper.random(

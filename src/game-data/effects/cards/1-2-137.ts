@@ -1,5 +1,6 @@
 import { System, EffectTemplate, Effect } from '..';
 import type { StackWithCard } from '../schema/types';
+import { Unit } from '@/package/core/class/card';
 
 export const effects = {
   checkTurnStart: (stack: StackWithCard) => {
@@ -27,5 +28,21 @@ export const effects = {
     }
 
     EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['intercept'] });
+  },
+
+  checkBattle: (stack: StackWithCard) => {
+    //自身のフィールドのユニットが1体以下の場合に発動
+    return stack.processing.owner.field.length <= 1;
+  },
+
+  onBattle: async (stack: StackWithCard) => {
+    if (!(stack.source instanceof Unit) || !(stack.target instanceof Unit)) return;
+
+    const ownUnit =
+      stack.processing.owner.id === stack.source.owner.id ? stack.source : stack.target;
+
+    await System.show(stack, '歴戦の戦士', 'BP+10000');
+
+    Effect.modifyBP(stack, stack.processing, ownUnit, 10000, { event: 'turnEnd', count: 1 });
   },
 };
