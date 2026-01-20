@@ -1,6 +1,6 @@
 import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
-import master from '@/database/catalog';
+import master from '@/game-data/catalog';
 import type { Player } from '../Player';
 import { Delta } from '../delta';
 
@@ -50,7 +50,8 @@ export class Unit extends Card implements IUnit {
       this.bp +
       this.delta
         .map(delta => {
-          if (delta.effect.type === 'bp') return delta.effect.diff;
+          if (delta.effect.type === 'bp' || delta.effect.type === 'dynamic-bp')
+            return delta.effect.diff;
           if (delta.effect.type === 'damage') return -delta.effect.value;
           return 0;
         })

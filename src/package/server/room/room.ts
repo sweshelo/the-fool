@@ -1,13 +1,13 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
-import { Core } from '../../core/core';
+import { Core } from '../../core';
 import { Joker } from '../../core/class/card/Joker';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
-import { MessageHelper } from '@/package/core/message';
+import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
 
 export class Room {
@@ -205,7 +205,10 @@ export class Room {
         round: this.core.round,
         turn: this.core.turn,
         turnPlayer: this.core.players.length >= 2 ? this.core.getTurnPlayer().id : undefined,
-        firstPlayer: this.core.players.length >= 2 ? this.core.players[this.core.firstPlayerIndex].id : undefined,
+        firstPlayer:
+          this.core.players.length >= 2
+            ? this.core.players[this.core.firstPlayerIndex]?.id
+            : undefined,
       },
       players: playersState,
     });
@@ -295,7 +298,10 @@ export class Room {
               round: this.core.round,
               turn: this.core.turn,
               turnPlayer: this.core.players.length >= 2 ? this.core.getTurnPlayer().id : undefined,
-              firstPlayer: this.core.players.length >= 2 ? this.core.players[this.core.firstPlayerIndex].id : undefined,
+              firstPlayer:
+                this.core.players.length >= 2
+                  ? this.core.players[this.core.firstPlayerIndex]?.id
+                  : undefined,
             },
             players,
           },

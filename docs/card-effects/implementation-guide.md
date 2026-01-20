@@ -21,7 +21,7 @@
 ```typescript
 import type { Unit } from '@/package/core/class/card';
 import { Effect, System, EffectHelper } from '..';
-import type { CardEffects, StackWithCard } from '../classes/types';
+import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // イベントハンドラを実装
@@ -38,7 +38,7 @@ export const effects: CardEffects = {
 カード効果実装ファイルは、以下の命名規則に従います：
 
 ```
-src/database/effects/cards/[カードID].ts
+src/game-data/effects/cards/[カードID].ts
 ```
 
 例：
@@ -72,7 +72,7 @@ export const effects: CardEffects = {
 | `overclock`    | オーバークロックした           | `onOverclock`    |
 | `playerAttack` | プレイヤーアタックに成功した   | `onPlayerAttack` |
 
-詳細なイベント定義は `src/database/effects/classes/event.ts` と `eventHandlers.ts` を参照してください。
+詳細なイベント定義は `src/game-data/effects/schema/events.ts` と `handlers.ts` を参照してください。
 
 ### Suffix の活用
 
@@ -111,6 +111,19 @@ export const effects: CardEffects = {
 | `source`     | イベントの発生源             | 召喚したプレイヤー、アタックを宣言したプレイヤーなど |
 | `target`     | イベントの対象               | 召喚されたユニット、アタックするユニットなど         |
 | `core`       | ゲームのコアオブジェクト     | ゲーム全体の状態参照                                 |
+
+### source と target の詳細
+
+各イベントにおける `source` と `target` の具体例：
+
+| イベント       | source                       | target               |
+| -------------- | ---------------------------- | -------------------- |
+| 召喚（drive）  | 召喚したプレイヤー           | 召喚されたユニット   |
+| 破壊（break）  | 破壊効果を発動したカード     | 破壊されたユニット   |
+| アタック       | アタックを宣言したプレイヤー | アタックするユニット |
+| 戦闘（battle） | アタッカー                   | ブロッカー           |
+
+プレイヤーの操作が介在するイベントでは、概ね `source` にプレイヤーが指定されます。
 
 ### 使用例
 
@@ -184,38 +197,42 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 #### 重要な注意点
 
-永続効果は何度も呼び出されるため、**冪等性**を保つ必要があります。
-状態を変更する際は **Delta** を使用します。
+永続効果は何度も呼び出されるため、PermanentEffectクラスを利用した実装を行って下さい。
 
 #### 例：自身の BP を +1000 する
 
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  const self = stack.processing;
-
-  // 既に発行した Delta が存在するか確認
-  const delta = self.delta.find(
-    d => d.source.unit === self.id && d.effect.type === 'bp'
-  );
-
-  if (delta) {
-    // Delta を更新
-    delta.effect.diff = 1000;
-  } else {
-    // Delta を新規作成
-    Effect.modifyBP(stack, self, self, 1000, {
-      source: { unit: self.id }
-    });
-  }
+  PermanentEffect.mount(stack, stack.processing, {
+    effect: (target, source) => {
+      // 型チェックを実施
+      // ※それ以外の条件は condition に実装します
+      if (target instanceof Unit)
+        Effect.modifyBP(stack, stack.processing, target, 1000, { source })
+      },
+      effectCode: '効果名'
+      targets: ['self'], // 対象が自身のみならば 'self'
+  })
 }
 ```
 
-#### Delta の source について
+#### 例：条件付きキーワード付与（Lv1 の時に【秩序の盾】を付与）
 
-`source: { unit: self.id }` を指定することで、以下が自動的に処理されます：
-
-- 効果元のユニットに【沈黙】が付与された時、Delta が無効化される
-- 効果元のユニットがフィールドから離れた時、Delta が除去される
+```typescript
+fieldEffect: (stack: StackWithCard<Unit>) => {
+  PermanentEffect.mount(stack, stack.processing, {
+    effect: (target, source) => {
+      // 型チェックを実施
+      // ※それ以外の条件は condition に実装します
+      if (target instanceof Unit)
+        Effect.keyword(stack, stack.processing, target, '秩序の盾', { source })
+      },
+      effectCode: '効果名',
+      targets: ['self'], // 対象が自身のみならば 'self'
+      condition: (target) => target.lv === 1,
+  })
+}
+```
 
 ### 3. 起動効果
 
@@ -298,6 +315,17 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
   // 【不屈】を付与
   Effect.keyword(stack, stack.processing, stack.processing, '不屈');
 }
+```
+
+#### 特殊なキーワード効果
+
+**「ブロックされない」効果**
+
+「ブロックされない」効果は、`'次元干渉'` キーワードを `cost: 0` で付与します。
+
+```typescript
+// ブロックされない（次元干渉コスト0）
+Effect.keyword(stack, self, self, '次元干渉', { cost: 0 });
 ```
 
 ### ユニットの選択

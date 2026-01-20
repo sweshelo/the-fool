@@ -6,8 +6,9 @@
 
 1. [Effect クラス](#effect-クラス)
 2. [EffectHelper クラス](#effecthelper-クラス)
-3. [System クラス](#system-クラス)
-4. [EffectTemplate クラス](#effecttemplate-クラス)
+3. [PermanentEffect クラス](#permanenteffect-クラス)
+4. [System クラス](#system-クラス)
+5. [EffectTemplate クラス](#effecttemplate-クラス)
 
 ---
 
@@ -524,6 +525,49 @@ onBreak: async (stack: StackWithCard<Unit>) => {
   await System.show(stack, 'カード名', '効果発動');
   // 実装
 }
+```
+
+---
+
+## PermanentEffect クラス
+
+`PermanentEffect` クラスは、fieldEffect及びhandEffectを簡単に実装するためのクラスで、冪等性を担保した関数呼び出しの機能を提供します。
+
+### メソッド一覧
+
+#### `PermanentEffect.mount()`
+
+永続効果を登録します。
+
+```typescript
+static mount(
+  stack: StackWithCard,
+  source: Card,
+  details: EffectDetails
+): void
+```
+
+**パラメータ:**
+- `stack` - スタック
+- `source` - 効果の発動元
+- `details` - 効果の詳細オブジェクト
+
+**使用例:**
+
+```typescript
+// フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
+fieldEffect: (stack: StackWithCard<Unit>): void => {
+  PermanentEffect.mount(stack, stack.processing, {
+    effect: (target, source) => {
+      if (target instanceof Unit)
+        Effect.keyword(stack, stack.processing, target, '加護', { source });
+    },
+    effectCode: 'エンジェリックシールド',
+    condition: target =>
+      target.catalog.species?.includes('天使') && stack.processing.owner.life.current <= 6,
+    targets: ['owns'],
+  });
+},
 ```
 
 ---

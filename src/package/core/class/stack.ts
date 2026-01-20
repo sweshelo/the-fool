@@ -1,14 +1,14 @@
 import { createMessage } from '@/submodule/suit/types';
 import { Player, type CardArrayKeys } from './Player';
-import type { Core } from '../core';
-import type { CatalogWithHandler } from '@/database/factory';
-import master from '@/database/catalog';
+import type { Core } from '../index';
+import type { CatalogWithHandler } from '@/game-data/factory';
+import master from '@/game-data/catalog';
 import { Card, Intercept, Unit } from './card';
-import { Effect, System } from '@/database/effects';
+import { Effect, System } from '@/game-data/effects';
 import { Color } from '@/submodule/suit/constant/color';
-import type { StackWithCard } from '@/database/effects/classes/types';
+import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
-import type { GameEvent } from '@/database/effects/classes/event';
+import type { GameEvent } from '@/game-data/effects/schema/events';
 
 interface IStack {
   /**
@@ -313,6 +313,8 @@ export class Stack implements IStack {
         this.source instanceof Card ? this.source.catalog.name : this.source.id,
         this.target instanceof Card ? this.target.catalog.name : this.target?.id
       );
+
+    core.room.sync();
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -350,7 +352,7 @@ export class Stack implements IStack {
     }
 
     // Stackによって移動が約束されたユニットを移動させる
-    if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
+    if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
       const target = stack.target;
       if (target instanceof Unit) {
@@ -373,7 +375,7 @@ export class Stack implements IStack {
     this.children = [];
     if (isProcessed.includes(true)) {
       this.core.room.sync();
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await System.sleep(1000);
     }
   }
 
@@ -537,7 +539,7 @@ export class Stack implements IStack {
     if (typeof effectHandler === 'function') {
       try {
         // 効果を実行
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await System.sleep(500);
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
@@ -703,10 +705,17 @@ export class Stack implements IStack {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
-
-          // このフィールド効果による影響を確認
-          this.breakCheck(unit);
         }
+
+        // フィールド効果による dynamic-bp を計算
+        unit.delta.forEach(delta => {
+          if (delta.effect.type === 'dynamic-bp') {
+            delta.effect.diff = delta.calculator?.(unit) ?? 0;
+          }
+        });
+
+        // このフィールド効果による影響を確認
+        this.breakCheck(unit);
       });
 
     this.core.players
