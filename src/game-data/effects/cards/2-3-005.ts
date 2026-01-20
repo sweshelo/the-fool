@@ -61,7 +61,7 @@ export const effects: CardEffects = {
       Effect.damage(stack, stack.processing, target, 3000, 'effect');
       stack.processing.delta.push(
         new Delta(
-          { type: 'banned' },
+          { type: 'damage', value: 0 },
           { source: { unit: stack.processing.id, effectCode: 'ハピネスクッキング_2回目' } }
         )
       );
@@ -76,7 +76,7 @@ export const effects: CardEffects = {
       );
       stack.processing.delta.push(
         new Delta(
-          { type: 'banned' },
+          { type: 'damage', value: 0 },
           { source: { unit: stack.processing.id, effectCode: 'ハピネスクッキング_3回目' } }
         )
       );
