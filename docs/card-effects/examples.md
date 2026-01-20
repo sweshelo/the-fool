@@ -167,7 +167,7 @@ export const effects: CardEffects = {
           Effect.modifyBP(stack, stack.processing, target, 1000, { source })
         }
       },
-      effectCode: '効果名'
+      effectCode: '効果名',
       targets: ['self'], // 対象が自身のみならば 'self'
     })
   }
@@ -185,15 +185,19 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
+    // BP計算機
+    const calculator = (target: Unit) => target.owner.field.filter(unit => unit.catalog.species.includes('神')).length * 4000
+
+    // フィールド効果を適用
     PermanentEffect.mount(stack, stack.processing, {
       effect: (target, source) => {
         // 型チェックを実施
         // ※それ以外の条件は condition に実装します
         if (target instanceof Unit) {
-          Effect.dynamicBP(stack, stack.processing, target, target.owner.field.filter(unit => unit.catalog.species.includes('神')).length * 4000, { source })
+          Effect.dynamicBP(stack, stack.processing, target, calculator, { source })
         }
       },
-      effectCode: '闘士／神'
+      effectCode: '闘士／神',
       targets: ['self'], // 対象が自身のみならば 'self'
     })
   }

@@ -225,9 +225,9 @@ fieldEffect: (stack: StackWithCard<Unit>) => {
       // 型チェックを実施
       // ※それ以外の条件は condition に実装します
       if (target instanceof Unit)
-        Effect.keyword(stack, stack.processing, target, '秩序の盾')
+        Effect.keyword(stack, stack.processing, target, '秩序の盾', { source })
       },
-      effectCode: '効果名'
+      effectCode: '効果名',
       targets: ['self'], // 対象が自身のみならば 'self'
       condition: (target) => target.lv === 1,
   })
