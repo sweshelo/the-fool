@@ -6,10 +6,10 @@ import { System } from '../engine/system';
 export const effects: CardEffects = {
   // トリガー: 対戦相手の効果によって対戦相手のCPが増加した時
   checkModifyCP: (stack: StackWithCard<Card>): boolean => {
-    const sourceOwnerId = stack.source instanceof Card ? stack.source.owner?.id : stack.source?.id;
+    const sourceOwner = stack.source instanceof Card ? stack.source.owner : stack.source;
     return (
       stack.target?.id === stack.processing.owner.opponent.id &&
-      sourceOwnerId === stack.processing.owner.opponent.id &&
+      sourceOwner.id === stack.processing.owner.opponent.id &&
       stack.option?.type === 'cp' &&
       stack.option.value > 0
     );
@@ -22,7 +22,7 @@ export const effects: CardEffects = {
 
   // トリガー: あなたのターン開始時
   checkTurnStart: (stack: StackWithCard<Card>): boolean => {
-    return stack.source?.id === stack.processing.owner.id;
+    return stack.source.id === stack.processing.owner.id;
   },
 
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
