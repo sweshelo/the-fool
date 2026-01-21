@@ -14,6 +14,7 @@ import type {
   DebugDrivePayload,
   AttackPayload,
   BootPayload,
+  TurnEndPayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
@@ -310,7 +311,10 @@ export async function handleMessage(core: Core, message: Message) {
     }
 
     case 'TurnEnd': {
-      await turnChange(core);
+      const payload: TurnEndPayload = message.payload;
+      await turnChange(core, {
+        time: payload.remainingTime,
+      });
       break;
     }
 

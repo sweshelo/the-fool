@@ -15,7 +15,7 @@ import { MessageHelper } from '../helpers/message';
  */
 export async function start(core: Core) {
   core.room.broadcastToAll(MessageHelper.defrost());
-  await turnChange(core, true);
+  await turnChange(core, { isFirstTurn: true });
 }
 
 /**
@@ -103,11 +103,21 @@ export async function mulligan(core: Core, player: Player): Promise<void> {
  * @param core Coreインスタンス
  * @param isFirstTurn 初回ターンかどうか
  */
-export async function turnChange(core: Core, isFirstTurn: boolean = false) {
+export async function turnChange(
+  core: Core,
+  option: {
+    isFirstTurn?: boolean;
+    time?: number;
+  } = {}
+) {
   // freeze
   core.room.broadcastToAll(MessageHelper.freeze());
 
-  if (!isFirstTurn) {
+  // ジョーカーゲージ増加量を確定
+  const jokerGuage = 12.5 * ((option.time ?? 0) / core.room.rule.system.turnTime) + 2.5;
+  core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGuage, 100);
+
+  if (!option?.isFirstTurn) {
     // ターン終了スタックを積み、解決する
     core.stack.push(
       new Stack({
@@ -147,7 +157,6 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
       core.room.soundEffect('leave');
     }
 
-    core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + 10, 100);
     core.room.sync();
 
     // ターン開始処理

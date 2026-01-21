@@ -87,7 +87,7 @@ export class Core {
   }
 
   async turnChange(isFirstTurn: boolean = false) {
-    return gameFlow.turnChange(this, isFirstTurn);
+    return gameFlow.turnChange(this, { isFirstTurn });
   }
 
   async mulligan(player: Player): Promise<void> {

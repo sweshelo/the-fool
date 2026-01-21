@@ -63,10 +63,9 @@ export class Room {
           exists.id
         );
 
-        // 再接続で自分のターン中の場合は defrost する
-        if (this.core.getTurnPlayer().id === message.payload.player.id) {
-          this.broadcastToPlayer(message.payload.player.id, MessageHelper.defrost());
-        }
+        // 再接続で defrost する
+        this.sync(true);
+        this.broadcastToAll(MessageHelper.defrost());
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
 
