@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * mainブランチとの間のカード変更を確認するスクリプト
+ *releaseブランチとの間のカード変更を確認するスクリプト
  * 使用方法: bun run check-card-changes.ts
  */
 
@@ -14,10 +14,10 @@ interface CatalogCard {
   [key: string]: any;
 }
 
-console.log('Checking card changes between current branch and main...');
+console.log('Checking card changes between current branch and release...');
 console.log('================================================================\n');
 
-// mainブランチとの差分を取得
+// releaseブランチとの差分を取得
 // core.quotepath=false で日本語ファイル名のエスケープを防ぐ
 const gitDiff = execSync(
   'git -c core.quotepath=false diff origin/release --name-status -- "src/game-data/effects/cards/*.ts"',
