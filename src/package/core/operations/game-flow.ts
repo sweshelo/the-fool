@@ -176,7 +176,7 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
         payload: {
           type: 'TurnChange',
           player: turnPlayer.id,
-          isFirst: (core.turn - 1) % 2 === 0,
+          isFirst: (core.turn - 1 + core.firstPlayerIndex) % 2 === 0,
         },
       })
     );
