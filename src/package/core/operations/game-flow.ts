@@ -113,13 +113,13 @@ export async function turnChange(
   // freeze
   core.room.broadcastToAll(MessageHelper.freeze());
 
-  // ジョーカーゲージ増加量を確定
-  const { minTurnEnd, maxTurnEnd } = core.room.rule.joker;
-  const timeRatio = (option.time ?? 0) / core.room.rule.system.turnTime;
-  const jokerGauge = minTurnEnd + (maxTurnEnd - minTurnEnd) * timeRatio;
-  core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
-
   if (!option?.isFirstTurn) {
+    // ジョーカーゲージ増加量を確定
+    const { minTurnEnd, maxTurnEnd } = core.room.rule.joker;
+    const timeRatio = (option.time ?? 0) / core.room.rule.system.turnTime;
+    const jokerGauge = minTurnEnd + (maxTurnEnd - minTurnEnd) * timeRatio;
+    core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
+
     // ターン終了スタックを積み、解決する
     core.stack.push(
       new Stack({
@@ -166,11 +166,8 @@ export async function turnChange(
     core.round = Math.floor((core.turn + 1) / 2);
   } else {
     await Promise.all(core.players.map(player => mulligan(core, player)));
-  }
-
-  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
-  if (!option?.isFirstTurn) {
-    core.getTurnPlayer().checkAndMoveJokerToHand();
+    core.turn = 1;
+    core.round = 1;
   }
 
   // CP初期化
@@ -240,6 +237,8 @@ export async function turnChange(
         ))
     );
 
+  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
+  core.getTurnPlayer().checkAndMoveJokerToHand();
   core.room.sync();
 
   // ターン開始スタックを積み、解決する

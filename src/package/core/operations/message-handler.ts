@@ -22,7 +22,6 @@ import { Stack } from '../class/stack';
 import { Evolve, Unit } from '../class/card';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
-import { Joker } from '../class/card/Joker';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 import { handleEffectResponse, handleContinue } from './effect-handler';
 import { turnChange } from './game-flow';
@@ -30,6 +29,7 @@ import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
 import { MessageHelper } from '../helpers/message';
+import { Joker } from '../class/card/Joker';
 
 /**
  * クライアントからのメッセージを処理する
@@ -188,22 +188,15 @@ export async function handleMessage(core: Core, message: Message) {
         throw new Error('Invalid player');
       }
 
-      // Find joker ability in player's jokers or hand (for inHand setting)
-      let joker: Joker | undefined = player.joker.card.find(j => j.id === payload.target.id);
-      let isInHand = false;
-
-      if (!joker) {
-        // inHand設定: 手札からも検索
-        const handJoker = player.hand.find(c => c.id === payload.target.id);
-        if (handJoker instanceof Joker) {
-          joker = handJoker;
-          isInHand = true;
-        }
-      }
+      // Find joker ability in player's jokers
+      const joker = player.joker.card.find(j => j.id === payload.target.id);
 
       if (!joker || joker.catalog.type !== 'joker') {
         throw new Error('Invalid joker ability');
       }
+
+      // inHand設定: 手札にも存在するかチェック（ゲージ消費済みかどうか）
+      const isInHand = player.hand.some(c => c.id === joker.id);
 
       // Check if player has enough gauge (skip if Joker is in hand - gauge already consumed)
       if (!isInHand) {
@@ -231,8 +224,11 @@ export async function handleMessage(core: Core, message: Message) {
           throw new Error('ジョーカーゲージの消費量が定義されていません');
         }
         player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
-      } else {
-        // 手札からJokerを削除
+      }
+
+      // Jokerを削除（joker.cardから、手札にあれば手札からも）
+      player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
+      if (isInHand) {
         player.hand = player.hand.filter(c => c.id !== joker.id);
       }
 
@@ -398,8 +394,11 @@ export async function handleMessage(core: Core, message: Message) {
 
       if (target && target.card && player && isOnHand) {
         player.hand = player.hand.filter(c => c.id !== target.card?.id);
-        player.trash.push(target.card);
-        target.card.reset();
+
+        if (!(target instanceof Joker)) {
+          player.trash.push(target.card);
+          target.card.reset();
+        }
         core.room.sync();
         core.room.soundEffect('trash');
       }
@@ -469,6 +468,15 @@ export async function handleMessage(core: Core, message: Message) {
       }
       break;
     }
+  }
+
+  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
+  try {
+    if (core.turn > 0) {
+      core.getTurnPlayer()?.checkAndMoveJokerToHand();
+    }
+  } catch {
+    // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
   }
 
   core.stack.push(

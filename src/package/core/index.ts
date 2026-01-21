@@ -21,8 +21,8 @@ interface History {
 export class Core {
   id: string;
   players: Player[];
-  round: number = 1;
-  turn: number = 1;
+  round: number = 0;
+  turn: number = 0;
   firstPlayerIndex: number = 0;
   room: Room;
   stack: Stack[] = [];

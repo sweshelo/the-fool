@@ -246,6 +246,7 @@ export class Player implements IPlayer {
 
   /**
    * inHand設定が有効な場合、ゲージ条件を満たしたJokerを手札に移動する
+   * joker.cardからは削除しない（使用するジョーカーアビリティを公開するため）
    * @returns 移動したJokerの配列
    */
   checkAndMoveJokerToHand(): Joker[] {
@@ -256,9 +257,8 @@ export class Player implements IPlayer {
 
     const movedJokers: Joker[] = [];
 
-    // joker.cardを先頭から順にチェック（配列を変更するためコピーを使用）
-    const jokerCards = this.joker.card.slice();
-    for (const joker of jokerCards) {
+    // joker.cardを先頭から順にチェック
+    for (const joker of this.joker.card) {
       // 手札が上限に達していたら終了
       if (this.hand.length >= rule.player.max.hand) break;
 
@@ -273,9 +273,8 @@ export class Player implements IPlayer {
       // ゲージ消費
       this.joker.gauge -= requiredGauge;
 
-      // フラグを設定して手札に移動
+      // フラグを設定して手札に移動（joker.cardからは削除しない）
       joker.hasBeenInHand = true;
-      this.joker.card = this.joker.card.filter(j => j.id !== joker.id);
       this.hand.push(joker);
       movedJokers.push(joker);
     }
