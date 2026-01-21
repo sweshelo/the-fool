@@ -8,6 +8,7 @@ import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
 import { Joker } from './card/Joker';
 import type { Core } from '../index';
+import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 export interface PlayerAction {
   action: Action;
@@ -243,11 +244,58 @@ export class Player implements IPlayer {
     return this.#core;
   }
 
+  /**
+   * inHand設定が有効な場合、ゲージ条件を満たしたJokerを手札に移動する
+   * @returns 移動したJokerの配列
+   */
+  checkAndMoveJokerToHand(): Joker[] {
+    const rule = this.#core.room.rule;
+
+    // inHand設定が無効なら何もしない
+    if (!rule.joker.inHand) return [];
+
+    const movedJokers: Joker[] = [];
+
+    // joker.cardを先頭から順にチェック（配列を変更するためコピーを使用）
+    const jokerCards = this.joker.card.slice();
+    for (const joker of jokerCards) {
+      // 手札が上限に達していたら終了
+      if (this.hand.length >= rule.player.max.hand) break;
+
+      // 既に一度手札に加わったJokerはスキップ
+      if (joker.hasBeenInHand) continue;
+
+      // ゲージ条件チェック
+      const requiredGauge = joker.catalog.gauge ? JOKER_GAUGE_AMOUNT[joker.catalog.gauge] : null;
+      if (requiredGauge === null) continue;
+      if (this.joker.gauge < requiredGauge) continue;
+
+      // ゲージ消費
+      this.joker.gauge -= requiredGauge;
+
+      // フラグを設定して手札に移動
+      joker.hasBeenInHand = true;
+      this.joker.card = this.joker.card.filter(j => j.id !== joker.id);
+      this.hand.push(joker);
+      movedJokers.push(joker);
+    }
+
+    // 移動があった場合はSEを再生
+    if (movedJokers.length > 0) {
+      this.#core.room.soundEffect('draw');
+      this.#core.room.sync();
+    }
+
+    return movedJokers;
+  }
+
   damage(self: boolean = false) {
     this.life.current--;
     const rule = this.#core.room.rule.joker;
     if (!self || rule.suicide) {
       this.joker.gauge = Math.min(this.joker.gauge + rule.lifeDamage, 100);
+      // inHand設定: ゲージ条件を満たしたJokerを手札に移動
+      this.checkAndMoveJokerToHand();
     }
     if (this.life.current <= 0) return true;
   }

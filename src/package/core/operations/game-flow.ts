@@ -168,6 +168,11 @@ export async function turnChange(
     await Promise.all(core.players.map(player => mulligan(core, player)));
   }
 
+  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
+  if (!option?.isFirstTurn) {
+    core.getTurnPlayer().checkAndMoveJokerToHand();
+  }
+
   // CP初期化
   const turnPlayer = core.getTurnPlayer();
   if (turnPlayer) {

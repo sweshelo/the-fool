@@ -22,6 +22,7 @@ import { Stack } from '../class/stack';
 import { Evolve, Unit } from '../class/card';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
+import { Joker } from '../class/card/Joker';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 import { handleEffectResponse, handleContinue } from './effect-handler';
 import { turnChange } from './game-flow';
@@ -187,16 +188,28 @@ export async function handleMessage(core: Core, message: Message) {
         throw new Error('Invalid player');
       }
 
-      // Find joker ability in player's jokers using IAtom (id + catalogId)
-      const joker = player.joker.card.find(j => j.id === payload.target.id);
+      // Find joker ability in player's jokers or hand (for inHand setting)
+      let joker: Joker | undefined = player.joker.card.find(j => j.id === payload.target.id);
+      let isInHand = false;
+
+      if (!joker) {
+        // inHand設定: 手札からも検索
+        const handJoker = player.hand.find(c => c.id === payload.target.id);
+        if (handJoker instanceof Joker) {
+          joker = handJoker;
+          isInHand = true;
+        }
+      }
 
       if (!joker || joker.catalog.type !== 'joker') {
         throw new Error('Invalid joker ability');
       }
 
-      // Check if player has enough gauge
-      if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
-        throw new Error('Insufficient joker gauge');
+      // Check if player has enough gauge (skip if Joker is in hand - gauge already consumed)
+      if (!isInHand) {
+        if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
+          throw new Error('Insufficient joker gauge');
+        }
       }
 
       // check if player has enough cp
@@ -212,12 +225,16 @@ export async function handleMessage(core: Core, message: Message) {
         throw new Error('Joker conditions not met');
       }
 
-      // Consume gauge
-      if (!joker.catalog.gauge) {
-        throw new Error('ジョーカーゲージの消費量が定義されていません');
+      // Consume gauge (skip if Joker is in hand - gauge already consumed)
+      if (!isInHand) {
+        if (!joker.catalog.gauge) {
+          throw new Error('ジョーカーゲージの消費量が定義されていません');
+        }
+        player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
+      } else {
+        // 手札からJokerを削除
+        player.hand = player.hand.filter(c => c.id !== joker.id);
       }
-
-      player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
 
       if (joker.catalog.cost > 0) {
         player.cp.current -= joker.catalog.cost;

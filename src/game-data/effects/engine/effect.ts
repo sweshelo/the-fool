@@ -1,5 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import { Evolve, Intercept, Trigger, Unit, type Card } from '@/package/core/class/card';
+import { Joker } from '@/package/core/class/card/Joker';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
@@ -386,6 +387,15 @@ export class Effect {
     const owner = target.owner;
     const card = owner.find(target);
 
+    // inHand設定: 手札にあるJokerが他の領域に移動しようとした場合、消滅させる
+    if (stack.core.room.rule.joker.inHand && target instanceof Joker) {
+      // 手札から削除するだけ（どこにも追加しない）
+      owner.hand = owner.hand.filter(c => c.id !== target.id);
+      stack.core.room.soundEffect('destruction');
+      stack.core.room.sync();
+      return;
+    }
+
     if (card.place?.name === 'hand') {
       target.lv = 1;
       owner.hand = owner.hand.filter(c => c.id !== target.id);
@@ -423,6 +433,15 @@ export class Effect {
     // Type guard to check if the location property exists on owner
     if (!(location in owner) || location === cardFind.place.name) {
       throw new Error(`無効な移動先です: ${location}`);
+    }
+
+    // inHand設定: 手札にあるJokerが他の領域に移動しようとした場合、消滅させる
+    if (stack.core.room.rule.joker.inHand && origin === 'hand' && target instanceof Joker) {
+      // 手札から削除するだけ（どこにも追加しない）
+      owner.hand = owner.hand.filter(c => c.id !== target.id);
+      stack.core.room.soundEffect('destruction');
+      stack.core.room.sync();
+      return;
     }
 
     // 枚数上限付き領域には上限チェックを実施
@@ -558,6 +577,8 @@ export class Effect {
     target: Player,
     value: number | JokerGuageAmountKey
   ) {
+    const isIncrease = typeof value === 'number' && value > 0;
+
     if (typeof value === 'number') {
       target.joker.gauge += value;
     } else {
@@ -566,6 +587,11 @@ export class Effect {
 
     if (target.joker.gauge > 100) target.joker.gauge = 100;
     if (target.joker.gauge < 0) target.joker.gauge = 0;
+
+    // inHand設定: ゲージ増加時のみチェック
+    if (isIncrease) {
+      target.checkAndMoveJokerToHand();
+    }
 
     /* TODO: 将来的に必要になれば。
     stack.addChildStack('modifyJokerGuage', source, target, {
