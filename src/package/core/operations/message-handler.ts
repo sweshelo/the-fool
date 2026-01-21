@@ -12,6 +12,8 @@ import type {
   JokerDrivePayload,
   DebugMakePayload,
   DebugDrivePayload,
+  AttackPayload,
+  BootPayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
@@ -89,8 +91,9 @@ export async function handleMessage(core: Core, message: Message) {
     }
     case 'EvolveDrive':
     case 'UnitDrive': {
-      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
       const player = core.players.find(p => p.id === payload.player);
       const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
       if (!card || !player) {
@@ -168,13 +171,14 @@ export async function handleMessage(core: Core, message: Message) {
         await drive(core, player, card, source);
       }
 
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
     case 'JokerDrive': {
-      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: JokerDrivePayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
 
       // Validate player
       const player = core.players.find(p => p.id === payload.player);
@@ -255,7 +259,7 @@ export async function handleMessage(core: Core, message: Message) {
       // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
       core.stack.push(jokerStack);
       await resolveStack(core);
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
@@ -311,8 +315,9 @@ export async function handleMessage(core: Core, message: Message) {
     }
 
     case 'Attack': {
-      core.room.broadcastToAll(MessageHelper.freeze());
-      const { payload } = message;
+      const payload: AttackPayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
 
       // IUnit -> Unitに変換
       const attacker = core.players
@@ -321,14 +326,14 @@ export async function handleMessage(core: Core, message: Message) {
       if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
 
       await attack(core, attacker);
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
     case 'Boot': {
-      core.room.broadcastToAll(MessageHelper.freeze());
-
-      const payload = message.payload;
+      const payload: BootPayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
       const player = core.players.find(p => p.id === payload.player);
       const target = player?.field.find(unit => unit.id === payload.target.id);
 
@@ -360,7 +365,7 @@ export async function handleMessage(core: Core, message: Message) {
         core.stack.push(new Stack({ type: 'boot', target, core: core, source: player }));
         await resolveStack(core);
       }
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
