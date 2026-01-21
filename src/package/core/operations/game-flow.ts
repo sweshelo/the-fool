@@ -114,8 +114,10 @@ export async function turnChange(
   core.room.broadcastToAll(MessageHelper.freeze());
 
   // ジョーカーゲージ増加量を確定
-  const jokerGuage = 12.5 * ((option.time ?? 0) / core.room.rule.system.turnTime) + 2.5;
-  core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGuage, 100);
+  const { minTurnEnd, maxTurnEnd } = core.room.rule.joker;
+  const timeRatio = (option.time ?? 0) / core.room.rule.system.turnTime;
+  const jokerGauge = minTurnEnd + (maxTurnEnd - minTurnEnd) * timeRatio;
+  core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
 
   if (!option?.isFirstTurn) {
     // ターン終了スタックを積み、解決する

@@ -75,7 +75,7 @@ export class Player implements IPlayer {
     this.called = [];
     this.joker = {
       card: [],
-      gauge: 0,
+      gauge: core.room.rule.joker.gauge,
     };
     this.#core = core;
 
@@ -245,7 +245,10 @@ export class Player implements IPlayer {
 
   damage(self: boolean = false) {
     this.life.current--;
-    if (!self) this.joker.gauge = Math.min(this.joker.gauge + 10, 100);
+    const rule = this.#core.room.rule.joker;
+    if (!self || rule.suicide) {
+      this.joker.gauge = Math.min(this.joker.gauge + rule.lifeDamage, 100);
+    }
     if (this.life.current <= 0) return true;
   }
 }

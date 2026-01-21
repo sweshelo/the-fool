@@ -71,8 +71,12 @@ export class Room {
 
         // Initialize jokers from owned JOKER card names
         if (message.payload.jokersOwned) {
+          const jokerIds = this.rule.joker.single
+            ? message.payload.jokersOwned.slice(0, 1)
+            : message.payload.jokersOwned;
+
           const ownedJokerAbilities: string[] = [];
-          message.payload.jokersOwned.forEach(jokerCardName => {
+          jokerIds.forEach(jokerCardName => {
             catalog.forEach(entry => {
               if (entry.type === 'joker' && entry.id === jokerCardName) {
                 ownedJokerAbilities.push(entry.id);

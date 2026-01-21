@@ -34,5 +34,18 @@ game:
   misc:
     # オーバーライドを厳密にするか
     strictOverride: false
+  joker:
     # 自傷ダメージでジョーカーゲージを増加させるか
-    suicideJoker: false
+    suicide: false
+    # 1stジョーカーのみ使用可能にするか
+    single: false
+    # ジョーカーが使用可能になったら手札に加えるか（Ver.1系）
+    inHand: false
+    # 初期ジョーカーゲージ
+    gauge: 0
+    # ライフダメージ時のゲージ増加量
+    lifeDamage: 10
+    # ターン終了時の最大ゲージ増加量
+    maxTurnEnd: 15
+    # ターン終了時の最小ゲージ増加量
+    minTurnEnd: 2.5
