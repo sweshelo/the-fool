@@ -61,7 +61,8 @@ export class Effect {
     source: Card,
     target: Unit,
     value: number,
-    type: 'effect' | 'battle' = 'effect'
+    type: 'effect' | 'battle' = 'effect',
+    effectCode: string = `${source.id}-${stack.type}`
   ): boolean | undefined {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
@@ -140,7 +141,20 @@ export class Effect {
       })
     );
 
-    target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
+    target.delta.push(
+      new Delta(
+        { type: 'damage', value: damage },
+        {
+          event: 'turnEnd',
+          count: 1,
+          source: {
+            effectCode,
+            unit: source.id,
+          },
+        }
+      )
+    );
+
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
