@@ -116,7 +116,9 @@ export async function turnChange(
   if (!option?.isFirstTurn) {
     // ジョーカーゲージ増加量を確定
     const { minTurnEnd, maxTurnEnd } = core.room.rule.joker;
-    const timeRatio = (option.time ?? 0) / core.room.rule.system.turnTime;
+    const timeRatio =
+      Math.max(Math.min(option.time ?? 0, core.room.rule.system.turnTime), 0) /
+      core.room.rule.system.turnTime;
     const jokerGauge = minTurnEnd + (maxTurnEnd - minTurnEnd) * timeRatio;
     core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
 
