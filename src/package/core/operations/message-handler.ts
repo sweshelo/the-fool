@@ -230,9 +230,9 @@ export async function handleMessage(core: Core, message: Message) {
         player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
       }
 
-      // Jokerを削除（joker.cardから、手札にあれば手札からも）
-      player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
+      // Jokerを削除（旧ルールの場合のみ）
       if (isInHand) {
+        player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
         player.hand = player.hand.filter(c => c.id !== joker.id);
       }
 
