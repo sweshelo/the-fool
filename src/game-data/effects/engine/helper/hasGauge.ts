@@ -10,5 +10,7 @@ export function helperHasGauge(player: Player, gaugeKey: '小' | '中' | '大' |
       return player.joker.gauge > 65;
     case '特大':
       return player.joker.gauge > 80;
+    default:
+      return false;
   }
 }
