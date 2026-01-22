@@ -9,7 +9,8 @@ export function effectDamage(
   source: Card,
   target: Unit,
   value: number,
-  type: 'effect' | 'battle' = 'effect'
+  type: 'effect' | 'battle' = 'effect',
+  effectCode: string = `${source.id}-${stack.type}`
 ): boolean | undefined {
   const exists = target.owner.find(target);
   const isOnField = exists.result && exists.place?.name === 'field';
@@ -80,7 +81,20 @@ export function effectDamage(
     })
   );
 
-  target.delta.push(new Delta({ type: 'damage', value: damage }, { event: 'turnEnd', count: 1 }));
+  target.delta.push(
+    new Delta(
+      { type: 'damage', value: damage },
+      {
+        event: 'turnEnd',
+        count: 1,
+        source: {
+          effectCode,
+          unit: source.id,
+        },
+      }
+    )
+  );
+
   stack.addChildStack('damage', source, target, {
     type: 'damage',
     cause: type,

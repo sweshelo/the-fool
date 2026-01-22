@@ -54,9 +54,10 @@ export class Effect {
     source: Card,
     target: Unit,
     value: number,
-    type: 'effect' | 'battle' = 'effect'
+    type: 'effect' | 'battle' = 'effect',
+    effectCode: string = `${source.id}-${stack.type}`
   ): boolean | undefined {
-    return effectDamage(stack, source, target, value, type);
+    return effectDamage(stack, source, target, value, type, effectCode);
   }
 
   /**

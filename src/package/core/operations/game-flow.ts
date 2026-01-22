@@ -142,9 +142,11 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
     await resolveStack(core);
 
     // ウィルス除外
-    const afterField = core.getTurnPlayer().field.filter(
-      unit => !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
-    );
+    const afterField = core
+      .getTurnPlayer()
+      .field.filter(
+        unit => !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
+      );
     if (afterField.length !== core.getTurnPlayer().field.length) {
       core.getTurnPlayer().field = afterField;
       core.room.soundEffect('leave');
@@ -179,7 +181,7 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
         payload: {
           type: 'TurnChange',
           player: turnPlayer.id,
-          isFirst: (core.turn - 1) % 2 === 0,
+          isFirst: (core.turn - 1 + core.firstPlayerIndex) % 2 === 0,
         },
       })
     );
@@ -218,12 +220,14 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
   }
 
   // 行動制限を解除する
-  core.getTurnPlayer().field.forEach(
-    unit =>
-      (unit.delta = unit.delta.filter(
-        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-      ))
-  );
+  core
+    .getTurnPlayer()
+    .field.forEach(
+      unit =>
+        (unit.delta = unit.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        ))
+    );
 
   core.room.sync();
 
@@ -239,13 +243,15 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
   await resolveStack(core);
 
   // 狂戦士 アタックさせる
-  for (const unit of core.getTurnPlayer().field.filter(
-    unit =>
-      unit.hasKeyword('狂戦士') &&
-      !unit.hasKeyword('攻撃禁止') &&
-      !unit.hasKeyword('行動制限') &&
-      unit.active
-  )) {
+  for (const unit of core
+    .getTurnPlayer()
+    .field.filter(
+      unit =>
+        unit.hasKeyword('狂戦士') &&
+        !unit.hasKeyword('攻撃禁止') &&
+        !unit.hasKeyword('行動制限') &&
+        unit.active
+    )) {
     await attack(core, unit);
   }
 

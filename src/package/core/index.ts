@@ -23,6 +23,7 @@ export class Core {
   players: Player[];
   round: number = 1;
   turn: number = 1;
+  firstPlayerIndex: number = 0;
   room: Room;
   stack: Stack[] = [];
   histories: History[];
@@ -54,6 +55,13 @@ export class Core {
 
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
+      // 先攻をランダムに決定 (0 or 1)
+      this.firstPlayerIndex = Math.floor(Math.random() * 2);
+      console.log(
+        'First player decided: %s (index: %s)',
+        this.players[this.firstPlayerIndex]?.id,
+        this.firstPlayerIndex
+      );
       this.room.soundEffect('agent-interrupt');
       // oxlint-disable-next-line no-floating-promises
       this.start();
@@ -65,8 +73,8 @@ export class Core {
    * @returns ターンプレイヤーのID
    */
   getTurnPlayer(): Player {
-    // 現在のターン数から、対応するプレイヤーのインデックスを計算
-    const playerIndex = (this.turn - 1) % this.players.length;
+    // 現在のターン数と先攻インデックスから、対応するプレイヤーのインデックスを計算
+    const playerIndex = (this.turn - 1 + this.firstPlayerIndex) % this.players.length;
     const player = this.players[playerIndex];
 
     if (!player) throw new Error('ターンプレイヤーが見つかりませんでした');
