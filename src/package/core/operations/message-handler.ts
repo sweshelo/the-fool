@@ -155,7 +155,16 @@ export async function handleMessage(core: Core, message: Message) {
         const cost =
           card.catalog.cost +
           card.delta
-            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
+            .map(delta => {
+              switch (delta.effect.type) {
+                case 'cost':
+                  return delta.effect.value;
+                case 'dynamic-cost':
+                  return delta.effect.diff;
+                default:
+                  return 0;
+              }
+            })
             .reduce((acc, cur) => acc + cur, 0);
 
         // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
@@ -418,7 +427,9 @@ export async function handleMessage(core: Core, message: Message) {
       } else {
         console.warn(`[Core ${core.id}] No mulligan handler found for player ${payload.player}`);
       }
-      break;
+
+      // マリガン中は後処理を実行させない
+      return;
     }
 
     case 'DebugDraw': {
@@ -475,12 +486,12 @@ export async function handleMessage(core: Core, message: Message) {
     if (core.turn > 0) {
       core.getTurnPlayer()?.checkAndMoveJokerToHand();
     }
-  } catch {
+    core.stack.push(
+      new Stack({ type: '_messageReceived', source: core.getTurnPlayer(), core: core })
+    );
+    await resolveStack(core);
+  } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
+    console.error(e);
   }
-
-  core.stack.push(
-    new Stack({ type: '_messageReceived', source: core.getTurnPlayer(), core: core })
-  );
-  await resolveStack(core);
 }
