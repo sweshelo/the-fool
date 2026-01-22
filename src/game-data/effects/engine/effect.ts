@@ -359,7 +359,7 @@ export class Effect {
    * @example
    * const cloned = await Effect.clone(stack, stack.processing, target, player);
    */
-  static async clone(stack: Stack, source: Card, target: Unit, owner: Player): Promise<Unit> {
+  static async clone(stack: Stack, source: Card, target: Unit, owner: Player) {
     return effectClone(stack, source, target, owner);
   }
 

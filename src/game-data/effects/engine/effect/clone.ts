@@ -9,12 +9,11 @@ export async function effectClone(
   source: Card,
   target: Unit,
   owner: Player
-): Promise<Unit> {
+): Promise<Unit | undefined> {
   const unit = target.clone(owner, true);
   stack.core.room.soundEffect('copying');
   sendSelectedVisualEffect(stack, target);
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  await effectSummon(stack, source, unit, true);
-  return unit;
+  return effectSummon(stack, source, unit, true);
 }
