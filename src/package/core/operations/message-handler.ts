@@ -395,7 +395,7 @@ export async function handleMessage(core: Core, message: Message) {
       if (target && target.card && player && isOnHand) {
         player.hand = player.hand.filter(c => c.id !== target.card?.id);
 
-        if (!(target instanceof Joker)) {
+        if (!(target.card instanceof Joker)) {
           player.trash.push(target.card);
           target.card.reset();
         }
