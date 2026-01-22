@@ -3,7 +3,7 @@ import { Delta } from '@/package/core/class/delta';
 
 export function effectDeath(target: Unit, count: number) {
   const deathCounter = target.delta.find(delta => delta.effect.type === 'death');
-  if (deathCounter && count < deathCounter.count) {
+  if (deathCounter) {
     deathCounter.count = count;
   } else {
     target.delta.push(
