@@ -20,7 +20,7 @@ export const effects: CardEffects = {
       // Make sure we have a valid target
       if (randomTarget) {
         // Discard it
-        Effect.handes(stack, stack.processing, randomTarget);
+        Effect.break(stack, stack.processing, randomTarget);
       }
     }
   },

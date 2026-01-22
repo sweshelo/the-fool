@@ -36,7 +36,7 @@ export const effects: CardEffects = {
       if (hasBlueUnit && opponent.hand.length > 0) {
         const [target] = EffectHelper.random(opponent.hand, 1);
         if (target) {
-          Effect.handes(stack, self, target);
+          Effect.break(stack, self, target);
         }
       }
     }

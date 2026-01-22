@@ -19,7 +19,7 @@ export const effects: CardEffects = {
 
     // 対戦相手の手札を全て破壊する
     [...opponent.hand].forEach((card: Card) => {
-      Effect.handes(stack, stack.processing, card);
+      Effect.break(stack, stack.processing, card);
     });
   },
 };

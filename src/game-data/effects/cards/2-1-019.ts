@@ -67,7 +67,7 @@ export const effects: CardEffects = {
         );
 
         // カードを捨てる
-        Effect.handes(stack, stack.processing, card);
+        Effect.break(stack, stack.processing, card);
 
         // カードを1枚引く
         EffectTemplate.draw(owner, stack.core);

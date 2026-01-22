@@ -40,7 +40,7 @@ export const effects: CardEffects = {
     if (!drawTarget || draws.length !== drawTarget.length)
       throw new Error('正しいカードが選択されませんでした');
 
-    discardTarget.forEach(card => Effect.handes(stack, stack.processing, card));
+    discardTarget.forEach(card => Effect.break(stack, stack.processing, card));
     drawTarget.forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
   },
 };

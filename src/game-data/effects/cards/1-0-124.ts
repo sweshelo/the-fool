@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     const targets = (await System.prompt(stack, stack.processing.owner.id, choices))
       .map(id => stack.processing.owner.hand.find(card => card.id === id))
       .filter(card => card !== undefined);
-    targets.forEach(card => Effect.handes(stack, stack.processing, card));
+    targets.forEach(card => Effect.break(stack, stack.processing, card));
 
     [...Array(3)].forEach(() => EffectTemplate.draw(stack.processing.owner, stack.core));
   },
