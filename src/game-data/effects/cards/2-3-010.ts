@@ -6,7 +6,7 @@ import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   handEffect: (_core: unknown, self: Card) => {
-    const calculator = (self: Card) => -self.owner.delete;
+    const calculator = (self: Card) => -self.owner.delete.length;
     PermanentEffect.mount(self, {
       effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
       effectCode: '',
