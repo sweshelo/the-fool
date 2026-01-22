@@ -195,7 +195,7 @@ export class Effect {
   /**
    * 効果によってカードを移動させる
    *
-   * 手札を捨てる動作は `handes` を利用してください。
+   * 手札を捨てる動作は `break` を利用してください。
    *
    * @param stack - 親スタック
    * @param source - 効果の発動元
