@@ -1,17 +1,21 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import type { Card } from '@/package/core/class/card';
 import { sendSelectedVisualEffect } from './_utils';
 import { effectMove } from './move';
+import { EffectHelper } from '../helper';
 
 export function effectBounce(
   stack: Stack,
   source: Card,
-  target: Unit,
+  target: Card,
   location: 'hand' | 'deck' | 'trigger' = 'hand'
 ): void {
   const exists = target.owner.find(target);
   const isOnField =
-    exists.result && exists.place?.name === 'field' && target.destination !== location;
+    EffectHelper.isUnit(target) &&
+    exists.result &&
+    exists.place?.name === 'field' &&
+    target.destination !== location;
 
   switch (exists.place?.name) {
     case 'field': {

@@ -1,18 +1,22 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import type { Card } from '@/package/core/class/card';
 import { sendSelectedVisualEffect } from './_utils';
 import { effectHandes } from './handes';
 import { effectMove } from './move';
+import { EffectHelper } from '../helper';
 
 export function effectBreak(
   stack: Stack,
   source: Card,
-  target: Unit,
+  target: Card,
   cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
 ): void {
   const exists = target.owner.find(target);
   const isOnField =
-    exists.result && exists.place?.name === 'field' && target.destination !== 'trash';
+    EffectHelper.isUnit(target) &&
+    exists.result &&
+    exists.place?.name === 'field' &&
+    target.destination !== 'trash';
   if (!exists.result) return;
 
   switch (exists.place?.name) {
@@ -34,6 +38,7 @@ export function effectBreak(
         type: 'break',
         cause: cause === 'modifyBp' ? 'effect' : cause,
       });
+
       target.destination = 'trash';
       stack.core.room.soundEffect('bang');
       sendSelectedVisualEffect(stack, target);

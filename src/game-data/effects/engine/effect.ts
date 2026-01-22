@@ -114,11 +114,10 @@ export class Effect {
   }
 
   /**
-   * ユニットを破壊する
+   * 対象を破壊する
    *
-   * 【破壊効果耐性】を自動でチェックします。
-   * フィールド上のユニット以外を破壊する場合はこのメソッドではなく
-   * Effect.handes() や Effect.move() で捨札に送る操作を実行します。
+   * フィールド上のユニットに対しては【破壊効果耐性】を自動でチェックし、破壊スタックを発生させます。
+   * 手札内のカードに対しては、手札破壊スタックを発生させます。
    *
    * @param stack - 親スタック
    * @param source - 効果の発動元
@@ -131,7 +130,7 @@ export class Effect {
   static break(
     stack: Stack,
     source: Card,
-    target: Unit,
+    target: Card,
     cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
   ) {
     return effectBreak(stack, source, target, cause);
@@ -140,9 +139,7 @@ export class Effect {
   /**
    * 対象を消滅させる
    *
-   * 【消滅効果耐性】を自動でチェックします。
-   * フィールド上のユニット以外を消滅させる場合はこのメソッドではなく
-   * Effect.move() で消滅札に送る操作を実行します。
+   * フィールド上のユニットに対しては【消滅効果耐性】を自動でチェックし、消滅スタックを発生させます。
    *
    * @param stack - 親スタック
    * @param source - 効果の発動元
@@ -151,14 +148,14 @@ export class Effect {
    * @example
    * Effect.delete(stack, stack.processing, target);
    */
-  static delete(stack: Stack, source: Card, target: Unit) {
+  static delete(stack: Stack, source: Card, target: Card) {
     return effectDelete(stack, source, target);
   }
 
   /**
    * 対象を移動させる（バウンス）
    *
-   * 【固着】を自動でチェックします。
+   * フィールド上のユニットに対しては【固着】を自動でチェックし、手札へ戻すスタックを発生させます。
    *
    * @param stack - 親スタック
    * @param source - 効果の発動元
@@ -175,7 +172,7 @@ export class Effect {
   static bounce(
     stack: Stack,
     source: Card,
-    target: Unit,
+    target: Card,
     location: 'hand' | 'deck' | 'trigger' = 'hand'
   ) {
     return effectBounce(stack, source, target, location);
@@ -183,13 +180,13 @@ export class Effect {
 
   /**
    * 効果によって手札を捨てさせる
-   *
+   * @deprecated Effect.break() を手札以外にも利用することが出来ます
    * @param stack - 親スタック
    * @param source - 効果の発動元
    * @param target - 破壊する手札
    *
    * @example
-   * Effect.handes(stack, stack.processing, targetCard);
+   * Effect.break(stack, stack.processing, targetCard);
    */
   static handes(stack: Stack, source: Card, target: Card) {
     return effectHandes(stack, source, target);
