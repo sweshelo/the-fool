@@ -123,6 +123,20 @@ export class Unit extends Card implements IUnit {
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
     this.isBooted = false;
   }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      bp: this.bp,
+      active: this.active,
+      destination: this.destination,
+      overclocked: this.overclocked,
+      isCopy: this.isCopy,
+      hasBootAbility: this.hasBootAbility,
+      isBooted: this.isBooted,
+      currentBP: this.currentBP,
+    };
+  }
 }
 
 export class Evolve extends Unit implements IUnit {}

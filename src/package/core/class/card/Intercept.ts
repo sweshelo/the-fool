@@ -34,4 +34,12 @@ export class Intercept extends Card implements ICard {
     this.revealed = false;
     this.remain = this.#originalRemain;
   }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      remain: this.remain,
+      revealed: this.revealed,
+    };
+  }
 }

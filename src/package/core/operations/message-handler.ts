@@ -116,22 +116,8 @@ export async function handleMessage(core: Core, message: Message) {
           c.catalog.color === card.catalog.color &&
           (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
       );
-      const cost =
-        card.catalog.cost +
-        card.delta
-          .map(delta => {
-            switch (delta.effect.type) {
-              case 'cost':
-                return delta.effect.value;
-              case 'dynamic-cost':
-                return delta.effect.diff;
-              default:
-                return 0;
-            }
-          })
-          .reduce((acc, cur) => acc + cur, 0);
 
-      const isEnoughCP = cost - (mitigate ? 1 : 0) <= player.cp.current;
+      const isEnoughCP = card.currentCost - (mitigate ? 1 : 0) <= player.cp.current;
 
       // ユニットである
       const isUnit = card instanceof Unit;
@@ -162,13 +148,13 @@ export async function handleMessage(core: Core, message: Message) {
 
       if (isEnoughCP && hasFieldSpace && isUnit) {
         // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
-        if (cost > 0 && mitigate) {
+        if (card.currentCost > 0 && mitigate) {
           player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
           mitigate.lv = 1;
           player.trash.push(mitigate);
         }
 
-        const actualCost = cost - (mitigate ? 1 : 0);
+        const actualCost = card.currentCost - (mitigate ? 1 : 0);
         player.cp.current -= Math.min(Math.max(actualCost, 0), player.cp.current);
         if (actualCost > 0) core.room.soundEffect('cp-consume');
         player.hand = player?.hand.filter(c => c.id !== card?.id);
