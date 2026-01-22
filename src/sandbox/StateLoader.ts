@@ -15,6 +15,7 @@ import { Joker } from '@/package/core/class/card/Joker';
 import { Delta } from '@/package/core/class/delta';
 import { DummyCard, DummyUnit } from './DummyCard';
 import catalog from '@/game-data/catalog';
+import type { GameEvent } from '@/game-data/effects/schema/events';
 
 /**
  * IAtomまたはICard型のデータからカードオブジェクトを復元する
@@ -62,7 +63,8 @@ function restoreCard(owner: Player, data: IAtom | ICard): Card {
           };
           return new Delta(serialized.effect, {
             count: serialized.count,
-            event: serialized.event,
+            // oxlint-disable-next-line
+            event: serialized.event as GameEvent,
             source: serialized.source,
             onlyForOwnersTurn: serialized.onlyForOwnersTurn,
             permanent: serialized.permanent,
@@ -108,7 +110,8 @@ function restoreUnit(owner: Player, data: IUnit): Unit {
         };
         return new Delta(serialized.effect, {
           count: serialized.count,
-          event: serialized.event,
+          // oxlint-disable-next-line
+          event: serialized.event as GameEvent,
           source: serialized.source,
           onlyForOwnersTurn: serialized.onlyForOwnersTurn,
           permanent: serialized.permanent,

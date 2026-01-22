@@ -26,7 +26,7 @@ export function effectModifyBP(
   if ('source' in option) {
     target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
   }
-  if ('event' in option && typeof option.event === 'string') {
+  if ('event' in option && option.event) {
     target.delta.push(
       new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
     );

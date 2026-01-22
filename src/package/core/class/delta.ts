@@ -1,6 +1,7 @@
 import type { DeltaEffect, IDelta, IUnit } from '@/submodule/suit/types';
 import type { StackWithCard } from '@/game-data/effects/schema/types';
 import type { Card } from './card';
+import type { GameEvent } from '@/game-data/effects/schema/events';
 
 export interface DeltaSource {
   unit: IUnit['id'];
@@ -8,13 +9,13 @@ export interface DeltaSource {
 }
 
 export interface DeltaEvent {
-  event: string;
+  event: GameEvent;
   count: number;
 }
 
 export type DeltaCalculator = (self: Card) => number;
 
-type DeltaConstructorOptionParams = {
+export type DeltaConstructorOptionParams = {
   onlyForOwnersTurn?: boolean;
   source?: DeltaSource;
   permanent?: boolean;
@@ -24,7 +25,7 @@ type DeltaConstructorOptionParams = {
 export class Delta implements IDelta {
   id: string;
   count: number;
-  event: string | undefined;
+  event: GameEvent | undefined;
   effect: DeltaEffect;
   source?: DeltaSource;
   onlyForOwnersTurn: boolean; // このパラメータが true のとき、eventに合致するイベントが発生しても自分のターン中でない場合はcountを減算しない
