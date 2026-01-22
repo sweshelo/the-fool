@@ -27,11 +27,11 @@ export function effectDamage(
 
   const damage = type === 'effect' && target.hasKeyword('オーバーヒート') ? value * 2 : value;
 
-  const hasImmotal = target.hasKeyword('不滅');
+  const hasImmortal = target.hasKeyword('不滅');
   const hasOrderShield =
     target.hasKeyword('秩序の盾') && type === 'effect' && source.owner.id !== target.owner.id;
   const hasKingsHealing = target.hasKeyword('王の治癒力') && target.currentBP > damage;
-  if (hasImmotal || hasOrderShield || hasKingsHealing) {
+  if (hasImmortal || hasOrderShield || hasKingsHealing) {
     stack.core.room.soundEffect('block');
     return false;
   }
