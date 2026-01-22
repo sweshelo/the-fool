@@ -10,4 +10,7 @@ export function effectModifyJokerGauge(target: Player, value: number | JokerGuag
 
   if (target.joker.gauge > 100) target.joker.gauge = 100;
   if (target.joker.gauge < 0) target.joker.gauge = 0;
+
+  // inHand設定
+  target.checkAndMoveJokerToHand();
 }

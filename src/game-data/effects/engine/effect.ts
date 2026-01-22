@@ -1,5 +1,5 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import { Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
 import type { DeltaSource } from '@/package/core/class/delta';
 import type { KeywordEffect } from '@/submodule/suit/types';

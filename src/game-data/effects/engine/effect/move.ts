@@ -1,6 +1,7 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card } from '@/package/core/class/card';
 import type { CardArrayKeys } from '@/package/core/class/Player';
+import { Joker } from '@/package/core/class/card/Joker';
 
 export function effectMove(
   stack: Stack,
@@ -23,6 +24,15 @@ export function effectMove(
 
   if (!(location in owner) || location === cardFind.place.name) {
     throw new Error(`無効な移動先です: ${location}`);
+  }
+
+  // inHand設定: 手札にあるJokerが他の領域に移動しようとした場合、消滅させる
+  if (stack.core.room.rule.joker.inHand && origin === 'hand' && target instanceof Joker) {
+    // 手札から削除するだけ（どこにも追加しない）
+    owner.hand = owner.hand.filter(c => c.id !== target.id);
+    stack.core.room.soundEffect('destruction');
+    stack.core.room.sync();
+    return;
   }
 
   if (location === 'hand' && owner.hand.length >= stack.core.room.rule.player.max.hand) return;
