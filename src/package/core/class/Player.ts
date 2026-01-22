@@ -252,8 +252,8 @@ export class Player implements IPlayer {
   checkAndMoveJokerToHand(): Joker[] {
     const rule = this.#core.room.rule;
 
-    // inHand設定が無効なら何もしない
-    if (!rule.joker.inHand) return [];
+    // inHand設定が無効 / 自分のターンでないなら何もしない
+    if (!rule.joker.inHand || this.#core.getTurnPlayer().id !== this.id) return [];
 
     const movedJokers: Joker[] = [];
 
