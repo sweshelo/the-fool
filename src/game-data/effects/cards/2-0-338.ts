@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       const cards = EffectHelper.random(stack.processing.owner.hand, 1);
       const card = cards[0];
       if (card) {
-        Effect.handes(stack, stack.processing, card);
+        Effect.break(stack, stack.processing, card);
 
         await System.show(
           stack,

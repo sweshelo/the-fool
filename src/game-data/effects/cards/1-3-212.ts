@@ -26,7 +26,7 @@ export const effects: CardEffects = {
           '失われた翼の対価',
           '手札からトリガーカードを捨てる\n【スピードムーブ】を得る'
         );
-        Effect.handes(stack, stack.processing, selectedCard);
+        Effect.break(stack, stack.processing, selectedCard);
         Effect.speedMove(stack, stack.processing);
       }
     }
@@ -90,7 +90,7 @@ export const effects: CardEffects = {
 
             if (selectedCard) {
               // 捨て札に移動
-              Effect.handes(stack, stack.processing, selectedCard);
+              Effect.break(stack, stack.processing, selectedCard);
             }
           }
 

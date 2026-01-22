@@ -23,7 +23,7 @@ export const effects: CardEffects = {
       '捨てるカードを選択'
     );
 
-    Effect.handes(stack, stack.processing, discardCard);
+    Effect.break(stack, stack.processing, discardCard);
 
     // デッキからカードを1枚選んで手札に加える
     const [selectedCard] = await EffectHelper.selectCard(

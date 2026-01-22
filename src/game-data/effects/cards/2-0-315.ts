@@ -23,7 +23,7 @@ export const effects: CardEffects = {
       case '1': {
         await System.show(stack, '選略・呪詛発生装置', '手札を1枚破壊');
         const [target] = EffectHelper.random(opponent.hand, 1);
-        if (target) Effect.handes(stack, stack.processing, target);
+        if (target) Effect.break(stack, stack.processing, target);
         break;
       }
 
