@@ -130,7 +130,8 @@ export async function drive(
  */
 export function fieldEffectUnmount(core: Core, target: Unit, stack: Stack) {
   const unmount = (card: Card) =>
-    (card.delta = card.delta.filter(delta => delta.source?.unit !== target.id));
+    // delta.event に 値が設定されていれば、それは source.unit によるフィールド効果ではないとみなす
+    (card.delta = card.delta.filter(delta => !delta.event || delta.source?.unit !== target.id));
 
   // フィールド
   core.players
