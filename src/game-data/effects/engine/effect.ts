@@ -1,7 +1,12 @@
 import type { Stack } from '@/package/core/class/stack';
 import { Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
-import { Delta, type DeltaCalculator, type DeltaSource } from '@/package/core/class/delta';
+import {
+  Delta,
+  type DeltaCalculator,
+  type DeltaConstructorOptionParams,
+  type DeltaSource,
+} from '@/package/core/class/delta';
 import type { KeywordEffect } from '@/submodule/suit/types';
 import type { JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 import {
@@ -478,7 +483,7 @@ export class Effect {
     return effectMake(stack, player, target, locationKey);
   }
 
-  static modifyCost(target: Card, value: number, option: { source: DeltaSource } | {}) {
+  static modifyCost(target: Card, value: number, option?: DeltaConstructorOptionParams) {
     target.delta.push(new Delta({ type: 'cost', value }, option));
   }
 

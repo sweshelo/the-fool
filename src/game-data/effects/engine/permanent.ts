@@ -1,5 +1,4 @@
 import { Unit, type Card } from '@/package/core/class/card';
-import type { StackWithCard } from '../schema/types';
 import type { DeltaSource } from '@/package/core/class/delta';
 
 const targetKeys = ['self', 'owns', 'opponents', 'both', 'hand', 'trigger'] as const;
@@ -49,39 +48,34 @@ interface Targets {
 export class PermanentEffect {
   /**
    * フィールド効果を登録します。
-   * @param stack Stack
-   * @param source フィールド効果の発生源
+   * @param self フィールド効果の発生源
    * @param details フィールド効果詳細
    */
-  static mount(stack: StackWithCard, source: Card, details: EffectDetails) {
-    const { units = [], cards = [] } = this.getTargets(stack, source, details.targets);
+  static mount(self: Card, details: EffectDetails) {
+    const { units = [], cards = [] } = this.getTargets(self, details.targets);
 
     // FIXME: units / cards と それに対する effect() の型付けをうまく連携させる方法を思いついたら実装する
     const targets = [...units, ...cards];
 
     targets.forEach(card => {
       const delta = card.delta.some(
-        delta => delta.source?.effectCode === details.effectCode && delta.source.unit === source.id
+        delta => delta.source?.effectCode === details.effectCode && delta.source.unit === self.id
       );
       if (!details.condition || details.condition(card)) {
         // 効果付与
-        if (!delta) details.effect(card, { unit: source.id, effectCode: details.effectCode });
+        if (!delta) details.effect(card, { unit: self.id, effectCode: details.effectCode });
       } else {
         // 効果剥奪
         if (delta)
           card.delta = card.delta.filter(
             delta =>
-              !(delta.source?.effectCode === details.effectCode && delta.source?.unit === source.id)
+              !(delta.source?.effectCode === details.effectCode && delta.source?.unit === self.id)
           );
       }
     });
   }
 
-  static getTargets(
-    stack: StackWithCard,
-    source: Card,
-    targetKeys: TargetKeys[]
-  ): Partial<Targets> {
+  static getTargets(source: Card, targetKeys: TargetKeys[]): Partial<Targets> {
     const players = [];
 
     // self を指定した場合
@@ -95,7 +89,7 @@ export class PermanentEffect {
 
     // 対象のプレイヤーを絞り込む
     if (targetKeys.includes('both')) {
-      players.push(stack.core.getTurnPlayer(), stack.core.getTurnPlayer().opponent);
+      players.push(source.owner.core.getTurnPlayer(), source.owner.core.getTurnPlayer().opponent);
     } else if (targetKeys.includes('owns')) {
       players.push(source.owner);
     } else if (targetKeys.includes('opponents')) {

@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数
 const hasFourGodCard = (stack: StackWithCard<Unit>, name: string): boolean => {
@@ -24,7 +23,7 @@ export const effects: CardEffects = {
       );
       const card = EffectTemplate.draw(stack.processing.owner, stack.core);
       if (card) {
-        card.delta.push(new Delta({ type: 'cost', value: -2 }));
+        Effect.modifyCost(card, -2);
       }
     } else {
       await System.show(

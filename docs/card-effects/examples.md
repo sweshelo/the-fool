@@ -159,7 +159,7 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (target, source) => {
         // 型チェックを実施
         // ※それ以外の条件は condition に実装します
@@ -189,7 +189,7 @@ export const effects: CardEffects = {
     const calculator = (target: Unit) => target.owner.field.filter(unit => unit.catalog.species.includes('神')).length * 4000
 
     // フィールド効果を適用
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (target, source) => {
         // 型チェックを実施
         // ※それ以外の条件は condition に実装します

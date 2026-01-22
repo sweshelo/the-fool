@@ -44,7 +44,7 @@ export const effects: CardEffects = {
 
   // フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (target, source) => {
         if (target instanceof Unit)
           Effect.keyword(stack, stack.processing, target, '加護', { source });

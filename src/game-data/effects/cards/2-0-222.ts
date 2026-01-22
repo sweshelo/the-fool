@@ -1,5 +1,4 @@
-import { System } from '..';
-import { Delta } from '@/package/core/class/delta';
+import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -23,12 +22,7 @@ export const effects: CardEffects = {
 
       // 各対象カードにコスト-1のDeltaを適用
       targets.forEach(card => {
-        card.delta.push(
-          new Delta(
-            { type: 'cost', value: -1 },
-            { event: 'turnEnd', count: 1, onlyForOwnersTurn: true }
-          )
-        );
+        Effect.modifyCost(card, -1, { event: 'turnEnd', count: 1 });
       });
     }
   },

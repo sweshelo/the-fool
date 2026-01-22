@@ -537,14 +537,12 @@ onBreak: async (stack: StackWithCard<Unit>) => {
 
 ```typescript
 static mount(
-  stack: StackWithCard,
   source: Card,
   details: EffectDetails
 ): void
 ```
 
 **パラメータ:**
-- `stack` - スタック
 - `source` - 効果の発動元
 - `details` - 効果の詳細オブジェクト
 
@@ -553,7 +551,7 @@ static mount(
 ```typescript
 // フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
 fieldEffect: (stack: StackWithCard<Unit>): void => {
-  PermanentEffect.mount(stack, stack.processing, {
+  PermanentEffect.mount(stack.processing, {
     effect: (target, source) => {
       if (target instanceof Unit)
         Effect.keyword(stack, stack.processing, target, '加護', { source });
