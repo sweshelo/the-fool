@@ -56,7 +56,7 @@ export class Effect {
     value: number,
     type: 'effect' | 'battle' = 'effect',
     effectCode: string = `${source.id}-${stack.type}`
-  ): boolean | undefined {
+  ) {
     return effectDamage(stack, source, target, value, type, effectCode);
   }
 
@@ -133,7 +133,7 @@ export class Effect {
     source: Card,
     target: Unit,
     cause: 'effect' | 'damage' | 'modifyBp' | 'battle' | 'death' | 'system' = 'effect'
-  ): void {
+  ) {
     return effectBreak(stack, source, target, cause);
   }
 
@@ -151,7 +151,7 @@ export class Effect {
    * @example
    * Effect.delete(stack, stack.processing, target);
    */
-  static delete(stack: Stack, source: Card, target: Unit): void {
+  static delete(stack: Stack, source: Card, target: Unit) {
     return effectDelete(stack, source, target);
   }
 
@@ -177,7 +177,7 @@ export class Effect {
     source: Card,
     target: Unit,
     location: 'hand' | 'deck' | 'trigger' = 'hand'
-  ): void {
+  ) {
     return effectBounce(stack, source, target, location);
   }
 
@@ -191,7 +191,7 @@ export class Effect {
    * @example
    * Effect.handes(stack, stack.processing, targetCard);
    */
-  static handes(stack: Stack, source: Card, target: Card): void {
+  static handes(stack: Stack, source: Card, target: Card) {
     return effectHandes(stack, source, target);
   }
 
@@ -212,7 +212,7 @@ export class Effect {
    * // トリガーゾーンにセット
    * Effect.move(stack, stack.processing, target, 'trigger');
    */
-  static move(stack: Stack, source: Card, target: Card, location: CardArrayKeys): void {
+  static move(stack: Stack, source: Card, target: Card, location: CardArrayKeys) {
     return effectMove(stack, source, target, location);
   }
 
@@ -227,7 +227,7 @@ export class Effect {
    * @example
    * Effect.modifyCP(stack, stack.processing, player, 2);
    */
-  static modifyCP(stack: Stack, source: Card, target: Player, value: number): void {
+  static modifyCP(stack: Stack, source: Card, target: Player, value: number) {
     return effectModifyCP(stack, source, target, value);
   }
 
@@ -254,8 +254,8 @@ export class Effect {
   /**
    * ジョーカーゲージを操作する
    *
-   * @param stack - 親スタック
-   * @param source - 効果の発動元
+   * @param _stack - 親スタック
+   * @param _source - 効果の発動元
    * @param target - 対象のプレイヤー
    * @param value - 増減量（数値または JokerGuageAmountKey）
    *
@@ -267,8 +267,8 @@ export class Effect {
    * Effect.modifyJokerGauge(stack, stack.processing, player, '中');
    */
   static modifyJokerGauge(
-    stack: Stack,
-    source: Card,
+    _stack: Stack,
+    _source: Card,
     target: Player,
     value: number | JokerGuageAmountKey
   ) {
