@@ -1,7 +1,7 @@
 import type { Stack } from '@/package/core/class/stack';
 import { Evolve, Intercept, Trigger, Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
-import { Delta, type DeltaSource } from '@/package/core/class/delta';
+import { Delta, type DeltaCalculator, type DeltaSource } from '@/package/core/class/delta';
 import { createMessage, type KeywordEffect } from '@/submodule/suit/types';
 import { JOKER_GAUGE_AMOUNT, type JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 import master from '@/game-data/catalog';
@@ -25,25 +25,30 @@ const sendSelectedVisualEffect = (stack: Stack, target: Unit) => {
   );
 };
 
-interface KeywordOptionParams {
-  event?: string;
-  count?: number;
+const isSourceOption = (option: ModifyBPOption): option is DeltaSourceOption => 'source' in option;
+const isEventOption = (option: ModifyBPOption): option is DeltaEventOption => 'event' in option;
+
+interface DeltaEventOption {
+  event: Delta['event'];
+  count: Delta['count'];
+}
+
+interface DeltaSourceOption {
+  source: DeltaSource;
+}
+
+type KeywordOptionParams = {
   cost?: number;
   onlyForOwnersTurn?: boolean;
-  source?: DeltaSource;
-}
+} & Partial<DeltaEventOption> &
+  Partial<DeltaSourceOption>;
 
 type ModifyBPOption =
   | {
       isBaseBP: true;
     }
-  | {
-      event: Delta['event'];
-      count: Delta['count'];
-    }
-  | {
-      source: Delta['source'];
-    };
+  | DeltaEventOption
+  | DeltaSourceOption;
 
 export class Effect {
   /**
@@ -182,9 +187,13 @@ export class Effect {
 
     if ('isBaseBP' in option) {
       target.bp += value;
-    } else if ('source' in option) {
+    }
+
+    if (isSourceOption(option)) {
       target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
-    } else {
+    }
+
+    if (isEventOption(option)) {
       target.delta.push(
         new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
       );
@@ -230,8 +239,8 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    calculator: (self: Card) => number,
-    option: { source: DeltaSource }
+    calculator: DeltaCalculator,
+    option: DeltaSourceOption
   ) {
     // 対象がフィールド上に存在するか確認
     const exists = target.owner.find(target);
@@ -1000,5 +1009,13 @@ export class Effect {
       location.push(clone);
       return clone;
     }
+  }
+
+  static modifyCost(target: Card, value: number, option: DeltaSourceOption | DeltaEventOption) {
+    target.delta.push(new Delta({ type: 'cost', value }, option));
+  }
+
+  static dynamicCost(target: Card, option: DeltaSourceOption & { calculator: DeltaCalculator }) {
+    target.delta.push(new Delta({ type: 'dynamic-cost', diff: option.calculator(target) }, option));
   }
 }

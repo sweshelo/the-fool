@@ -7,13 +7,15 @@ export interface DeltaSource {
   effectCode?: string; // 1つのユニットが異なる条件で複数のフィールド効果を持つ場合、それを識別するためのID
 }
 
+export type DeltaCalculator = (self: Card) => number;
+
 interface DeltaConstructorOptionParams {
   event?: string;
   count?: number;
   onlyForOwnersTurn?: boolean;
   source?: DeltaSource;
   permanent?: boolean;
-  calculator?: (self: Card) => number;
+  calculator?: DeltaCalculator;
 }
 
 export class Delta implements IDelta {
