@@ -7,6 +7,7 @@ export function effectDelete(stack: Stack, source: Card, target: Unit): void {
   const exists = target.owner.find(target);
   const isOnField =
     exists.result && exists.place?.name === 'field' && target.destination !== 'delete';
+  if (!exists.result) return;
 
   switch (exists.place?.name) {
     case 'field': {
