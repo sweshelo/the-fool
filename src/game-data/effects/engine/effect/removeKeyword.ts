@@ -15,7 +15,7 @@ export function effectRemoveKeyword(
         !(
           delta.effect.type === 'keyword' &&
           delta.effect.name === keyword &&
-          (!option.source || delta.source === option.source)
+          (!option.source || delta.source?.unit === option.source.unit)
         )
     );
   } else {
