@@ -129,10 +129,9 @@ export async function handleMessage(core: Core, message: Message) {
                 return 0;
             }
           })
-          .reduce((acc, cur) => acc + cur, 0) -
-        (mitigate ? 1 : 0);
+          .reduce((acc, cur) => acc + cur, 0);
 
-      const isEnoughCP = cost <= player.cp.current;
+      const isEnoughCP = cost - (mitigate ? 1 : 0) <= player.cp.current;
 
       // ユニットである
       const isUnit = card instanceof Unit;
