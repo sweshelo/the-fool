@@ -116,13 +116,23 @@ export async function handleMessage(core: Core, message: Message) {
           c.catalog.color === card.catalog.color &&
           (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
       );
-      const isEnoughCP =
-        cardCatalog.cost -
-          (mitigate ? 1 : 0) +
-          card.delta
-            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
-            .reduce((acc, cur) => acc + cur, 0) <=
-        player.cp.current;
+      const cost =
+        card.catalog.cost +
+        card.delta
+          .map(delta => {
+            switch (delta.effect.type) {
+              case 'cost':
+                return delta.effect.value;
+              case 'dynamic-cost':
+                return delta.effect.diff;
+              default:
+                return 0;
+            }
+          })
+          .reduce((acc, cur) => acc + cur, 0) -
+        (mitigate ? 1 : 0);
+
+      const isEnoughCP = cost <= player.cp.current;
 
       // ユニットである
       const isUnit = card instanceof Unit;
@@ -152,21 +162,6 @@ export async function handleMessage(core: Core, message: Message) {
       }
 
       if (isEnoughCP && hasFieldSpace && isUnit) {
-        const cost =
-          card.catalog.cost +
-          card.delta
-            .map(delta => {
-              switch (delta.effect.type) {
-                case 'cost':
-                  return delta.effect.value;
-                case 'dynamic-cost':
-                  return delta.effect.diff;
-                default:
-                  return 0;
-              }
-            })
-            .reduce((acc, cur) => acc + cur, 0);
-
         // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
         if (cost > 0 && mitigate) {
           player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
