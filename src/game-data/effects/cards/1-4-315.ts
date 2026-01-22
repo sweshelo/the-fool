@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     );
 
     for (const card of selectedCards) {
-      Effect.handes(stack, stack.processing, card);
+      Effect.break(stack, stack.processing, card);
     }
   },
 

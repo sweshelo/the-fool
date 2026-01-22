@@ -18,7 +18,7 @@ export const effects: CardEffects = {
 
         // 手札がある場合、全て捨てる
         opponentHand.forEach(card => {
-          Effect.handes(stack, stack.processing, card);
+          Effect.break(stack, stack.processing, card);
         });
       }
     }

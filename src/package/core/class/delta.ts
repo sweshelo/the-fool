@@ -7,16 +7,19 @@ export interface DeltaSource {
   effectCode?: string; // 1つのユニットが異なる条件で複数のフィールド効果を持つ場合、それを識別するためのID
 }
 
+export interface DeltaEvent {
+  event: string;
+  count: number;
+}
+
 export type DeltaCalculator = (self: Card) => number;
 
-interface DeltaConstructorOptionParams {
-  event?: string;
-  count?: number;
+type DeltaConstructorOptionParams = {
   onlyForOwnersTurn?: boolean;
   source?: DeltaSource;
   permanent?: boolean;
   calculator?: DeltaCalculator;
-}
+} & (DeltaEvent | {});
 
 export class Delta implements IDelta {
   id: string;
@@ -31,8 +34,12 @@ export class Delta implements IDelta {
   constructor(effect: DeltaEffect, options: DeltaConstructorOptionParams | undefined = {}) {
     this.id = crypto.randomUUID();
     this.effect = effect;
-    this.event = options.event;
-    this.count = options.count ?? 0;
+    if ('event' in options) {
+      this.event = options.event;
+      this.count = options.count;
+    } else {
+      this.count = 0;
+    }
     this.onlyForOwnersTurn = options.onlyForOwnersTurn ?? false;
     this.source = options.source;
     this.permanent = options.permanent ?? false;

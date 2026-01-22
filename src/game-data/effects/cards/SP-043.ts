@@ -36,6 +36,6 @@ export const effects: CardEffects = {
       if (card) Effect.move(stack, stack.processing, card, 'hand');
     }
 
-    if (selectedCard) Effect.handes(stack, stack.processing, selectedCard);
+    if (selectedCard) Effect.break(stack, stack.processing, selectedCard);
   },
 };

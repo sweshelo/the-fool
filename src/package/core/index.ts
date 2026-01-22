@@ -21,8 +21,8 @@ interface History {
 export class Core {
   id: string;
   players: Player[];
-  round: number = 1;
-  turn: number = 1;
+  round: number = 0;
+  turn: number = 0;
   firstPlayerIndex: number = 0;
   room: Room;
   stack: Stack[] = [];
@@ -87,7 +87,7 @@ export class Core {
   }
 
   async turnChange(isFirstTurn: boolean = false) {
-    return gameFlow.turnChange(this, isFirstTurn);
+    return gameFlow.turnChange(this, { isFirstTurn });
   }
 
   async mulligan(player: Player): Promise<void> {

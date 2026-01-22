@@ -1,154 +1,96 @@
-import { Card, Evolve, Unit } from '@/package/core/class/card';
-import { Player } from '@/package/core/class/Player';
+import type { Card, Evolve, Unit } from '@/package/core/class/card';
+import type { Player } from '@/package/core/class/Player';
 import type { Core } from '@/package/core';
-import { System } from './system';
 import type { Stack } from '@/package/core/class/stack';
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { createMessage } from '@/submodule/suit/types';
+import {
+  helperExceptSelf,
+  helperRandom,
+  helperShuffle,
+  helperSelectCard,
+  helperRepeat,
+  helperIsBreakByEffect,
+  helperHasGauge,
+  helperIsVirusInjectable,
+  helperIsUnitSelectable,
+  helperPickUnit,
+  helperChoice,
+  helperIsUnit,
+  helperIsEvolve,
+  type UnitPickFilter,
+  type Choice,
+} from './helper/index';
 
-type UnitPickFilter = ((unit: Unit) => unknown) | 'owns' | 'opponents' | 'all';
-
-interface Choice {
-  id: string;
-  description: string;
-  condition?: () => boolean;
-}
+export type { UnitPickFilter, Choice };
 
 export class EffectHelper {
   /**
    * 『自身以外に』の効果を実行する
-   * @param effect 実行する効果
+   *
+   * フィールド上の全ユニット（自身を除く）に対して指定した効果を適用します。
+   *
+   * @param core - ゲームコアインスタンス
+   * @param card - 効果の発動元（このユニットは除外される）
+   * @param effect - 各ユニットに適用する効果関数
+   *
+   * @example
+   * // 自身以外の全ユニットに1000ダメージ
+   * EffectHelper.exceptSelf(stack.core, card, (unit) => {
+   *   Effect.damage(stack, card, unit, 1000);
+   * });
    */
   static exceptSelf(core: Core, card: Unit, effect: (unit: Unit) => void): void {
-    // 自身以外
-    const units = core.players
-      .map(p => p.field)
-      .flat()
-      .filter(u => u.id !== card.id);
-    units.forEach(effect);
+    return helperExceptSelf(core, card, effect);
   }
 
   /**
-   * 【セレクトハック】や【加護】を持つユニットを考慮して、プレイヤー向けにユニットの選択肢を生成する
-   * @param filter 独自のフィルタ関数
-   * @param selector 選択肢を提供するプレイヤー
-   * @returns 選択可能なユニット
-   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.isUnitSelectable() を利用して下さい。
-   */
-  static candidate(core: Core, filter: (unit: Unit) => boolean, selector: Player): Unit[] {
-    const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
-    const units = core.players
-      .map(p => p.field)
-      .flat()
-      .filter(exceptBlessing)
-      .filter(filter);
-
-    // セレクトハック持ちがいたらそれだけ返す
-    return units.some(unit => unit.hasKeyword('セレクトハック') && unit.owner.id !== selector.id)
-      ? units.filter(unit => unit.hasKeyword('セレクトハック'))
-      : units;
-  }
-
-  /**
-   * 与えられた T型の配列から 重複しないnumber個のランダムに選択された要素を選択する
-   * @param targets 要素を選択する配列（undefined要素は除外される）
-   * @param number 選択する要素数（デフォルト: 1）
+   * 与えられた配列からランダムに重複しない要素を選択する
+   *
+   * @param targets - 要素を選択する配列（undefined要素は除外される）
+   * @param number - 選択する要素数（デフォルト: 1）
+   * @returns ランダムに選択された要素の配列
+   *
+   * @example
+   * // フィールド上の敵ユニットからランダムに1体選択
+   * const [target] = EffectHelper.random(opponent.field);
+   *
+   * // 手札からランダムに2枚選択
+   * const cards = EffectHelper.random(player.hand, 2);
    */
   static random<T>(targets: T[], number = 1): T[] {
-    if (!Array.isArray(targets) || targets.length === 0 || number <= 0) return [];
-
-    // 必要な数だけ取得
-    return this.shuffle(targets).slice(0, Math.min(number, targets.length));
+    return helperRandom(targets, number);
   }
 
   /**
-   * 対象をランダムにソートする
+   * 対象をランダムにソート（シャッフル）する
+   *
+   * @param targets - シャッフルする配列
+   * @returns シャッフルされた新しい配列
+   *
+   * @example
+   * const shuffledDeck = EffectHelper.shuffle(player.deck);
    */
   static shuffle<T>(targets: T[]): T[] {
-    const out: (T | undefined)[] = Array.from(targets);
-    for (let i = out.length - 1; i > 0; i--) {
-      const r = Math.floor(Math.random() * (i + 1));
-      const tmp = out[i];
-      out[i] = out[r];
-      out[r] = tmp;
-    }
-
-    return out.filter(e => e !== undefined);
+    return helperShuffle(targets);
   }
 
   /**
-   * フィールド上に存在するユニットで構成された Unit[] から ユーザに1つを選ばせる
-   * カードを選択する場合は selectCard を利用する
-   * @param stack stack
-   * @param player 対象を選択するプレイヤー
-   * @param targets 対象の候補
-   * @param title UIに表示するメッセージ
-   * @param count 選択するユニット数
-   * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
-   * @deprecated このメソッドは非推奨です。代わりに、EffectHelper.pickUnit() を利用して下さい。
-   */
-  static async selectUnit(
-    stack: Stack,
-    player: Player,
-    targets: Unit[],
-    title: string,
-    count: number = 1
-  ): Promise<[Unit, ...Unit[]]> {
-    const selected: Unit[] = [];
-    const units = stack.core.players.flatMap(player => player.field);
-
-    while (selected.length < count) {
-      const candidate: Unit[] = targets.filter(
-        unit => !unit.hasKeyword('加護') && !selected.includes(unit) && units.includes(unit)
-      );
-      const selectHacked = candidate.filter(
-        unit => unit.hasKeyword('セレクトハック') && unit.owner.id !== player.id
-      );
-      if (candidate.length <= 0) break;
-
-      const [choiceId] = await System.prompt(stack, player.id, {
-        title,
-        type: 'unit',
-        items: selectHacked.length > 0 ? selectHacked : candidate,
-      });
-
-      const chosen = targets.find(unit => unit.id === choiceId) ?? candidate[0];
-      if (!chosen) throw new Error('対象のユニットが存在しません');
-
-      // クライアントにエフェクトを送信
-      stack.core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'VisualEffect',
-            body: {
-              effect: 'select',
-              unitId: chosen.id,
-            },
-          },
-        })
-      );
-
-      selected.push(chosen);
-    }
-
-    // oxlint-disable-next-line no-unsafe-type-assertion
-    if (selected.length > 0) return selected as [Unit, ...Unit[]];
-    throw new Error('選択すべきユニットが見つかりませんでした');
-  }
-
-  /**
-   * 与えられた Card[] で構成されたリストを提示し ユーザに1つを選ばせる
-   * フィールド上のユニットを選択する場合は pickUnit を利用する
-   * @param stack stack
-   * @param player 対象を選択するプレイヤー
-   * @param targets 対象の候補
-   * @param title UIに表示するメッセージ
-   * @param count 選択するユニット数
-   * @returns Promise。 最低1つのCardを含む Card[] が得られる。
+   * 与えられたカード配列からユーザに選択させる
+   *
+   * フィールド上のユニットを選択する場合は pickUnit を利用してください。
+   *
+   * @param stack - スタック
+   * @param player - 対象を選択するプレイヤー
+   * @param targets - 対象の候補
+   * @param title - UIに表示するメッセージ
+   * @param count - 選択するカード数（デフォルト: 1）
+   * @returns 最低1つのCardを含む Card[] が得られる Promise
+   *
+   * @example
+   * // 捨札から1枚選択
+   * const [card] = await EffectHelper.selectCard(stack, player, player.trash, '回収するカードを選択');
+   *
+   * // 手札から2枚選択
+   * const cards = await EffectHelper.selectCard(stack, player, player.hand, '捨てるカードを選択', 2);
    */
   static async selectCard<T extends Card = Card>(
     stack: Stack,
@@ -157,72 +99,84 @@ export class EffectHelper {
     title: string,
     count: number = 1
   ): Promise<[T, ...T[]]> {
-    const choices: Choices = {
-      title,
-      type: 'card',
-      items: targets,
-      count,
-    };
-    const response = await System.prompt(stack, player.id, choices);
-    const result = targets.filter(card => response.includes(card.id));
-
-    // oxlint-disable-next-line no-unsafe-type-assertion
-    if (result.length > 0) return result as [T, ...T[]];
-    throw new Error('選択すべきカードが見つかりませんでした');
+    return helperSelectCard(stack, player, targets, title, count);
   }
 
   /**
    * 与えられたメソッドを繰り返す
-   * @param times 回数
-   * @param callback 繰り返す関数
+   *
+   * @param times - 回数
+   * @param callback - 繰り返す関数
+   *
+   * @example
+   * // 3回ドロー
+   * EffectHelper.repeat(3, () => player.draw());
    */
   static repeat(times: number, callback: () => unknown) {
-    [...Array(Math.max(times, 0))].forEach(callback);
+    return helperRepeat(times, callback);
   }
 
   /**
    * 与えられた破壊スタックに対して、それが「効果による破壊」とみなされるかを判定する
-   * @param stack
+   *
+   * @param stack - 破壊スタック
+   * @returns 効果による破壊の場合は true
+   * @throws 破壊スタックでない場合や、破壊理由が格納されていない場合はエラー
+   *
+   * @example
+   * if (EffectHelper.isBreakByEffect(stack)) {
+   *   // 効果による破壊時の処理
+   * }
    */
   static isBreakByEffect(stack: Stack): boolean {
-    if (stack.type !== 'break')
-      throw new Error('isBreakByEffect: 破壊スタックではないスタックを渡されました');
-    if (stack.option?.type !== 'break')
-      throw new Error('isBreakByEffect: 破壊理由が格納されていないスタックを渡されました');
-
-    const cause = stack.option.cause;
-    const effectTable = ['damage', 'effect']; // 効果による破壊とみなす cause 一覧
-
-    return effectTable.includes(cause);
+    return helperIsBreakByEffect(stack);
   }
 
+  /**
+   * プレイヤーが指定されたゲージ量を持っているかを判定する
+   *
+   * @param player - 対象のプレイヤー
+   * @param gaugeKey - ゲージの大きさ（'小' | '中' | '大' | '特大'）
+   * @returns 指定量以上のゲージがある場合は true
+   *
+   * @example
+   * if (EffectHelper.hasGauge(player, '中')) {
+   *   // 中ゲージ以上の処理
+   * }
+   */
   static hasGauge(player: Player, gaugeKey: '小' | '中' | '大' | '特大'): boolean {
-    switch (gaugeKey) {
-      case '小':
-        return player.joker.gauge > 40;
-      case '中':
-        return player.joker.gauge > 52.5;
-      case '大':
-        return player.joker.gauge > 65;
-      case '特大':
-        return player.joker.gauge > 80;
-    }
+    return helperHasGauge(player, gaugeKey);
   }
 
   /**
    * 対象プレイヤーのフィールドに【ウィルス】ユニットを【特殊召喚】可能であるかを調べる
-   * @param player 調査対象のプレイヤー
-   * @returns boolean
+   *
+   * @param player - 調査対象のプレイヤー
+   * @returns ウィルスを召喚可能な場合は true
+   *
+   * @example
+   * if (EffectHelper.isVirusInjectable(opponent)) {
+   *   // ウィルス召喚処理
+   * }
    */
   static isVirusInjectable(player: Player) {
-    return player.field.filter(unit => !unit.catalog.species?.includes('ウィルス')).length < 5;
+    return helperIsVirusInjectable(player);
   }
 
   /**
    * 【加護】を持つユニットを考慮して、プレイヤーがユニットを選択できるかを調べる
-   * @param filter 独自のフィルタ関数か 'owns' 'opponents' 'all' のキーワード
-   * @param count 厳密にそのユニット数を選択する必要がある場合、選択するユニット数
-   * @returns 選択可能であるか
+   *
+   * @param core - ゲームコアインスタンス
+   * @param filter - フィルタ条件（'owns' | 'opponents' | 'all' またはカスタム関数）
+   * @param selector - 選択するプレイヤー
+   * @param count - 必要な選択数（デフォルト: 1）
+   * @returns 選択可能であれば true
+   *
+   * @example
+   * // 敵ユニットを1体選択可能か
+   * if (EffectHelper.isUnitSelectable(stack.core, 'opponents', player)) {
+   *   // 選択処理
+   * }
    */
   static isUnitSelectable(
     core: Core,
@@ -230,38 +184,27 @@ export class EffectHelper {
     selector: Player,
     count: number = 1
   ): boolean {
-    const exceptBlessing = (unit: Unit) => !unit.hasKeyword('加護');
-    // フィルタ関数を取得
-    const getFilterMethod = () => {
-      switch (filter) {
-        case 'owns':
-          return (unit: Unit) => unit.owner.id === selector.id;
-        case 'opponents':
-          return (unit: Unit) => unit.owner.id !== selector.id;
-        case 'all':
-          return () => true;
-      }
-      return filter;
-    };
-
-    const candidate = core.players
-      .map(p => p.field)
-      .flat()
-      .filter(exceptBlessing)
-      .filter(getFilterMethod());
-
-    return candidate.length >= count;
+    return helperIsUnitSelectable(core, filter, selector, count);
   }
 
   /**
-   * フィールド上に存在するユニットを特定条件でフィルタし、【加護】【セレクトハック】を考慮したうえで ユーザに1つ以上を選ばせる
-   * カードを選択する場合は selectCard を利用する
-   * @param stack stack
-   * @param player 対象を選択するプレイヤー
-   * @param filter 自分のユニットのみの場合は 'owns'、敵ユニットのみの場合は 'oppents'、全ての場合は 'all'、カスタム条件の場合は対象の候補を絞り込むフィルター関数
-   * @param title UIに表示するメッセージ
-   * @param count 選択するユニット数
-   * @returns Promise。 最低1つのUnitを含む Unit[] が得られる。
+   * フィールド上のユニットを【加護】【セレクトハック】を考慮してユーザに選択させる
+   *
+   * カードを選択する場合は selectCard を利用してください。
+   *
+   * @param stack - スタック
+   * @param player - 対象を選択するプレイヤー
+   * @param filter - 'owns'（自分のみ）、'opponents'（敵のみ）、'all'（全て）、またはカスタムフィルター関数
+   * @param title - UIに表示するメッセージ
+   * @param count - 選択するユニット数（デフォルト: 1）
+   * @returns 最低1つのUnitを含む Unit[] が得られる Promise
+   *
+   * @example
+   * // 敵ユニットを1体選択
+   * const [target] = await EffectHelper.pickUnit(stack, player, 'opponents', '対象を選択');
+   *
+   * // 全ユニットから2体選択
+   * const targets = await EffectHelper.pickUnit(stack, player, 'all', '対象を選択', 2);
    */
   static async pickUnit(
     stack: Stack,
@@ -270,96 +213,64 @@ export class EffectHelper {
     title: string,
     count: number = 1
   ): Promise<[Unit, ...Unit[]]> {
-    const selected: Unit[] = [];
-
-    // フィルタ関数を取得
-    const getFilterMethod = () => {
-      switch (filter) {
-        case 'owns':
-          return (unit: Unit) => unit.owner.id === player.id;
-        case 'opponents':
-          return (unit: Unit) => unit.owner.id !== player.id;
-        case 'all':
-          return () => true;
-      }
-      return filter;
-    };
-
-    while (selected.length < count) {
-      // フィールド上から対象になりえるユニットを取得
-      const candidate: Unit[] = stack.core.players
-        .flatMap(player => player.field)
-        .filter(unit => !selected.includes(unit) && !unit.hasKeyword('加護'))
-        .filter(getFilterMethod());
-      if (candidate.length <= 0) break;
-
-      // 選択者と所有者が異なる、セレクトハックを持つユニットを取得
-      const selectHacked: Unit[] = candidate.filter(
-        unit => unit.owner.id !== player.id && unit.hasKeyword('セレクトハック')
-      );
-
-      const [choiceId] = await System.prompt(stack, player.id, {
-        title,
-        type: 'unit',
-        items: selectHacked.length > 0 ? selectHacked : candidate,
-      });
-
-      const chosen = candidate.find(unit => unit.id === choiceId) ?? candidate[0];
-      if (!chosen) throw new Error('対象のユニットが存在しません');
-
-      // クライアントにエフェクトを送信
-      stack.core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'VisualEffect',
-            body: {
-              effect: 'select',
-              unitId: chosen.id,
-            },
-          },
-        })
-      );
-
-      selected.push(chosen);
-    }
-
-    // oxlint-disable-next-line no-unsafe-type-assertion
-    if (selected.length > 0) return selected as [Unit, ...Unit[]];
-    throw new Error('選択すべきユニットが見つかりませんでした');
+    return helperPickUnit(stack, player, filter, title, count);
   }
 
+  /**
+   * 2つの選択肢からユーザに1つを選ばせる
+   *
+   * 各選択肢にconditionを指定することで、条件を満たす選択肢のみ表示できます。
+   * 選択可能な選択肢が1つのみの場合は自動的にその選択肢が選ばれます。
+   *
+   * @param stack - スタック
+   * @param player - 選択するプレイヤー
+   * @param title - UIに表示するタイトル
+   * @param choices - 2つの選択肢
+   * @returns 選択された選択肢のID、または選択肢がない場合はundefined
+   *
+   * @example
+   * const result = await EffectHelper.choice(stack, player, '効果を選択', [
+   *   { id: 'draw', description: 'カードを1枚引く', condition: () => player.deck.length > 0 },
+   *   { id: 'damage', description: '相手に1ダメージ' },
+   * ]);
+   */
   static async choice(
     stack: Stack,
     player: Player,
     title: string,
     choices: [Choice, Choice]
   ): Promise<Choice['id'] | undefined> {
-    const availableChoices = choices.filter(choice => choice.condition?.() ?? true); // condition をチェックする。未指定ならば条件無しで呼び出し可
-    switch (availableChoices.length) {
-      case 0:
-        return undefined;
-      case 1:
-        return availableChoices[0]?.id;
-      default: {
-        const [chosen] = await System.prompt(stack, player.id, {
-          type: 'option',
-          title,
-          items: availableChoices,
-        });
-        return chosen;
-      }
-    }
+    return helperChoice(stack, player, title, choices);
   }
 
+  /**
+   * 与えられた値がUnitインスタンスかを判定する
+   *
+   * @param card - 判定対象
+   * @param strict - trueの場合、進化ユニットを除外する（デフォルト: false）
+   * @returns Unitの場合は true
+   *
+   * @example
+   * if (EffectHelper.isUnit(card)) {
+   *   // Unitとして処理
+   * }
+   */
   static isUnit(card: unknown, strict: boolean = false): card is Unit {
-    return card instanceof Unit && (strict ? card.catalog.type === 'unit' : true);
+    return helperIsUnit(card, strict);
   }
 
+  /**
+   * 与えられた値がEvolveインスタンスかを判定する
+   *
+   * @param card - 判定対象
+   * @returns Evolveの場合は true
+   *
+   * @example
+   * if (EffectHelper.isEvolve(card)) {
+   *   // 進化ユニットとして処理
+   * }
+   */
   static isEvolve(card: unknown): card is Evolve {
-    return card instanceof Evolve;
+    return helperIsEvolve(card);
   }
 }

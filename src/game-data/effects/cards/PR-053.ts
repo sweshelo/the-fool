@@ -19,7 +19,7 @@ export const effects: CardEffects = {
         stack.processing.owner.hand,
         '捨てるカードを選んで下さい'
       );
-      Effect.handes(stack, stack.processing, target);
+      Effect.break(stack, stack.processing, target);
       EffectTemplate.draw(stack.processing.owner, stack.core);
       stack.processing.owner.field
         .filter(unit => unit.catalog.species?.includes('悪魔'))

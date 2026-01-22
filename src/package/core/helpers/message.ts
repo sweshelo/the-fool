@@ -1,7 +1,7 @@
 import { createMessage } from '@/submodule/suit/types';
 
 export class MessageHelper {
-  static freeze() {
+  static freeze(remainingTime?: number) {
     return createMessage({
       action: {
         type: 'operation',
@@ -10,11 +10,12 @@ export class MessageHelper {
       payload: {
         type: 'Operation',
         action: 'freeze',
+        remainingTime,
       },
     });
   }
 
-  static defrost() {
+  static defrost(remainingTime?: number) {
     return createMessage({
       action: {
         type: 'operation',
@@ -23,6 +24,7 @@ export class MessageHelper {
       payload: {
         type: 'Operation',
         action: 'defrost',
+        remainingTime,
       },
     });
   }

@@ -42,6 +42,6 @@ export const effects: CardEffects = {
     const target = owner.hand.find(card => card.id === targetId);
     if (!target) return;
 
-    Effect.handes(stack, stack.processing, target);
+    Effect.break(stack, stack.processing, target);
   },
 };

@@ -12,6 +12,9 @@ import type {
   JokerDrivePayload,
   DebugMakePayload,
   DebugDrivePayload,
+  AttackPayload,
+  BootPayload,
+  TurnEndPayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
@@ -26,6 +29,7 @@ import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
 import { MessageHelper } from '../helpers/message';
+import { Joker } from '../class/card/Joker';
 
 /**
  * クライアントからのメッセージを処理する
@@ -89,8 +93,9 @@ export async function handleMessage(core: Core, message: Message) {
     }
     case 'EvolveDrive':
     case 'UnitDrive': {
-      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: UnitDrivePayload | EvolveDrivePayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
       const player = core.players.find(p => p.id === payload.player);
       const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
       if (!card || !player) {
@@ -168,13 +173,14 @@ export async function handleMessage(core: Core, message: Message) {
         await drive(core, player, card, source);
       }
 
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
     case 'JokerDrive': {
-      core.room.broadcastToAll(MessageHelper.freeze());
       const payload: JokerDrivePayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
 
       // Validate player
       const player = core.players.find(p => p.id === payload.player);
@@ -182,16 +188,21 @@ export async function handleMessage(core: Core, message: Message) {
         throw new Error('Invalid player');
       }
 
-      // Find joker ability in player's jokers using IAtom (id + catalogId)
+      // Find joker ability in player's jokers
       const joker = player.joker.card.find(j => j.id === payload.target.id);
 
       if (!joker || joker.catalog.type !== 'joker') {
         throw new Error('Invalid joker ability');
       }
 
-      // Check if player has enough gauge
-      if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
-        throw new Error('Insufficient joker gauge');
+      // inHand設定: 手札にも存在するかチェック（ゲージ消費済みかどうか）
+      const isInHand = player.hand.some(c => c.id === joker.id);
+
+      // Check if player has enough gauge (skip if Joker is in hand - gauge already consumed)
+      if (!isInHand) {
+        if (!joker.catalog.gauge || player.joker.gauge < JOKER_GAUGE_AMOUNT[joker.catalog.gauge]) {
+          throw new Error('Insufficient joker gauge');
+        }
       }
 
       // check if player has enough cp
@@ -207,12 +218,19 @@ export async function handleMessage(core: Core, message: Message) {
         throw new Error('Joker conditions not met');
       }
 
-      // Consume gauge
-      if (!joker.catalog.gauge) {
-        throw new Error('ジョーカーゲージの消費量が定義されていません');
+      // Consume gauge (skip if Joker is in hand - gauge already consumed)
+      if (!isInHand) {
+        if (!joker.catalog.gauge) {
+          throw new Error('ジョーカーゲージの消費量が定義されていません');
+        }
+        player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
       }
 
-      player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
+      // Jokerを削除（joker.cardから、手札にあれば手札からも）
+      player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
+      if (isInHand) {
+        player.hand = player.hand.filter(c => c.id !== joker.id);
+      }
 
       if (joker.catalog.cost > 0) {
         player.cp.current -= joker.catalog.cost;
@@ -255,7 +273,7 @@ export async function handleMessage(core: Core, message: Message) {
       // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
       core.stack.push(jokerStack);
       await resolveStack(core);
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
@@ -306,13 +324,17 @@ export async function handleMessage(core: Core, message: Message) {
     }
 
     case 'TurnEnd': {
-      await turnChange(core);
+      const payload: TurnEndPayload = message.payload;
+      await turnChange(core, {
+        time: payload.remainingTime,
+      });
       break;
     }
 
     case 'Attack': {
-      core.room.broadcastToAll(MessageHelper.freeze());
-      const { payload } = message;
+      const payload: AttackPayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
 
       // IUnit -> Unitに変換
       const attacker = core.players
@@ -321,14 +343,14 @@ export async function handleMessage(core: Core, message: Message) {
       if (!attacker) throw new Error('存在しないユニットがアタッカーとして指定されました');
 
       await attack(core, attacker);
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
     case 'Boot': {
-      core.room.broadcastToAll(MessageHelper.freeze());
-
-      const payload = message.payload;
+      const payload: BootPayload = message.payload;
+      const remainingTime = payload.remainingTime;
+      core.room.broadcastToAll(MessageHelper.freeze(remainingTime));
       const player = core.players.find(p => p.id === payload.player);
       const target = player?.field.find(unit => unit.id === payload.target.id);
 
@@ -360,7 +382,7 @@ export async function handleMessage(core: Core, message: Message) {
         core.stack.push(new Stack({ type: 'boot', target, core: core, source: player }));
         await resolveStack(core);
       }
-      core.room.broadcastToPlayer(core.getTurnPlayer().id, MessageHelper.defrost());
+      core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
       break;
     }
 
@@ -372,8 +394,11 @@ export async function handleMessage(core: Core, message: Message) {
 
       if (target && target.card && player && isOnHand) {
         player.hand = player.hand.filter(c => c.id !== target.card?.id);
-        player.trash.push(target.card);
-        target.card.reset();
+
+        if (!(target.card instanceof Joker)) {
+          player.trash.push(target.card);
+          target.card.reset();
+        }
         core.room.sync();
         core.room.soundEffect('trash');
       }
@@ -443,6 +468,15 @@ export async function handleMessage(core: Core, message: Message) {
       }
       break;
     }
+  }
+
+  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
+  try {
+    if (core.turn > 0) {
+      core.getTurnPlayer()?.checkAndMoveJokerToHand();
+    }
+  } catch {
+    // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
   }
 
   core.stack.push(

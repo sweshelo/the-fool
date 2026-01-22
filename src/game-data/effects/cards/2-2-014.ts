@@ -26,7 +26,7 @@ export const effects: CardEffects = {
     const [response] = await System.prompt(stack, stack.processing.owner.id, choices);
     const target = stack.processing.owner.hand.find(card => card.id === response);
     if (target) {
-      Effect.handes(stack, stack.processing, target);
+      Effect.break(stack, stack.processing, target);
       EffectTemplate.draw(stack.processing.owner, stack.core);
     }
   },
