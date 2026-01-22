@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       '【消滅効果耐性】\n【スピードムーブ】\n手札を全て捨てる'
     );
     // 手札を全て捨てる
-    [...owner.hand].forEach(card => Effect.handes(stack, stack.processing, card));
+    [...owner.hand].forEach(card => Effect.break(stack, stack.processing, card));
 
     // キーワード付与
     Effect.keyword(stack, self, self, '消滅効果耐性');
@@ -73,7 +73,7 @@ export const effects: CardEffects = {
       await System.show(stack, '憂国の侵攻', '手札を全て捨てる\nカードを3枚引く');
       stack.core.players
         .flatMap(player => player.hand)
-        .forEach(card => Effect.handes(stack, stack.processing, card));
+        .forEach(card => Effect.break(stack, stack.processing, card));
       stack.core.players.forEach(player =>
         [...Array(3)].forEach(() => EffectTemplate.draw(player, stack.core))
       );

@@ -362,11 +362,7 @@ if(EffectHelper.isUnitSelectable(
 
 #### `EffectHelper.pickUnit()`
 
-フィールド上のユニットから1体以上を選択します。
-
-> [!Important]
-> 以前存在した `EffectHelper.selectUnit()` は現在非推奨です。これは、`candidate()` + `selectUnit()` では、複数のユニットを選択する際に【セレクトハック】を十分に考慮できていないためです。
-> `isUnitSelectable()` + `pickUnit()` を使用して下さい。
+フィールド上のユニットから1体以上を選択します。【加護】【セレクトハック】を自動的に考慮します。
 
 ```typescript
 static async pickUnit(

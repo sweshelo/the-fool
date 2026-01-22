@@ -35,7 +35,7 @@ export const effects: CardEffects = {
 
       // 手札を全て捨てる
       for (const card of handCopy) {
-        Effect.handes(stack, stack.processing, card);
+        Effect.break(stack, stack.processing, card);
       }
     }
   },

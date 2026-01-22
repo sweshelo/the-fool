@@ -11,7 +11,7 @@ export const effects: CardEffects = {
     await System.show(stack, 'ポイズンディナー', 'お互いの手札を2枚破壊');
     stack.core.players.forEach(player => {
       EffectHelper.random(player.hand, 2).forEach(card =>
-        Effect.handes(stack, stack.processing, card)
+        Effect.break(stack, stack.processing, card)
       );
     });
   },

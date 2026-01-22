@@ -16,7 +16,7 @@ const replaceMagick = async (stack: StackWithCard) => {
       stack.processing.owner.hand,
       '捨てるカードを選んで下さい'
     );
-    Effect.handes(stack, stack.processing, target);
+    Effect.break(stack, stack.processing, target);
     EffectTemplate.draw(stack.processing.owner, stack.core);
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   }

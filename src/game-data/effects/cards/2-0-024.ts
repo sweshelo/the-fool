@@ -24,7 +24,7 @@ export const effects: CardEffects = {
     const [response] = await System.prompt(stack, owner.id, choices);
     const target = owner.hand.find(card => card.id === response);
     if (!target) throw new Error('正しいカードが選択されませんでした');
-    Effect.handes(stack, stack.processing, target);
+    Effect.break(stack, stack.processing, target);
 
     // コスト3のユニットを引く
     const [card] = EffectHelper.random(

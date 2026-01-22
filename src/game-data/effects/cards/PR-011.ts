@@ -19,7 +19,7 @@ export const effects: CardEffects = {
         '捨てるカードを選択',
         1
       );
-      Effect.handes(stack, stack.processing, card);
+      Effect.break(stack, stack.processing, card);
     }
     EffectTemplate.draw(stack.processing.owner, stack.core);
     EffectTemplate.draw(stack.processing.owner, stack.core);

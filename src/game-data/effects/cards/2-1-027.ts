@@ -12,7 +12,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, 'ダウジング', '手札を1枚破壊\nカードを2枚引く');
     EffectHelper.random(stack.processing.owner.hand).forEach(card =>
-      Effect.handes(stack, stack.processing, card)
+      Effect.break(stack, stack.processing, card)
     );
     [...Array(2)].forEach(() => EffectTemplate.draw(stack.processing.owner, stack.core));
   },

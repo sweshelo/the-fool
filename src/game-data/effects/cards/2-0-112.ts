@@ -46,7 +46,7 @@ export const effects: CardEffects = {
 
       const selectedCard = opponent.hand.find(card => card.id === choice);
       if (selectedCard) {
-        Effect.handes(stack, stack.processing, selectedCard);
+        Effect.break(stack, stack.processing, selectedCard);
       }
     }
   },

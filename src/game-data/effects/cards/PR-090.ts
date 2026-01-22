@@ -12,7 +12,7 @@ export const effects: CardEffects = {
       '雄大なる間欠泉',
       '手札をすべて捨てる\n手札が7枚になるまでカードを引く'
     );
-    stack.processing.owner.hand.forEach(card => Effect.handes(stack, stack.processing, card));
+    stack.processing.owner.hand.forEach(card => Effect.break(stack, stack.processing, card));
     while (stack.processing.owner.hand.length < 7)
       EffectTemplate.draw(stack.processing.owner, stack.core);
   },
