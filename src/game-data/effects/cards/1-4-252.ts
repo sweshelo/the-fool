@@ -12,10 +12,9 @@ export const effects: CardEffects = {
   },
   // あなたのユニットがフィールドに出た時
   onDrive: async (stack: StackWithCard): Promise<void> => {
+    // 対戦相手のユニットが存在する場合
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
-
-    // 対戦相手のユニットが存在する場合
 
     // 捨札の赤属性のカードの枚数をカウント
     const redCardsCount = owner.trash.filter(card => card.catalog.color === Color.RED).length;
@@ -27,7 +26,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '絨毯爆撃',
-        `対戦相手のユニットからランダムで1体に${damage}ダメージ`
+        `対戦相手のユニットからランダムで1体に［あなたの捨札の赤属性のカードの枚数×1000］ダメージ`
       );
 
       // 対戦相手のユニットからランダムで1体を選択
