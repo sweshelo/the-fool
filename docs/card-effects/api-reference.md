@@ -327,7 +327,7 @@ static modifyCost(
 )
 ```
 
-### `Effect.dynamicCost()`
+#### `Effect.dynamicCost()`
 
 手札・トリガーゾーンにあるカードのコストを動的な値で操作します。
 効果の発生源 `source` と、差分計算を行う計算機 `calculator` が必須パラメータです。 
@@ -902,3 +902,4 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 - [アーキテクチャ](../architecture.md)
 - [環境構築](../getting-started.md)
+
