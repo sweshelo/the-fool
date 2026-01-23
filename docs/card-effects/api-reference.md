@@ -353,8 +353,8 @@ const calculator = (self: Card) => -self.owner.delete.length;
 PermanentEffect.mount(self, {
   // 関数 effect が受け取る source を dynamicCost にそのまま渡す
   effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
-    effectCode: 'ドラゴニックオーラ',
-    targets: ['self'],
+  effectCode: 'ドラゴニックオーラ',
+  targets: ['self'],
 });
 ```
 
