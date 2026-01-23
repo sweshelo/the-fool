@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check formatting
+        run: bunx oxfmt --check src
+
+      - name: Lint (oxlint)
+        run: bunx oxlint --type-aware
+
+      - name: Lint (ESLint)
+        run: bunx eslint
+
+      - name: Type check
+        run: bunx tsc
+
+      # TODO: knip を有効化するには設定ファイルが必要
+      # 動的にロードされるカード効果ファイルを認識させる設定が必要
+      # - name: Check unused code (knip)
+      #   run: bunx knip
+
+      - name: Check dependencies (dependency-cruiser)
+        run: bunx depcruise src --config
