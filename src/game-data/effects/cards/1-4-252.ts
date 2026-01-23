@@ -7,6 +7,7 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
       stack.processing.owner.id === stack.source.id &&
+  // 対戦相手のユニットが存在する場合
       stack.processing.owner.opponent.field.length > 0
     );
   },
