@@ -9,7 +9,7 @@ export const effects: CardEffects = {
     const calculator = (self: Card) => -self.owner.delete.length;
     PermanentEffect.mount(self, {
       effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
-      effectCode: '',
+      effectCode: 'ドラゴニックオーラ',
       targets: ['self'],
     });
   },
