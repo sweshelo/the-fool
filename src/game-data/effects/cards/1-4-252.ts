@@ -33,6 +33,5 @@ export const effects: CardEffects = {
       if (target instanceof Unit) {
         Effect.damage(stack, stack.processing, target, damage);
       }
-    
   },
 };
