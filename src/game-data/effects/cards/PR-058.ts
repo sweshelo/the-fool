@@ -17,7 +17,7 @@ export const effects: CardEffects = {
 
     owner.field.forEach(unit => {
       Effect.modifyBP(stack, stack.processing, unit, 3000, { isBaseBP: true });
-      Effect.keyword(stack, stack.processing, unit Unit, '呪縛');
+      Effect.keyword(stack, stack.processing, unit, '呪縛');
     });
   },
 };
