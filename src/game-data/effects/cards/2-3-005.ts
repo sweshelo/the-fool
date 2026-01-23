@@ -2,7 +2,6 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import master from '@/submodule/suit/catalog/catalog';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -16,7 +15,7 @@ export const effects: CardEffects = {
         'ダメージを与えるユニットを選択して下さい',
         1
       );
-      Effect.damage(stack, stack.processing, target, 4000, 'effect');
+      Effect.damage(stack, stack.processing, target, 4000, 'effect', 'ハピネスクッキング_1回目');
     }
   },
 
@@ -29,25 +28,32 @@ export const effects: CardEffects = {
     )
       return;
 
-    // 2回目の効果が発動しているかチェック
-    const effect2activated = stack.processing.delta.some(
-      delta =>
-        delta.source?.unit === stack.processing.id &&
-        delta.source.effectCode === 'ハピネスクッキング_2回目'
-    );
-    // 3回目の効果が発動しているかチェック
-    const effect3activated = stack.processing.delta.some(
-      delta =>
-        delta.source?.unit === stack.processing.id &&
-        delta.source.effectCode === 'ハピネスクッキング_3回目'
-    );
+    // 1回目の効果で破壊したかチェック
+    const effect1activated =
+      stack.target instanceof Unit &&
+      stack.target.delta.some(
+        delta =>
+          delta.source?.unit === stack.processing.id &&
+          delta.source.effectCode === 'ハピネスクッキング_1回目'
+      );
+    // 2回目の効果で破壊したかチェック
+    const effect2activated =
+      stack.target instanceof Unit &&
+      stack.target.delta.some(
+        delta =>
+          delta.source?.unit === stack.processing.id &&
+          delta.source.effectCode === 'ハピネスクッキング_2回目'
+      );
+
+    // どちらでもなければ終了
+    if (!effect1activated && !effect2activated) return;
 
     // 単体3000ダメージの効果
-    // 既に発動済み、または選択対象がない場合は発動しない
+    // 1回目の効果でユニットを破壊し、さらに選択対象がある場合に発動する
     const filter = (unit: Unit) =>
       unit.destination !== 'trash' && unit.owner.id !== stack.processing.owner.id;
     if (
-      !effect2activated &&
+      effect1activated &&
       EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
     ) {
       await System.show(stack, 'ヘスティアのハピネスクッキング♪', '3000ダメージ');
@@ -58,27 +64,18 @@ export const effects: CardEffects = {
         'ダメージを与えるユニットを選択して下さい',
         1
       );
-      Effect.damage(stack, stack.processing, target, 3000, 'effect');
-      stack.processing.delta.push(
-        new Delta(
-          { type: 'damage', value: 0 },
-          { source: { unit: stack.processing.id, effectCode: 'ハピネスクッキング_2回目' } }
-        )
-      );
+      Effect.damage(stack, stack.processing, target, 3000, 'effect', 'ハピネスクッキング_2回目');
     }
 
     // 全体2000ダメージの効果
-    // 既に発動済み、または敵ユニットがいない場合は発動しない
-    if (effect2activated && !effect3activated && stack.processing.owner.opponent.field.length > 0) {
+    // 2回目の効果でユニットを破壊し、さらに敵ユニットがいる場合に発動する
+    if (
+      effect2activated &&
+      stack.processing.owner.opponent.field.some(unit => unit.destination !== 'trash')
+    ) {
       await System.show(stack, 'ヘスティアのハピネスクッキング♪', '2000ダメージ');
       stack.processing.owner.opponent.field.forEach(unit =>
         Effect.damage(stack, stack.processing, unit, 2000, 'effect')
-      );
-      stack.processing.delta.push(
-        new Delta(
-          { type: 'damage', value: 0 },
-          { source: { unit: stack.processing.id, effectCode: 'ハピネスクッキング_3回目' } }
-        )
       );
     }
   },
