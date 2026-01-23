@@ -724,6 +724,13 @@ export class Stack implements IStack {
         if ('handEffect' in card.catalog && typeof card.catalog.handEffect === 'function') {
           card.catalog.handEffect(this.core, card);
         }
+
+        // 手札効果による dynamic-cost を計算
+        card.delta.forEach(delta => {
+          if (delta.effect.type === 'dynamic-cost') {
+            delta.effect.diff = delta.calculator?.(card) ?? 0;
+          }
+        });
       });
 
     this.core.room.sync(true);

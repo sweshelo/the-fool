@@ -203,7 +203,7 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  PermanentEffect.mount(stack, stack.processing, {
+  PermanentEffect.mount(stack.processing, {
     effect: (target, source) => {
       // 型チェックを実施
       // ※それ以外の条件は condition に実装します
@@ -220,7 +220,7 @@ fieldEffect: (stack: StackWithCard<Unit>) => {
 
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  PermanentEffect.mount(stack, stack.processing, {
+  PermanentEffect.mount(stack.processing, {
     effect: (target, source) => {
       // 型チェックを実施
       // ※それ以外の条件は condition に実装します

@@ -315,6 +315,49 @@ Effect.activate(stack, self, target, true);
 Effect.activate(stack, self, target, false);
 ```
 
+#### `Effect.modifyCost()`
+
+手札・トリガーゾーンにあるカードのコストを固定値で操作します。
+
+```ts
+static modifyCost(
+  target: Card,
+  value: number,
+  option?: DeltaConstructorOptionParams,
+)
+```
+
+### `Effect.dynamicCost()`
+
+手札・トリガーゾーンにあるカードのコストを動的な値で操作します。
+効果の発生源 `source` と、差分計算を行う計算機 `calculator` が必須パラメータです。 
+
+この効果は `PermanentEffect` と併用することが前提です。効果の発生源は `PermanentEffect.mount` の第2引数に与えるオブジェクトの `effect` 関数に引き渡される `source` をそのまま渡すことを想定しています。  
+
+カード効果の上下限はシステム側で自動的に考慮されます。
+
+```ts
+static dynamicCost(
+  target: Card,
+  option: { source: DeltaSource } & { calculator: DeltaCalculator }
+)
+```
+
+**使用例:**
+
+```ts
+// 自身の所有者の消滅カードの数 × -1 を返却する差分計算関数
+const calculator = (self: Card) => -self.owner.delete.length;
+
+// PermanentEffect.mount() で必要になった際に自動的に効果を適用
+PermanentEffect.mount(self, {
+  // 関数 effect が受け取る source を dynamicCost にそのまま渡す
+  effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+  effectCode: 'ドラゴニックオーラ',
+  targets: ['self'],
+});
+```
+
 ---
 
 ## EffectHelper クラス
@@ -537,14 +580,12 @@ onBreak: async (stack: StackWithCard<Unit>) => {
 
 ```typescript
 static mount(
-  stack: StackWithCard,
   source: Card,
   details: EffectDetails
 ): void
 ```
 
 **パラメータ:**
-- `stack` - スタック
 - `source` - 効果の発動元
 - `details` - 効果の詳細オブジェクト
 
@@ -553,7 +594,7 @@ static mount(
 ```typescript
 // フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
 fieldEffect: (stack: StackWithCard<Unit>): void => {
-  PermanentEffect.mount(stack, stack.processing, {
+  PermanentEffect.mount(stack.processing, {
     effect: (target, source) => {
       if (target instanceof Unit)
         Effect.keyword(stack, stack.processing, target, '加護', { source });

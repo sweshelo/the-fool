@@ -1,7 +1,8 @@
 import type { Delta, DeltaSource } from '@/package/core/class/delta';
+import type { GameEvent } from '../../schema/events';
 
 export interface KeywordOptionParams {
-  event?: string;
+  event?: GameEvent;
   count?: number;
   cost?: number;
   onlyForOwnersTurn?: boolean;

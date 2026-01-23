@@ -22,9 +22,11 @@ export function effectModifyBP(
 
   if ('isBaseBP' in option) {
     target.bp += value;
-  } else if ('source' in option) {
+  }
+  if ('source' in option) {
     target.delta.push(new Delta({ type: 'bp', diff: value }, { source: option.source }));
-  } else {
+  }
+  if ('event' in option && option.event) {
     target.delta.push(
       new Delta({ type: 'bp', diff: value }, { event: option.event, count: option.count })
     );

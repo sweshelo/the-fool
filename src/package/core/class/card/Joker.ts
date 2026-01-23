@@ -53,4 +53,14 @@ export class Joker extends Card {
   clone(): never {
     throw new Error('Joker.clone() メソッドを呼び出すことは出来ません');
   }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      chara: this.chara,
+      cost: this.cost,
+      hasBeenInHand: this.hasBeenInHand,
+      isAvailable: this.isAvailable,
+    };
+  }
 }

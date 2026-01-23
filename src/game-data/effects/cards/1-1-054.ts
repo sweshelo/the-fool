@@ -1,6 +1,5 @@
-import { EffectHelper, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -18,7 +17,7 @@ export const effects: CardEffects = {
       await System.show(stack, '繋がれる竜の血', '【ドラゴン】ユニットのコスト-1');
       const selectedCard = EffectHelper.random(dragonUnits, 1)[0];
       if (selectedCard) {
-        selectedCard.delta.push(new Delta({ type: 'cost', value: -1 }));
+        Effect.modifyCost(selectedCard, -1);
       }
     }
   },

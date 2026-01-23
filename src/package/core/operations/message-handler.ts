@@ -116,13 +116,8 @@ export async function handleMessage(core: Core, message: Message) {
           c.catalog.color === card.catalog.color &&
           (c.catalog.type === 'advanced_unit' || c.catalog.type === 'unit')
       );
-      const isEnoughCP =
-        cardCatalog.cost -
-          (mitigate ? 1 : 0) +
-          card.delta
-            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
-            .reduce((acc, cur) => acc + cur, 0) <=
-        player.cp.current;
+
+      const isEnoughCP = card.currentCost - (mitigate ? 1 : 0) <= player.cp.current;
 
       // ユニットである
       const isUnit = card instanceof Unit;
@@ -152,20 +147,14 @@ export async function handleMessage(core: Core, message: Message) {
       }
 
       if (isEnoughCP && hasFieldSpace && isUnit) {
-        const cost =
-          card.catalog.cost +
-          card.delta
-            .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
-            .reduce((acc, cur) => acc + cur, 0);
-
-        // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
-        if (cost > 0 && mitigate) {
+        // 軽減前のcostが0でない場合はmitigateをtriggerからtrashに移動させる
+        if (card.currentCost > 0 && mitigate) {
           player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
           mitigate.lv = 1;
           player.trash.push(mitigate);
         }
 
-        const actualCost = cost - (mitigate ? 1 : 0);
+        const actualCost = card.currentCost - (mitigate ? 1 : 0);
         player.cp.current -= Math.min(Math.max(actualCost, 0), player.cp.current);
         if (actualCost > 0) core.room.soundEffect('cp-consume');
         player.hand = player?.hand.filter(c => c.id !== card?.id);
@@ -226,9 +215,9 @@ export async function handleMessage(core: Core, message: Message) {
         player.joker.gauge -= JOKER_GAUGE_AMOUNT[joker.catalog.gauge];
       }
 
-      // Jokerを削除（joker.cardから、手札にあれば手札からも）
-      player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
+      // Jokerを削除（旧ルールの場合のみ）
       if (isInHand) {
+        player.joker.card = player.joker.card.filter(j => j.id !== joker.id);
         player.hand = player.hand.filter(c => c.id !== joker.id);
       }
 
@@ -418,7 +407,9 @@ export async function handleMessage(core: Core, message: Message) {
       } else {
         console.warn(`[Core ${core.id}] No mulligan handler found for player ${payload.player}`);
       }
-      break;
+
+      // マリガン中は後処理を実行させない
+      return;
     }
 
     case 'DebugDraw': {
@@ -475,12 +466,12 @@ export async function handleMessage(core: Core, message: Message) {
     if (core.turn > 0) {
       core.getTurnPlayer()?.checkAndMoveJokerToHand();
     }
-  } catch {
+    core.stack.push(
+      new Stack({ type: '_messageReceived', source: core.getTurnPlayer(), core: core })
+    );
+    await resolveStack(core);
+  } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
+    console.error(e);
   }
-
-  core.stack.push(
-    new Stack({ type: '_messageReceived', source: core.getTurnPlayer(), core: core })
-  );
-  await resolveStack(core);
 }

@@ -23,7 +23,7 @@ export const effects: CardEffects = {
 
   // フィールド効果：天使ユニットのBPを+1000する
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       targets: ['owns'],
       effect: (unit, source) => {
         if (unit instanceof Unit) {

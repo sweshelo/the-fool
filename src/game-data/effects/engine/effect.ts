@@ -1,7 +1,12 @@
 import type { Stack } from '@/package/core/class/stack';
 import { Unit, type Card } from '@/package/core/class/card';
 import type { CardArrayKeys, Player } from '@/package/core/class/Player';
-import type { DeltaSource } from '@/package/core/class/delta';
+import {
+  Delta,
+  type DeltaCalculator,
+  type DeltaConstructorOptionParams,
+  type DeltaSource,
+} from '@/package/core/class/delta';
 import type { KeywordEffect } from '@/submodule/suit/types';
 import type { JokerGuageAmountKey } from '@/submodule/suit/constant/joker';
 import {
@@ -107,7 +112,7 @@ export class Effect {
     stack: Stack,
     source: Card,
     target: Unit,
-    calculator: (self: Card) => number,
+    calculator: DeltaCalculator,
     option: { source: DeltaSource }
   ) {
     return effectDynamicBP(stack, source, target, calculator, option);
@@ -476,5 +481,47 @@ export class Effect {
     locationKey: 'hand' | 'trigger' = 'hand'
   ) {
     return effectMake(stack, player, target, locationKey);
+  }
+
+  /**
+   * 手札・トリガーゾーンにあるカードのコストを固定値で操作する
+   *
+   * @param target - 対象のカード
+   * @param value - 増減するコストの値
+   * @param option - Deltaへの引数 (効果の発生源など)
+   *
+   * @example
+   * modifyCost(target, -1)
+   *
+   * // フィールド効果として
+   * modifyCost(target, -1, { source: { unit: stack.processing.id }})
+   */
+  static modifyCost(target: Card, value: number, option?: DeltaConstructorOptionParams) {
+    target.delta.push(new Delta({ type: 'cost', value }, option));
+  }
+
+  /**
+   * 手札・トリガーゾーンにあるカードのコストを動的な値で操作する
+   *
+   * @param target - 対象のカード
+   * @param option - 発生源と差分計算関数のオブジェクト
+   *
+   * @example
+   * // 自身の所有者の消滅カードの数 × -1 を返却する差分計算関数
+   * const calculator = (self: Card) => -self.owner.delete.length;
+   *
+   * // PermanentEffect.mount() で必要になった際に自動的に効果を適用
+   * PermanentEffect.mount(self, {
+   *   // 関数 effect が受け取る source を dynamicCost にそのまま渡す
+   *   effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+   *   effectCode: 'ドラゴニックオーラ',
+   *   targets: ['self'],
+   * });
+   */
+  static dynamicCost(
+    target: Card,
+    option: { source: DeltaSource } & { calculator: DeltaCalculator }
+  ) {
+    target.delta.push(new Delta({ type: 'dynamic-cost', diff: option.calculator(target) }, option));
   }
 }

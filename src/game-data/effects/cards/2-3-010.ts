@@ -1,27 +1,17 @@
 import { Unit, type Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   handEffect: (_core: unknown, self: Card) => {
-    const targetDelta = self.delta.find(delta => delta.source?.unit === self.id);
-    if (targetDelta && targetDelta.effect.type === 'cost') {
-      targetDelta.effect.value = Math.max(-self.owner.delete.length, -14);
-    } else {
-      self.delta.push(
-        new Delta(
-          {
-            type: 'cost',
-            value: Math.max(-self.owner.delete.length, -14),
-          },
-          {
-            source: { unit: self.id },
-          }
-        )
-      );
-    }
+    const calculator = (self: Card) => -self.owner.delete.length;
+    PermanentEffect.mount(self, {
+      effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+      effectCode: 'ドラゴニックオーラ',
+      targets: ['self'],
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
