@@ -147,7 +147,7 @@ export async function handleMessage(core: Core, message: Message) {
       }
 
       if (isEnoughCP && hasFieldSpace && isUnit) {
-        // オリジナルのcostが0でない場合はmitigateをtriggerからtrashに移動させる
+        // 軽減前のcostが0でない場合はmitigateをtriggerからtrashに移動させる
         if (card.currentCost > 0 && mitigate) {
           player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
           mitigate.lv = 1;
