@@ -38,7 +38,7 @@ export const effects: CardEffects = {
         '捨てるカードを選択して下さい',
         1
       );
-      Effect.handes(stack, stack.processing, target);
+      Effect.break(stack, stack.processing, target);
       EffectTemplate.draw(stack.processing.owner, stack.core);
       Effect.keyword(stack, stack.processing, stack.processing, '沈黙', {
         event: 'turnEnd',

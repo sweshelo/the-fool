@@ -84,6 +84,7 @@ export function createMockRoom(getCore: () => Core, autoResponder: AutoResponder
       system: {
         cp: { ceil: 12, increase: 1, init: 2, carryover: false, max: 7 },
         round: 10,
+        turnTime: 120,
         draw: { top: 2, override: 1, mulligan: 4 },
         handicap: { attack: false, cp: false, draw: false },
       },

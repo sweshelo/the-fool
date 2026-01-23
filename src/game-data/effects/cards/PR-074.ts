@@ -14,7 +14,7 @@ export const effects: CardEffects = {
       stack.processing.owner.hand,
       '捨てるカードを選んで下さい'
     );
-    Effect.handes(stack, stack.processing, target);
+    Effect.break(stack, stack.processing, target);
     Effect.modifyCP(stack, stack.processing, stack.processing.owner, 1);
   },
 };

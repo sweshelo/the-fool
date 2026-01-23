@@ -26,7 +26,7 @@ export const effects: CardEffects = {
       // ランダムで2枚選んで捨てる
       const cardsToDiscard = EffectHelper.random(opponent.hand, 2);
       for (const card of cardsToDiscard) {
-        Effect.handes(stack, stack.processing, card);
+        Effect.break(stack, stack.processing, card);
       }
     }
   },

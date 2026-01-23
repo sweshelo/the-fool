@@ -25,7 +25,7 @@ export const effects: CardEffects = {
       2
     );
 
-    selectedCards.forEach((card: Card) => Effect.handes(stack, stack.processing, card));
+    selectedCards.forEach((card: Card) => Effect.break(stack, stack.processing, card));
     EffectHelper.repeat(3, () => EffectTemplate.draw(stack.processing.owner, stack.core));
   },
 };

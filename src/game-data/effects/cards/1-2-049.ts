@@ -14,7 +14,7 @@ export const effects: CardEffects = {
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
     // 大地の掟
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (unit, source) => {
         if (unit instanceof Unit) {
           Effect.keyword(stack, stack.processing, unit, '秩序の盾', {
@@ -27,7 +27,7 @@ export const effects: CardEffects = {
     });
 
     // 豊穣の女神
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (unit, source) => {
         if (unit instanceof Unit) {
           Effect.modifyBP(stack, stack.processing, unit, 2000, { source });
@@ -38,7 +38,7 @@ export const effects: CardEffects = {
       effectCode: '豊穣の女神_Lv2',
     });
 
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (unit, source) => {
         if (unit instanceof Unit) {
           Effect.keyword(stack, stack.processing, unit, '不屈', { source });

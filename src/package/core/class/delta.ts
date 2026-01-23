@@ -1,25 +1,31 @@
 import type { DeltaEffect, IDelta, IUnit } from '@/submodule/suit/types';
 import type { StackWithCard } from '@/game-data/effects/schema/types';
 import type { Card } from './card';
+import type { GameEvent } from '@/game-data/effects/schema/events';
 
 export interface DeltaSource {
   unit: IUnit['id'];
   effectCode?: string; // 1つのユニットが異なる条件で複数のフィールド効果を持つ場合、それを識別するためのID
 }
 
-interface DeltaConstructorOptionParams {
-  event?: string;
-  count?: number;
+export interface DeltaEvent {
+  event: GameEvent;
+  count: number;
+}
+
+export type DeltaCalculator = (self: Card) => number;
+
+export type DeltaConstructorOptionParams = {
   onlyForOwnersTurn?: boolean;
   source?: DeltaSource;
   permanent?: boolean;
-  calculator?: (self: Card) => number;
-}
+  calculator?: DeltaCalculator;
+} & (DeltaEvent | {});
 
 export class Delta implements IDelta {
   id: string;
   count: number;
-  event: string | undefined;
+  event: GameEvent | undefined;
   effect: DeltaEffect;
   source?: DeltaSource;
   onlyForOwnersTurn: boolean; // このパラメータが true のとき、eventに合致するイベントが発生しても自分のターン中でない場合はcountを減算しない
@@ -29,8 +35,12 @@ export class Delta implements IDelta {
   constructor(effect: DeltaEffect, options: DeltaConstructorOptionParams | undefined = {}) {
     this.id = crypto.randomUUID();
     this.effect = effect;
-    this.event = options.event;
-    this.count = options.count ?? 0;
+    if ('event' in options) {
+      this.event = options.event;
+      this.count = options.count;
+    } else {
+      this.count = 0;
+    }
     this.onlyForOwnersTurn = options.onlyForOwnersTurn ?? false;
     this.source = options.source;
     this.permanent = options.permanent ?? false;

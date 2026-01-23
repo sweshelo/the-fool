@@ -49,6 +49,6 @@ export const effects: CardEffects = {
     await System.show(stack, '理不尽な訓令', '手札を2枚捨てる');
 
     // 対戦相手の手札から2枚ランダムで捨てる
-    EffectHelper.random(owner.opponent.hand, 2).forEach(card => Effect.handes(stack, self, card));
+    EffectHelper.random(owner.opponent.hand, 2).forEach(card => Effect.break(stack, self, card));
   },
 };

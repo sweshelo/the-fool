@@ -1,7 +1,7 @@
 import { Effect, System } from '..';
-import { Delta } from '@/package/core/class/delta';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // このカードがフィールドに出た時、フィールド効果の内容を表示
@@ -17,61 +17,24 @@ export const effects: CardEffects = {
   // あなたの手札の【戦士】ユニットのコストを-1する。
   // あなたの【戦士】ユニットのBPを+[あなたのフィールドにいる【戦士】×500]する。
   fieldEffect(stack: StackWithCard<Unit>) {
-    const owner = stack.processing.owner;
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns', 'hand'],
+      effect: (card, source) => Effect.modifyCost(card, -1, { source }),
+      effectCode: '転戦の天ノ河',
+      condition: card => card.catalog.species?.includes('戦士'),
+    });
 
-    // フィールド上の戦士ユニット数をカウント
-    const warriorCount = owner.field.filter(unit => unit.catalog.species?.includes('戦士')).length;
-
-    // BP増加量
-    const bpBonus = warriorCount * 500;
-
-    // 手札の戦士ユニットのコスト減少処理
-    for (const card of owner.hand) {
-      if (card instanceof Unit && card.catalog.species?.includes('戦士')) {
-        const existingDelta = card.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source?.effectCode === 'warrior_cost_reduction'
-        );
-
-        if (!existingDelta) {
-          card.delta.push(
-            new Delta(
-              { type: 'cost', value: -1 },
-              {
-                source: {
-                  unit: stack.processing.id,
-                  effectCode: 'warrior_cost_reduction',
-                },
-              }
-            )
-          );
-        }
-      }
-    }
-
-    // フィールド上の戦士ユニットのBP増加処理
-    for (const unit of owner.field) {
-      if (unit.catalog.species?.includes('戦士')) {
-        const existingDelta = unit.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source?.effectCode === 'warrior_bp_boost'
-        );
-
-        if (existingDelta) {
-          // 既存のDeltaを更新 (BP deltaの場合はdiffプロパティを使用)
-          if (existingDelta.effect.type === 'bp') {
-            existingDelta.effect.diff = bpBonus;
-          }
-        } else {
-          // 新しいDeltaを追加
-          Effect.modifyBP(stack, stack.processing, unit, bpBonus, {
-            source: { unit: stack.processing.id, effectCode: 'warrior_bp_boost' },
-          });
-        }
-      }
-    }
+    const fighterCalculator = (self: Card) =>
+      self.owner.field.filter(unit => unit.catalog.species?.includes('戦士')).length * 500;
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      effect: (unit, source) => {
+        if (unit instanceof Unit)
+          Effect.dynamicBP(stack, stack.processing, unit, fighterCalculator, { source });
+      },
+      effectCode: '転戦の天ノ河',
+      condition: unit => unit.catalog.species?.includes('戦士'),
+    });
   },
 
   // ■星華の導き

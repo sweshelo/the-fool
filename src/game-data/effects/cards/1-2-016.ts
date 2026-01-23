@@ -10,7 +10,7 @@ export const effects: CardEffects = {
 
   // 闘士／神：フィールドの【神】1体につき+4000される
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       effect: (unit, source) => {
         if (unit instanceof Unit) {
           Effect.dynamicBP(

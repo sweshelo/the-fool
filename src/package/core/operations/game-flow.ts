@@ -7,17 +7,15 @@ import { EffectHelper } from '@/game-data/effects/engine/helper';
 import { resolveStack } from './stack-resolver';
 import { setEffectDisplayHandler } from './effect-handler';
 import { attack } from './battle';
+import { MessageHelper } from '../helpers/message';
 
 /**
  * ゲーム開始
  * @param core Coreインスタンス
  */
 export async function start(core: Core) {
-  core.room.broadcastToPlayer(core.getTurnPlayer().id, {
-    action: { type: 'operation', handler: 'client' },
-    payload: { type: 'Operation', action: 'defrost' },
-  });
-  await turnChange(core, true);
+  core.room.broadcastToAll(MessageHelper.defrost());
+  await turnChange(core, { isFirstTurn: true });
 }
 
 /**
@@ -105,14 +103,25 @@ export async function mulligan(core: Core, player: Player): Promise<void> {
  * @param core Coreインスタンス
  * @param isFirstTurn 初回ターンかどうか
  */
-export async function turnChange(core: Core, isFirstTurn: boolean = false) {
+export async function turnChange(
+  core: Core,
+  option: {
+    isFirstTurn?: boolean;
+    time?: number;
+  } = {}
+) {
   // freeze
-  core.room.broadcastToAll({
-    action: { type: 'operation', handler: 'client' },
-    payload: { type: 'Operation', action: 'freeze' },
-  });
+  core.room.broadcastToAll(MessageHelper.freeze());
 
-  if (!isFirstTurn) {
+  if (!option?.isFirstTurn) {
+    // ジョーカーゲージ増加量を確定
+    const { minTurnEnd, maxTurnEnd } = core.room.rule.joker;
+    const timeRatio =
+      Math.max(Math.min(option.time ?? 0, core.room.rule.system.turnTime), 0) /
+      core.room.rule.system.turnTime;
+    const jokerGauge = minTurnEnd + (maxTurnEnd - minTurnEnd) * timeRatio;
+    core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
+
     // ターン終了スタックを積み、解決する
     core.stack.push(
       new Stack({
@@ -142,15 +151,16 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
     await resolveStack(core);
 
     // ウィルス除外
-    const afterField = core.getTurnPlayer().field.filter(
-      unit => !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
-    );
+    const afterField = core
+      .getTurnPlayer()
+      .field.filter(
+        unit => !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
+      );
     if (afterField.length !== core.getTurnPlayer().field.length) {
       core.getTurnPlayer().field = afterField;
       core.room.soundEffect('leave');
     }
 
-    core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + 10, 100);
     core.room.sync();
 
     // ターン開始処理
@@ -158,6 +168,8 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
     core.round = Math.floor((core.turn + 1) / 2);
   } else {
     await Promise.all(core.players.map(player => mulligan(core, player)));
+    core.turn = 1;
+    core.round = 1;
   }
 
   // CP初期化
@@ -179,7 +191,7 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
         payload: {
           type: 'TurnChange',
           player: turnPlayer.id,
-          isFirst: (core.turn - 1) % 2 === 0,
+          isFirst: (core.turn - 1 + core.firstPlayerIndex) % 2 === core.firstPlayerIndex,
         },
       })
     );
@@ -218,13 +230,17 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
   }
 
   // 行動制限を解除する
-  core.getTurnPlayer().field.forEach(
-    unit =>
-      (unit.delta = unit.delta.filter(
-        delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
-      ))
-  );
+  core
+    .getTurnPlayer()
+    .field.forEach(
+      unit =>
+        (unit.delta = unit.delta.filter(
+          delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
+        ))
+    );
 
+  // inHand設定: ゲージ条件を満たしたJokerを手札に移動（初回ターン=マリガン前は除く）
+  core.getTurnPlayer().checkAndMoveJokerToHand();
   core.room.sync();
 
   // ターン開始スタックを積み、解決する
@@ -239,19 +255,18 @@ export async function turnChange(core: Core, isFirstTurn: boolean = false) {
   await resolveStack(core);
 
   // 狂戦士 アタックさせる
-  for (const unit of core.getTurnPlayer().field.filter(
-    unit =>
-      unit.hasKeyword('狂戦士') &&
-      !unit.hasKeyword('攻撃禁止') &&
-      !unit.hasKeyword('行動制限') &&
-      unit.active
-  )) {
+  for (const unit of core
+    .getTurnPlayer()
+    .field.filter(
+      unit =>
+        unit.hasKeyword('狂戦士') &&
+        !unit.hasKeyword('攻撃禁止') &&
+        !unit.hasKeyword('行動制限') &&
+        unit.active
+    )) {
     await attack(core, unit);
   }
 
   // defrost
-  core.room.broadcastToPlayer(core.getTurnPlayer().id, {
-    action: { type: 'operation', handler: 'client' },
-    payload: { type: 'Operation', action: 'defrost' },
-  });
+  core.room.broadcastToAll(MessageHelper.defrost());
 }

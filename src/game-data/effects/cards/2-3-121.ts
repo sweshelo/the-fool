@@ -45,7 +45,7 @@ export const effects: CardEffects = {
       );
 
       // Discard it
-      Effect.handes(stack, stack.processing, selectedCard);
+      Effect.break(stack, stack.processing, selectedCard);
 
       // Get the cost of the discarded card
       const cost = selectedCard.catalog.cost;

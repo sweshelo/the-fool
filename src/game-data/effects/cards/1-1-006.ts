@@ -16,7 +16,7 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    PermanentEffect.mount(stack, stack.processing, {
+    PermanentEffect.mount(stack.processing, {
       targets: ['opponents'],
       effect: (unit, source) => {
         if (unit instanceof Unit) {

@@ -25,6 +25,6 @@ export const effects: CardEffects = {
     );
 
     // 選んだカードを捨てる
-    Effect.handes(stack, stack.processing, selectedCard);
+    Effect.break(stack, stack.processing, selectedCard);
   },
 };

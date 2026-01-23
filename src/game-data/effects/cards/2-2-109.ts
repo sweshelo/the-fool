@@ -1,7 +1,6 @@
 import type { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
@@ -24,7 +23,7 @@ export const effects: CardEffects = {
         1
       );
       Effect.bounce(stack, stack.processing, target, 'hand');
-      target.delta.push(new Delta({ type: 'cost', value: -1 }, { permanent: true }));
+      Effect.modifyCost(target, -1, { permanent: true });
     }
   },
 

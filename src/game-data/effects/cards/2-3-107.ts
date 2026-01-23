@@ -6,7 +6,6 @@ import { Color } from '@/submodule/suit/constant/color';
 export const effects: CardEffects = {
   // ■ソロモンへの反逆
   // このユニットがフィールドに出た時、このユニット以外の全てのユニットに［あなたの捨札の赤属性のカードの枚数×500］ダメージを与える。
-  // この効果であなたのユニットを破壊した場合、【スピードムーブ】を得る。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
@@ -24,19 +23,29 @@ export const effects: CardEffects = {
     if (targetUnits.length > 0 && damage > 0) {
       await System.show(stack, 'ソロモンへの反逆', `[捨札の赤属性カード×500]ダメージ`);
 
-      // 自分のユニットを破壊した場合は【スピードムーブ】を得る
-      if (
-        targetUnits
-          .map(
-            unit =>
-              Effect.damage(stack, stack.processing, unit, damage) &&
-              unit.owner.id === stack.processing.owner.id
-          )
-          .includes(true)
-      ) {
-        await System.show(stack, 'ソロモンへの反逆', '【スピードムーブ】を得る');
-        Effect.speedMove(stack, stack.processing);
-      }
+      targetUnits
+        .map(
+          unit =>
+            Effect.damage(stack, stack.processing, unit, damage, 'effect', 'ソロモンへの反逆') &&
+            unit.owner.id === stack.processing.owner.id
+        )
+        .includes(true);
+    }
+  },
+
+  // この効果であなたのユニットを破壊した場合、【スピードムーブ】を得る。
+  onBreak: async (stack: StackWithCard<Unit>) => {
+    if (
+      stack.processing.hasKeyword('行動制限') &&
+      stack.source.id === stack.processing.id &&
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.id &&
+      stack.target.delta.some(
+        delta => delta.effect.type === 'damage' && delta.source?.effectCode === 'ソロモンへの反逆'
+      )
+    ) {
+      await System.show(stack, 'ソロモンへの反逆', '【スピードムーブ】を得る');
+      Effect.speedMove(stack, stack.processing);
     }
   },
 

@@ -12,7 +12,7 @@ const effect = async (stack: StackWithCard) => {
     stack.processing.owner.opponent.hand,
     '捨てるカードを選んで下さい'
   );
-  Effect.handes(stack, stack.processing, target);
+  Effect.break(stack, stack.processing, target);
 };
 
 export const effects: CardEffects = {
