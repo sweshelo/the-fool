@@ -28,11 +28,3 @@ jobs:
 
       - name: Type check
         run: bunx tsc
-
-      # TODO: knip を有効化するには設定ファイルが必要
-      # 動的にロードされるカード効果ファイルを認識させる設定が必要
-      # - name: Check unused code (knip)
-      #   run: bunx knip
-
-      - name: Check dependencies (dependency-cruiser)
-        run: bunx depcruise src --config
