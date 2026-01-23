@@ -1,6 +1,6 @@
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
@@ -24,10 +24,13 @@ export const effects: CardEffects = {
       condition: card => card.catalog.species?.includes('戦士'),
     });
 
+    const fighterCalculator = (self: Card) =>
+      self.owner.field.filter(unit => unit.catalog.species?.includes('戦士')).length * 500;
     PermanentEffect.mount(stack.processing, {
       targets: ['owns'],
       effect: (unit, source) => {
-        if (unit instanceof Unit) Effect.modifyBP(stack, stack.processing, unit, 1000, { source });
+        if (unit instanceof Unit)
+          Effect.dynamicBP(stack, stack.processing, unit, fighterCalculator, { source });
       },
       effectCode: '転戦の天ノ河',
       condition: unit => unit.catalog.species?.includes('戦士'),
