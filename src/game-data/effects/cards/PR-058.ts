@@ -1,4 +1,3 @@
-import { Unit } from '@/package/core/class/card';
 import type { Card } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
