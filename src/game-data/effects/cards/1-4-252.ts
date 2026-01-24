@@ -7,7 +7,7 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
       stack.processing.owner.id === stack.source.id &&
-  // 対戦相手のユニットが存在する場合
+      // 対戦相手のユニットが存在する場合
       stack.processing.owner.opponent.field.length > 0
     );
   },
@@ -22,16 +22,16 @@ export const effects: CardEffects = {
     // ダメージ量を計算
     const damage = redCardsCount * 1000;
 
-      await System.show(
-        stack,
-        '絨毯爆撃',
-        `対戦相手のユニットからランダムで1体に［あなたの捨札の赤属性のカードの枚数×1000］ダメージ`
-      );
+    await System.show(
+      stack,
+      '絨毯爆撃',
+      `対戦相手のユニットからランダムで1体に［あなたの捨札の赤属性のカードの枚数×1000］ダメージ`
+    );
 
-      // 対戦相手のユニットからランダムで1体を選択
-      const [target] = EffectHelper.random(opponent.field, 1);
-      if (target instanceof Unit) {
-        Effect.damage(stack, stack.processing, target, damage);
-      }
+    // 対戦相手のユニットからランダムで1体を選択
+    const [target] = EffectHelper.random(opponent.field, 1);
+    if (target instanceof Unit) {
+      Effect.damage(stack, stack.processing, target, damage);
+    }
   },
 };
