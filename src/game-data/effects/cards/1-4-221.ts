@@ -36,7 +36,7 @@ export const effects: CardEffects = {
         // Add selected card to hand
         Effect.move(stack, stack.processing, selectedCard, 'hand');
         // Discard the selected card
-        Effect.handes(stack, stack.processing, discardTarget);
+        Effect.break(stack, stack.processing, discardTarget);
       } catch (error) {
         // Failed to select a card, do nothing
         console.error('Failed to select a card:', error);

@@ -22,7 +22,6 @@
     "dependency-cruiser": "^16.10.0",
     "eslint": "^9.39.2",
     "globals": "^16.0.0",
-    "knip": "^5.46.5",
     "lefthook": "^2.0.13",
     "oxfmt": "^0.20.0",
     "oxlint-tsgolint": "^0.10.0",

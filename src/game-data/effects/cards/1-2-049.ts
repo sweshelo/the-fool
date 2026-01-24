@@ -1,4 +1,5 @@
 import { Effect, System } from '..';
+import { PermanentEffect } from '../engine/permanent';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -13,73 +14,39 @@ export const effects: CardEffects = {
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
     // 大地の掟
-    if (
-      stack.processing.delta.some(
-        delta =>
-          delta.source?.unit === stack.processing.id && delta.source.effectCode === '大地の掟'
-      )
-    ) {
-      if (stack.processing.lv !== 1)
-        stack.processing.delta = stack.processing.delta.filter(
-          delta =>
-            !(delta.source?.unit === stack.processing.id && delta.source.effectCode === '大地の掟')
-        );
-    } else {
-      if (stack.processing.lv === 1) {
-        Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾', {
-          source: { unit: stack.processing.id, effectCode: '大地の掟' },
-        });
-      }
-    }
-
-    stack.processing.owner.field.forEach(unit => {
-      // 豊穣の女神_Lv3
-      if (
-        unit.delta.some(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source.effectCode === '豊穣の女神_Lv3'
-        )
-      ) {
-        // 発動中で条件外ならば取り除く
-        if (unit.lv < 3) {
-          unit.delta = unit.delta.filter(
-            delta =>
-              !(
-                delta.source?.unit === stack.processing.id &&
-                delta.source.effectCode === '豊穣の女神_Lv3'
-              )
-          );
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '秩序の盾', {
+            source,
+          });
         }
-      } else {
-        // 非発動中で条件内ならば付与する
-        if (unit.lv >= 3)
-          Effect.keyword(stack, stack.processing, unit, '不屈', {
-            source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv3' },
-          });
-      }
+      },
+      targets: ['self'],
+      effectCode: '大地の掟',
+    });
 
-      if (
-        unit.delta.some(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source.effectCode === '豊穣の女神_Lv2'
-        )
-      ) {
-        if (unit.lv < 2)
-          unit.delta = unit.delta.filter(
-            delta =>
-              !(
-                delta.source?.unit === stack.processing.id &&
-                delta.source.effectCode === '豊穣の女神_Lv2'
-              )
-          );
-      } else {
-        if (unit.lv >= 2)
-          Effect.modifyBP(stack, stack.processing, unit, 2000, {
-            source: { unit: stack.processing.id, effectCode: '豊穣の女神_Lv2' },
-          });
-      }
+    // 豊穣の女神
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, unit, 2000, { source });
+        }
+      },
+      targets: ['owns'],
+      condition: unit => unit.lv >= 2,
+      effectCode: '豊穣の女神_Lv2',
+    });
+
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '不屈', { source });
+        }
+      },
+      targets: ['owns'],
+      condition: unit => unit.lv >= 3,
+      effectCode: '豊穣の女神_Lv3',
     });
   },
 };

@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 【加護】
@@ -43,42 +44,15 @@ export const effects: CardEffects = {
 
   // フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // ライフが6以下かチェック
-    const isLifeLow = owner.life.current <= 6;
-
-    // 自分のフィールドの天使ユニットを対象にする
-    owner.field.forEach(unit => {
-      // 天使ユニットか確認
-      if (unit.catalog.species?.includes('天使')) {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          d =>
-            d.source?.unit === stack.processing.id &&
-            d.source?.effectCode === 'エンジェリックシールド'
-        );
-
-        if (isLifeLow) {
-          // ライフが6以下で、まだ加護を持っていなければ付与
-          if (!delta) {
-            Effect.keyword(stack, stack.processing, unit, '加護', {
-              source: { unit: stack.processing.id, effectCode: 'エンジェリックシールド' },
-            });
-          }
-        } else {
-          // ライフが7以上の場合、このユニットが付与した加護を削除
-          if (delta) {
-            unit.delta = unit.delta.filter(
-              d =>
-                !(
-                  d.source?.unit === stack.processing.id &&
-                  d.source?.effectCode === 'エンジェリックシールド'
-                )
-            );
-          }
-        }
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '加護', { source });
+      },
+      effectCode: 'エンジェリックシールド',
+      condition: target =>
+        target.catalog.species?.includes('天使') && stack.processing.owner.life.current <= 6,
+      targets: ['owns'],
     });
   },
 };

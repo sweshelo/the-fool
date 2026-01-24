@@ -1,7 +1,7 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   //■起動・霊猫の王
@@ -97,15 +97,6 @@ export const effects: CardEffects = {
 
   onBootSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
-
-    /*     //【獣】ユニットをフィルタリング
-    const candidates = EffectHelper.candidate(
-      stack.core,
-      unit => unit.owner.id === owner.id && (unit.catalog.species?.includes('獣') ?? false),
-      owner
-    );
-
-    if (candidates.length === 0) return; */
 
     await System.show(
       stack,

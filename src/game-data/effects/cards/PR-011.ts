@@ -10,9 +10,8 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
+    await System.show(stack, '忘れられし地下書庫', '手札を1枚捨てる\nカードを2枚引く');
     if (stack.processing.owner.hand.length > 0) {
-      await System.show(stack, '忘れられし地下書庫', '手札を1枚捨てる\nカードを2枚引く');
-
       const [card] = await EffectHelper.selectCard(
         stack,
         stack.processing.owner,
@@ -20,10 +19,9 @@ export const effects: CardEffects = {
         '捨てるカードを選択',
         1
       );
-
-      Effect.handes(stack, stack.processing, card);
-      EffectTemplate.draw(stack.processing.owner, stack.core);
-      EffectTemplate.draw(stack.processing.owner, stack.core);
+      Effect.break(stack, stack.processing, card);
     }
+    EffectTemplate.draw(stack.processing.owner, stack.core);
+    EffectTemplate.draw(stack.processing.owner, stack.core);
   },
 };

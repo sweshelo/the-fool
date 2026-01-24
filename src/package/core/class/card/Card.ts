@@ -30,11 +30,46 @@ export abstract class Card extends Atom implements ICard {
     return c;
   }
 
-  reset() {
-    this.delta = this.delta.filter(delta => delta.permanent);
+  reset(forceReset: boolean = false) {
+    this.delta = this.delta.filter(delta => delta.permanent && !forceReset);
     this.lv = 1;
     this.generation++;
   }
 
+  get currentCost(): number {
+    const [, minStr] = this.catalog.ability?.match(/コストは(\d*)以下にならない/) ?? [, '0'];
+    const [, maxStr] = this.catalog.ability?.match(/コストは(\d*)以上にならない/) ?? [, '99'];
+    const min = parseInt(minStr);
+    const max = parseInt(maxStr);
+
+    const raw =
+      this.catalog.cost +
+      this.delta
+        .map(delta => {
+          switch (delta.effect.type) {
+            case 'cost':
+              return delta.effect.value;
+            case 'dynamic-cost':
+              return delta.effect.diff;
+            default:
+              return 0;
+          }
+        })
+        .reduce((acc, cur) => acc + cur, 0);
+
+    return Math.min(Math.max(raw, min), max - 1);
+  }
+
   abstract clone(owner: Player): Card;
+
+  toJSON() {
+    return {
+      id: this.id,
+      catalogId: this.catalogId,
+      lv: this.lv,
+      delta: this.delta,
+      generation: this.generation,
+      currentCost: this.currentCost,
+    };
+  }
 }

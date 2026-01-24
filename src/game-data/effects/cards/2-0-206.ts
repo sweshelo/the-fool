@@ -37,7 +37,7 @@ export const effects: CardEffects = {
         // ランダムで1枚捨てる
         const [card] = EffectHelper.random(opponent.hand, 1);
         if (card) {
-          Effect.handes(stack, self, card);
+          Effect.break(stack, self, card);
         }
       }
     }

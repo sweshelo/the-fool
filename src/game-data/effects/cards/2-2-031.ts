@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // 起動・妖精王の覇気
@@ -10,7 +10,7 @@ export const effects: CardEffects = {
       self.owner.trigger.length > 0 &&
       EffectHelper.isUnitSelectable(
         core,
-        (unit: Unit) => unit.owner.id === self.owner.id,
+        (unit: Unit) => unit.owner.id === self.owner.id && unit.catalog.cost >= 3,
         self.owner
       )
     );
@@ -22,7 +22,8 @@ export const effects: CardEffects = {
       '起動・妖精王の覇気',
       'トリガーゾーンを1枚破壊\n【スピードムーブ】を与える'
     );
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
+    const filter = (unit: Unit) =>
+      unit.owner.id === stack.processing.owner.id && unit.catalog.cost >= 3;
     EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
       Effect.move(stack, stack.processing, card, 'trash')
     );

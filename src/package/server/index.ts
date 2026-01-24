@@ -10,7 +10,7 @@ import type {
 } from '@/submodule/suit/types/message/payload/client';
 import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
-import { MessageHelper } from '../core/message';
+import { MessageHelper } from '../core/helpers/message';
 
 class ServerError extends Error {
   constructor(

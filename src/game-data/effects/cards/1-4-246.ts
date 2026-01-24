@@ -31,7 +31,7 @@ export const effects = {
       '捨てるカードを選んで下さい'
     );
     Effect.break(stack, stack.processing, stack.target);
-    Effect.handes(stack, stack.processing, sacrifice);
+    Effect.break(stack, stack.processing, sacrifice);
     stack.processing.owner.damage(true);
   },
 };

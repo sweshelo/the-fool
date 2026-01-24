@@ -5,6 +5,14 @@ import { Unit } from '@/package/core/class/card';
 
 export class System {
   /**
+   * 指定時間待機する（テスト時にモック可能）
+   * @param ms 待機時間（ミリ秒）
+   */
+  static sleep: (ms: number) => Promise<void> = (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  };
+
+  /**
    * スタックの処理状態をクライアントに通知する
    * @param stack 対象のスタック
    * @param core ゲームのコアインスタンス
@@ -32,7 +40,7 @@ export class System {
     );
 
     // 少し待機してアニメーションなどの時間を確保
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await System.sleep(300);
   }
 
   /**

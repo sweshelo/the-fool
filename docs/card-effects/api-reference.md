@@ -6,8 +6,9 @@
 
 1. [Effect クラス](#effect-クラス)
 2. [EffectHelper クラス](#effecthelper-クラス)
-3. [System クラス](#system-クラス)
-4. [EffectTemplate クラス](#effecttemplate-クラス)
+3. [PermanentEffect クラス](#permanenteffect-クラス)
+4. [System クラス](#system-クラス)
+5. [EffectTemplate クラス](#effecttemplate-クラス)
 
 ---
 
@@ -314,6 +315,49 @@ Effect.activate(stack, self, target, true);
 Effect.activate(stack, self, target, false);
 ```
 
+#### `Effect.modifyCost()`
+
+手札・トリガーゾーンにあるカードのコストを固定値で操作します。
+
+```ts
+static modifyCost(
+  target: Card,
+  value: number,
+  option?: DeltaConstructorOptionParams,
+)
+```
+
+#### `Effect.dynamicCost()`
+
+手札・トリガーゾーンにあるカードのコストを動的な値で操作します。
+効果の発生源 `source` と、差分計算を行う計算機 `calculator` が必須パラメータです。 
+
+この効果は `PermanentEffect` と併用することが前提です。効果の発生源は `PermanentEffect.mount` の第2引数に与えるオブジェクトの `effect` 関数に引き渡される `source` をそのまま渡すことを想定しています。  
+
+カード効果の上下限はシステム側で自動的に考慮されます。
+
+```ts
+static dynamicCost(
+  target: Card,
+  option: { source: DeltaSource } & { calculator: DeltaCalculator }
+)
+```
+
+**使用例:**
+
+```ts
+// 自身の所有者の消滅カードの数 × -1 を返却する差分計算関数
+const calculator = (self: Card) => -self.owner.delete.length;
+
+// PermanentEffect.mount() で必要になった際に自動的に効果を適用
+PermanentEffect.mount(self, {
+  // 関数 effect が受け取る source を dynamicCost にそのまま渡す
+  effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+  effectCode: 'ドラゴニックオーラ',
+  targets: ['self'],
+});
+```
+
 ---
 
 ## EffectHelper クラス
@@ -361,11 +405,7 @@ if(EffectHelper.isUnitSelectable(
 
 #### `EffectHelper.pickUnit()`
 
-フィールド上のユニットから1体以上を選択します。
-
-> [!Important]
-> 以前存在した `EffectHelper.selectUnit()` は現在非推奨です。これは、`candidate()` + `selectUnit()` では、複数のユニットを選択する際に【セレクトハック】を十分に考慮できていないためです。
-> `isUnitSelectable()` + `pickUnit()` を使用して下さい。
+フィールド上のユニットから1体以上を選択します。【加護】【セレクトハック】を自動的に考慮します。
 
 ```typescript
 static async pickUnit(
@@ -524,6 +564,47 @@ onBreak: async (stack: StackWithCard<Unit>) => {
   await System.show(stack, 'カード名', '効果発動');
   // 実装
 }
+```
+
+---
+
+## PermanentEffect クラス
+
+`PermanentEffect` クラスは、fieldEffect及びhandEffectを簡単に実装するためのクラスで、冪等性を担保した関数呼び出しの機能を提供します。
+
+### メソッド一覧
+
+#### `PermanentEffect.mount()`
+
+永続効果を登録します。
+
+```typescript
+static mount(
+  source: Card,
+  details: EffectDetails
+): void
+```
+
+**パラメータ:**
+- `source` - 効果の発動元
+- `details` - 効果の詳細オブジェクト
+
+**使用例:**
+
+```typescript
+// フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
+fieldEffect: (stack: StackWithCard<Unit>): void => {
+  PermanentEffect.mount(stack.processing, {
+    effect: (target, source) => {
+      if (target instanceof Unit)
+        Effect.keyword(stack, stack.processing, target, '加護', { source });
+    },
+    effectCode: 'エンジェリックシールド',
+    condition: target =>
+      target.catalog.species?.includes('天使') && stack.processing.owner.life.current <= 6,
+    targets: ['owns'],
+  });
+},
 ```
 
 ---
@@ -821,3 +902,4 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 - [アーキテクチャ](../architecture.md)
 - [環境構築](../getting-started.md)
+

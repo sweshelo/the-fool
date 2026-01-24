@@ -3,25 +3,45 @@ import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  // ■森の女神 - インターセプトカード
   // あなたのユニットが戦闘した時、ターン終了時までそれのBPを+2000する。
-  // あなたのユニットが戦闘で勝利した時、あなたはカードを1枚引く。あなたのCPを+1する。
-  // あなたがプレイヤーアタックを受けた時、プレイヤーアタックしたユニットの基本BPを-3000する。
+  checkBattle: (stack: StackWithCard): boolean => {
+    const owner = stack.processing.owner;
+
+    // 戦闘中の自ユニットを特定
+    const ownUnit = [stack.source, stack.target].find(
+      (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
+    );
+
+    // ユニットが存在し、フィールドにまだいる場合のみ発動
+    return !!ownUnit && owner.field.some(unit => unit.id === ownUnit.id);
+  },
 
   // 味方ユニットが戦闘した時のインターセプト効果
   onBattle: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 自分のユニットが戦闘した時のみ発動
-    if (stack.source instanceof Unit && stack.source.owner.id === owner.id) {
-      await System.show(stack, '森の女神', 'BP+2000');
+    // 戦闘中の自ユニットを特定
+    const [target] = [stack.source, stack.target].filter(
+      (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
+    );
 
-      // BP+2000（ターン終了時まで）
-      Effect.modifyBP(stack, stack.processing, stack.source, 2000, {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+    if (!target) return;
+
+    await System.show(stack, '森の女神', 'BP+2000');
+
+    // BP+2000（ターン終了時まで）
+    Effect.modifyBP(stack, stack.processing, target, 2000, {
+      event: 'turnEnd',
+      count: 1,
+    });
+  },
+
+  // あなたのユニットが戦闘で勝利した時、あなたはカードを1枚引く。あなたのCPを+1する。
+  checkWin: (stack: StackWithCard): boolean => {
+    const owner = stack.processing.owner;
+
+    // 自分のユニットが戦闘で勝利した時のみ発動可能
+    return stack.target instanceof Unit && stack.target.owner.id === owner.id;
   },
 
   // 戦闘で勝利した時のインターセプト効果
@@ -36,6 +56,19 @@ export const effects: CardEffects = {
     Effect.modifyCP(stack, stack.processing, owner, 1);
   },
 
+  // あなたがプレイヤーアタックを受けた時、プレイヤーアタックしたユニットの基本BPを-3000する。
+  checkPlayerAttack: (stack: StackWithCard): boolean => {
+    const owner = stack.processing.owner;
+    const attacker = stack.source;
+
+    // 自分がプレイヤーアタックを受けた時のみ発動可能
+    if (!(attacker instanceof Unit)) return false;
+    if (stack.target?.id !== owner.id) return false; // 自分が攻撃を受けていない
+
+    // 相手のフィールドに攻撃ユニットが存在するか確認
+    return attacker.owner.field.some(unit => unit.id === attacker.id);
+  },
+
   // プレイヤーアタックを受けた時のインターセプト効果
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     if (stack.source instanceof Unit) {
@@ -46,30 +79,5 @@ export const effects: CardEffects = {
         isBaseBP: true,
       });
     }
-  },
-
-  // インターセプトカード効果の発動チェック：戦闘時
-  checkBattle: async (_stack: StackWithCard): Promise<boolean> => {
-    return true;
-  },
-
-  // インターセプトカード効果の発動チェック：戦闘勝利時
-  checkWin: async (stack: StackWithCard): Promise<boolean> => {
-    const owner = stack.processing.owner;
-
-    // 自分のユニットが戦闘で勝利した時のみ発動可能
-    return stack.source instanceof Unit && stack.source.owner.id === owner.id;
-  },
-
-  // インターセプトカード効果の発動チェック：プレイヤーアタック時
-  checkPlayerAttack: async (stack: StackWithCard): Promise<boolean> => {
-    const owner = stack.processing.owner;
-
-    // 自分がプレイヤーアタックを受けた時のみ発動可能
-    return (
-      stack.source instanceof Unit &&
-      stack.source.owner.id !== owner.id && // 相手のユニット
-      stack.target?.id === owner.id // 自分がターゲット
-    );
   },
 };

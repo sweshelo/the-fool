@@ -50,7 +50,8 @@ export class Unit extends Card implements IUnit {
       this.bp +
       this.delta
         .map(delta => {
-          if (delta.effect.type === 'bp') return delta.effect.diff;
+          if (delta.effect.type === 'bp' || delta.effect.type === 'dynamic-bp')
+            return delta.effect.diff;
           if (delta.effect.type === 'damage') return -delta.effect.value;
           return 0;
         })
@@ -121,6 +122,20 @@ export class Unit extends Card implements IUnit {
     this.destination = undefined;
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
     this.isBooted = false;
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      bp: this.bp,
+      active: this.active,
+      destination: this.destination,
+      overclocked: this.overclocked,
+      isCopy: this.isCopy,
+      hasBootAbility: this.hasBootAbility,
+      isBooted: this.isBooted,
+      currentBP: this.currentBP,
+    };
   }
 }
 

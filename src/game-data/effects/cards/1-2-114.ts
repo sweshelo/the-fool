@@ -5,17 +5,15 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   // ■ブレイク・クロック
   // このユニット以外のあなたのユニットが破壊されるたび
-  checkBreak: (stack: StackWithCard): boolean => {
-    return (
-      stack.target instanceof Unit &&
-      stack.target.owner.id === stack.processing.owner.id &&
-      stack.target.id !== stack.processing.id
-    );
-  },
-
   onBreak: async (stack: StackWithCard): Promise<void> => {
-    const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.id;
+    if (
+      !(stack.target instanceof Unit) ||
+      stack.target.owner.id !== stack.processing.owner.id ||
+      stack.target.id === stack.processing.id
+    )
+      return;
 
+    const filter = (unit: Unit) => unit.destination !== 'trash' && unit.lv < 3;
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ブレイク・クロック', 'レベル+1');
       const [target] = await EffectHelper.pickUnit(

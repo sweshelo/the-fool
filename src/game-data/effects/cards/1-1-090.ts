@@ -33,7 +33,7 @@ export const effects: CardEffects = {
       const [discard] = await System.prompt(stack, owner.id, discardChoices);
       const discardTarget = owner.hand.find(card => card.id === discard);
       if (!discardTarget) throw new Error('正しいカードが選択されませんでした');
-      Effect.handes(stack, stack.processing, discardTarget);
+      Effect.break(stack, stack.processing, discardTarget);
     } else {
       await System.show(stack, '無限の魔法石', 'デッキから1枚選んで引く');
     }

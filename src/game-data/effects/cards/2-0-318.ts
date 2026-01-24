@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -47,8 +46,7 @@ export const effects: CardEffects = {
       await System.show(stack, '選略・ジャッジガベル', 'BP+5000');
       const allUnits = [...owner.field, ...owner.opponent.field];
       allUnits.forEach(unit => {
-        // Deltaで一時的BP増加（event: 'turnEnd', count: 1 でターン終了時まで）
-        unit.delta.push(new Delta({ type: 'bp', diff: 5000 }, { event: 'turnEnd', count: 1 }));
+        Effect.modifyBP(stack, stack.processing, unit, 5000, { event: 'turnEnd', count: 1 });
       });
     } else if (choice === '2') {
       await System.show(stack, '選略・ジャッジガベル', 'インターセプトカードを1枚引く');

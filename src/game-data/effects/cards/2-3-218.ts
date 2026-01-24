@@ -1,13 +1,15 @@
 import type { Card, Unit } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 import { Delta } from '@/package/core/class/delta';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
 
 export const effects: CardEffects = {
   handEffect: (core: Core, self: Card) => {
-    const targetDelta = self.delta.find(delta => delta.source?.unit === self.id);
+    const targetDelta = self.delta.find(
+      delta => delta.source?.unit === self.id && delta.source.effectCode === '悠久のセレマ'
+    );
     if (targetDelta && targetDelta.effect.type === 'cost') {
       targetDelta.effect.value = core.round;
     } else {
@@ -17,6 +19,7 @@ export const effects: CardEffects = {
           {
             source: {
               unit: self.id,
+              effectCode: '悠久のセレマ',
             },
           }
         )
@@ -26,13 +29,15 @@ export const effects: CardEffects = {
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
     const targetDelta = stack.processing.delta.find(
-      delta => delta.source?.unit === stack.processing.id
+      delta =>
+        delta.source?.unit === stack.processing.id &&
+        delta.source.effectCode === 'タイムパラドックス'
     );
     if (targetDelta && targetDelta.effect.type === 'bp') {
       targetDelta.effect.diff = stack.core.round * 1000;
     } else {
       Effect.modifyBP(stack, stack.processing, stack.processing, stack.core.round * 1000, {
-        source: { unit: stack.processing.id },
+        source: { unit: stack.processing.id, effectCode: 'タイムパラドックス' },
       });
     }
   },

@@ -2,7 +2,7 @@ import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';
-import type { Core } from '@/package/core/core';
+import type { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -26,7 +26,7 @@ export const effects: CardEffects = {
     const [response] = await System.prompt(stack, stack.processing.owner.id, choices);
     const target = stack.processing.owner.hand.find(card => card.id === response);
     if (target) {
-      Effect.handes(stack, stack.processing, target);
+      Effect.break(stack, stack.processing, target);
       EffectTemplate.draw(stack.processing.owner, stack.core);
     }
   },

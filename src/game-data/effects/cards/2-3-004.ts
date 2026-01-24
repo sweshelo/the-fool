@@ -2,7 +2,7 @@ import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Delta } from '@/package/core/class/delta';
-import { Core } from '@/package/core/core';
+import { Core } from '@/package/core';
 
 export const effects: CardEffects = {
   // ■起動・アウトレイジ

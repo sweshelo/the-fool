@@ -1,13 +1,13 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
 import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
-import { Core } from '../../core/core';
+import { Core } from '../../core';
 import { Joker } from '../../core/class/card/Joker';
 import catalog from '@/game-data/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
-import { MessageHelper } from '@/package/core/message';
+import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
 
 export class Room {
@@ -63,17 +63,20 @@ export class Room {
           exists.id
         );
 
-        // 再接続で自分のターン中の場合は defrost する
-        if (this.core.getTurnPlayer().id === message.payload.player.id) {
-          this.broadcastToPlayer(message.payload.player.id, MessageHelper.defrost());
-        }
+        // 再接続で defrost する
+        this.sync(true);
+        this.broadcastToAll(MessageHelper.defrost());
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
 
         // Initialize jokers from owned JOKER card names
         if (message.payload.jokersOwned) {
+          const jokerIds = this.rule.joker.single
+            ? message.payload.jokersOwned.slice(0, 1)
+            : message.payload.jokersOwned;
+
           const ownedJokerAbilities: string[] = [];
-          message.payload.jokersOwned.forEach(jokerCardName => {
+          jokerIds.forEach(jokerCardName => {
             catalog.forEach(entry => {
               if (entry.type === 'joker' && entry.id === jokerCardName) {
                 ownedJokerAbilities.push(entry.id);
@@ -204,6 +207,14 @@ export class Room {
       game: {
         round: this.core.round,
         turn: this.core.turn,
+        turnPlayer:
+          this.core.players.length >= 2 && this.core.turn > 0
+            ? this.core.getTurnPlayer().id
+            : undefined,
+        firstPlayer:
+          this.core.players.length >= 2
+            ? this.core.players[this.core.firstPlayerIndex]?.id
+            : undefined,
       },
       players: playersState,
     });
@@ -292,6 +303,14 @@ export class Room {
             game: {
               round: this.core.round,
               turn: this.core.turn,
+              turnPlayer:
+                this.core.players.length >= 2 && this.core.turn > 0
+                  ? this.core.getTurnPlayer().id
+                  : undefined,
+              firstPlayer:
+                this.core.players.length >= 2
+                  ? this.core.players[this.core.firstPlayerIndex]?.id
+                  : undefined,
             },
             players,
           },
