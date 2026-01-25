@@ -12,3 +12,4 @@ export { helperPickUnit } from './pickUnit';
 export { helperChoice } from './choice';
 export { helperIsUnit } from './isUnit';
 export { helperIsEvolve } from './isEvolve';
+export { helperCombine } from './combine';
