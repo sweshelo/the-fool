@@ -25,7 +25,7 @@ export const effects: CardEffects = {
 
   //このユニットが効果によって破壊された時
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    if (stack.option?.type !== 'break' || stack.option.cause !== 'effect') return;
+    if (!EffectHelper.isBreakByEffect(stack)) return;
 
     const owner = stack.processing.owner;
     //あなたのフィールドにユニットが4体以下の場合
