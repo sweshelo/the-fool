@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     // 対戦相手のフィールドにユニットが3体以上いる場合
     if (stack.processing.owner.opponent.field.length >= 3) {
       // このユニットに【スピードムーブ】を与える
-      await System.show(stack, '海賊流の戦い', '【スピードムーブ】を付与');
+      await System.show(stack, '海賊流の戦い', '【スピードムーブ】を得る');
       Effect.speedMove(stack, stack.processing);
     }
   },

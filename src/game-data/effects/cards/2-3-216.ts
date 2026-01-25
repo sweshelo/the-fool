@@ -40,11 +40,7 @@ export const effects: CardEffects = {
       );
       if (targets.length === 0) return;
 
-      await System.show(
-        stack,
-        '道連れボディプレス',
-        `コスト${deathCounter.count}以下の青属性ユニットを【特殊召喚】`
-      );
+      await System.show(stack, '道連れボディプレス', 'ユニットを【特殊召喚】');
       const [target] = EffectHelper.random(targets);
       if (target instanceof Unit) {
         await Effect.summon(stack, stack.processing, target);
