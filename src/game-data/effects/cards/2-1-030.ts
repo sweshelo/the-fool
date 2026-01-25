@@ -19,10 +19,8 @@ export const effects: CardEffects = {
       // 忍者の場合、フィールドが4体以下か確認
       return owner.field.length <= 4;
     } else {
-      // 忍者以外の場合、デッキに忍者ユニットがいるか確認
-      return owner.deck.some(
-        card => card instanceof Unit && card.catalog.species?.includes('忍者')
-      );
+      // 忍者以外の場合は常に発動（デッキに忍者がいなくても発動する）
+      return true;
     }
   },
 
