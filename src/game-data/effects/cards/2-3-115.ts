@@ -13,7 +13,8 @@ export const effects: CardEffects = {
 
   onClockupSelf: async (stack: StackWithCard<Unit>) => {
     const self = stack.processing;
-    const filter = (unit: Unit) => unit.owner.id !== self.owner.id && unit.currentBP <= self.currentBP;
+    const filter = (unit: Unit) =>
+      unit.owner.id !== self.owner.id && unit.currentBP <= self.currentBP;
 
     if (EffectHelper.isUnitSelectable(stack.core, filter, self.owner)) {
       await System.show(stack, 'ゴリ押し', '自身のBP以下のユニットを1体破壊');

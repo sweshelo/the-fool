@@ -8,7 +8,7 @@ pre-commit:
 
     - name: format
       run: bunx oxfmt {staged_files}
-      glob: "*.{js,jsx,ts,tsx,mjs,cjs}"
+      glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
 
     - name: stage
       run: git add {staged_files}
