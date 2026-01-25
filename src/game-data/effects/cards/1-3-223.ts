@@ -16,7 +16,7 @@ export const effects: CardEffects = {
     const immortalUnits = owner.field.filter(immortalFilter);
     if (immortalUnits.length < 2) return;
 
-    await System.show(stack, '永遠を授かりし者', '【不死】を2体消滅\n【不滅】を付与');
+    await System.show(stack, '永遠を授かりし者', '【不死】を2体消滅\n【不滅】を得る');
 
     // 【不死】ユニットを2体選ぶ
     const targets = await EffectHelper.pickUnit(
@@ -40,15 +40,14 @@ export const effects: CardEffects = {
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
+    await System.show(stack, '永遠を授かりし者', '捨札からユニットカードを2枚回収');
+
     // 捨札のユニットカードをフィルタリング
     const unitCards = owner.trash.filter(card => card.catalog.type === 'unit');
     if (unitCards.length === 0) return;
 
-    await System.show(stack, '永遠を授かりし者', '捨札からユニットを手札に加える');
-
     // ランダムで2体まで選んで手札に加える
-    const count = Math.min(2, unitCards.length);
-    EffectHelper.random(unitCards, count).forEach(card => {
+    EffectHelper.random(unitCards, 2).forEach(card => {
       Effect.move(stack, stack.processing, card, 'hand');
     });
   },

@@ -20,7 +20,7 @@ export const effects: CardEffects = {
 
     if (!(stack.target instanceof Unit)) return;
 
-    await System.show(stack, 'ドッペルゲンガー', 'ユニットを【複製】\n元のユニットを破壊');
+    await System.show(stack, 'ドッペルゲンガー', 'ユニットを【複製】し破壊');
 
     // ユニットを複製する
     await Effect.clone(stack, stack.processing, stack.target, owner);

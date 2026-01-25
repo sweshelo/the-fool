@@ -25,7 +25,7 @@ export const effects: CardEffects = {
 
     if (candidates.length === 0) return;
 
-    await System.show(stack, 'ブラン・アヴァランチ', '【巨人】ユニットを特殊召喚');
+    await System.show(stack, 'ブラン・アヴァランチ', '【巨人】ユニットを【特殊召喚】');
 
     // ランダムで1体選ぶ
     const [target] = EffectHelper.random(candidates, 1);

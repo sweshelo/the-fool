@@ -49,7 +49,11 @@ export const effects: CardEffects = {
 
     if (candidates.length === 0) return;
 
-    await System.show(stack, '路線変更', 'ユニットをデッキに戻す\n別種族を特殊召喚');
+    await System.show(
+      stack,
+      '路線変更',
+      'ユニットをデッキに戻す\n別の種族のユニットを【特殊召喚】'
+    );
 
     // そのユニットをデッキに戻す
     Effect.bounce(stack, stack.processing, stack.target, 'deck');
