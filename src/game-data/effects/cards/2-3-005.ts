@@ -8,35 +8,75 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
       await System.show(stack, 'ヘスティアのハピネスクッキング♪', '4000ダメージ');
-      const [target1] = await EffectHelper.pickUnit(
+      const [target] = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
         'opponents',
         'ダメージを与えるユニットを選択して下さい',
         1
       );
-      const result1 = Effect.damage(stack, stack.processing, target1, 4000, 'effect');
+      Effect.damage(stack, stack.processing, target, 4000, 'effect', 'ハピネスクッキング_1回目');
+    }
+  },
 
-      const filter = (unit: Unit) =>
-        unit.id !== target1.id && unit.owner.id !== stack.processing.owner.id;
-      if (result1 && EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
-        await System.show(stack, 'ヘスティアのハピネスクッキング♪', '3000ダメージ');
-        const [target2] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          'ダメージを与えるユニットを選択して下さい',
-          1
-        );
-        const result2 = Effect.damage(stack, stack.processing, target2, 3000, 'effect');
+  onBreak: async (stack: StackWithCard<Unit>): Promise<void> => {
+    // 自分の効果で破壊されたかチェック
+    if (
+      stack.source.id !== stack.processing.id ||
+      stack.option?.type !== 'break' ||
+      stack.option.cause !== 'damage'
+    )
+      return;
 
-        if (result2) {
-          await System.show(stack, 'ヘスティアのハピネスクッキング♪', '2000ダメージ');
-          stack.processing.owner.opponent.field.forEach(unit =>
-            Effect.damage(stack, stack.processing, unit, 2000, 'effect')
-          );
-        }
-      }
+    // 1回目の効果で破壊したかチェック
+    const effect1activated =
+      stack.target instanceof Unit &&
+      stack.target.delta.some(
+        delta =>
+          delta.source?.unit === stack.processing.id &&
+          delta.source.effectCode === 'ハピネスクッキング_1回目'
+      );
+    // 2回目の効果で破壊したかチェック
+    const effect2activated =
+      stack.target instanceof Unit &&
+      stack.target.delta.some(
+        delta =>
+          delta.source?.unit === stack.processing.id &&
+          delta.source.effectCode === 'ハピネスクッキング_2回目'
+      );
+
+    // どちらでもなければ終了
+    if (!effect1activated && !effect2activated) return;
+
+    // 単体3000ダメージの効果
+    // 1回目の効果でユニットを破壊し、さらに選択対象がある場合に発動する
+    const filter = (unit: Unit) =>
+      unit.destination !== 'trash' && unit.owner.id !== stack.processing.owner.id;
+    if (
+      effect1activated &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
+    ) {
+      await System.show(stack, 'ヘスティアのハピネスクッキング♪', '3000ダメージ');
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'ダメージを与えるユニットを選択して下さい',
+        1
+      );
+      Effect.damage(stack, stack.processing, target, 3000, 'effect', 'ハピネスクッキング_2回目');
+    }
+
+    // 全体2000ダメージの効果
+    // 2回目の効果でユニットを破壊し、さらに敵ユニットがいる場合に発動する
+    if (
+      effect2activated &&
+      stack.processing.owner.opponent.field.some(unit => unit.destination !== 'trash')
+    ) {
+      await System.show(stack, 'ヘスティアのハピネスクッキング♪', '2000ダメージ');
+      stack.processing.owner.opponent.field.forEach(unit =>
+        Effect.damage(stack, stack.processing, unit, 2000, 'effect')
+      );
     }
   },
 

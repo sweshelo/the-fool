@@ -1,59 +1,49 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { EffectHelper } from '../engine/helper';
+import { System } from '../engine/system';
+import { Effect } from '../engine/effect';
 import { Color } from '@/submodule/suit/constant/color';
 
 export const effects: CardEffects = {
-  // ■選略・竜胆の舞
-  // このユニットがフィールドに出た時、以下の効果から1つを選び発動する。
-  // ①：対戦相手のユニットからランダムで2体のレベルを+1する。
-  // ②：あなたのフィールドに青属性ユニットが2体以上いる場合、対戦相手のレベル2以上のユニットをランダムで1体破壊する。
-  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
+  // このユニットがフィールドに出た時
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    // 選択肢①が選べるか確認（相手フィールドにユニットがいるか）
-    const canOption1 = opponent.field.length > 0;
+    // １：対戦相手のユニットからランダムで2体のレベルを+1する
+    // ２：あなたのフィールドに青属性ユニットが2体以上いる場合、対戦相手のレベル2以上のユニットをランダムで1体破壊する。
+    const choice = await EffectHelper.choice(stack, owner, '選略・竜胆の舞', [
+      {
+        id: '1',
+        description: '相手ユニット2体のレベル+1',
+        condition: () => opponent.field.length > 0,
+      },
+      {
+        id: '2',
+        description: 'レベル2以上のユニットを破壊',
+        condition: () =>
+          owner.field.filter(unit => unit.catalog.color === Color.BLUE).length >= 2 &&
+          opponent.field.some(unit => unit.lv >= 2),
+      },
+    ]);
 
-    // 選択肢②が選べるか確認（自分のフィールドに青属性ユニットが2体以上いて、相手にLv2以上がいるか）
-    const blueUnits = owner.field.filter(unit => unit.catalog.color === Color.BLUE);
-    const hasEnoughBlue = blueUnits.length >= 2;
-    const lv2OrHigher = opponent.field.filter(unit => unit.lv >= 2);
-    const canOption2 = hasEnoughBlue && lv2OrHigher.length > 0;
-
-    // どちらも選べない場合は発動しない
-    if (!canOption1 && !canOption2) return;
-
-    // 選択肢の提示
-    const [choice] =
-      canOption1 && canOption2
-        ? await System.prompt(stack, owner.id, {
-            title: '選略・竜胆の舞',
-            type: 'option',
-            items: [
-              { id: '1', description: '対戦相手のユニットからランダムで2体のレベルを+1' },
-              { id: '2', description: '対戦相手のLv2以上のユニットをランダムで1体破壊' },
-            ],
-          })
-        : canOption1
-          ? ['1']
-          : ['2'];
-
-    if (choice === '1') {
-      await System.show(stack, '選略・竜胆の舞', '敵ユニット2体のレベル+1');
-
-      // ランダムで2体まで選んでレベル+1
-      const count = Math.min(2, opponent.field.length);
-      EffectHelper.random(opponent.field, count).forEach(unit => {
-        Effect.clock(stack, stack.processing, unit, 1);
-      });
-    } else {
-      await System.show(stack, '選略・竜胆の舞', 'Lv2以上を1体破壊');
-
-      // ランダムで1体破壊
-      EffectHelper.random(lv2OrHigher, 1).forEach(unit => {
-        Effect.break(stack, stack.processing, unit);
-      });
+    switch (choice) {
+      case '1':
+        await System.show(stack, '選略・竜胆の舞', '相手ユニット2体のレベル+1');
+        EffectHelper.random(opponent.field, 2).forEach(unit =>
+          Effect.clock(stack, stack.processing, unit, 1)
+        );
+        break;
+      case '2': {
+        await System.show(stack, '選略・竜胆の舞', 'レベル2以上のユニットを破壊');
+        const targets = opponent.field.filter(unit => unit.lv >= 2);
+        const [target] = EffectHelper.random(targets);
+        if (target instanceof Unit) {
+          Effect.break(stack, stack.processing, target);
+        }
+        break;
+      }
     }
   },
 };
