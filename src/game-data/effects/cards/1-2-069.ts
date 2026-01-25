@@ -9,7 +9,17 @@ export const effects: CardEffects = {
   // 【レベル3】全てのコスト2以下のユニットを破壊する。
   checkDrive: (stack: StackWithCard): boolean => {
     // ユニットが出た時に発動
-    return stack.target instanceof Unit;
+    if (!(stack.target instanceof Unit)) return false;
+
+    const cardLv = stack.processing.lv;
+    const costLimit = cardLv >= 3 ? 2 : 1;
+
+    // 対象となるユニットが存在するかチェック
+    const targets = stack.core.players.flatMap(player =>
+      player.field.filter(unit => unit.catalog.cost <= costLimit)
+    );
+
+    return targets.length > 0;
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {

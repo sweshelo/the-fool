@@ -14,7 +14,20 @@ export const effects: CardEffects = {
     if (stack.target.catalog.cost > 4) return false;
 
     // フィールドにユニットが4体以下か確認
-    return owner.field.length <= 4;
+    if (owner.field.length > 4) return false;
+
+    // 特殊召喚可能なユニットがデッキに存在するかチェック
+    const targetCost = stack.target.catalog.cost;
+    const targetSpecies = stack.target.catalog.species ?? [];
+    const candidates = owner.deck.filter(
+      card =>
+        card instanceof Unit &&
+        !(card instanceof Evolve) &&
+        card.catalog.cost === targetCost &&
+        !card.catalog.species?.some(s => targetSpecies.includes(s))
+    );
+
+    return candidates.length > 0;
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
