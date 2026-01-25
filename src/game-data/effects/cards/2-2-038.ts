@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { EffectHelper, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -30,9 +30,8 @@ export const effects: CardEffects = {
 
     // 捨札を全てデッキに戻す
     const trashCards = [...owner.trash];
-    owner.trash.length = 0;
     trashCards.forEach(card => {
-      owner.deck.push(card);
+      Effect.move(stack, stack.processing, card, 'deck');
     });
 
     // デッキをシャッフル

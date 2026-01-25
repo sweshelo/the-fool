@@ -1,4 +1,4 @@
-import { EffectHelper, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -19,19 +19,14 @@ export const effects: CardEffects = {
       const deckCards = [...player.deck];
       const trashCards = [...player.trash];
 
-      // デッキをクリア
-      player.deck.length = 0;
-      // 捨札をクリア
-      player.trash.length = 0;
-
-      // 捨札のカードをデッキに移動
+      // 捨札のカードをデッキへ
       trashCards.forEach(card => {
-        player.deck.push(card);
+        Effect.move(stack, stack.processing, card, 'deck');
       });
 
-      // デッキのカードを捨札に移動
+      // デッキのカードを捨札へ
       deckCards.forEach(card => {
-        player.trash.push(card);
+        Effect.move(stack, stack.processing, card, 'trash');
       });
 
       // デッキをシャッフル

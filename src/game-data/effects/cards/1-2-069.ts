@@ -31,8 +31,6 @@ export const effects: CardEffects = {
       player.field.filter(unit => unit.catalog.cost <= costLimit)
     );
 
-    if (targets.length === 0) return;
-
     await System.show(stack, '弱肉強食', `コスト${costLimit}以下を全て破壊`);
 
     // 全てのコスト{costLimit}以下のユニットを破壊

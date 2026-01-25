@@ -12,15 +12,19 @@ export const effects: CardEffects = {
   },
 
   onClockupSelf: async (stack: StackWithCard<Unit>) => {
-    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
+    const self = stack.processing;
+    const filter = (unit: Unit) => unit.owner.id !== self.owner.id && unit.currentBP <= self.currentBP;
+
+    if (EffectHelper.isUnitSelectable(stack.core, filter, self.owner)) {
       await System.show(stack, 'ゴリ押し', '自身のBP以下のユニットを1体破壊');
       const [target] = await EffectHelper.pickUnit(
         stack,
-        stack.processing.owner,
-        'opponents',
+        self.owner,
+        filter,
         '破壊するユニットを選択して下さい'
       );
-      Effect.break(stack, stack.processing, target);
+      if (!target || target.currentBP > self.currentBP) return;
+      Effect.break(stack, self, target);
     }
   },
 
