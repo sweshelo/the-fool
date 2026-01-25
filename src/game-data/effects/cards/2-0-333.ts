@@ -1,4 +1,5 @@
 import { Unit } from '@/package/core/class/card';
+import { Color } from '@/submodule/suit/constant/color';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -39,7 +40,7 @@ export const effects: CardEffects = {
     // 破壊されたのが自分の紫ユニットか確認
     if (!(stack.target instanceof Unit)) return;
     if (stack.target.owner.id !== owner.id) return;
-    if (stack.target.catalog.color !== 5) return; // 紫 = 5
+    if (stack.target.catalog.color !== Color.PURPLE) return;
 
     // 効果による破壊か確認
     if (!EffectHelper.isBreakByEffect(stack)) return;
