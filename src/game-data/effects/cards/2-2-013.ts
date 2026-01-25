@@ -30,7 +30,7 @@ export const effects: CardEffects = {
         1
       );
 
-      Effect.move(stack, stack.processing, selectedCard, 'trash');
+      Effect.break(stack, stack.processing, selectedCard);
     }
   },
 };

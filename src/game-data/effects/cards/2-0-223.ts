@@ -37,7 +37,7 @@ export const effects: CardEffects = {
     const discardedCost = selectedCard.catalog.cost;
 
     // カードを捨てる
-    Effect.move(stack, stack.processing, selectedCard, 'trash');
+    Effect.break(stack, stack.processing, selectedCard);
 
     // 捨てたユニットと同じコストの全てのユニットを破壊
     stack.core.players.forEach(player => {
