@@ -16,7 +16,7 @@ export const effects: CardEffects = {
     const cost = stack.target.catalog.cost;
     const damage = cost * 1000;
 
-    await System.show(stack, '灼熱の大地', `全ユニットに${damage}ダメージ`);
+    await System.show(stack, '灼熱の大地', '全ユニットに[コスト×1000]ダメージ');
 
     // 全てのユニットにダメージを与える
     stack.core.players.forEach(player => {

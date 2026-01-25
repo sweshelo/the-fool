@@ -8,6 +8,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     await System.show(stack, '加護', '効果に選ばれない');
     Effect.keyword(stack, stack.processing, stack.processing, '加護');
+    await System.show(stack, 'サポーター／神獣', '【神獣】のBP+1000');
   },
 
   // ■サポーター／神獣

@@ -16,7 +16,7 @@ export const effects: CardEffects = {
     // 捨札がなければ発動しない
     if (owner.trash.length === 0) return;
 
-    await System.show(stack, 'ラブリィ・マミー', '捨札からカードを手札に加える');
+    await System.show(stack, 'ラブリィ・マミー', '捨札から1枚回収');
 
     // ランダムで1枚選んで手札に加える
     EffectHelper.random(owner.trash, 1).forEach(card => {
