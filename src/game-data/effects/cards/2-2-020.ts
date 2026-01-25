@@ -3,6 +3,26 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
 
+// CP奪取処理
+const stealCP = (stack: StackWithCard<Unit>, self: Unit, owner: typeof self.owner) => {
+  const opponent = owner.opponent;
+  const stolenCP = Math.min(12, opponent.cp.current);
+  Effect.modifyCP(stack, self, opponent, -stolenCP);
+  Effect.modifyCP(stack, self, owner, stolenCP);
+};
+
+// 連撃処理
+const comboEffect = async (stack: StackWithCard<Unit>, self: Unit, owner: typeof self.owner) => {
+  const [target] = await EffectHelper.pickUnit(
+    stack,
+    owner,
+    'opponents',
+    '基本BPを-2000するユニットを選択'
+  );
+  Effect.modifyBP(stack, self, target, -2000, { isBaseBP: true });
+  Effect.modifyBP(stack, self, self, 2000, { isBaseBP: true });
+};
+
 export const effects: CardEffects = {
   // ■ハートスティール
   // このユニットがフィールドに出た時、対戦相手のCPが1以上ある場合、対戦相手のCPを-12する。そうした場合、あなたのCPを+［減少させたCP×1］する。
@@ -30,42 +50,21 @@ export const effects: CardEffects = {
 
     if (canStealCP && canCombo) {
       // 両方発動
-      await System.show(stack, 'ハートスティール', 'CPを奪う\n基本BP-2000/+2000');
-
-      // CP奪取
-      const stolenCP = Math.min(12, opponent.cp.current);
-      Effect.modifyCP(stack, self, opponent, -stolenCP);
-      Effect.modifyCP(stack, self, owner, stolenCP);
-
-      // 連撃効果
-      const [target] = await EffectHelper.pickUnit(
+      await System.show(
         stack,
-        owner,
-        'opponents',
-        '基本BPを-2000するユニットを選択'
+        'ハートスティール＆連撃・バトレコンフュージョン',
+        'CP-12\nCP+[減少させたCP]\n基本BP-2000\n基本BP+2000'
       );
-      Effect.modifyBP(stack, self, target, -2000, { isBaseBP: true });
-      Effect.modifyBP(stack, self, self, 2000, { isBaseBP: true });
+      stealCP(stack, self, owner);
+      await comboEffect(stack, self, owner);
     } else if (canStealCP) {
       // ハートスティールのみ
-      await System.show(stack, 'ハートスティール', 'CPを奪う');
-
-      const stolenCP = Math.min(12, opponent.cp.current);
-      Effect.modifyCP(stack, self, opponent, -stolenCP);
-      Effect.modifyCP(stack, self, owner, stolenCP);
+      await System.show(stack, 'ハートスティール', 'CP-12\nCP+[減少させたCP]');
+      stealCP(stack, self, owner);
     } else if (canCombo) {
       // 連撃のみ
-      await System.show(stack, '連撃・バトレコンフュージョン', '基本BP-2000/+2000');
-
-      const [target] = await EffectHelper.pickUnit(
-        stack,
-        owner,
-        'opponents',
-        '基本BPを-2000するユニットを選択'
-      );
-      Effect.modifyBP(stack, self, target, -2000, { isBaseBP: true });
-      Effect.modifyBP(stack, self, self, 2000, { isBaseBP: true });
+      await System.show(stack, '連撃・バトレコンフュージョン', '基本BP-2000\n基本BP+2000');
+      await comboEffect(stack, self, owner);
     }
-    // 両方発動できない場合は何もしない
   },
 };
