@@ -12,43 +12,46 @@ export const effects: CardEffects = {
     // ユニットが出た時のみ発動
     if (!(stack.target instanceof Unit)) return false;
 
-    // トリガーゾーンにカードがあるか確認
-    return owner.trigger.length > 0;
+    // トリガーゾーンにこのカード以外のカードがあるか確認
+    return owner.trigger.filter(card => card.id !== stack.processing.id).length > 0;
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
 
     if (!(stack.target instanceof Unit)) return;
-    if (owner.trigger.length === 0) return;
+
+    // このカード以外のトリガーゾーンのカードを取得
+    const triggerCards = owner.trigger.filter(card => card.id !== stack.processing.id);
+    if (triggerCards.length === 0) return;
 
     // 自分のユニットか対戦相手のユニットかで効果が異なる
     const isOwnUnit = stack.target.owner.id === owner.id;
 
     if (isOwnUnit) {
-      await System.show(stack, '運命の装填', 'トリガーを手札に戻す');
+      await System.show(stack, '運命の装填', 'トリガーゾーンから手札に戻す');
 
       // トリガーゾーンから1枚選んで手札に戻す
       const [selectedCard] = await EffectHelper.selectCard(
         stack,
         owner,
-        owner.trigger,
+        triggerCards,
         '手札に戻すカードを選択'
       );
 
-      Effect.move(stack, stack.processing, selectedCard, 'hand');
+      Effect.bounce(stack, stack.processing, selectedCard, 'hand');
     } else {
-      await System.show(stack, '運命の装填', 'トリガーを手札に戻す\nカードを1枚引く');
+      await System.show(stack, '運命の装填', 'トリガーゾーンから手札に戻す\nカードを1枚引く');
 
       // トリガーゾーンから1枚選んで手札に戻す
       const [selectedCard] = await EffectHelper.selectCard(
         stack,
         owner,
-        owner.trigger,
+        triggerCards,
         '手札に戻すカードを選択'
       );
 
-      Effect.move(stack, stack.processing, selectedCard, 'hand');
+      Effect.bounce(stack, stack.processing, selectedCard, 'hand');
 
       // カードを1枚引く
       EffectTemplate.draw(owner, stack.core);
