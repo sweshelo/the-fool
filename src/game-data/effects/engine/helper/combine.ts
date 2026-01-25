@@ -17,8 +17,11 @@ export const helperCombine = async (stack: Stack, effects: Effect[]) => {
   // order でソート（低い値が先、未指定は 0 扱い）
   const sorted = [...available].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  await System.show(stack, title, description);
-  for (const process of sorted.map(effect => effect.effect)) {
-    await process();
+  // 効果を発動できる場合
+  if (sorted.length > 0) {
+    await System.show(stack, title, description);
+    for (const process of sorted.map(effect => effect.effect)) {
+      await process();
+    }
   }
 };
