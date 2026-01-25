@@ -30,6 +30,9 @@ export const effects: CardEffects = {
 
     const filter = (unit: Unit) => unit.owner.id !== owner.id && unit.catalog.cost <= 7;
 
+    // 対象が選択可能か確認
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, owner)) return;
+
     await System.show(stack, '魔弾', 'ユニットを【複製】\n紫ゲージ+1');
 
     // 対戦相手のコスト7以下のユニットを1体選ぶ
