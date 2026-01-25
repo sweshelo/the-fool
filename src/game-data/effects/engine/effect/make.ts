@@ -54,9 +54,11 @@ export function effectMake(
 
     if (stack.core.players.flatMap(player => player.field).some(unit => unit.id === target.id)) {
       clone.reset();
+      clone.lv = target.lv;
     }
 
     location.push(clone);
+    stack.core.room.sync();
     return clone;
   }
 }
