@@ -3,6 +3,11 @@ import type { Player } from '../class/Player';
 import type { Unit, Card } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
+import {
+  createPreDriveStack,
+  createDriveStack,
+  createOverclockStack,
+} from '../class/stack-factory';
 import { Delta } from '../class/delta';
 import { Effect, System } from '@/game-data/effects';
 import { resolveStack } from './stack-resolver';
@@ -59,31 +64,14 @@ export async function drive(
   /* Stack追加 */
   // フィールド効果チェック用のStackを発行
   // 解決は resolveStack() にて、召喚後に実施される
-  const stackForResolveFieldEffectUnmount = new Stack({
-    type: '_preDrive',
-    source: player,
-    target: undefined,
-    core: core,
-  });
+  const stackForResolveFieldEffectUnmount = createPreDriveStack(core, player);
 
   // 召喚
-  const driveStack = new Stack({
-    type: 'drive',
-    source: player,
-    target: card,
-    core: core,
-  });
+  const driveStack = createDriveStack(core, player, card);
 
   // Lv3起動 - Lv3を維持&未OC&フィールドに残留している
   if (card.lv === 3) {
-    core.stack.push(
-      new Stack({
-        type: 'overclock',
-        source: card,
-        target: card,
-        core: core,
-      })
-    );
+    core.stack.push(createOverclockStack(core, card, card));
   }
 
   // フィールド効果の終了に伴う破壊のチェックを実施

@@ -2,6 +2,15 @@ import { createMessage } from '@/submodule/suit/types/message/message';
 import type { Unit } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
+import {
+  createAttackStack,
+  createBlockStack,
+  createBattleStack,
+  createPostBattleStack,
+  createPlayerAttackStack,
+  createPostBattleClockUpStack,
+  createWinStack,
+} from '../class/stack-factory';
 import { Parry } from '../class/parry';
 import { Effect, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
@@ -58,13 +67,7 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
   );
   core.room.soundEffect('decide');
 
-  const attackStack = new Stack({
-    type: 'attack',
-    source: attacker.owner,
-    target: attacker,
-    core: core,
-    parent: parentStack,
-  });
+  const attackStack = createAttackStack(core, attacker.owner, attacker, { parent: parentStack });
 
   // 親スタックが指定された場合、children として追加
   if (parentStack) {
@@ -167,21 +170,18 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
     await System.sleep(1000);
 
     // 戦闘終了としてマークする
+    // Note: _postBattleのsource/targetは通常attacker/blockerだが、
+    // プレイヤーアタック時はblockerがいないためattacker.ownerをsourceとして使用
     const postBattleStack = new Stack({
       type: '_postBattle',
-      target: attacker,
       source: attacker.owner,
+      target: attacker,
       core: core,
     });
     await postBattleStack.resolve(core);
 
     // プレイヤーアタックに成功
-    const playerAttackStack = new Stack({
-      type: 'playerAttack',
-      target: attacker.owner.opponent,
-      source: attacker,
-      core: core,
-    });
+    const playerAttackStack = createPlayerAttackStack(core, attacker, attacker.owner.opponent);
     await playerAttackStack.resolve(core);
   }
 }
@@ -288,12 +288,7 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
   await System.sleep(1000);
 
   if (blocker) {
-    const blockStack = new Stack({
-      type: 'block',
-      source: attacker,
-      target: blocker,
-      core: core,
-    });
+    const blockStack = createBlockStack(core, attacker, blocker);
     await blockStack.resolve(core);
     core.room.sync();
   }
@@ -308,12 +303,7 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
  * @param blocker ブロックするユニット
  */
 export async function preBattle(core: Core, attacker: Unit, blocker: Unit) {
-  const battleStack = new Stack({
-    type: 'battle',
-    source: attacker,
-    target: blocker,
-    core: core,
-  });
+  const battleStack = createBattleStack(core, attacker, blocker);
   console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
   await battleStack.resolve(core);
   core.room.sync();
@@ -348,12 +338,7 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
   }
 
   // システムスタック: Effect.damage() を呼ぶために生成している
-  const stack = new Stack({
-    type: '_postBattle',
-    source: attacker,
-    target: blocker,
-    core: core,
-  });
+  const stack = createPostBattleStack(core, attacker, blocker);
 
   // ダメージ量を確定する
   const [loserDamage, winnerDamage] = [winner.currentBP, loser.currentBP];
@@ -394,23 +379,11 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
     if (winner.owner.field.find(unit => unit.id === winner.id)) {
       // 戦闘勝利後のクロックアップ処理
       const systemStack =
-        winner.lv < 3
-          ? new Stack({
-              type: '_postBattleClockUp',
-              source: loser,
-              target: winner,
-              core: core,
-            })
-          : undefined;
+        winner.lv < 3 ? createPostBattleClockUpStack(core, loser, winner) : undefined;
       if (systemStack) Effect.clock(systemStack, loser, winner, 1);
 
       // 戦闘勝利スタック
-      const winnerStack = new Stack({
-        type: 'win',
-        source: loser,
-        target: winner,
-        core: core,
-      });
+      const winnerStack = createWinStack(core, loser, winner);
 
       // 各スタックを直接 resolve
       if (systemStack) {

@@ -18,7 +18,12 @@ import type {
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
-import { Stack } from '../class/stack';
+import {
+  createJokerStack,
+  createWithdrawStack,
+  createBootStack,
+  createMessageReceivedStack,
+} from '../class/stack-factory';
 import { Evolve, Unit } from '../class/card';
 import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
@@ -252,12 +257,7 @@ export async function handleMessage(core: Core, message: Message) {
         action: 'joker',
         generation: joker.generation,
       });
-      const jokerStack = new Stack({
-        type: 'joker',
-        source: player,
-        target: joker,
-        core: core,
-      });
+      const jokerStack = createJokerStack(core, player, joker);
 
       // Stack解決（resolveStack が自動で onJokerSelf を呼ぶ）
       core.stack.push(jokerStack);
@@ -280,11 +280,7 @@ export async function handleMessage(core: Core, message: Message) {
         target.reset();
 
         // フィールド効果呼び出し
-        const stack = new Stack({
-          type: '_withdraw',
-          core: core,
-          source: target,
-        });
+        const stack = createWithdrawStack(core, target);
         fieldEffectUnmount(core, target, stack);
 
         core.room.soundEffect('withdrawal');
@@ -368,7 +364,7 @@ export async function handleMessage(core: Core, message: Message) {
         target.isBooted = true;
         core.room.soundEffect('recover');
         await new Promise(resolve => setTimeout(resolve, 900));
-        core.stack.push(new Stack({ type: 'boot', target, core: core, source: player }));
+        core.stack.push(createBootStack(core, player, target));
         await resolveStack(core);
       }
       core.room.broadcastToAll(MessageHelper.defrost(remainingTime));
@@ -466,9 +462,7 @@ export async function handleMessage(core: Core, message: Message) {
     if (core.turn > 0) {
       core.getTurnPlayer()?.checkAndMoveJokerToHand();
     }
-    core.stack.push(
-      new Stack({ type: '_messageReceived', source: core.getTurnPlayer(), core: core })
-    );
+    core.stack.push(createMessageReceivedStack(core, core.getTurnPlayer()));
     await resolveStack(core);
   } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす

@@ -1,7 +1,11 @@
 import { createMessage } from '@/submodule/suit/types/message/message';
 import type { Player } from '../class/Player';
 import type { Core } from '../index';
-import { Stack } from '../class/stack';
+import {
+  createTurnEndStack,
+  createDeathCounterCheckStack,
+  createTurnStartStack,
+} from '../class/stack-factory';
 import { Effect } from '@/game-data/effects';
 import { EffectHelper } from '@/game-data/effects/engine/helper';
 import { resolveStack } from './stack-resolver';
@@ -123,21 +127,11 @@ export async function turnChange(
     core.getTurnPlayer().joker.gauge = Math.min(core.getTurnPlayer().joker.gauge + jokerGauge, 100);
 
     // ターン終了スタックを積み、解決する
-    core.stack.push(
-      new Stack({
-        type: 'turnEnd',
-        source: core.getTurnPlayer(),
-        core: core,
-      })
-    );
+    core.stack.push(createTurnEndStack(core, core.getTurnPlayer()));
     await resolveStack(core);
 
     // ターン終了処理
-    const deathCounterCheckStack = new Stack({
-      type: '_deathCounterCheckStack',
-      source: core.getTurnPlayer(),
-      core: core,
-    });
+    const deathCounterCheckStack = createDeathCounterCheckStack(core, core.getTurnPlayer());
     core.getTurnPlayer().field.forEach(unit => {
       if (unit.hasKeyword('不屈') && !unit.active) {
         unit.active = true;
@@ -245,13 +239,7 @@ export async function turnChange(
 
   // ターン開始スタックを積み、解決する
   core.histories = [];
-  core.stack.push(
-    new Stack({
-      type: 'turnStart',
-      source: core.getTurnPlayer(),
-      core: core,
-    })
-  );
+  core.stack.push(createTurnStartStack(core, core.getTurnPlayer()));
   await resolveStack(core);
 
   // 狂戦士 アタックさせる
