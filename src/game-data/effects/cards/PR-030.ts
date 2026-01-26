@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Unit, Card } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import { PermanentEffect } from '../engine/permanent';
 import type { CardEffects, StackWithCard } from '../schema/types';
@@ -21,8 +21,8 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 手札が2枚以下の時、このユニットのBPを+4000する
-    PermanentEffect.mount(stack, stack.processing, {
-      effect: (unit, source) => {
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit: Card, source) => {
         if (unit instanceof Unit) {
           Effect.modifyBP(stack, stack.processing, unit, 4000, {
             source,
@@ -35,8 +35,8 @@ export const effects: CardEffects = {
     });
 
     // 手札が1枚以下の時、対戦相手のユニットのBPを-1000する
-    PermanentEffect.mount(stack, stack.processing, {
-      effect: (unit, source) => {
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit: Card, source) => {
         if (unit instanceof Unit) {
           Effect.modifyBP(stack, stack.processing, unit, -1000, {
             source,
@@ -49,8 +49,8 @@ export const effects: CardEffects = {
     });
 
     // 手札が0枚の時、このユニットに【不滅】を与える
-    PermanentEffect.mount(stack, stack.processing, {
-      effect: (unit, source) => {
+    PermanentEffect.mount(stack.processing, {
+      effect: (unit: Card, source) => {
         if (unit instanceof Unit) {
           Effect.keyword(stack, stack.processing, unit, '不滅', {
             source,
