@@ -244,6 +244,71 @@ describe('Stack.target 配列対応テスト', () => {
       expect(targets[0]).toBe(target1);
       expect(targets[1]).toBe(target2);
     });
+
+    test('処理時にはターンプレイヤーのカードが先に処理される', () => {
+      const { core, player1, player2 } = createTestContext();
+
+      // player1 がターンプレイヤーになるよう設定
+      // turn = 2, firstPlayerIndex = 1 → playerIndex = (2 - 1 + 1) % 2 = 0 → player1
+      core.firstPlayerIndex = 1;
+
+      // player1（ターンプレイヤー）のフィールドにユニット配置
+      const turnPlayerUnit1 = createUnit(player1, '1-0-001');
+      const turnPlayerUnit2 = createUnit(player1, '1-0-001');
+      player1.field.push(turnPlayerUnit1, turnPlayerUnit2);
+
+      // player2（非ターンプレイヤー）のフィールドにユニット配置
+      const nonTurnPlayerUnit1 = createUnit(player2, '1-0-001');
+      const nonTurnPlayerUnit2 = createUnit(player2, '1-0-001');
+      player2.field.push(nonTurnPlayerUnit1, nonTurnPlayerUnit2);
+
+      // 非ターンプレイヤーのカードを先に追加してスタック作成
+      const stack = new Stack({
+        type: 'damage',
+        source: player1,
+        target: [nonTurnPlayerUnit2, turnPlayerUnit1, nonTurnPlayerUnit1, turnPlayerUnit2],
+        core,
+      });
+
+      // getTargetsSortedForProcessing()で処理順を取得
+      const sortedTargets = stack.getTargetsSortedForProcessing();
+
+      // ターンプレイヤーのカードが先に来る
+      expect(sortedTargets[0]).toBe(turnPlayerUnit1);
+      expect(sortedTargets[1]).toBe(turnPlayerUnit2);
+      // 非ターンプレイヤーのカードが後に来る
+      expect(sortedTargets[2]).toBe(nonTurnPlayerUnit1);
+      expect(sortedTargets[3]).toBe(nonTurnPlayerUnit2);
+    });
+
+    test('各プレイヤー内でフィールドインデックス順にソートされる', () => {
+      const { core, player1, player2 } = createTestContext();
+
+      // player1 がターンプレイヤーになるよう設定
+      core.firstPlayerIndex = 1;
+
+      // player2 のフィールドにユニットを配置（インデックス0, 1, 2の順）
+      const unit0 = createUnit(player2, '1-0-001');
+      const unit1 = createUnit(player2, '1-0-001');
+      const unit2 = createUnit(player2, '1-0-001');
+      player2.field.push(unit0, unit1, unit2);
+
+      // インデックス逆順でターゲットとしてスタック作成
+      const stack = new Stack({
+        type: 'damage',
+        source: player1,
+        target: [unit2, unit0, unit1],
+        core,
+      });
+
+      // getTargetsSortedForProcessing()で処理順を取得
+      const sortedTargets = stack.getTargetsSortedForProcessing();
+
+      // インデックス順にソートされる
+      expect(sortedTargets[0]).toBe(unit0);
+      expect(sortedTargets[1]).toBe(unit1);
+      expect(sortedTargets[2]).toBe(unit2);
+    });
   });
 
   describe('Stack型の整合性テスト', () => {

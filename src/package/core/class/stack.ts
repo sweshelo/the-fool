@@ -168,6 +168,57 @@ export class Stack implements IStack {
   }
 
   /**
+   * 処理順にソートされたターゲットを取得する
+   * ターンプレイヤーのカードを先に（Indexの小さい順）、
+   * 次に非ターンプレイヤーのカード（Indexの小さい順）で返す
+   * @returns ソートされたターゲットの配列
+   */
+  getTargetsSortedForProcessing(): (Card | Player)[] {
+    const turnPlayer = this.core.getTurnPlayer();
+
+    // ターゲットをプレイヤー別に分類
+    const turnPlayerTargets: (Card | Player)[] = [];
+    const nonTurnPlayerTargets: (Card | Player)[] = [];
+
+    for (const target of this._targets) {
+      if (target instanceof Player) {
+        // Playerの場合はIDで判定
+        if (target.id === turnPlayer.id) {
+          turnPlayerTargets.push(target);
+        } else {
+          nonTurnPlayerTargets.push(target);
+        }
+      } else if (target instanceof Card) {
+        // Cardの場合はownerで判定
+        if (target.owner.id === turnPlayer.id) {
+          turnPlayerTargets.push(target);
+        } else {
+          nonTurnPlayerTargets.push(target);
+        }
+      }
+    }
+
+    // それぞれをフィールドインデックス順にソート
+    const sortByFieldIndex = (a: Card | Player, b: Card | Player): number => {
+      if (a instanceof Card && b instanceof Card) {
+        const aIndex = a.owner.field.findIndex(u => u.id === a.id);
+        const bIndex = b.owner.field.findIndex(u => u.id === b.id);
+        // フィールドに存在しない場合は後ろに配置
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      }
+      return 0;
+    };
+
+    turnPlayerTargets.sort(sortByFieldIndex);
+    nonTurnPlayerTargets.sort(sortByFieldIndex);
+
+    return [...turnPlayerTargets, ...nonTurnPlayerTargets];
+  }
+
+  /**
    * ログ出力用のターゲット文字列を生成する
    */
   private formatTargetForLog(): string {
@@ -275,7 +326,8 @@ export class Stack implements IStack {
       // 効果の影響を受けた側のチェックをする場合
       default: {
         // 配列ターゲットの場合、各ターゲットに対してSelf効果を処理
-        const targets = this.getTargets();
+        // ターンプレイヤーのカード → 非ターンプレイヤーのカードの順で処理
+        const targets = this.getTargetsSortedForProcessing();
         for (const target of targets) {
           if (target instanceof Unit && !target.hasKeyword('沈黙')) {
             await this.processCardEffect(target, core, 'Self');
@@ -459,8 +511,9 @@ export class Stack implements IStack {
     // Stackによって移動が約束されたユニットを移動させる
     if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
-      // 配列ターゲット対応: すべてのターゲットを処理
-      const targets = stack.getTargets();
+      // 配列ターゲット対応: すべてのターゲットを処理順にソートして処理
+      // ターンプレイヤーのカード → 非ターンプレイヤーのカード の順でIndexの小さい順
+      const targets = stack.getTargetsSortedForProcessing();
       let processed = false;
       for (const target of targets) {
         if (target instanceof Unit) {
