@@ -20,6 +20,8 @@ export function effectHandes(stack: Stack, source: Card, target: Card): void {
     stack.core.room.sync();
     stack.core.room.soundEffect('destruction');
 
-    stack.addChildStack('handes', source, target);
+    // 同一source/typeのスタックが既にある場合はマージする
+    // 複数ハンデスを1つのStackで処理できるようにする
+    stack.addOrMergeChildStack('handes', source, target);
   }
 }

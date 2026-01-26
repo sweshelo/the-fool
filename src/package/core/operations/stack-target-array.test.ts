@@ -18,8 +18,8 @@ let Effect: typeof import('@/game-data/effects').Effect;
  * Stack処理順序を検証する。
  *
  * 【Issue #176】
- * - 現在: 複数回のイベントが発生した際、複数のStackが生成される
- * - 目標: 1つのStackで複数のtargetを処理できるようにする
+ * - 変更前: 複数回のイベントが発生した際、複数のStackが生成される
+ * - 変更後: 1つのStackで複数のtargetを処理できる
  */
 
 // テストユーティリティを遅延インポート
@@ -47,8 +47,8 @@ beforeAll(async () => {
 });
 
 describe('Stack.target 配列対応テスト', () => {
-  describe('現在のhandes処理挙動（リグレッション用）', () => {
-    test('複数のハンデス時、各カードに対して個別のStackが生成される', async () => {
+  describe('handes処理挙動', () => {
+    test('複数のハンデス時、1つのStackに複数ターゲットがマージされる', async () => {
       const { core, player1, player2 } = createTestContext();
 
       // 相手の手札にカードを追加
@@ -72,12 +72,22 @@ describe('Stack.target 配列対応テスト', () => {
       Effect.break(parentStack, source, card1, 'effect');
       Effect.break(parentStack, source, card2, 'effect');
 
-      // 現在の実装では、各ハンデスに対して個別のStackが生成される
+      // 新しい実装では、複数ハンデスが1つのStackにマージされる
       const handesStacks = parentStack.children.filter((s: StackClass) => s.type === 'handes');
-      expect(handesStacks.length).toBe(2);
+      expect(handesStacks.length).toBe(1);
+
+      // マージされたスタックは複数のターゲットを持つ
+      const mergedStack = handesStacks[0];
+      expect(mergedStack).toBeDefined();
+      expect(mergedStack?.getTargets().length).toBe(2);
+      expect(mergedStack?.getTargets()).toContain(card1);
+      expect(mergedStack?.getTargets()).toContain(card2);
+
+      // target getter は最初のターゲットを返す（後方互換性）
+      expect(mergedStack?.target).toBe(card1);
     });
 
-    test('handes Stack解決時、onlySelfResolve で重複発火を防止', async () => {
+    test('handes Stack解決時、単一resolveで複数ターゲットを処理', async () => {
       const { core, player1, player2 } = createTestContext();
       const recorder = new EventRecorder();
 
@@ -92,7 +102,6 @@ describe('Stack.target 配列対応テスト', () => {
 
       // スタック解決をフック
       let handesResolveCount = 0;
-      const onlySelfResolveArgs: boolean[] = [];
 
       // oxlint-disable-next-line typescript-eslint/unbound-method
       const originalResolve = Stack.prototype.resolve;
@@ -103,8 +112,7 @@ describe('Stack.target 配列対応テスト', () => {
       ) {
         if (this.type === 'handes') {
           handesResolveCount++;
-          onlySelfResolveArgs.push(onlySelfResolve);
-          recorder.record(`handes-resolve-${onlySelfResolve ? 'self' : 'full'}`);
+          recorder.record(`handes-resolve-targets:${this.getTargets().length}`);
         }
         await originalResolve.call(this, c, onlySelfResolve);
       };
@@ -125,21 +133,17 @@ describe('Stack.target 配列対応テスト', () => {
         // 親スタック解決
         await parentStack.resolve(core);
 
-        // 2回のhandes resolveが呼ばれる
-        expect(handesResolveCount).toBe(2);
-
-        // 最初は full (false)、2回目は self-only (true)
-        // ※同じownerに対する2回目以降は onlySelfResolve=true になる
-        expect(onlySelfResolveArgs[0]).toBe(false);
-        expect(onlySelfResolveArgs[1]).toBe(true);
+        // 1回のhandes resolveで2ターゲットを処理
+        expect(handesResolveCount).toBe(1);
+        expect(recorder.events).toContain('handes-resolve-targets:2');
       } finally {
         Stack.prototype.resolve = originalResolve;
       }
     });
   });
 
-  describe('現在のdamage処理挙動（リグレッション用）', () => {
-    test('複数のダメージ時、各ユニットに対して個別のStackが生成される', async () => {
+  describe('damage処理挙動', () => {
+    test('複数のダメージ時、同一source/optionのStackがマージされる', async () => {
       const { core, player1, player2 } = createTestContext();
 
       // 相手のフィールドにユニットを配置
@@ -161,20 +165,20 @@ describe('Stack.target 配列対応テスト', () => {
         core,
       });
 
-      // 2体にダメージ
+      // 2体にダメージ（同じダメージ値）
       Effect.damage(parentStack, source, target1, 1000);
       Effect.damage(parentStack, source, target2, 1000);
 
-      // 現在の実装では、各ダメージに対して個別のStackが生成される
+      // 新しい実装では、同一source/optionの場合はマージされる
       const damageStacks = parentStack.children.filter((s: StackClass) => s.type === 'damage');
-      expect(damageStacks.length).toBe(2);
-    });
-  });
+      expect(damageStacks.length).toBe(1);
 
-  describe('Stack処理順序（リグレッション用）', () => {
-    test('子スタック処理順序はchildren配列の順序に従う', async () => {
+      // マージされたスタックは複数のターゲットを持つ
+      expect(damageStacks[0]?.getTargets().length).toBe(2);
+    });
+
+    test('異なるダメージ値の場合は別々のStackが生成される', async () => {
       const { core, player1, player2 } = createTestContext();
-      const childResolveOrder: string[] = [];
 
       // 相手のフィールドにユニットを配置
       const target1 = createUnit(player2, '1-0-001');
@@ -187,65 +191,90 @@ describe('Stack.target 配列対応テスト', () => {
       const source = createUnit(player1, '1-0-001');
       player1.field.push(source);
 
-      // スタック解決をフック
-      // oxlint-disable-next-line typescript-eslint/unbound-method
-      const originalResolve = Stack.prototype.resolve;
-      Stack.prototype.resolve = async function (
-        this: StackClass,
-        c: Core,
-        onlySelfResolve: boolean = false
-      ) {
-        if (this.type === 'damage' && this.target && 'id' in this.target) {
-          childResolveOrder.push(this.target.id);
-        }
-        await originalResolve.call(this, c, onlySelfResolve);
-      };
+      // 親スタック作成
+      const parentStack = new Stack({
+        type: 'drive',
+        source: player1,
+        target: source,
+        core,
+      });
 
-      try {
-        // 親スタック作成
-        const parentStack = new Stack({
-          type: 'drive',
-          source: player1,
-          target: source,
-          core,
-        });
+      // 2体に異なるダメージ値
+      Effect.damage(parentStack, source, target1, 1000);
+      Effect.damage(parentStack, source, target2, 2000);
 
-        // target1, target2 の順でダメージ（children に追加される順序）
-        Effect.damage(parentStack, source, target1, 1000);
-        Effect.damage(parentStack, source, target2, 1000);
+      // 異なるoptionなので別々のStackが生成される
+      const damageStacks = parentStack.children.filter((s: StackClass) => s.type === 'damage');
+      expect(damageStacks.length).toBe(2);
+    });
+  });
 
-        // 親スタック解決
-        await parentStack.resolve(core);
+  describe('Stack処理順序', () => {
+    test('マージされたスタックのターゲットは追加順に保持される', async () => {
+      const { core, player1, player2 } = createTestContext();
 
-        // children配列の順序通りに処理される（target1 → target2）
-        expect(childResolveOrder[0]).toBe(target1.id);
-        expect(childResolveOrder[1]).toBe(target2.id);
-      } finally {
-        Stack.prototype.resolve = originalResolve;
-      }
+      // 相手のフィールドにユニットを配置
+      const target1 = createUnit(player2, '1-0-001');
+      const target2 = createUnit(player2, '1-0-001');
+      target1.bp = 5000;
+      target2.bp = 5000;
+      player2.field.push(target1, target2);
+
+      // 自分のフィールドにユニットを配置
+      const source = createUnit(player1, '1-0-001');
+      player1.field.push(source);
+
+      // 親スタック作成
+      const parentStack = new Stack({
+        type: 'drive',
+        source: player1,
+        target: source,
+        core,
+      });
+
+      // target1, target2 の順でダメージ
+      Effect.damage(parentStack, source, target1, 1000);
+      Effect.damage(parentStack, source, target2, 1000);
+
+      // マージされたスタックのターゲット順序を確認
+      const damageStack = parentStack.children.find((s: StackClass) => s.type === 'damage');
+      expect(damageStack).toBeDefined();
+
+      const targets = damageStack?.getTargets() ?? [];
+      expect(targets[0]).toBe(target1);
+      expect(targets[1]).toBe(target2);
     });
   });
 
   describe('Stack型の整合性テスト', () => {
-    test('Stack.targetは現在単一の値を取る', () => {
+    test('target getterは最初のターゲットを返す（後方互換性）', () => {
       const { core, player1 } = createTestContext();
-      const unit = createUnit(player1, '1-0-001');
+      const unit1 = createUnit(player1, '1-0-001');
+      const unit2 = createUnit(player1, '1-0-001');
 
+      // 配列ターゲットでスタック作成
       const stack = new Stack({
         type: 'drive',
         source: player1,
-        target: unit,
+        target: [unit1, unit2],
         core,
       });
 
-      // 現在の実装では target は単一の値
-      expect(stack.target).toBe(unit);
+      // target は最初のターゲットを返す
+      expect(stack.target).toBe(unit1);
       expect(Array.isArray(stack.target)).toBe(false);
+
+      // getTargets() は配列全体を返す
+      expect(stack.getTargets().length).toBe(2);
+      expect(stack.getTargets()).toContain(unit1);
+      expect(stack.getTargets()).toContain(unit2);
     });
 
-    test('addChildStackは単一のtargetを受け取る', () => {
+    test('addChildStackは配列targetも受け取れる', () => {
       const { core, player1 } = createTestContext();
       const unit = createUnit(player1, '1-0-001');
+      const childTarget1 = createUnit(player1, '1-0-001');
+      const childTarget2 = createUnit(player1, '1-0-001');
 
       const parentStack = new Stack({
         type: 'drive',
@@ -254,10 +283,37 @@ describe('Stack.target 配列対応テスト', () => {
         core,
       });
 
-      const childTarget = createUnit(player1, '1-0-001');
-      const childStack = parentStack.addChildStack('break', unit, childTarget);
+      // 配列ターゲットで子スタック作成
+      const childStack = parentStack.addChildStack('break', unit, [childTarget1, childTarget2]);
 
-      expect(childStack.target).toBe(childTarget);
+      expect(childStack.getTargets().length).toBe(2);
+      expect(childStack.target).toBe(childTarget1);
+    });
+
+    test('addOrMergeChildStackは同一type/sourceのスタックにターゲットをマージする', () => {
+      const { core, player1 } = createTestContext();
+      const unit = createUnit(player1, '1-0-001');
+      const childTarget1 = createUnit(player1, '1-0-001');
+      const childTarget2 = createUnit(player1, '1-0-001');
+
+      const parentStack = new Stack({
+        type: 'drive',
+        source: player1,
+        target: unit,
+        core,
+      });
+
+      // 1つ目のターゲット
+      const childStack1 = parentStack.addOrMergeChildStack('break', unit, childTarget1);
+      expect(parentStack.children.length).toBe(1);
+
+      // 2つ目のターゲット（同じスタックにマージされる）
+      const childStack2 = parentStack.addOrMergeChildStack('break', unit, childTarget2);
+      expect(parentStack.children.length).toBe(1);
+      expect(childStack1).toBe(childStack2);
+
+      // 両方のターゲットを持つ
+      expect(childStack1.getTargets().length).toBe(2);
     });
   });
 });
