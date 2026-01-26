@@ -89,6 +89,7 @@ export function createMockRoom(getCore: () => Core, autoResponder: AutoResponder
         handicap: { attack: false, cp: false, draw: false },
       },
       misc: { strictOverride: false, suicideJoker: false },
+      joker: { gauge: 0, inHand: false },
     },
   } as unknown as Room;
 
