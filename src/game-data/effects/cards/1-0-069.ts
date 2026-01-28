@@ -7,21 +7,23 @@ import { System } from '../engine/system';
 export const effects: CardEffects = {
   // あなたのユニットがフィールドに出た時
   checkDrive: (stack: StackWithCard<Card>): boolean => {
-    return stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id;
+    if (!(stack.target instanceof Unit)) return false;
+    if (stack.target.owner.id !== stack.processing.owner.id) return false;
+
+    // 相手のユニットが選択可能か
+    return EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
   },
 
   onDrive: async (stack: StackWithCard<Card>): Promise<void> => {
-    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
-      await System.show(stack, '絶妙な挑発', 'レベルを3にする');
+    await System.show(stack, '絶妙な挑発', 'レベルを3にする');
 
-      const [target] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        'opponents',
-        'レベルを3にするユニットを選択'
-      );
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      'opponents',
+      'レベルを3にするユニットを選択'
+    );
 
-      Effect.clock(stack, stack.processing, target, 2, true);
-    }
+    Effect.clock(stack, stack.processing, target, 2, true);
   },
 };

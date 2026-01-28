@@ -28,14 +28,15 @@ export const effects: CardEffects = {
   },
 
   onBattle: async (stack: StackWithCard) => {
-    const attacker = stack.source;
-    if (
-      attacker instanceof Unit &&
-      attacker.catalog.species?.includes('侍') &&
-      attacker.owner.id === stack.processing.owner.id
-    ) {
+    const owner = stack.processing.owner;
+    // 戦闘中の自ユニットを特定
+    const ownUnit = [stack.source, stack.target].find(
+      (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
+    );
+
+    if (ownUnit instanceof Unit && ownUnit.catalog.species?.includes('侍')) {
       await System.show(stack, '心眼の撫子', '基本BP+1000');
-      Effect.modifyBP(stack, stack.processing, attacker, 1000, { isBaseBP: true });
+      Effect.modifyBP(stack, stack.processing, ownUnit, 1000, { isBaseBP: true });
     }
   },
 };
