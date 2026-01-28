@@ -298,6 +298,8 @@ export class Room {
         },
         payload: {
           type: 'Sync',
+          selfId: playerId,
+          role: 'player' as const,
           body: {
             rule: this.rule,
             game: {
