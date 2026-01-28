@@ -17,7 +17,9 @@ export function effectDamage(
   if (!isOnField) throw new Error('対象が見つかりませんでした');
 
   if (target.destination !== undefined) {
-    stack.addChildStack('damage', source, target, {
+    // 同一source/typeのスタックが既にある場合はマージする
+    // 複数ダメージを1つのStackで処理できるようにする
+    stack.addOrMergeChildStack('damage', source, target, {
       type: 'damage',
       cause: type,
       value,
@@ -95,7 +97,9 @@ export function effectDamage(
     )
   );
 
-  stack.addChildStack('damage', source, target, {
+  // 同一source/typeのスタックが既にある場合はマージする
+  // 複数ダメージを1つのStackで処理できるようにする
+  stack.addOrMergeChildStack('damage', source, target, {
     type: 'damage',
     cause: type,
     value: damage,

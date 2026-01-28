@@ -86,7 +86,9 @@ export function effectMove(
 
   if (origin === 'trigger' && location === 'trash') {
     stack.core.room.soundEffect('destruction');
-    stack.addChildStack('lost', source, target);
+    // 同一source/typeのスタックが既にある場合はマージする
+    // 複数のlostを1つのStackで処理できるようにする
+    stack.addOrMergeChildStack('lost', source, target);
   } else {
     stack.addChildStack('move', source, target);
   }

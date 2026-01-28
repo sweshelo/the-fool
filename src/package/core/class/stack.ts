@@ -10,6 +10,12 @@ import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
 import type { GameEvent } from '@/game-data/effects/schema/events';
 
+/**
+ * Stack のターゲット型
+ * 単一のターゲット、または複数のターゲットを配列で指定可能
+ */
+export type StackTarget = Card | Player | (Card | Player)[];
+
 interface IStack {
   /**
    * @param type そのStackのタイプを示す
@@ -20,9 +26,15 @@ interface IStack {
    */
   source: Card | Player;
   /**
-   * @param target そのStackによって影響を受ける対象を示す。例えば召喚操作の場合、召喚されたUnitが指定される。破壊効果の場合は、破壊されたUnitが指定される。
+   * @param target そのStackによって影響を受ける対象を示す。
+   * 単一のターゲット（Card | Player）または複数のターゲット（配列）を指定可能。
+   * 例: 召喚操作の場合は召喚されたUnit、破壊効果の場合は破壊されたUnit。
+   * handes/damage/lost などのイベントでは複数のターゲットを配列で指定できる。
+   *
+   * 後方互換性のため、getterは最初のターゲットを返す。
+   * 複数ターゲットを取得する場合は getTargets() を使用する。
    */
-  target?: Card | Player;
+  target?: StackTarget;
   /**
    * @param parent そのStackが発生した契機の親にあたる。例えば召喚効果によって相手を破壊するStackが発生した場合、親が召喚スタック、子が破壊スタックとなる。
    */
@@ -70,7 +82,11 @@ type StackOption =
 export class Stack implements IStack {
   type: GameEvent;
   source: Card | Player;
-  target?: Card | Player;
+  /**
+   * 内部的にはターゲットを配列として保持する
+   * 後方互換性のため、target プロパティ（getter）は最初のターゲットを返す
+   */
+  private _targets: (Card | Player)[];
   parent: undefined | Stack;
   children: Stack[];
   core: Core;
@@ -80,11 +96,140 @@ export class Stack implements IStack {
   constructor({ type, source, target, parent, core, option }: Omit<IStack, 'children'>) {
     this.type = type;
     this.source = source;
-    this.target = target;
+    // ターゲットを配列として内部に保持
+    if (target === undefined) {
+      this._targets = [];
+    } else if (Array.isArray(target)) {
+      this._targets = target;
+    } else {
+      this._targets = [target];
+    }
     this.parent = parent;
     this.children = [];
     this.core = core;
     this.option = option;
+  }
+
+  /**
+   * 後方互換性のため、最初のターゲットを返す getter
+   * 既存のコード（stack.target?.id など）がそのまま動作する
+   */
+  get target(): Card | Player | undefined {
+    return this._targets[0];
+  }
+
+  /**
+   * ターゲットを設定する setter
+   * 単一ターゲットまたは配列を受け取れる
+   */
+  set target(value: StackTarget | undefined) {
+    if (value === undefined) {
+      this._targets = [];
+    } else if (Array.isArray(value)) {
+      this._targets = value;
+    } else {
+      this._targets = [value];
+    }
+  }
+
+  /**
+   * ターゲットを配列として取得する
+   * @returns ターゲットの配列（空配列の場合もある）
+   */
+  getTargets(): (Card | Player)[] {
+    return this._targets;
+  }
+
+  /**
+   * 最初のターゲットを取得する
+   * target getterと同じ値を返すが、より明示的な名前
+   * @returns 最初のターゲット、またはundefined
+   */
+  getFirstTarget(): Card | Player | undefined {
+    return this._targets[0];
+  }
+
+  /**
+   * ターゲットが複数あるかどうかを判定する
+   */
+  hasMultipleTargets(): boolean {
+    return this._targets.length > 1;
+  }
+
+  /**
+   * ターゲットを追加する
+   * 既存のターゲットに新しいターゲットを追加する
+   * @param target 追加するターゲット
+   */
+  addTarget(target: Card | Player): void {
+    if (!this._targets.some(t => t.id === target.id)) {
+      this._targets.push(target);
+    }
+  }
+
+  /**
+   * 処理順にソートされたターゲットを取得する
+   * ターンプレイヤーのカードを先に（Indexの小さい順）、
+   * 次に非ターンプレイヤーのカード（Indexの小さい順）で返す
+   * @returns ソートされたターゲットの配列
+   */
+  getTargetsSortedForProcessing(): (Card | Player)[] {
+    const turnPlayer = this.core.getTurnPlayer();
+
+    // ターゲットをプレイヤー別に分類
+    const turnPlayerTargets: (Card | Player)[] = [];
+    const nonTurnPlayerTargets: (Card | Player)[] = [];
+
+    for (const target of this._targets) {
+      if (target instanceof Player) {
+        // Playerの場合はIDで判定
+        if (target.id === turnPlayer.id) {
+          turnPlayerTargets.push(target);
+        } else {
+          nonTurnPlayerTargets.push(target);
+        }
+      } else if (target instanceof Card) {
+        // Cardの場合はownerで判定
+        if (target.owner.id === turnPlayer.id) {
+          turnPlayerTargets.push(target);
+        } else {
+          nonTurnPlayerTargets.push(target);
+        }
+      }
+    }
+
+    // それぞれをフィールドインデックス順にソート
+    const sortByFieldIndex = (a: Card | Player, b: Card | Player): number => {
+      if (a instanceof Card && b instanceof Card) {
+        const aIndex = a.owner.field.findIndex(u => u.id === a.id);
+        const bIndex = b.owner.field.findIndex(u => u.id === b.id);
+        // フィールドに存在しない場合は後ろに配置
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      }
+      return 0;
+    };
+
+    turnPlayerTargets.sort(sortByFieldIndex);
+    nonTurnPlayerTargets.sort(sortByFieldIndex);
+
+    return [...turnPlayerTargets, ...nonTurnPlayerTargets];
+  }
+
+  /**
+   * ログ出力用のターゲット文字列を生成する
+   */
+  private formatTargetForLog(): string {
+    if (this._targets.length === 0) {
+      return 'none';
+    }
+    if (this._targets.length === 1) {
+      const t = this._targets[0];
+      return t !== undefined ? (t instanceof Card ? t.catalog.name : t.id) : 'none';
+    }
+    return `[${this._targets.map(t => (t instanceof Card ? t.catalog.name : t.id)).join(', ')}]`;
   }
 
   /**
@@ -94,14 +239,16 @@ export class Stack implements IStack {
    */
   async resolve(core: Core, onlySelfResolve: boolean = false): Promise<void> {
     // Log
-    if (!this.type.startsWith('_'))
+    if (!this.type.startsWith('_')) {
+      const targetStr = this.formatTargetForLog();
       console.log(
         '[stack.resolve] Room: %s | event: %s | source: %s | target: %s',
         core.room.id,
         this.type,
         this.source instanceof Card ? this.source.catalog.name : this.source.id,
-        this.target instanceof Card ? this.target.catalog.name : this.target?.id
+        targetStr
       );
+    }
 
     // ターンプレイヤーを取得
     const turnPlayer = core.getTurnPlayer();
@@ -114,15 +261,16 @@ export class Stack implements IStack {
     };
 
     if (this.type === 'overclock') {
+      const firstTarget = this.getFirstTarget();
       if (
-        this.target instanceof Unit &&
-        this.target.lv === 3 &&
-        !this.target.overclocked &&
-        this.target.owner.field.some(unit => unit.id === this.target?.id)
+        firstTarget instanceof Unit &&
+        firstTarget.lv === 3 &&
+        !firstTarget.overclocked &&
+        firstTarget.owner.field.some(unit => unit.id === firstTarget.id)
       ) {
-        this.target.overclocked = true;
-        this.target.active = true;
-        this.target.delta = this.target.delta.filter(
+        firstTarget.overclocked = true;
+        firstTarget.active = true;
+        firstTarget.delta = firstTarget.delta.filter(
           delta => !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限')
         );
         core.room.soundEffect('clock-up-field');
@@ -148,8 +296,9 @@ export class Stack implements IStack {
 
       // ジョーカー効果の場合
       case 'joker': {
-        if (this.target instanceof Card) {
-          await this.processCardEffect(this.target, core, 'Self');
+        const firstTarget = this.getFirstTarget();
+        if (firstTarget instanceof Card) {
+          await this.processCardEffect(firstTarget, core, 'Self');
           this.processFieldEffect(); // field-effect
           await this.resolveChild(core);
         }
@@ -158,11 +307,12 @@ export class Stack implements IStack {
 
       // 両方のチェックをする場合
       case 'battle': {
-        if (this.source instanceof Unit && this.target instanceof Unit) {
-          const targets = [this.source, this.target];
-          for (const target of targets) {
-            if (target instanceof Unit && !target.hasKeyword('沈黙')) {
-              await this.processCardEffect(target, core, 'Self');
+        const firstTarget = this.getFirstTarget();
+        if (this.source instanceof Unit && firstTarget instanceof Unit) {
+          const battleTargets = [this.source, firstTarget];
+          for (const battleTarget of battleTargets) {
+            if (battleTarget instanceof Unit && !battleTarget.hasKeyword('沈黙')) {
+              await this.processCardEffect(battleTarget, core, 'Self');
               this.processFieldEffect(); //field-effect
               await this.resolveChild(core);
             }
@@ -175,10 +325,15 @@ export class Stack implements IStack {
 
       // 効果の影響を受けた側のチェックをする場合
       default: {
-        if (this.target instanceof Unit && !this.target.hasKeyword('沈黙')) {
-          await this.processCardEffect(this.target, core, 'Self');
-          this.processFieldEffect(); // field-effect
-          await this.resolveChild(core);
+        // 配列ターゲットの場合、各ターゲットに対してSelf効果を処理
+        // ターンプレイヤーのカード → 非ターンプレイヤーのカードの順で処理
+        const targets = this.getTargetsSortedForProcessing();
+        for (const target of targets) {
+          if (target instanceof Unit && !target.hasKeyword('沈黙')) {
+            await this.processCardEffect(target, core, 'Self');
+            this.processFieldEffect(); // field-effect
+            await this.resolveChild(core);
+          }
         }
         break;
       }
@@ -311,7 +466,7 @@ export class Stack implements IStack {
         core.room.id,
         this.type,
         this.source instanceof Card ? this.source.catalog.name : this.source.id,
-        this.target instanceof Card ? this.target.catalog.name : this.target?.id
+        this.formatTargetForLog()
       );
 
     core.room.sync();
@@ -338,7 +493,9 @@ export class Stack implements IStack {
 
     for (const child of this.children) {
       // target が Card の場合、owner.id を取得してユニーク判定
-      const ownerId = child.target instanceof Card ? child.target.owner.id : undefined;
+      // 配列の場合は最初のターゲットのオーナーを使用
+      const firstTarget = child.getFirstTarget();
+      const ownerId = firstTarget instanceof Card ? firstTarget.owner.id : undefined;
       const key = `${child.type}_${ownerId}`;
 
       if (ownerId === undefined || !seen.has(key) || !isPreventDuplicateEventHandling(child)) {
@@ -354,22 +511,31 @@ export class Stack implements IStack {
     // Stackによって移動が約束されたユニットを移動させる
     if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
-      const target = stack.target;
-      if (target instanceof Unit) {
-        switch (stack.type) {
-          case 'break':
-            this.moveUnit(target, 'trash');
-            return true;
-          case 'delete':
-            this.moveUnit(target, 'delete', 'deleted');
-            return true;
-          case 'bounce':
-            if (stack.option?.type === 'bounce') {
-              this.moveUnit(target, stack.option?.location, 'bounce');
-            }
-            return true;
+      // 配列ターゲット対応: すべてのターゲットを処理順にソートして処理
+      // ターンプレイヤーのカード → 非ターンプレイヤーのカード の順でIndexの小さい順
+      const targets = stack.getTargetsSortedForProcessing();
+      let processed = false;
+      for (const target of targets) {
+        if (target instanceof Unit) {
+          switch (stack.type) {
+            case 'break':
+              this.moveUnit(target, 'trash');
+              processed = true;
+              break;
+            case 'delete':
+              this.moveUnit(target, 'delete', 'deleted');
+              processed = true;
+              break;
+            case 'bounce':
+              if (stack.option?.type === 'bounce') {
+                this.moveUnit(target, stack.option?.location, 'bounce');
+              }
+              processed = true;
+              break;
+          }
         }
       }
+      return processed;
     });
 
     this.children = [];
@@ -659,13 +825,13 @@ export class Stack implements IStack {
    * 新しい子スタックを作成して追加する
    * @param type スタックのタイプ
    * @param source 効果の発生源
-   * @param target 効果の対象
+   * @param target 効果の対象（単一または配列）
    * @returns 作成されたスタック
    */
   addChildStack(
     type: GameEvent,
     source: Card | Player,
-    target?: Card | Player,
+    target?: StackTarget,
     option?: StackOption
   ): Stack {
     const childStack = new Stack({
@@ -679,6 +845,41 @@ export class Stack implements IStack {
 
     this.children.push(childStack);
     return childStack;
+  }
+
+  /**
+   * 既存のスタックのターゲットにターゲットを追加する
+   * 同一のtype/sourceを持つ子スタックが存在する場合はそのターゲットに追加し、
+   * 存在しない場合は新しい子スタックを作成する
+   *
+   * @param type スタックのタイプ
+   * @param source 効果の発生源
+   * @param target 追加するターゲット
+   * @param option スタックオプション
+   * @returns 更新または作成されたスタック
+   */
+  addOrMergeChildStack(
+    type: GameEvent,
+    source: Card | Player,
+    target: Card | Player,
+    option?: StackOption
+  ): Stack {
+    // 同一のtype/sourceを持つ既存の子スタックを探す
+    const existingStack = this.children.find(
+      child =>
+        child.type === type &&
+        child.source.id === source.id &&
+        JSON.stringify(child.option) === JSON.stringify(option)
+    );
+
+    if (existingStack) {
+      // 既存のスタックにターゲットを追加
+      existingStack.addTarget(target);
+      return existingStack;
+    }
+
+    // 新しいスタックを作成
+    return this.addChildStack(type, source, target, option);
   }
 
   /**
