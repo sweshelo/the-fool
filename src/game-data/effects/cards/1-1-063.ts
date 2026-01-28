@@ -3,8 +3,8 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // カードが発動可能であるかを調べ、発動条件を満たしていれば true を、そうでなければ false を返す。
-  checkDrive: (stack: StackWithCard) => {
-    return stack.processing.owner.id === stack.source.id;
+  checkDrive: (_stack: StackWithCard) => {
+    return true;
   },
 
   // 実際の効果本体
