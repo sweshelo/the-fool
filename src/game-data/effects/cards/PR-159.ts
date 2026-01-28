@@ -21,7 +21,8 @@ export const effects: CardEffects = {
     return (
       stack.source instanceof Unit &&
       stack.source.owner.id === stack.processing.owner.id &&
-      stack.source.catalog.color === Color.BLUE
+      stack.source.catalog.color === Color.BLUE &&
+      stack.processing.owner.trash.length > 0
     );
   },
 

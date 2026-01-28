@@ -69,6 +69,7 @@ export const effects: CardEffects = {
   },
 
   onOverclockSelf: async (stack: StackWithCard) => {
+    if (stack.processing.owner.trash.length <= 0) return;
     await System.show(stack, 'カオスディール', '捨札から選んで回収');
     await EffectTemplate.revive(stack, 1);
   },
