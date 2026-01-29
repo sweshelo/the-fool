@@ -22,7 +22,10 @@ export const effects: CardEffects = {
   onAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
     // アタックしているユニットが相手のユニットかチェック
     const attacker = stack.target;
-    if (attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id) {
+    if (!(attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id))
+      return;
+    // アタックしているユニットの存在を確認
+    if (stack.processing.owner.opponent.field.some(unit => unit.id === attacker.id)) {
       // 自分のトリガーゾーンにカードがあるか確認
       const triggerCards = stack.processing.owner.trigger;
 
