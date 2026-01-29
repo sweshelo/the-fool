@@ -12,7 +12,7 @@ export const effects: CardEffects = {
 
   // 召喚時に無我の境地を付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    await System.show(stack, '無我の境地', '【無我の境地】を付与');
+    await System.show(stack, '無我の境地', '対戦相手の効果によって行動権を消費しない');
     Effect.keyword(stack, stack.processing, stack.processing, '無我の境地');
   },
 
