@@ -26,7 +26,7 @@ export const effects: CardEffects = {
 
   // あなたのユニットが戦闘によって対戦相手のユニットを破壊した時、インターセプトカードを1枚引く。
   checkWin(stack: StackWithCard) {
-    return stack.source instanceof Unit && stack.source.owner.id === stack.processing.owner.id;
+    return stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id;
   },
 
   async onWin(stack: StackWithCard) {
