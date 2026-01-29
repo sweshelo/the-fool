@@ -30,7 +30,11 @@ export const effects: CardEffects = {
       const triggerCards = stack.processing.owner.trigger;
 
       if (triggerCards.length > 0) {
-        await System.show(stack, '海底の宝物庫', 'トリガーカードを破壊\n相手ユニットを破壊');
+        await System.show(
+          stack,
+          '海底の宝物庫',
+          'トリガーゾーンのカードを破壊\n相手ユニットを破壊'
+        );
 
         // トリガーゾーンからランダムで1枚選択して破壊
         const randomTriggers = EffectHelper.random(triggerCards, 1);
