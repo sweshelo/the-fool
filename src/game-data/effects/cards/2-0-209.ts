@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       {
         id: '2',
         description: '捨札からユニットカードを1枚手札に加える',
-        condition: () => owner.trash.some(card => card instanceof Unit),
+        condition: owner.trash.some(card => card instanceof Unit),
       },
     ]);
 

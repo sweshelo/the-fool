@@ -13,13 +13,12 @@ export const effects: CardEffects = {
         {
           id: '1',
           description: 'デッキから【魔導士】ユニットを【特殊召喚】',
-          condition: () =>
-            stack.processing.owner.field.length < stack.core.room.rule.player.max.field,
+          condition: stack.processing.owner.field.length < stack.core.room.rule.player.max.field,
         },
         {
           id: '2',
           description: '敵全体の基本BP-［【魔導士】×1000］',
-          condition: () => stack.processing.owner.opponent.field.length > 0,
+          condition: stack.processing.owner.opponent.field.length > 0,
         },
       ]
     );

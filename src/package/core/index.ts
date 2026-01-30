@@ -12,7 +12,7 @@ import * as battle from './operations/battle';
 import * as gameFlow from './operations/game-flow';
 import * as messageHandler from './operations/message-handler';
 
-interface History {
+export interface History {
   card: Card;
   generation: number;
   action: 'drive' | 'boot' | 'joker';

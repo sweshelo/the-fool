@@ -11,7 +11,7 @@ export const effects: CardEffects = {
       {
         id: '2',
         description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
-        condition: () => owner.cp.current >= 1,
+        condition: owner.cp.current >= 1,
       },
     ]);
 

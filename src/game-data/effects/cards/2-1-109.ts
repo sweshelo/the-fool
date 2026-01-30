@@ -13,7 +13,7 @@ export const effects: CardEffects = {
       {
         id: '2',
         description: '手札を1枚消滅\nユニットを手札に戻す\n相手のユニットを消滅',
-        condition: () =>
+        condition:
           EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) &&
           owner.hand.length > 0,
       },

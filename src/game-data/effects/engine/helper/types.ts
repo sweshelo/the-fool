@@ -5,5 +5,5 @@ export type UnitPickFilter = ((unit: Unit) => unknown) | 'owns' | 'opponents' | 
 export interface Choice {
   id: string;
   description: string;
-  condition?: () => boolean;
+  condition?: boolean;
 }

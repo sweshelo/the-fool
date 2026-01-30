@@ -24,7 +24,7 @@ export const effects: CardEffects = {
       {
         id: '1',
         description: '手札を1枚消滅\nトリガーカードを2枚回収',
-        condition: () => stack.processing.owner.hand.length > 0,
+        condition: stack.processing.owner.hand.length > 0,
       },
       { id: '2', description: 'トリガーカードを1枚引く' },
     ]);
