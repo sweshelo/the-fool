@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
     const opponent = owner.opponent;
-    const isComboAvailable = EffectHelper.combo(stack.core, GREEN_COMBO(2));
+    const isComboAvailable = EffectHelper.combo(stack.core, stack.processing, GREEN_COMBO(2));
 
     await EffectHelper.combine(stack, [
       {

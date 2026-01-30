@@ -317,7 +317,7 @@ export class EffectHelper {
    *  // 効果処理
    * }
    */
-  static combo(core: Core, condition: ComboCheckCondition) {
-    return helperCombo(core, condition);
+  static combo(core: Core, self: Unit, condition: ComboCheckCondition) {
+    return helperCombo(core, self, condition);
   }
 }

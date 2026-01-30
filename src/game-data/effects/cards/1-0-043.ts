@@ -20,7 +20,7 @@ export const effects: CardEffects = {
         title: 'グラインドドロー',
         description: 'カードを1枚引く',
         effect: () => EffectTemplate.draw(stack.processing.owner, stack.core),
-        condition: EffectHelper.combo(stack.core, GREEN_COMBO(2)),
+        condition: EffectHelper.combo(stack.core, stack.processing, GREEN_COMBO(2)),
       },
     ]);
   },
