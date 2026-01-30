@@ -8,7 +8,7 @@ const mainEffect = async (stack: StackWithCard, attacker: Unit) => {
     {
       id: '2',
       description: 'アタックしたユニットのレベルを+1する',
-      condition: () => attacker.lv < 3,
+      condition: attacker.lv < 3,
     },
   ]);
 

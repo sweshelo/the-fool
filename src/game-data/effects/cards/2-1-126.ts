@@ -16,7 +16,7 @@ export const effects: CardEffects = {
         {
           id: '2',
           description: 'ジョーカーゲージ-10%\nジョーカーゲージ+40%\n紫ゲージ-3',
-          condition: () => (stack.processing.owner.purple ?? 0) >= 3,
+          condition: (stack.processing.owner.purple ?? 0) >= 3,
         },
       ]
     );

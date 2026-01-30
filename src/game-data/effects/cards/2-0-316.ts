@@ -17,12 +17,12 @@ export const effects: CardEffects = {
       {
         id: '1',
         description: '相手ユニット2体のレベル+1',
-        condition: () => opponent.field.length > 0,
+        condition: opponent.field.length > 0,
       },
       {
         id: '2',
         description: 'レベル2以上のユニットを破壊',
-        condition: () =>
+        condition:
           owner.field.filter(unit => unit.catalog.color === Color.BLUE).length >= 2 &&
           opponent.field.some(unit => unit.lv >= 2),
       },

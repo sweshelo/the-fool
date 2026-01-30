@@ -9,7 +9,7 @@ export async function helperChoice(
   title: string,
   choices: [Choice, Choice]
 ): Promise<Choice['id'] | undefined> {
-  const availableChoices = choices.filter(choice => choice.condition?.() ?? true);
+  const availableChoices = choices.filter(choice => choice.condition ?? true);
   switch (availableChoices.length) {
     case 0:
       return undefined;

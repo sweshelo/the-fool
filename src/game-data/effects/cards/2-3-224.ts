@@ -15,8 +15,7 @@ export const effects: CardEffects = {
         {
           id: '2',
           description: '基本BP-[【英雄】×2000]',
-          condition: () =>
-            EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
+          condition: EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
         },
       ]
     );

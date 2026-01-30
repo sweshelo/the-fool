@@ -13,3 +13,4 @@ export { helperChoice } from './choice';
 export { helperIsUnit } from './isUnit';
 export { helperIsEvolve } from './isEvolve';
 export { helperCombine } from './combine';
+export { helperCombo, type ComboCheckCondition } from './combo';

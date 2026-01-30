@@ -11,7 +11,7 @@ const effect = async (stack: StackWithCard<Unit>) => {
     {
       id: '1',
       description: '手札を1枚捨てる\nブロックされない',
-      condition: () => stack.processing.owner.hand.length > 0,
+      condition: stack.processing.owner.hand.length > 0,
     },
     { id: '2', description: 'BP+2000' },
   ]);
