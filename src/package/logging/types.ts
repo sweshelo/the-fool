@@ -43,7 +43,6 @@ export interface GameActionLog {
   round: number;
   turn: number;
   player_id?: string;
-  player_index: number;
   action_type: string;
   action_handler: string;
   payload: Payload;

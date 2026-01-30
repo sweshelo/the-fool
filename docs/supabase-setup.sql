@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS game_actions (
   round INT NOT NULL,
   turn INT NOT NULL,
   player_id TEXT,  -- プレイヤーID（文字列形式）
-  player_index INT NOT NULL,
 
   action_type VARCHAR(50) NOT NULL,
   action_handler VARCHAR(20) NOT NULL,

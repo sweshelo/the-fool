@@ -88,18 +88,20 @@ export class GameLogger {
   }
 
   /** ゲームアクションをログ（キュー経由） */
-  logAction(core: Core, message: Message, playerIndex: number): void {
+  logAction(core: Core, message: Message): void {
     if (!this.isEnabled() || !this.matchId) return;
 
-    const player = core.players[playerIndex];
+    // payloadからplayer情報を抽出（存在する場合のみ）
+    const payload = message.payload;
+    const playerId =
+      'player' in payload && typeof payload.player === 'string' ? payload.player : undefined;
 
     const log: GameActionLog = {
       match_id: this.matchId,
       sequence_number: ++this.sequenceNumber,
       round: core.round,
       turn: core.turn,
-      player_id: player?.id,
-      player_index: playerIndex,
+      player_id: playerId,
       action_type: message.payload.type,
       action_handler: message.action.handler,
       payload: message.payload,

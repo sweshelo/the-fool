@@ -43,13 +43,9 @@ export async function handleMessage(core: Core, message: Message) {
     message.payload.type
   );
 
-  // アクションログを記録
-  const payload = message.payload;
-  const playerId =
-    'player' in payload && typeof payload.player === 'string' ? payload.player : undefined;
-  const playerIndex = playerId ? core.players.findIndex(p => p.id === playerId) : -1;
-  if (playerIndex >= 0) {
-    core.room.logger.logAction(core, message, playerIndex);
+  // Continue以外のアクションログを記録
+  if (message.payload.type !== 'Continue') {
+    core.room.logger.logAction(core, message);
   }
 
   switch (message.payload.type) {
