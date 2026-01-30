@@ -161,6 +161,8 @@ export class Stack implements IStack {
         if (this.source instanceof Unit && this.target instanceof Unit) {
           const targets = [this.source, this.target];
           for (const target of targets) {
+            // ユニットが破壊されている場合、resolve自体を中断する
+            if (!target.owner.field.some(unit => unit.id === target.id)) return;
             if (target instanceof Unit && !target.hasKeyword('沈黙')) {
               await this.processCardEffect(target, core, 'Self');
               this.processFieldEffect(); //field-effect
