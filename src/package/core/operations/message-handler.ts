@@ -42,6 +42,16 @@ export async function handleMessage(core: Core, message: Message) {
     message.action.type,
     message.payload.type
   );
+
+  // アクションログを記録
+  const payload = message.payload;
+  const playerId =
+    'player' in payload && typeof payload.player === 'string' ? payload.player : undefined;
+  const playerIndex = playerId ? core.players.findIndex(p => p.id === playerId) : -1;
+  if (playerIndex >= 0) {
+    core.room.logger.logAction(core, message, playerIndex);
+  }
+
   switch (message.payload.type) {
     case 'Choose': {
       const payload: ChoosePayload = message.payload;

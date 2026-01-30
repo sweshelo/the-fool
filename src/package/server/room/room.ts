@@ -9,6 +9,7 @@ import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
 import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
+import { GameLogger } from '@/package/logging';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -20,11 +21,13 @@ export class Room {
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
   cache: string | undefined;
+  logger: GameLogger;
 
   constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
     this.name = name;
     this.cache = undefined;
+    this.logger = new GameLogger();
     if (rule) this.rule = rule;
   }
 
@@ -91,6 +94,11 @@ export class Room {
         this.clients.set(player.id, socket);
         this.core.entry(player);
         this.players.set(player.id, player);
+
+        // 2人揃ったらマッチ開始ログを記録
+        if (this.core.players.length === 2) {
+          this.logger.logMatchStart(this.core).catch(console.error);
+        }
       }
       this.sync(true);
       return true;

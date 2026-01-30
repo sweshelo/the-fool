@@ -301,6 +301,9 @@ export class Server {
           this.rooms.set(room.id, room);
           this.clientRooms.set(client, room.id);
 
+          // ルーム作成ログを記録
+          room.logger.logRoomCreation(room.id, room.name, room.rule).catch(console.error);
+
           const response = {
             action: {
               type: 'response',
