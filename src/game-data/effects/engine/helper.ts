@@ -17,8 +17,10 @@ import {
   helperIsUnit,
   helperIsEvolve,
   helperCombine,
+  helperCombo,
   type UnitPickFilter,
   type Choice,
+  type ComboCheckCondition,
 } from './helper/index';
 import type { Effect } from './helper/combine';
 
@@ -299,5 +301,23 @@ export class EffectHelper {
    */
   static isEvolve(card: unknown): card is Evolve {
     return helperIsEvolve(card);
+  }
+
+  /**
+   * 「連撃」などの履歴参照系の効果を発動可能であるかチェックします
+   *
+   *  連撃の実装は GREEN_COMBO 関数を利用して、ComboCheckCondition を利用すると簡単にチェックできます
+   *
+   * @param core
+   * @param condition 条件オブジェクト
+   * @returns boolean
+   * @example
+   * // コスト2以上の連撃の場合
+   * if( EffectHelper.combo(stack.core, GREEN_COMBO(2)) ) {
+   *  // 効果処理
+   * }
+   */
+  static combo(core: Core, condition: ComboCheckCondition) {
+    return helperCombo(core, condition);
   }
 }
