@@ -4,13 +4,13 @@ import { System } from '../system';
 export interface Effect {
   title: string;
   description: string;
-  condition?: () => boolean;
+  condition?: boolean;
   effect: () => unknown;
   order?: number; // 低い値が先に実行（デフォルト: 0）
 }
 
 export const helperCombine = async (stack: Stack, effects: Effect[]) => {
-  const available = effects.filter(effect => (effect.condition ? effect.condition() : true));
+  const available = effects.filter(effect => effect.condition ?? true);
   const title = [...new Set(available.map(effect => effect.title))].join('＆');
   const description = available.map(effect => effect.description).join('\n');
 

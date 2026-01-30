@@ -17,7 +17,7 @@ export const effects: CardEffects = {
       {
         id: '2',
         description: 'コスト2以下を【特殊召喚】',
-        condition: () => owner.field.length < stack.core.room.rule.player.max.field,
+        condition: owner.field.length < stack.core.room.rule.player.max.field,
       },
     ]);
 

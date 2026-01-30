@@ -9,7 +9,7 @@ export const effects: CardEffects = {
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    await System.show(stack, '天使の楽園', '【天使】を1枚引く');
+    await System.show(stack, '天空の楽園', '【天使】を1枚引く');
     EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '天使' });
   },
 
@@ -22,7 +22,7 @@ export const effects: CardEffects = {
   },
 
   onPlayerAttack: async (stack: StackWithCard) => {
-    await System.show(stack, '天使の楽園', '属性の異なる【天使】を2枚引く');
+    await System.show(stack, '天空の楽園', '属性の異なる【天使】を2枚引く');
     const colors = EffectHelper.shuffle([
       Color.RED,
       Color.YELLOW,

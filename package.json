@@ -10,6 +10,7 @@
     "lint": "bunx oxlint --type-aware && bunx eslint --fix"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
     "js-yaml": "^4.1.0",
     "nanoid": "^5.1.5",
     "ws": "^8.18.1"

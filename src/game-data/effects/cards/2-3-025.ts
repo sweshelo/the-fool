@@ -10,7 +10,7 @@ export const effects: CardEffects = {
       {
         id: '2',
         description: '[紫ゲージ×1000]ダメージ\n紫ゲージ-2',
-        condition: () => (purple ?? 0) >= 2,
+        condition: (purple ?? 0) >= 2,
       },
     ]);
 

@@ -41,7 +41,7 @@ export const effects: CardEffects = {
           {
             id: '1',
             description: 'ランダムで2体作成し消滅',
-            condition: () => stack.processing.owner.opponent.field.length >= 2,
+            condition: stack.processing.owner.opponent.field.length > 0,
           },
           { id: '2', description: '味方全体の基本BP+5000\n【不屈】を与える' },
         ]

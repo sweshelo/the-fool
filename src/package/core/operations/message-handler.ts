@@ -42,6 +42,12 @@ export async function handleMessage(core: Core, message: Message) {
     message.action.type,
     message.payload.type
   );
+
+  // Continue以外のアクションログを記録
+  if (message.payload.type !== 'Continue') {
+    core.room.logger.logAction(core, message);
+  }
+
   switch (message.payload.type) {
     case 'Choose': {
       const payload: ChoosePayload = message.payload;

@@ -3,6 +3,7 @@ import type { StackWithCard } from '../schema/types';
 
 export const effects = {
   onDriveSelf: async (stack: StackWithCard) => {
+    if (stack.processing.owner.trash.length <= 0) return;
     await System.show(stack, '月蝕の棺', '捨札から1枚選んで回収');
     await EffectTemplate.revive(stack, 1);
   },

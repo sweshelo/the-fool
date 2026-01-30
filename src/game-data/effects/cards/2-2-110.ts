@@ -14,7 +14,7 @@ export const effects: CardEffects = {
         {
           id: '2',
           description: '手札を1枚作成',
-          condition: () =>
+          condition:
             stack.processing.owner.hand.length > 0 &&
             stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand,
         },

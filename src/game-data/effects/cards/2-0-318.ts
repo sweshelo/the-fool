@@ -1,23 +1,20 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
-    const opponent = stack.processing.owner.opponent;
-    const candidates = opponent.field.filter(unit => unit.lv >= 2);
-    if (candidates.length === 0) return;
+    const filter = (unit: Unit) => unit.lv >= 2 && unit.owner.id !== stack.processing.owner.id;
+    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
 
     await System.show(stack, '冷酷なる裁き', `レベル2以上のユニットを1体破壊`);
-    const [targetId] = await System.prompt(stack, stack.processing.owner.id, {
-      title: '破壊する相手ユニットを選択',
-      type: 'unit',
-      items: candidates,
-    });
-    const target = opponent.field.find(unit => unit.id === targetId);
-    if (target) {
-      Effect.break(stack, stack.processing, target, 'effect');
-    }
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      filter,
+      '破壊するユニットを選択して下さい'
+    );
+    Effect.break(stack, stack.processing, target, 'effect');
   },
 
   // 破壊時効果：手札に戻る
@@ -30,28 +27,33 @@ export const effects: CardEffects = {
   },
 
   // オーバークロック時効果：選択肢
-  onOverclockSelf: async (stack: StackWithCard) => {
+  onOverclockSelf: async (stack: StackWithCard<Unit>) => {
     const owner = stack.processing.owner;
-    const [choice] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・ジャッジガベル',
-      items: [
+    const choice = await EffectHelper.choice(
+      stack,
+      stack.processing.owner,
+      '選略・ジャッジガベル',
+      [
         { id: '1', description: 'BP+5000' },
         { id: '2', description: 'インターセプトカードを1枚引く' },
-      ],
-    });
+      ]
+    );
 
-    if (choice === '1') {
-      // 全フィールドユニットにBP+5000（ターン終了時まで）
-      await System.show(stack, '選略・ジャッジガベル', 'BP+5000');
-      const allUnits = [...owner.field, ...owner.opponent.field];
-      allUnits.forEach(unit => {
-        Effect.modifyBP(stack, stack.processing, unit, 5000, { event: 'turnEnd', count: 1 });
-      });
-    } else if (choice === '2') {
-      await System.show(stack, '選略・ジャッジガベル', 'インターセプトカードを1枚引く');
-      // デッキからインターセプトカードを1枚手札に加える
-      EffectTemplate.reinforcements(stack, owner, { type: ['intercept'] });
+    switch (choice) {
+      case '1': {
+        await System.show(stack, '選略・ジャッジガベル', 'BP+5000');
+        const allUnits = [...owner.field, ...owner.opponent.field];
+        allUnits.forEach(unit => {
+          Effect.modifyBP(stack, stack.processing, unit, 5000, { event: 'turnEnd', count: 1 });
+        });
+        break;
+      }
+      case '2': {
+        await System.show(stack, '選略・ジャッジガベル', 'インターセプトカードを1枚引く');
+        // デッキからインターセプトカードを1枚手札に加える
+        EffectTemplate.reinforcements(stack, owner, { type: ['intercept'] });
+        break;
+      }
     }
   },
 };

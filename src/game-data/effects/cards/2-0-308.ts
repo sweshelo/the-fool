@@ -13,12 +13,12 @@ export const effects: CardEffects = {
       {
         id: '1',
         description: '行動権を消費する',
-        condition: () => owner.opponent.field.some(unit => unit.active),
+        condition: owner.opponent.field.some(unit => unit.active),
       },
       {
         id: '2',
         description: '【呪縛】を与える',
-        condition: () => owner.opponent.field.some(unit => !unit.active),
+        condition: owner.opponent.field.some(unit => !unit.active),
       },
     ]);
 

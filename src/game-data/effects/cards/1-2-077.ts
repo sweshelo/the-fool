@@ -6,7 +6,7 @@ export const effects: CardEffects = {
   // ■勝者の証
   // あなたのユニットが戦闘に勝利した時
   checkWin: (stack: StackWithCard): boolean => {
-    return stack.target instanceof Unit && stack.target.id === stack.processing.owner.id;
+    return stack.target instanceof Unit && stack.target.owner.id === stack.processing.owner.id;
   },
 
   onWin: async (stack: StackWithCard): Promise<void> => {

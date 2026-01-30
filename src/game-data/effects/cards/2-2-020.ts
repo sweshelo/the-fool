@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Color } from '@/submodule/suit/constant/color';
+import { GREEN_COMBO } from '../engine/helper/combo';
 
 // CP奪取処理
 const stealCP = (stack: StackWithCard<Unit>, self: Unit, owner: typeof self.owner) => {
@@ -20,28 +20,14 @@ export const effects: CardEffects = {
     const self = stack.processing;
     const owner = self.owner;
     const opponent = owner.opponent;
-
-    // 連撃条件確認: このターンにコスト2以上の緑属性のカードを使用しているか
-    const hasUsedGreenCardThisTurn = stack.core.histories.some(
-      history =>
-        history.card.id !== self.id &&
-        history.card.catalog.color === Color.GREEN &&
-        history.card.catalog.cost >= 2
-    );
-
-    // ハートスティール: CPを奪う
-    const canStealCP = opponent.cp.current >= 1;
-
-    // 連撃: 対戦相手のユニットを選べるか
-    const canCombo =
-      hasUsedGreenCardThisTurn && EffectHelper.isUnitSelectable(stack.core, 'opponents', owner);
+    const isComboAvailable = EffectHelper.combo(stack.core, stack.processing, GREEN_COMBO(2));
 
     await EffectHelper.combine(stack, [
       {
         title: 'ハートスティール',
         description: 'CP-12\nCP+[減少させたCP]',
         effect: () => stealCP(stack, self, owner),
-        condition: () => canStealCP,
+        condition: opponent.cp.current >= 1,
         order: 1,
       },
       {
@@ -56,16 +42,16 @@ export const effects: CardEffects = {
           );
           Effect.modifyBP(stack, stack.processing, target, -2000, { isBaseBP: true });
         },
-        condition: () =>
+        condition:
           EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) &&
-          canCombo,
+          isComboAvailable,
       },
       {
         title: '連撃・バトレコンフュージョン',
         description: '基本BP+2000',
         effect: () =>
           Effect.modifyBP(stack, stack.processing, stack.processing, 2000, { isBaseBP: true }),
-        condition: () => canCombo,
+        condition: isComboAvailable,
       },
     ]);
   },

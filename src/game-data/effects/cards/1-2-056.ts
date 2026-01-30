@@ -5,17 +5,21 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   // 【呪縛】【固着】キーワード能力付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // キーワード能力を付与
-
-    // 捕喰：フィールドに出た時に自分の他のユニットを全て破壊
-    await System.show(stack, '捕喰', '自身以外のユニットを破壊');
-
     const ownUnits = stack.processing.owner.field.filter(unit => unit.id !== stack.processing.id);
 
-    ownUnits.forEach(unit => {
-      Effect.break(stack, stack.processing, unit);
-    });
+    // 自分のフィールドに自身以外のユニットが存在する場合
+    if (ownUnits.length > 0) {
+      // 捕喰：フィールドに出た時に自分の他のユニットを全て破壊
+      await System.show(stack, '捕喰', '自身以外のユニットを破壊');
 
+      ownUnits.forEach(unit => {
+        Effect.break(stack, stack.processing, unit);
+      });
+    } else {
+      await System.show(stack, '呪縛＆固着', 'ターン開始時に行動権を回復しない\n手札に戻らない');
+    }
+
+    // キーワード能力を付与
     Effect.keyword(stack, stack.processing, stack.processing, '呪縛', {
       source: { unit: stack.processing.id },
     });
@@ -31,7 +35,8 @@ export const effects: CardEffects = {
     if (
       summonedUnit instanceof Unit &&
       summonedUnit.owner.id === stack.processing.owner.id &&
-      summonedUnit.id !== stack.processing.id
+      summonedUnit.id !== stack.processing.id &&
+      stack.processing.owner.field.some(unit => unit.id === summonedUnit.id)
     ) {
       await System.show(stack, '捕喰', 'ユニットを破壊\n行動権を回復');
 

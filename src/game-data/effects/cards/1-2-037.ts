@@ -22,12 +22,19 @@ export const effects: CardEffects = {
   onAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
     // アタックしているユニットが相手のユニットかチェック
     const attacker = stack.target;
-    if (attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id) {
+    if (!(attacker instanceof Unit && attacker.owner.id === stack.processing.owner.opponent.id))
+      return;
+    // アタックしているユニットの存在を確認
+    if (stack.processing.owner.opponent.field.some(unit => unit.id === attacker.id)) {
       // 自分のトリガーゾーンにカードがあるか確認
       const triggerCards = stack.processing.owner.trigger;
 
       if (triggerCards.length > 0) {
-        await System.show(stack, '海底の宝物庫', 'トリガーカードを破壊\n相手ユニットを破壊');
+        await System.show(
+          stack,
+          '海底の宝物庫',
+          'トリガーゾーンのカードを破壊\n相手ユニットを破壊'
+        );
 
         // トリガーゾーンからランダムで1枚選択して破壊
         const randomTriggers = EffectHelper.random(triggerCards, 1);
