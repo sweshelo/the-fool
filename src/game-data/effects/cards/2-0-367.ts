@@ -1,12 +1,15 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  // ユニットがフィールドに出た時: 対戦相手ユニットが存在するかチェック
+  // 自身のユニットがフィールドに出た時: 対戦相手ユニットが存在するかチェック
   checkDrive: (stack: StackWithCard): boolean => {
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    return EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner);
+    return (
+      stack.target instanceof Unit &&
+      stack.processing.owner.id === stack.target.owner.id &&
+      stack.processing.owner.opponent.field.length > 0
+    );
   },
 
   // 紫ゲージに応じてダメージ回数を変更
@@ -17,13 +20,12 @@ export const effects: CardEffects = {
 
     await System.show(stack, 'ホーミングバレット', message);
 
-    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const targets = stack.processing.owner.opponent.field;
 
     EffectHelper.repeat(repeatCount, () => {
-      const selectableUnits = stack.core.players.flatMap(player => player.field).filter(filter);
-      if (selectableUnits.length > 0) {
-        const [target] = EffectHelper.random(selectableUnits);
-        if (target) Effect.damage(stack, stack.processing, target, 1000, 'effect');
+      const [target] = EffectHelper.random(targets);
+      if (target) {
+        Effect.damage(stack, stack.processing, target, 1000, 'effect');
       }
     });
   },
