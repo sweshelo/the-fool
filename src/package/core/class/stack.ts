@@ -515,6 +515,12 @@ export class Stack implements IStack {
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
+        // 履歴追加
+        core.histories.push({
+          card: card,
+          action: 'drive',
+          generation: card.generation,
+        });
         this.addChildStack('intercept', player, card, { type: 'lv', value: lv });
         return false;
       }
@@ -642,6 +648,12 @@ export class Stack implements IStack {
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
+          // 履歴追加
+          core.histories.push({
+            card: card,
+            action: 'drive',
+            generation: card.generation,
+          });
           this.addChildStack('trigger', owner, card, { type: 'lv', value: lv });
         }
         core.room.sync();
