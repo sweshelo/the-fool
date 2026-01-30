@@ -2,7 +2,7 @@ import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '../engine/permanent';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数
 const hasFourGodCard = (stack: StackWithCard<Unit>, name: string): boolean => {
@@ -22,27 +22,13 @@ const hasAllBlackFourGods = (stack: StackWithCard<Unit>): boolean => {
 export const effects: CardEffects = {
   // 手札のこのカードのコストは-［あなたの捨札の【四聖獣】×1］される。このユニットのコストは3以下にならない。
   handEffect: (core: Core, self: Card): void => {
-    // 捨札の【四聖獣】ユニット数を数える
-    const fourGodCount = self.owner.trash.filter(
-      card => card instanceof Unit && card.catalog.species?.includes('四聖獣')
-    ).length;
-    const delta = self.delta.find(delta => delta.source?.unit === self.id);
-    const reduce = Math.max(-fourGodCount, -12);
-
-    if (delta && delta.effect.type === 'cost') {
-      delta.effect.value = reduce;
-    } else {
-      self.delta.push(
-        new Delta(
-          { type: 'cost', value: reduce },
-          {
-            source: {
-              unit: self.id,
-            },
-          }
-        )
-      );
-    }
+    const calculator = (self: Card) =>
+      -self.owner.trash.filter(card => card.catalog.species?.includes('四聖獣')).length;
+    PermanentEffect.mount(self, {
+      effect: (target, source) => Effect.dynamicCost(target, { source, calculator }),
+      targets: ['self'],
+      effectCode: '四聖の湧力',
+    });
   },
 
   // このユニットがフィールドに出た時、あなたの捨札から【四聖獣】をランダムで4体まで【特殊召喚】する。［黄龍］を1枚作成する。
@@ -106,18 +92,7 @@ export const effects: CardEffects = {
 
           // 選択したカードを消滅させる
           for (const card of randomCards) {
-            // カードの位置によって処理を分ける
-            const cardLocation = opponent.find(card);
-
-            if (cardLocation.result && cardLocation.place) {
-              if (cardLocation.place.name === 'field' && card instanceof Unit) {
-                // フィールド上のユニットは消滅効果で処理
-                Effect.delete(stack, stack.processing, card);
-              } else {
-                // それ以外のカードはmoveで消滅札に送る
-                Effect.move(stack, stack.processing, card, 'delete');
-              }
-            }
+            Effect.delete(stack, stack.processing, card);
           }
         }
       }
