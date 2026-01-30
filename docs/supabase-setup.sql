@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS rooms (
   room_id VARCHAR(5) NOT NULL UNIQUE,
   name VARCHAR(255) NOT NULL,
   rule JSONB NOT NULL,
-  created_by UUID REFERENCES auth.users(id),
+  created_by TEXT,  -- プレイヤーID（文字列形式）
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -21,13 +21,13 @@ CREATE TABLE IF NOT EXISTS matches (
   room_id VARCHAR(5) NOT NULL,
 
   -- プレイヤー1
-  player1_id UUID REFERENCES auth.users(id),
+  player1_id TEXT,  -- プレイヤーID（文字列形式）
   player1_name VARCHAR(255) NOT NULL,
   player1_deck JSONB NOT NULL,
   player1_jokers JSONB,
 
   -- プレイヤー2
-  player2_id UUID REFERENCES auth.users(id),
+  player2_id TEXT,  -- プレイヤーID（文字列形式）
   player2_name VARCHAR(255) NOT NULL,
   player2_deck JSONB NOT NULL,
   player2_jokers JSONB,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS game_actions (
   sequence_number INT NOT NULL,
   round INT NOT NULL,
   turn INT NOT NULL,
-  player_id UUID REFERENCES auth.users(id),
+  player_id TEXT,  -- プレイヤーID（文字列形式）
   player_index INT NOT NULL,
 
   action_type VARCHAR(50) NOT NULL,
@@ -84,7 +84,7 @@ ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 -- 自分が作成したルームのみ閲覧可能
 CREATE POLICY "Users can view their own rooms"
   ON rooms FOR SELECT TO authenticated
-  USING (created_by = auth.uid());
+  USING (created_by = auth.uid()::text);
 
 -- Service Roleのみ挿入可能
 CREATE POLICY "Service role can insert rooms"
@@ -97,7 +97,7 @@ ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 -- 自分が参加した試合（相手の記録含む）を閲覧可能
 CREATE POLICY "Users can view matches they participated in"
   ON matches FOR SELECT TO authenticated
-  USING (player1_id = auth.uid() OR player2_id = auth.uid());
+  USING (player1_id = auth.uid()::text OR player2_id = auth.uid()::text);
 
 -- Service Roleのみ挿入・更新可能
 CREATE POLICY "Service role can insert matches"
@@ -118,7 +118,7 @@ CREATE POLICY "Users can view actions of their matches"
   USING (
     match_id IN (
       SELECT id FROM matches
-      WHERE player1_id = auth.uid() OR player2_id = auth.uid()
+      WHERE player1_id = auth.uid()::text OR player2_id = auth.uid()::text
     )
   );
 
