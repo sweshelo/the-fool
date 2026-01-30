@@ -23,6 +23,7 @@ export class GameLogger {
   private actionQueue: ActionQueue;
   private matchId: string | null = null;
   private sequenceNumber: number = 0;
+  private pendingActions: { core: Core; message: Message }[] = [];
 
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
@@ -84,12 +85,31 @@ export class GameLogger {
 
     this.matchId = data.id;
     this.sequenceNumber = 0;
+
+    // バッファリングされたアクションを処理
+    for (const { core: actionCore, message } of this.pendingActions) {
+      this.logActionInternal(actionCore, message);
+    }
+    this.pendingActions = [];
+
     return this.matchId;
   }
 
   /** ゲームアクションをログ（キュー経由） */
   logAction(core: Core, message: Message): void {
-    if (!this.isEnabled() || !this.matchId) return;
+    if (!this.isEnabled()) return;
+
+    if (!this.matchId) {
+      // matchId が未確定の場合はバッファリング
+      this.pendingActions.push({ core, message });
+      return;
+    }
+
+    this.logActionInternal(core, message);
+  }
+
+  private logActionInternal(core: Core, message: Message): void {
+    if (!this.matchId) return;
 
     // payloadからplayer情報を抽出（存在する場合のみ）
     const payload = message.payload;

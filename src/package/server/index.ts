@@ -136,6 +136,7 @@ export class Server {
 
         // Roomが空になったら削除
         if (roomWillClose) {
+          room.logger.dispose().catch(console.error);
           this.rooms.delete(roomId);
           console.log('room %s has been deleted.', roomId);
         }
@@ -302,7 +303,8 @@ export class Server {
           this.clientRooms.set(client, room.id);
 
           // ルーム作成ログを記録
-          room.logger.logRoomCreation(room.id, room.name, room.rule).catch(console.error);
+          const user = this.clients.get(client);
+          room.logger.logRoomCreation(room.id, room.name, room.rule, user?.id).catch(console.error);
 
           const response = {
             action: {
@@ -344,6 +346,10 @@ export class Server {
     if (!Server.instance) {
       console.error('[Server] No server instance available');
       return false;
+    }
+    const room = Server.instance.rooms.get(roomId);
+    if (room) {
+      room.logger.dispose().catch(console.error);
     }
     const deleted = Server.instance.rooms.delete(roomId);
     if (deleted) {
