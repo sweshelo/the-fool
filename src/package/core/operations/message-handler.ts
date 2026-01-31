@@ -15,7 +15,6 @@ import type {
   AttackPayload,
   BootPayload,
   TurnEndPayload,
-  SituationCompletedPayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
@@ -25,7 +24,7 @@ import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 import { handleEffectResponse, handleContinue } from './effect-handler';
-import { turnChange } from './game-flow';
+import { turnChange, completeGame } from './game-flow';
 import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
@@ -486,18 +485,6 @@ export async function handleMessage(core: Core, message: Message) {
   const loser = core.players.filter(player => player.life.current <= 0);
   if (loser.length > 0) {
     const winner = core.players.find(player => player.life.current > 0);
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'situation',
-          handler: 'client',
-        },
-        payload: {
-          type: 'SituationCompleted',
-          winner: winner?.id,
-          reason: 'damage',
-        } satisfies SituationCompletedPayload,
-      })
-    );
+    await completeGame(core, winner?.id, 'damage');
   }
 }

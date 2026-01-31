@@ -110,6 +110,17 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
+        // 最後のプレイヤーが切断した場合、そのプレイヤーを winner として記録
+        // （= 最後まで残っていたプレイヤー、ルーム終了を引き起こしたプレイヤー）
+        // プレイヤー削除前に判定する
+        if (disconnectedUser.playerId && room.clients.size === 1) {
+          // room.clients.size === 1 は、このプレイヤーが最後のプレイヤーであることを意味する
+          const winnerIndex = room.core.players.findIndex(p => p.id === disconnectedUser.playerId);
+          room.logger
+            .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
+            .catch(console.error);
+        }
+
         // playerId が設定されている場合のみ Room のマップから削除
         if (disconnectedUser.playerId) {
           room.clients.delete(disconnectedUser.playerId);
