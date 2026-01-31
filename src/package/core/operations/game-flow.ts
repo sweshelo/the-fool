@@ -8,6 +8,7 @@ import { resolveStack } from './stack-resolver';
 import { setEffectDisplayHandler } from './effect-handler';
 import { attack } from './battle';
 import { MessageHelper } from '../helpers/message';
+import type { SituationCompletedPayload } from '@/submodule/suit/types';
 
 /**
  * ゲーム開始
@@ -162,6 +163,25 @@ export async function turnChange(
     }
 
     core.room.sync();
+
+    // ゲームの終了をチェック
+    if (core.round * 2 === core.turn && core.round === core.room.rule.system.round) {
+      // ライフの多いプレイヤーを取得する
+      const [winner, loser] = core.players.sort((a, b) => a.life.current - b.life.current);
+      core.room.broadcastToAll(
+        createMessage({
+          action: {
+            type: 'situation',
+            handler: 'client',
+          },
+          payload: {
+            type: 'SituationCompleted',
+            winner: winner?.life.current === loser?.life.current ? undefined : winner?.id,
+            reason: 'damage',
+          } satisfies SituationCompletedPayload,
+        })
+      );
+    }
 
     // ターン開始処理
     core.turn++;
