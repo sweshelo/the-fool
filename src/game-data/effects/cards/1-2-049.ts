@@ -8,7 +8,7 @@ export const effects: CardEffects = {
     await System.show(
       stack,
       '大地の掟＆豊穣の女神',
-      '【秩序の盾】を得る\nレベル2以上の味方のBP+2000\nレベル3以上の味方に【不屈】を与える'
+      'レベル1の時【秩序の盾】を得る\nレベル2以上の味方のBP+2000\nレベル3以上の味方に【不屈】を与える'
     );
   },
 
@@ -23,6 +23,7 @@ export const effects: CardEffects = {
         }
       },
       targets: ['self'],
+      condition: unit => unit.lv == 1,
       effectCode: '大地の掟',
     });
 
