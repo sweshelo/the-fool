@@ -127,6 +127,12 @@ export class Stack implements IStack {
         );
         core.room.soundEffect('clock-up-field');
         core.room.soundEffect('reboot');
+        core.room.visualEffect({
+          effect: 'status',
+          type: 'overclock',
+          unitId: this.target.id,
+          value: 3,
+        });
         core.room.sync();
       } else {
         // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
