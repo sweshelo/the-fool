@@ -3,7 +3,7 @@ import type { Unit } from '../class/card';
 import type { Core } from '../index';
 import { Stack } from '../class/stack';
 import { Parry } from '../class/parry';
-import { Effect, System } from '@/game-data/effects';
+import { Effect, EffectHelper, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
 
 /**
@@ -163,7 +163,11 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
   if (blocker) {
     await postBattle(core, attacker, blocker);
   } else {
-    attacker.owner.opponent.damage();
+    if (core.room.rule.misc.damageAsCost) {
+      EffectHelper.repeat(attacker.catalog.cost, () => attacker.owner.opponent.damage());
+    } else {
+      attacker.owner.opponent.damage();
+    }
     await System.sleep(1000);
 
     // 戦闘終了としてマークする
