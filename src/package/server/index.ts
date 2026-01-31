@@ -136,7 +136,7 @@ export class Server {
 
         // Roomが空になったら削除
         if (roomWillClose) {
-          room.logger.dispose().catch(console.error);
+          room.dispose().catch(console.error);
           this.rooms.delete(roomId);
           console.log('room %s has been deleted.', roomId);
         }
@@ -349,7 +349,7 @@ export class Server {
     }
     const room = Server.instance.rooms.get(roomId);
     if (room) {
-      room.logger.dispose().catch(console.error);
+      room.dispose().catch(console.error);
     }
     const deleted = Server.instance.rooms.delete(roomId);
     if (deleted) {

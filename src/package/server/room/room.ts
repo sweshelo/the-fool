@@ -332,4 +332,23 @@ export class Room {
     // 通信した場合はキャッシュを更新
     this.cache = currentHash;
   };
+
+  /**
+   * リソースを解放する
+   * 全プレイヤー切断時に呼び出される
+   */
+  async dispose(): Promise<void> {
+    // GameLogger のリソースを解放
+    await this.logger.dispose();
+
+    // Core のリソースを解放
+    this.core.dispose();
+
+    // マップをクリア
+    this.players.clear();
+    this.clients.clear();
+
+    // キャッシュをクリア
+    this.cache = undefined;
+  }
 }
