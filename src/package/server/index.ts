@@ -110,27 +110,10 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
-        // 最後のプレイヤーが切断した場合、そのプレイヤーを winner として記録
-        // （= 最後まで残っていたプレイヤー、ルーム終了を引き起こしたプレイヤー）
-        // プレイヤー削除前に判定する
-        if (disconnectedUser.playerId && room.clients.size === 1) {
-          // room.clients.size === 1 は、このプレイヤーが最後のプレイヤーであることを意味する
-          const winnerIndex = room.core.players.findIndex(p => p.id === disconnectedUser.playerId);
-          room.logger
-            .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
-            .catch(console.error);
-        }
+        // 1. 切断通知を先に送信（clients から削除する前に）
+        // roomWillClose は自分が最後のプレイヤーかどうかで判定
+        const roomWillClose = room.clients.size === 1;
 
-        // playerId が設定されている場合のみ clients から削除
-        // room.players は削除しない（再接続時にプレイヤーを特定するため）
-        if (disconnectedUser.playerId) {
-          room.clients.delete(disconnectedUser.playerId);
-        }
-
-        // Roomの残りのクライアント数を基に閉じるかどうかを判定
-        const roomWillClose = room.clients.size === 0;
-
-        // 切断通知を他のプレイヤーに送信
         const payload: PlayerDisconnectedPayload = {
           type: 'PlayerDisconnected',
           disconnectedPlayerId: disconnectedUser.playerId ?? disconnectedUser.id,
@@ -147,8 +130,20 @@ export class Server {
           disconnectedUser.playerId ?? disconnectedUser.id
         );
 
-        // Roomが空になったら削除
-        if (roomWillClose) {
+        // 2. playerId が設定されている場合のみ clients から削除
+        // room.players は削除しない（再接続時にプレイヤーを特定するため）
+        if (disconnectedUser.playerId) {
+          room.clients.delete(disconnectedUser.playerId);
+        }
+
+        // 3. Roomが空になったらログ記録と削除
+        if (room.clients.size === 0) {
+          // 最後のプレイヤーが切断 → ログ記録
+          const winnerIndex = room.core.players.findIndex(p => p.id === disconnectedUser.playerId);
+          room.logger
+            .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
+            .catch(console.error);
+
           room.dispose().catch(console.error);
           this.rooms.delete(roomId);
           console.log('room %s has been deleted.', roomId);
