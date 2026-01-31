@@ -15,6 +15,7 @@ import type {
   AttackPayload,
   BootPayload,
   TurnEndPayload,
+  SituationCompletedPayload,
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
@@ -479,5 +480,24 @@ export async function handleMessage(core: Core, message: Message) {
   } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
     console.error(e);
+  }
+
+  // ゲームの終了を確認
+  const loser = core.players.filter(player => player.life.current <= 0);
+  if (loser.length > 0) {
+    const winner = core.players.find(player => player.life.current > 0);
+    core.room.broadcastToAll(
+      createMessage({
+        action: {
+          type: 'situation',
+          handler: 'client',
+        },
+        payload: {
+          type: 'SituationCompleted',
+          winner: winner?.id,
+          reason: 'damage',
+        } satisfies SituationCompletedPayload,
+      })
+    );
   }
 }
