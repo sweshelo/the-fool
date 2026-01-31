@@ -176,11 +176,13 @@ export async function turnChange(
           },
           payload: {
             type: 'SituationCompleted',
-            winner: winner?.life.current === loser?.life.current ? undefined : winner?.id,
-            reason: 'damage',
+            winner:
+              winner?.life.current === loser?.life.current ? core.getTurnPlayer().id : winner?.id,
+            reason: 'limit',
           } satisfies SituationCompletedPayload,
         })
       );
+      return;
     }
 
     // ターン開始処理
