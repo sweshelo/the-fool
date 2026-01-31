@@ -16,6 +16,7 @@ export const effects: CardEffects = {
     return (
       stack.target instanceof Unit &&
       stack.target.owner.id === owner.opponent.id &&
+      stack.processing.owner.opponent.field.some(unit => unit.id === stack.target?.id) &&
       EffectHelper.isUnitSelectable(stack.core, filter, owner)
     );
   },
