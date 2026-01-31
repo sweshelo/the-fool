@@ -110,9 +110,11 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
-        // Roomオブジェクトの内部マップからプレイヤーを削除
-        room.clients.delete(disconnectedUser.id);
-        room.players.delete(disconnectedUser.id);
+        // playerId が設定されている場合のみ Room のマップから削除
+        if (disconnectedUser.playerId) {
+          room.clients.delete(disconnectedUser.playerId);
+          room.players.delete(disconnectedUser.playerId);
+        }
 
         // Roomの残りのクライアント数を基に閉じるかどうかを判定
         const roomWillClose = room.clients.size === 0;
@@ -120,7 +122,7 @@ export class Server {
         // 切断通知を他のプレイヤーに送信
         const payload: PlayerDisconnectedPayload = {
           type: 'PlayerDisconnected',
-          disconnectedPlayerId: disconnectedUser.id,
+          disconnectedPlayerId: disconnectedUser.playerId ?? disconnectedUser.id,
           reason: 'connection_lost',
           timestamp: Date.now(),
           roomWillClose,
@@ -131,7 +133,7 @@ export class Server {
             action: { handler: 'client', type: 'disconnected' },
             payload,
           },
-          disconnectedUser.id
+          disconnectedUser.playerId ?? disconnectedUser.id
         );
 
         // Roomが空になったら削除
@@ -231,6 +233,11 @@ export class Server {
               if (result) {
                 this.clientRooms.delete(client);
                 this.clientRooms.set(client, room.id);
+                // User に playerId を設定
+                const user = this.clients.get(client);
+                if (user) {
+                  user.playerId = message.payload.player.id;
+                }
               } else {
                 throw new ServerError('ルームの参加に失敗しました', ErrorCode.ROOM_FULL);
               }
