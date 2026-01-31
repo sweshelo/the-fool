@@ -121,10 +121,10 @@ export class Server {
             .catch(console.error);
         }
 
-        // playerId が設定されている場合のみ Room のマップから削除
+        // playerId が設定されている場合のみ clients から削除
+        // room.players は削除しない（再接続時にプレイヤーを特定するため）
         if (disconnectedUser.playerId) {
           room.clients.delete(disconnectedUser.playerId);
-          room.players.delete(disconnectedUser.playerId);
         }
 
         // Roomの残りのクライアント数を基に閉じるかどうかを判定
