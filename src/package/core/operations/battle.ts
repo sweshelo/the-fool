@@ -6,6 +6,8 @@ import { Parry } from '../class/parry';
 import { Effect, EffectHelper, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
 
+// NOTE: createMessage はブロック候補選択のプロンプト送信で使用されているため、完全に削除しない
+
 /**
  * アタック
  * @param core Coreインスタンス
@@ -41,21 +43,10 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
     return;
   }
 
-  core.room.broadcastToAll(
-    createMessage({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'VisualEffect',
-        body: {
-          effect: 'attack',
-          attackerId: attacker.id,
-        },
-      },
-    })
-  );
+  core.room.visualEffect({
+    effect: 'attack',
+    attackerId: attacker.id,
+  });
   core.room.soundEffect('decide');
 
   const attackStack = new Stack({
@@ -89,21 +80,10 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
       (blocker && !blocker.owner.field.find(unit => unit.id === blocker?.id))
     ) {
       attacker.active = false;
-      core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'VisualEffect',
-            body: {
-              effect: 'launch-cancel',
-              attackerId: attacker.id,
-            },
-          },
-        })
-      );
+      core.room.visualEffect({
+        effect: 'launch-cancel',
+        attackerId: attacker.id,
+      });
       return;
     }
 
@@ -115,21 +95,10 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
         !blocker.owner.field.find(unit => unit.id === blocker?.id)
       ) {
         attacker.active = false;
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'effect',
-              handler: 'client',
-            },
-            payload: {
-              type: 'VisualEffect',
-              body: {
-                effect: 'launch-cancel',
-                attackerId: attacker.id,
-              },
-            },
-          })
-        );
+        core.room.visualEffect({
+          effect: 'launch-cancel',
+          attackerId: attacker.id,
+        });
         return;
       }
     }
@@ -140,22 +109,11 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
   }
 
   // NOTE: 生存確認処理を行い、attacker/blocker(非undefinedの場合)の両者が生存していれば以下が実行される
-  core.room.broadcastToAll(
-    createMessage({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'VisualEffect',
-        body: {
-          effect: 'launch',
-          attackerId: attacker.id,
-          blockerId: blocker?.id,
-        },
-      },
-    })
-  );
+  core.room.visualEffect({
+    effect: 'launch',
+    attackerId: attacker.id,
+    blockerId: blocker?.id,
+  });
 
   attacker.active = false;
   core.room.sync();
@@ -273,21 +231,10 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
 
   core.room.soundEffect('decide');
   if (blocker) {
-    core.room.broadcastToAll(
-      createMessage({
-        action: {
-          handler: 'client',
-          type: 'effect',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'block',
-            blockerId: blocker.id,
-          },
-        },
-      })
-    );
+    core.room.visualEffect({
+      effect: 'block',
+      blockerId: blocker.id,
+    });
   }
   await System.sleep(1000);
 

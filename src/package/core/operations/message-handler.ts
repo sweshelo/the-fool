@@ -1,4 +1,4 @@
-import { createMessage, type Message } from '@/submodule/suit/types/message/message';
+import type { Message } from '@/submodule/suit/types/message/message';
 import type {
   DebugDrawPayload,
   IAtom,
@@ -234,23 +234,12 @@ export async function handleMessage(core: Core, message: Message) {
       core.room.soundEffect('evolve');
       core.room.sync();
 
-      core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'VisualEffect',
-            body: {
-              effect: 'drive',
-              image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
-              player: player.id,
-              type: 'JOKER',
-            },
-          },
-        })
-      );
+      core.room.visualEffect({
+        effect: 'drive',
+        image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
+        player: player.id,
+        type: 'JOKER',
+      });
 
       // Create and resolve joker stack
       core.histories.push({

@@ -1,4 +1,3 @@
-import { createMessage } from '@/submodule/suit/types/message/message';
 import type { Player } from '../class/Player';
 import type { Unit, Card } from '../class/card';
 import type { Core } from '../index';
@@ -96,23 +95,12 @@ export async function drive(
   // coreのスタックに積む
   core.stack.push(driveStack);
 
-  core.room.broadcastToAll(
-    createMessage({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'VisualEffect',
-        body: {
-          effect: 'drive',
-          image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-          player: player.id,
-          type: card.catalog.type === 'unit' ? 'UNIT' : 'EVOLVE',
-        },
-      },
-    })
-  );
+  core.room.visualEffect({
+    effect: 'drive',
+    image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+    player: player.id,
+    type: card.catalog.type === 'unit' ? 'UNIT' : 'EVOLVE',
+  });
 
   // wait
   await System.sleep(1500);
