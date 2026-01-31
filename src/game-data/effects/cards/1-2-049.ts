@@ -23,7 +23,7 @@ export const effects: CardEffects = {
         }
       },
       targets: ['self'],
-      condition: unit => unit.lv == 1,
+      condition: unit => unit.lv === 1,
       effectCode: '大地の掟',
     });
 
