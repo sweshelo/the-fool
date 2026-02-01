@@ -1,5 +1,8 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
-import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/payload/client';
+import type {
+  PlayerReconnectedPayload,
+  VisualEffectPayloadBody,
+} from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core';
 import { Joker } from '../../core/class/card/Joker';
@@ -171,6 +174,21 @@ export class Room {
     }
   }
 
+  // VisualEffectを送信
+  visualEffect(body: VisualEffectPayloadBody) {
+    const message = createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'VisualEffect',
+        body,
+      },
+    });
+    this.broadcastToAll(message);
+  }
+
   // 現在のステータスを全て送信
   sync = (force: boolean = false) => {
     // Colorマッピング
@@ -332,4 +350,23 @@ export class Room {
     // 通信した場合はキャッシュを更新
     this.cache = currentHash;
   };
+
+  /**
+   * リソースを解放する
+   * 全プレイヤー切断時に呼び出される
+   */
+  async dispose(): Promise<void> {
+    // GameLogger のリソースを解放
+    await this.logger.dispose();
+
+    // Core のリソースを解放
+    this.core.dispose();
+
+    // マップをクリア
+    this.players.clear();
+    this.clients.clear();
+
+    // キャッシュをクリア
+    this.cache = undefined;
+  }
 }

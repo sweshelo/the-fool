@@ -1,7 +1,6 @@
 import type { Unit } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
-import { createMessage } from '@/submodule/suit/types';
 import { System } from '../system';
 import type { UnitPickFilter } from './types';
 
@@ -46,21 +45,10 @@ export async function helperPickUnit(
     const chosen = candidate.find(unit => unit.id === choiceId) ?? candidate[0];
     if (!chosen) throw new Error('対象のユニットが存在しません');
 
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'select',
-            unitId: chosen.id,
-          },
-        },
-      })
-    );
+    stack.core.room.visualEffect({
+      effect: 'select',
+      unitId: chosen.id,
+    });
 
     selected.push(chosen);
   }

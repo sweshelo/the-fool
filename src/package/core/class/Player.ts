@@ -79,6 +79,10 @@ export class Player implements IPlayer {
       gauge: core.room.rule.joker.gauge,
     };
     this.#core = core;
+    this.life = {
+      current: core.room.rule.player.max.life,
+      max: core.room.rule.player.max.life,
+    };
 
     // ライブラリからデッキを生成する
     this.library = [...deck];

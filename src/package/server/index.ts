@@ -110,17 +110,13 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
-        // Roomオブジェクトの内部マップからプレイヤーを削除
-        room.clients.delete(disconnectedUser.id);
-        room.players.delete(disconnectedUser.id);
+        // 1. 切断通知を先に送信（clients から削除する前に）
+        // roomWillClose は自分が最後のプレイヤーかどうかで判定
+        const roomWillClose = room.clients.size === 1;
 
-        // Roomの残りのクライアント数を基に閉じるかどうかを判定
-        const roomWillClose = room.clients.size === 0;
-
-        // 切断通知を他のプレイヤーに送信
         const payload: PlayerDisconnectedPayload = {
           type: 'PlayerDisconnected',
-          disconnectedPlayerId: disconnectedUser.id,
+          disconnectedPlayerId: disconnectedUser.playerId ?? disconnectedUser.id,
           reason: 'connection_lost',
           timestamp: Date.now(),
           roomWillClose,
@@ -131,12 +127,24 @@ export class Server {
             action: { handler: 'client', type: 'disconnected' },
             payload,
           },
-          disconnectedUser.id
+          disconnectedUser.playerId ?? disconnectedUser.id
         );
 
-        // Roomが空になったら削除
-        if (roomWillClose) {
-          room.logger.dispose().catch(console.error);
+        // 2. playerId が設定されている場合のみ clients から削除
+        // room.players は削除しない（再接続時にプレイヤーを特定するため）
+        if (disconnectedUser.playerId) {
+          room.clients.delete(disconnectedUser.playerId);
+        }
+
+        // 3. Roomが空になったらログ記録と削除
+        if (room.clients.size === 0) {
+          // 最後のプレイヤーが切断 → ログ記録
+          const winnerIndex = room.core.players.findIndex(p => p.id === disconnectedUser.playerId);
+          room.logger
+            .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
+            .catch(console.error);
+
+          room.dispose().catch(console.error);
           this.rooms.delete(roomId);
           console.log('room %s has been deleted.', roomId);
         }
@@ -231,6 +239,11 @@ export class Server {
               if (result) {
                 this.clientRooms.delete(client);
                 this.clientRooms.set(client, room.id);
+                // User に playerId を設定
+                const user = this.clients.get(client);
+                if (user) {
+                  user.playerId = message.payload.player.id;
+                }
               } else {
                 throw new ServerError('ルームの参加に失敗しました', ErrorCode.ROOM_FULL);
               }
@@ -349,7 +362,7 @@ export class Server {
     }
     const room = Server.instance.rooms.get(roomId);
     if (room) {
-      room.logger.dispose().catch(console.error);
+      room.dispose().catch(console.error);
     }
     const deleted = Server.instance.rooms.delete(roomId);
     if (deleted) {
