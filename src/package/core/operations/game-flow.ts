@@ -41,7 +41,8 @@ export async function completeGame(
   const validWinnerIndex = winnerIndex === -1 ? null : winnerIndex;
 
   // 3. MatchEndReason へマッピング
-  const endReason: MatchEndReason = reason === 'damage' ? 'life_zero' : 'round_limit';
+  const endReason: MatchEndReason =
+    reason === 'damage' ? 'life_zero' : reason === 'surrender' ? 'surrender' : 'round_limit';
 
   // 4. Supabase にログ記録
   await core.room.logger.logMatchEnd(core, validWinnerIndex, endReason);
