@@ -10,6 +10,9 @@ export const effects: CardEffects = {
 
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
+    if (opponent.field.length === 0) {
+      return;
+    }
 
     await System.show(stack, '憤怒の炎', '対戦相手のユニット全体に3000ダメージ');
 
