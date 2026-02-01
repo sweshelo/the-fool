@@ -26,11 +26,7 @@ export const effects: CardEffects = {
   // ■綺麗な薔薇には棘がある
   // このユニットがプレイヤーアタックに成功した時、
   // あなたのデッキから1枚ランダムであなたのトリガーゾーンにトリガーカードをセットする
-  checkPlayerAttack: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.source.id === stack.processing.id;
-  },
-
-  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
     // トリガーゾーンに空きがあるか確認
