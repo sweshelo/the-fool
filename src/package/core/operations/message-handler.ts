@@ -407,6 +407,16 @@ export async function handleMessage(core: Core, message: Message) {
       return;
     }
 
+    case 'Surrender': {
+      const payload = message.payload;
+      await completeGame(
+        core,
+        core.players.find(player => player.id !== payload.player)?.id,
+        'surrender'
+      );
+      break;
+    }
+
     case 'DebugDraw': {
       const payload: DebugDrawPayload = message.payload;
       const target = core.players.find(player => player.id === payload.player);

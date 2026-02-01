@@ -19,7 +19,7 @@ import type { MatchEndReason } from '@/package/logging/types';
 export async function completeGame(
   core: Core,
   winnerId: string | undefined,
-  reason: 'damage' | 'limit'
+  reason: 'damage' | 'limit' | 'surrender'
 ): Promise<void> {
   // 1. SituationCompleted をブロードキャスト
   core.room.broadcastToAll(
