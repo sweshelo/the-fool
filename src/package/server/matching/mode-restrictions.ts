@@ -13,9 +13,9 @@ export const modeConfigs: Record<MatchingMode, ModeConfig> = {
 
   standard: {
     cardRestriction: { type: 'version', operator: '>=', value: 6 },
-    deckRestriction: { type: 'sameNameLimit', max: 1 },
+    deckRestriction: null,
     ruleOverrides: {},
-    description: 'Ver.1.4EX2以降。同名カード1枚まで。',
+    description: 'Ver.1.2以降。同名カード3枚まで。',
   },
 
   legacy: {
@@ -23,13 +23,21 @@ export const modeConfigs: Record<MatchingMode, ModeConfig> = {
     deckRestriction: null,
     ruleOverrides: {
       joker: {
-        suicide: false,
+        suicide: true,
         single: true,
         inHand: true,
-        gauge: 3,
-        lifeDamage: 3,
-        maxTurnEnd: 2,
-        minTurnEnd: 1,
+        gauge: 0,
+        lifeDamage: 15,
+        maxTurnEnd: 15,
+        minTurnEnd: 2.5,
+      },
+      player: {
+        max: {
+          life: 7,
+          hand: 7,
+          trigger: 4,
+          field: 5,
+        },
       },
     },
     description: 'Ver.1.4EX1以前。1stジョーカー、手札加算方式。',

@@ -67,7 +67,7 @@ export interface ValidationResult {
 /**
  * ルールオーバーライド（Ruleの部分的上書き）
  */
-export type RuleOverrides = Partial<Pick<Rule, 'joker'>>;
+export type RuleOverrides = Partial<Pick<Rule, 'joker' | 'player'>>;
 
 /**
  * カード単体の制限条件

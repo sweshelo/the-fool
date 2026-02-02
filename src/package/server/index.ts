@@ -126,43 +126,49 @@ export class Server {
       const room = this.rooms.get(roomId);
 
       if (room) {
-        // 1. 切断通知を先に送信（clients から削除する前に）
-        // roomWillClose は自分が最後のプレイヤーかどうかで判定
-        const roomWillClose = room.clients.size === 1;
+        // 既にルームから退室済みの場合は通知しない（LeaveRoomRequest で退室済み）
+        const isStillInRoom =
+          disconnectedUser.playerId && room.clients.has(disconnectedUser.playerId);
 
-        const payload: PlayerDisconnectedPayload = {
-          type: 'PlayerDisconnected',
-          disconnectedPlayerId: disconnectedUser.playerId ?? disconnectedUser.id,
-          reason: 'connection_lost',
-          timestamp: Date.now(),
-          roomWillClose,
-        };
+        if (isStillInRoom) {
+          // 1. 切断通知を先に送信（clients から削除する前に）
+          // roomWillClose は自分が最後のプレイヤーかどうかで判定
+          const roomWillClose = room.clients.size === 1;
 
-        room.broadcastToAllExcept(
-          {
-            action: { handler: 'client', type: 'disconnected' },
-            payload,
-          },
-          disconnectedUser.playerId ?? disconnectedUser.id
-        );
+          const payload: PlayerDisconnectedPayload = {
+            type: 'PlayerDisconnected',
+            disconnectedPlayerId: disconnectedUser.playerId ?? disconnectedUser.id,
+            reason: 'connection_lost',
+            timestamp: Date.now(),
+            roomWillClose,
+          };
 
-        // 2. playerId が設定されている場合のみ clients から削除
-        // room.players は削除しない（再接続時にプレイヤーを特定するため）
-        if (disconnectedUser.playerId) {
-          room.clients.delete(disconnectedUser.playerId);
-        }
+          room.broadcastToAllExcept(
+            {
+              action: { handler: 'client', type: 'disconnected' },
+              payload,
+            },
+            disconnectedUser.playerId ?? disconnectedUser.id
+          );
 
-        // 3. Roomが空になったらログ記録と削除
-        if (room.clients.size === 0) {
-          // 最後のプレイヤーが切断 → ログ記録
-          const winnerIndex = room.core.players.findIndex(p => p.id === disconnectedUser.playerId);
-          room.logger
-            .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
-            .catch(console.error);
+          // 2. playerId が設定されている場合のみ clients から削除
+          // room.players は削除しない（再接続時にプレイヤーを特定するため）
+          if (disconnectedUser.playerId) room.clients.delete(disconnectedUser.playerId);
 
-          room.dispose().catch(console.error);
-          this.rooms.delete(roomId);
-          console.log('room %s has been deleted.', roomId);
+          // 3. Roomが空になったらログ記録と削除
+          if (room.clients.size === 0) {
+            // 最後のプレイヤーが切断 → ログ記録
+            const winnerIndex = room.core.players.findIndex(
+              p => p.id === disconnectedUser.playerId
+            );
+            room.logger
+              .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
+              .catch(console.error);
+
+            room.dispose().catch(console.error);
+            this.rooms.delete(roomId);
+            console.log('room %s has been deleted.', roomId);
+          }
         }
       }
 
@@ -263,6 +269,9 @@ export class Server {
               } else {
                 throw new ServerError('ルームの参加に失敗しました', ErrorCode.ROOM_FULL);
               }
+            } else if (message.payload.type === 'LeaveRoomRequest') {
+              // ゲーム終了後の退室処理
+              this.handleLeaveRoom(client, room);
             } else {
               room.handleMessage(client, message);
             }
@@ -518,6 +527,29 @@ export class Server {
       `[Matching] Room ${room.id} created for mode ${mode}: ${player1.player.name} vs ${player2.player.name}`
     );
     console.log(`[Matching] Waiting for PlayerEntry from both clients...`);
+  }
+
+  /**
+   * ルーム退室処理
+   * ゲーム終了後にクライアントがクリーンに退室するための処理
+   * 退室済みのプレイヤーには切断通知が送信されない
+   */
+  private handleLeaveRoom(client: ServerWebSocket, room: Room) {
+    const user = this.clients.get(client);
+    if (!user?.playerId) return;
+
+    // クライアントマップから削除（切断通知が送られないようにする）
+    room.clients.delete(user.playerId);
+    this.clientRooms.delete(client);
+
+    console.log(`[Room ${room.id}] Player ${user.playerId} left the room cleanly.`);
+
+    // ルームが空になったら破棄
+    if (room.clients.size === 0) {
+      room.dispose().catch(console.error);
+      this.rooms.delete(room.id);
+      console.log('room %s has been deleted (all players left).', room.id);
+    }
   }
 
   /**
