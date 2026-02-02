@@ -60,6 +60,8 @@ export const effects: CardEffects = {
 
   // When destroyed
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
+    if (!EffectHelper.isBreakByEffect(stack)) return;
+
     // Find cost 4 or lower samurai units in trash
     const targets = stack.processing.owner.trash.filter(
       card =>

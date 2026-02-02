@@ -16,7 +16,7 @@ export const effects: CardEffects = {
     }
   },
 
-  onBattle: async (stack: StackWithCard) => {
+  onBattleSelf: async (stack: StackWithCard) => {
     if (
       stack.source instanceof Unit &&
       stack.target instanceof Unit &&
