@@ -3,14 +3,24 @@ import { User } from './room/user';
 import { apiRouter } from './apiRouter';
 import type { Message } from '@/submodule/suit/types/message/message';
 import type { RequestPayload } from '@/submodule/suit/types/message/payload/base';
-import type { RoomOpenResponsePayload } from '@/submodule/suit/types/message/payload/server';
+import type {
+  RoomOpenResponsePayload,
+  MatchingStartRequestPayload,
+  MatchingStartResponsePayload,
+  MatchingCancelResponsePayload,
+} from '@/submodule/suit/types/message/payload/server';
 import type {
   PlayerDisconnectedPayload,
   ErrorPayload,
+  MatchingSuccessPayload,
 } from '@/submodule/suit/types/message/payload/client';
 import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
 import { MessageHelper } from '../core/helpers/message';
+import { MatchingManager, getModeConfig } from './matching';
+import type { MatchingMode, QueuedPlayer, MatchResult } from './matching';
+import { config } from '@/config';
+import type { Rule } from '@/submodule/suit/types';
 
 class ServerError extends Error {
   constructor(
@@ -29,6 +39,7 @@ export class Server {
   private rooms: Map<string, Room> = new Map(); // roomId <-> Room
   private clientRooms: Map<ServerWebSocket, string> = new Map();
   private clients: Map<ServerWebSocket, User> = new Map();
+  private matchingManager: MatchingManager = new MatchingManager();
 
   constructor(port?: number) {
     Server.instance = this;
@@ -105,6 +116,11 @@ export class Server {
   private onClose(ws: ServerWebSocket) {
     const roomId = this.clientRooms.get(ws);
     const disconnectedUser = this.clients.get(ws);
+
+    // マッチングキューからも削除
+    if (disconnectedUser) {
+      this.matchingManager.leave(disconnectedUser.id);
+    }
 
     if (roomId && disconnectedUser) {
       const room = this.rooms.get(roomId);
@@ -335,8 +351,225 @@ export class Server {
         }
         break;
       }
+      case 'matching-start': {
+        if (payload.type === 'MatchingStartRequest') {
+          // oxlint-disable-next-line no-unsafe-type-assertion
+          this.handleMatchingStart(client, message as Message<MatchingStartRequestPayload>);
+        }
+        break;
+      }
+      case 'matching-cancel': {
+        if (payload.type === 'MatchingCancelRequest') {
+          // oxlint-disable-next-line no-unsafe-type-assertion
+          this.handleMatchingCancel(client, message as Message<RequestPayload>);
+        }
+        break;
+      }
       case 'list':
     }
+  }
+
+  /**
+   * マッチング開始リクエストを処理する
+   */
+  private handleMatchingStart(
+    client: ServerWebSocket,
+    message: Message<MatchingStartRequestPayload>
+  ) {
+    const payload = message.payload;
+    const user = this.clients.get(client);
+
+    if (!user) {
+      this.sendError(client, ErrorCode.SYS_INTERNAL_ERROR, 'ユーザーが見つかりません');
+      return;
+    }
+
+    const queuedPlayer: QueuedPlayer = {
+      id: user.id,
+      socket: client,
+      player: payload.player,
+      jokersOwned: payload.jokersOwned,
+      queuedAt: Date.now(),
+    };
+
+    const result = this.matchingManager.join(payload.mode, queuedPlayer);
+
+    if (!result.success) {
+      // エラーレスポンス
+      const errorMessages: Record<string, string> = {
+        already_in_queue: '既にマッチングキューに参加しています',
+        invalid_deck_size: 'デッキは40枚である必要があります',
+        card_not_found: '存在しないカードがデッキに含まれています',
+        card_restriction_violation: 'このモードで使用できないカードが含まれています',
+        deck_restriction_violation: 'デッキが制限条件を満たしていません',
+      };
+      this.sendError(
+        client,
+        ErrorCode.MATCHING_INVALID_DECK,
+        errorMessages[result.error] ?? 'マッチングに失敗しました',
+        result.invalidCards ? { invalidCards: result.invalidCards } : undefined
+      );
+      return;
+    }
+
+    if (result.matched) {
+      // マッチング成立 - ルーム作成
+      this.createRoomForMatch(payload.mode, result.matchResult);
+    } else {
+      // キュー参加確認レスポンス
+      const response: Message<MatchingStartResponsePayload> = {
+        action: {
+          type: 'response',
+          handler: 'client',
+        },
+        payload: {
+          type: 'MatchingStartResponse',
+          requestId: payload.requestId,
+          result: true,
+          queueId: result.queueId,
+          position: result.position,
+        },
+      };
+      client.send(JSON.stringify(response));
+    }
+  }
+
+  /**
+   * マッチングキャンセルリクエストを処理する
+   */
+  private handleMatchingCancel(client: ServerWebSocket, message: Message<RequestPayload>) {
+    const user = this.clients.get(client);
+
+    if (!user) {
+      this.sendError(client, ErrorCode.SYS_INTERNAL_ERROR, 'ユーザーが見つかりません');
+      return;
+    }
+
+    const left = this.matchingManager.leave(user.id);
+
+    const response: Message<MatchingCancelResponsePayload> = {
+      action: {
+        type: 'response',
+        handler: 'client',
+      },
+      payload: {
+        type: 'MatchingCancelResponse',
+        requestId: message.payload.requestId,
+        result: left,
+      },
+    };
+    client.send(JSON.stringify(response));
+  }
+
+  /**
+   * マッチング成立時にルームを作成し、両プレイヤーを参加させる
+   */
+  private createRoomForMatch(mode: MatchingMode, matchResult: MatchResult) {
+    const { player1, player2 } = matchResult;
+    const modeConfig = getModeConfig(mode);
+
+    // ルールを作成（デフォルトルール + モードのオーバーライド）
+    const rule: Rule = {
+      ...config.game,
+      ...modeConfig.ruleOverrides,
+      joker: {
+        ...config.game.joker,
+        ...modeConfig.ruleOverrides.joker,
+      },
+    };
+
+    // ルーム作成
+    const room = new Room(`Matching: ${mode}`, rule);
+    this.rooms.set(room.id, room);
+
+    // ルーム作成ログを記録
+    room.logger.logRoomCreation(room.id, room.name, room.rule, player1.id).catch(console.error);
+
+    // 両プレイヤーにマッチング成功通知を送信
+    const sendMatchingSuccess = (player: QueuedPlayer, opponent: QueuedPlayer) => {
+      const successPayload: MatchingSuccessPayload = {
+        type: 'MatchingSuccess',
+        roomId: room.id,
+        opponentName: opponent.player.name,
+        mode,
+      };
+
+      const successMessage: Message<MatchingSuccessPayload> = {
+        action: {
+          type: 'matching-success',
+          handler: 'client',
+        },
+        payload: successPayload,
+      };
+
+      player.socket.send(JSON.stringify(successMessage));
+    };
+
+    sendMatchingSuccess(player1, player2);
+    sendMatchingSuccess(player2, player1);
+
+    // 両プレイヤーをルームに参加させる
+    const joinPlayer = (queuedPlayer: QueuedPlayer) => {
+      const joinMessage: Message = {
+        action: {
+          type: 'join',
+          handler: 'room',
+        },
+        payload: {
+          type: 'PlayerEntry',
+          roomId: room.id,
+          player: queuedPlayer.player,
+          jokersOwned: queuedPlayer.jokersOwned,
+        },
+      };
+
+      const joined = room.join(queuedPlayer.socket, joinMessage);
+      if (joined) {
+        this.clientRooms.delete(queuedPlayer.socket);
+        this.clientRooms.set(queuedPlayer.socket, room.id);
+
+        // User に playerId を設定
+        const user = this.clients.get(queuedPlayer.socket);
+        if (user) {
+          user.playerId = queuedPlayer.player.id;
+        }
+      }
+    };
+
+    joinPlayer(player1);
+    joinPlayer(player2);
+
+    console.log(
+      `[Matching] Room ${room.id} created for mode ${mode}: ${player1.player.name} vs ${player2.player.name}`
+    );
+  }
+
+  /**
+   * エラーメッセージを送信する
+   */
+  private sendError(
+    client: ServerWebSocket,
+    errorCode: ErrorCode,
+    errorMessage: string,
+    details?: Record<string, unknown>
+  ) {
+    const errorPayload: ErrorPayload = {
+      type: 'Error',
+      errorCode,
+      message: errorMessage,
+      details,
+      timestamp: Date.now(),
+    };
+
+    client.send(
+      JSON.stringify({
+        action: {
+          handler: 'client',
+          type: 'error',
+        },
+        payload: errorPayload,
+      })
+    );
   }
 
   /**
