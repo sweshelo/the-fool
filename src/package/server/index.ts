@@ -13,6 +13,7 @@ import type {
   PlayerDisconnectedPayload,
   ErrorPayload,
   MatchingSuccessPayload,
+  MatchingStatusPayload,
 } from '@/submodule/suit/types/message/payload/client';
 import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
@@ -111,6 +112,9 @@ export class Server {
     // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
     const user = new User();
     this.clients.set(ws, user);
+
+    // 接続直後にマッチングステータスを送信
+    this.sendMatchingStatusTo(ws);
   }
 
   private onClose(ws: ServerWebSocket) {
@@ -119,7 +123,11 @@ export class Server {
 
     // マッチングキューからも削除
     if (disconnectedUser) {
-      this.matchingManager.leave(disconnectedUser.id);
+      const wasInQueue = this.matchingManager.leave(disconnectedUser.id);
+      if (wasInQueue) {
+        // キューから削除されたので全クライアントにステータスを配信
+        this.broadcastMatchingStatus();
+      }
     }
 
     if (roomId && disconnectedUser) {
@@ -424,6 +432,8 @@ export class Server {
     if (result.matched) {
       // マッチング成立 - ルーム作成
       this.createRoomForMatch(payload.mode, result.matchResult);
+      // マッチング成立後、キューが変更されたので配信
+      this.broadcastMatchingStatus();
     } else {
       // キュー参加確認レスポンス
       const response: Message<MatchingStartResponsePayload> = {
@@ -440,6 +450,8 @@ export class Server {
         },
       };
       client.send(JSON.stringify(response));
+      // キュー参加後、キューが変更されたので配信
+      this.broadcastMatchingStatus();
     }
   }
 
@@ -468,6 +480,11 @@ export class Server {
       },
     };
     client.send(JSON.stringify(response));
+
+    // キャンセル成功時、キューが変更されたので配信
+    if (left) {
+      this.broadcastMatchingStatus();
+    }
   }
 
   /**
@@ -578,6 +595,59 @@ export class Server {
         payload: errorPayload,
       })
     );
+  }
+
+  /**
+   * 全クライアントにマッチング待機状況を配信する
+   */
+  private broadcastMatchingStatus() {
+    const queues = this.matchingManager.getAllQueueSizes();
+
+    const payload: MatchingStatusPayload = {
+      type: 'MatchingStatus',
+      queues,
+      timestamp: Date.now(),
+    };
+
+    const message: Message<MatchingStatusPayload> = {
+      action: {
+        type: 'matching-status',
+        handler: 'client',
+      },
+      payload,
+    };
+
+    const messageStr = JSON.stringify(message);
+
+    for (const client of this.clients.keys()) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(messageStr);
+      }
+    }
+  }
+
+  /**
+   * 特定のクライアントにマッチング待機状況を送信する
+   */
+  private sendMatchingStatusTo(client: ServerWebSocket) {
+    const queues = this.matchingManager.getAllQueueSizes();
+
+    const payload: MatchingStatusPayload = {
+      type: 'MatchingStatus',
+      queues,
+      timestamp: Date.now(),
+    };
+
+    const message: Message<MatchingStatusPayload> = {
+      action: {
+        type: 'matching-status',
+        handler: 'client',
+      },
+      payload,
+    };
+
+    client.send(JSON.stringify(message));
   }
 
   /**

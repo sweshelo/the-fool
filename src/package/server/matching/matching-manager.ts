@@ -161,6 +161,18 @@ export class MatchingManager {
   }
 
   /**
+   * 全モードのキューサイズを取得する
+   */
+  getAllQueueSizes(): Record<MatchingMode, number> {
+    return {
+      freedom: this.getQueueSize('freedom'),
+      standard: this.getQueueSize('standard'),
+      legacy: this.getQueueSize('legacy'),
+      limited: this.getQueueSize('limited'),
+    };
+  }
+
+  /**
    * キューIDを生成する
    */
   private generateQueueId(): string {
