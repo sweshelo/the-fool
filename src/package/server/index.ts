@@ -112,9 +112,6 @@ export class Server {
     // TODO: 将来的には id と user の mapを用意して、再接続した際に同一ユーザと見做せるようにする
     const user = new User();
     this.clients.set(ws, user);
-
-    // 接続直後にマッチングステータスを送信
-    this.sendMatchingStatusTo(ws);
   }
 
   private onClose(ws: ServerWebSocket) {
@@ -380,6 +377,11 @@ export class Server {
           // oxlint-disable-next-line no-unsafe-type-assertion
           this.handleMatchingCancel(client, message as Message<RequestPayload>);
         }
+        break;
+      }
+      case 'matchingStatus': {
+        // マッチングステータスを送信
+        this.sendMatchingStatusTo(client);
         break;
       }
       case 'list':
