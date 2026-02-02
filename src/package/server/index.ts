@@ -462,7 +462,8 @@ export class Server {
   }
 
   /**
-   * マッチング成立時にルームを作成し、両プレイヤーを参加させる
+   * マッチング成立時にルームを作成し、両プレイヤーに通知する
+   * 実際の参加処理はクライアントからの PlayerEntry を待つ
    */
   private createRoomForMatch(mode: MatchingMode, matchResult: MatchResult) {
     const { player1, player2 } = matchResult;
@@ -508,40 +509,15 @@ export class Server {
     sendMatchingSuccess(player1, player2);
     sendMatchingSuccess(player2, player1);
 
-    // 両プレイヤーをルームに参加させる
-    const joinPlayer = (queuedPlayer: QueuedPlayer) => {
-      const joinMessage: Message = {
-        action: {
-          type: 'join',
-          handler: 'room',
-        },
-        payload: {
-          type: 'PlayerEntry',
-          roomId: room.id,
-          player: queuedPlayer.player,
-          jokersOwned: queuedPlayer.jokersOwned,
-        },
-      };
-
-      const joined = room.join(queuedPlayer.socket, joinMessage);
-      if (joined) {
-        this.clientRooms.delete(queuedPlayer.socket);
-        this.clientRooms.set(queuedPlayer.socket, room.id);
-
-        // User に playerId を設定
-        const user = this.clients.get(queuedPlayer.socket);
-        if (user) {
-          user.playerId = queuedPlayer.player.id;
-        }
-      }
-    };
-
-    joinPlayer(player1);
-    joinPlayer(player2);
+    // クライアントの roomId マッピングを設定
+    // 実際の join はクライアントからの PlayerEntry を待つ
+    this.clientRooms.set(player1.socket, room.id);
+    this.clientRooms.set(player2.socket, room.id);
 
     console.log(
       `[Matching] Room ${room.id} created for mode ${mode}: ${player1.player.name} vs ${player2.player.name}`
     );
+    console.log(`[Matching] Waiting for PlayerEntry from both clients...`);
   }
 
   /**
