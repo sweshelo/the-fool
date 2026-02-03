@@ -19,7 +19,7 @@ export const modeConfigs: Record<MatchingMode, ModeConfig> = {
   },
 
   legacy: {
-    cardRestriction: { type: 'version', operator: '<=', value: 5 },
+    cardRestriction: { type: 'version', operator: '<=', value: 14 },
     deckRestriction: null,
     ruleOverrides: {
       joker: {
