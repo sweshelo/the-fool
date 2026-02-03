@@ -21,25 +21,30 @@ export const effects: CardEffects = {
     // ブラック白虎がいるかどうかをチェック
     const hasBlackByakko = hasFourGodCard(stack, 'ブラック白虎');
 
-    // ブラック白虎がいる場合、【四聖獣】ユニットを1枚引く
-    if (hasBlackByakko) {
-      await System.show(
-        stack,
-        '四聖の共鳴',
-        'コスト4のユニットを引く\n【四聖獣】ユニットを1枚引く'
-      );
-      // 四聖獣ユニットを引く（EffectTemplateのreinforcementsを使用）
-      EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '四聖獣' });
-    } else {
-      await System.show(stack, '四聖の共鳴', 'コスト4のユニットを引く');
-    }
-
-    // コスト4のユニットカードをランダムで1枚手札に加える
-    const [card] = EffectHelper.random(
-      stack.processing.owner.deck.filter(card => card.catalog.cost === 4 && card instanceof Unit),
-      1
-    );
-    if (card) Effect.move(stack, stack.processing, card, 'hand');
+    await EffectHelper.combine(stack, [
+      // コスト4のユニットカードをランダムで1枚手札に加える
+      {
+        title: '四聖の共鳴',
+        description: 'コスト4のユニットを引く',
+        effect: () => {
+          const [card] = EffectHelper.random(
+            stack.processing.owner.deck.filter(
+              card => card.catalog.cost === 4 && card instanceof Unit
+            ),
+            1
+          );
+          if (card) Effect.move(stack, stack.processing, card, 'hand');
+        },
+      },
+      // ブラック白虎がいる場合、【四聖獣】ユニットを1枚引く
+      {
+        title: '四聖の共鳴',
+        description: '【四聖獣】ユニットを1枚引く',
+        effect: () =>
+          EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '四聖獣' }),
+        condition: hasBlackByakko,
+      },
+    ]);
   },
 
   // このユニットがブロックした時、ターン終了時までこのユニットのBPを+［あなたのフィールドにいる【四聖獣】ユニット×2000］する。

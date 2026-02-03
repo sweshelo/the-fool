@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数
@@ -14,31 +14,48 @@ export const effects: CardEffects = {
     // ブラック玄武がいるかどうかをチェック
     const hasBlackGenbu = hasFourGodCard(stack, 'ブラック玄武');
 
-    // ブラック玄武がいる場合、カードを1枚引き、コストを-2する
-    if (hasBlackGenbu) {
-      await System.show(
-        stack,
-        '四聖の共鳴',
-        'コスト4のユニットを引く\n四聖獣ユニットに【不屈】を付与\nカードを1枚引く\nコスト-2'
-      );
-      const card = EffectTemplate.draw(stack.processing.owner, stack.core);
-      if (card) {
-        Effect.modifyCost(card, -2);
-      }
-    } else {
-      await System.show(
-        stack,
-        '四聖の共鳴＆翠檄叡智',
-        'コスト4のユニットを引く\n四聖獣ユニットに【不屈】を付与'
-      );
-    }
-
-    // コスト4のユニットカードをランダムで1枚手札に加える
-    const [card] = EffectHelper.random(
-      stack.processing.owner.deck.filter(card => card.catalog.cost === 4 && card instanceof Unit),
-      1
+    // デッキ内のコスト4であるユニット
+    const cost4Units = stack.processing.owner.deck.filter(
+      card => card.catalog.cost === 4 && card instanceof Unit
     );
-    if (card) Effect.move(stack, stack.processing, card, 'hand');
+
+    // 手札の空き枚数を計算する
+    // ルールでの手札上限値 - 現在手札枚数 - （デッキにコスト4のユニットがあれば 1、無ければ 0）
+    const countHandBlank =
+      stack.core.room.rule.player.max.hand -
+      stack.processing.owner.hand.length -
+      (cost4Units.length > 0 ? 1 : 0);
+
+    await EffectHelper.combine(stack, [
+      // コスト4のユニットカードをランダムで1枚手札に加える
+      {
+        title: '四聖の共鳴',
+        description: 'コスト4のユニットを引く',
+        effect: () => {
+          const [card] = EffectHelper.random(cost4Units, 1);
+          if (card) Effect.move(stack, stack.processing, card, 'hand');
+        },
+      },
+      // ブラック玄武がいる場合、カードを1枚引き、コストを-2する
+      {
+        title: '四聖の共鳴',
+        description: 'カードを1枚引きコスト-2',
+        effect: () => {
+          const card = EffectTemplate.draw(stack.processing.owner, stack.core);
+          if (card) {
+            Effect.modifyCost(card, -2);
+          }
+        },
+        condition: hasBlackGenbu && countHandBlank > 0,
+      },
+      {
+        title: '翠檄叡智',
+        description: '四聖獣ユニットに【不屈】を付与',
+        effect: () => {
+          //タイトル表示用
+        },
+      },
+    ]);
   },
 
   // あなたの【四聖獣】ユニットに【不屈】を与える。（フィールド効果）
