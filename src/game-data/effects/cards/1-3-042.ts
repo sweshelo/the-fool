@@ -15,7 +15,9 @@ export const effects: CardEffects = {
 
   checkBreak: (stack: StackWithCard) => {
     return (
-      stack.target instanceof Unit && stack.target.catalog.species?.includes('魔導士') === true
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.id &&
+      stack.target.catalog.species?.includes('魔導士') === true
     );
   },
 
