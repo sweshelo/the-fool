@@ -28,13 +28,8 @@ export const effects: CardEffects = {
         break;
       }
       case 3: {
-        await System.show(
-          stack,
-          'アムネシア',
-          '【沈黙】を与え破壊する\n捨札からユニットカードを1枚回収'
-        );
+        await System.show(stack, 'アムネシア', '【沈黙】を付与\n捨札からユニットカードを1枚回収');
         Effect.keyword(stack, stack.processing, target, '沈黙');
-        Effect.break(stack, stack.processing, target, 'effect');
         const [salvage] = EffectHelper.random(
           stack.processing.owner.trash.filter(card => card instanceof Unit)
         );
