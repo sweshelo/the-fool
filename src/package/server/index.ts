@@ -19,6 +19,7 @@ import { ErrorCode } from '@/submodule/suit/constant/error';
 import type { ServerWebSocket } from 'bun';
 import { MessageHelper } from '../core/helpers/message';
 import { MatchingManager, getModeConfig } from './matching';
+import { PlayCreditService } from '@/package/server/credits';
 import type { MatchingMode, QueuedPlayer, MatchResult } from './matching';
 import { config } from '@/config';
 import type { Rule } from '@/submodule/suit/types';
@@ -41,6 +42,7 @@ export class Server {
   private clientRooms: Map<ServerWebSocket, string> = new Map();
   private clients: Map<ServerWebSocket, User> = new Map();
   private matchingManager: MatchingManager = new MatchingManager();
+  private creditService = new PlayCreditService();
 
   constructor(port?: number) {
     Server.instance = this;
@@ -368,7 +370,16 @@ export class Server {
       case 'matching-start': {
         if (payload.type === 'MatchingStartRequest') {
           // oxlint-disable-next-line no-unsafe-type-assertion
-          this.handleMatchingStart(client, message as Message<MatchingStartRequestPayload>);
+          this.handleMatchingStart(client, message as Message<MatchingStartRequestPayload>).catch(
+            e => {
+              console.error('[Matching] Error during matching start:', e);
+              this.sendError(
+                client,
+                ErrorCode.SYS_INTERNAL_ERROR,
+                'マッチング処理中にエラーが発生しました'
+              );
+            }
+          );
         }
         break;
       }
@@ -391,7 +402,7 @@ export class Server {
   /**
    * マッチング開始リクエストを処理する
    */
-  private handleMatchingStart(
+  private async handleMatchingStart(
     client: ServerWebSocket,
     message: Message<MatchingStartRequestPayload>
   ) {
@@ -400,6 +411,17 @@ export class Server {
 
     if (!user) {
       this.sendError(client, ErrorCode.SYS_INTERNAL_ERROR, 'ユーザーが見つかりません');
+      return;
+    }
+
+    // プレイ可否チェック（キュー参加前）
+    const eligibility = await this.creditService.checkEligibility(payload.player.id);
+    if (!eligibility.canPlay) {
+      this.sendError(
+        client,
+        ErrorCode.MATCHING_INSUFFICIENT_CREDITS,
+        eligibility.reason ?? 'プレイ可能回数が不足しています'
+      );
       return;
     }
 
