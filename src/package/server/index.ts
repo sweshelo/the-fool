@@ -509,6 +509,7 @@ export class Server {
 
     // ルーム作成
     const room = new Room(`Matching: ${mode}`, rule);
+    room.matchingMode = mode;
     this.rooms.set(room.id, room);
 
     // ルーム作成ログを記録

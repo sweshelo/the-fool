@@ -13,6 +13,7 @@ import { config } from '@/config';
 import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
 import { GameLogger } from '@/package/logging';
+import type { MatchingMode } from '@/package/server/matching/types';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -25,6 +26,7 @@ export class Room {
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
   cache: string | undefined;
   logger: GameLogger;
+  matchingMode?: MatchingMode;
 
   constructor(name: string, rule?: Rule) {
     this.core = new Core(this);

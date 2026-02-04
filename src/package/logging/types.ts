@@ -22,6 +22,7 @@ export interface MatchStartLog {
   player2_jokers?: string[];
   first_player_index: number;
   seed?: number;
+  matching_mode?: 'freedom' | 'standard' | 'legacy' | 'limited';
 }
 
 /** マッチ終了理由 */

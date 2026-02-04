@@ -44,12 +44,16 @@ CREATE TABLE IF NOT EXISTS matches (
   ended_at TIMESTAMPTZ,
 
   -- 将来用（乱数シード）
-  seed BIGINT
+  seed BIGINT,
+
+  -- マッチの起源（NULLの場合は手動作成）
+  matching_mode VARCHAR(20)
 );
 
 CREATE INDEX IF NOT EXISTS idx_matches_player1_id ON matches(player1_id);
 CREATE INDEX IF NOT EXISTS idx_matches_player2_id ON matches(player2_id);
 CREATE INDEX IF NOT EXISTS idx_matches_started_at ON matches(started_at);
+CREATE INDEX IF NOT EXISTS idx_matches_matching_mode ON matches(matching_mode);
 
 -- 3. game_actionsテーブル（ゲームアクションログ）
 CREATE TABLE IF NOT EXISTS game_actions (
