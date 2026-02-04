@@ -36,17 +36,17 @@ export const effects: CardEffects = {
 
   // 対戦相手のトリガーカードの効果が発動するたび、対戦相手のユニットを1体選ぶ。それの行動権を消費する。
   onTrigger: async (stack: StackWithCard<Unit>) => {
-    // 相手のトリガーカードの効果が発動した時のみ
-    if (!(stack.source instanceof Card) || stack.source.owner.id === stack.processing.owner.id)
-      return;
+    const owner = stack.processing.owner;
 
-    const opponent = stack.processing.owner.opponent;
-    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) return;
+    // 相手のトリガーカードの効果が発動した時のみ
+    if (!(stack.target instanceof Card) || stack.target.owner.id === owner.id) return;
+
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
     await System.show(stack, 'レインボウ・ソング', '行動権を消費');
     const [target] = await EffectHelper.pickUnit(
       stack,
-      opponent,
+      owner,
       'opponents',
       '行動権を消費するユニットを選んでください',
       1

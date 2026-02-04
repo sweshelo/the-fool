@@ -9,7 +9,14 @@ export const effects: CardEffects = {
 
   //自身のユニットが出た時
   checkDrive: (stack: StackWithCard): boolean => {
-    return stack.processing.owner.id === stack.source.id;
+    const owner = stack.processing.owner;
+    if (owner.id !== stack.source.id) return false;
+
+    const hasHand = owner.hand.length > 0;
+    const hasField = owner.field.length > 0;
+    const targetOnField = owner.field.some(u => u.id === stack.target?.id);
+
+    return (!hasHand && hasField) || (hasHand && targetOnField);
   },
 
   onDrive: async (stack: StackWithCard<Unit>) => {
