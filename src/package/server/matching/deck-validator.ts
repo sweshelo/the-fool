@@ -85,7 +85,7 @@ export class DeckValidator {
     for (const card of deck) {
       const count = (nameCounts.get(card.name) ?? 0) + 1;
       nameCounts.set(card.name, count);
-      if (count > 3) {
+      if (count > 3 && mode !== 'freedom') {
         errors.push({
           type: 'deck_restriction',
           message: `カード「${card.name}」が3枚を超えています（${count}枚）`,
