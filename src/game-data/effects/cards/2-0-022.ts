@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Color } from '@/submodule/suit/constant/color';
+import { GREEN_COMBO } from '../engine/helper/combo';
 
 export const effects: CardEffects = {
   // ■連撃・豪熱の息吹
@@ -9,11 +9,10 @@ export const effects: CardEffects = {
   // 対戦相手のユニットを1体選ぶ。それの基本BPを-5000する。
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // 連撃条件確認: このターンにコスト2以上の緑属性のカードを使用しているか
-    const hasUsedGreenCardThisTurn = stack.core.histories.some(
-      history =>
-        history.card.id !== stack.processing.id && // このユニット以外
-        history.card.catalog.color === Color.GREEN && // 緑属性
-        history.card.catalog.cost >= 2 // コスト2以上
+    const hasUsedGreenCardThisTurn = EffectHelper.combo(
+      stack.core,
+      stack.processing,
+      GREEN_COMBO(2)
     );
 
     // 対戦相手のユニットが存在するか確認
