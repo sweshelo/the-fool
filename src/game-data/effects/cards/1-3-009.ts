@@ -8,8 +8,7 @@ export const effects: CardEffects = {
   async onDriveSelf(stack: StackWithCard<Unit>) {
     // 全てのユニットを取得
     const allUnits = stack.core.players
-      .map(p => p.field)
-      .flat()
+      .flatMap(p => p.field)
       .filter(unit => unit.id !== stack.processing.id);
 
     if (allUnits.length > 0) {
@@ -27,7 +26,7 @@ export const effects: CardEffects = {
     const turnPlayer = stack.core.getTurnPlayer();
 
     // 全てのユニットを取得
-    const allUnits = stack.core.players.map(p => p.field).flat();
+    const allUnits = stack.core.players.flatMap(p => p.field);
 
     // 自分のターン開始時のみ発動
     if (owner.id === turnPlayer.id && allUnits.length > 0) {
@@ -45,8 +44,7 @@ export const effects: CardEffects = {
   async onBreakSelf(stack: StackWithCard<Unit>) {
     // 全てのユニットを取得（自身は破壊済なので除外）
     const allUnits = stack.core.players
-      .map(p => p.field)
-      .flat()
+      .flatMap(p => p.field)
       .filter(unit => unit.id !== stack.processing.id);
 
     if (allUnits.length > 0) {
