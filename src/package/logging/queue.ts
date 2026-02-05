@@ -4,6 +4,7 @@ import { getSupabaseClient } from './supabase-client';
 export class ActionQueue {
   private queue: GameActionLog[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
+  private isFlushing: boolean = false;
 
   constructor(
     private batchSize: number,
@@ -21,17 +22,22 @@ export class ActionQueue {
   }
 
   async flush(): Promise<void> {
-    if (this.queue.length === 0) return;
+    if (this.isFlushing || this.queue.length === 0) return;
 
-    const batch = this.queue.splice(0, this.batchSize);
-    const client = getSupabaseClient();
-    if (!client) return;
+    this.isFlushing = true;
+    try {
+      const batch = this.queue.splice(0, this.batchSize);
+      const client = getSupabaseClient();
+      if (!client) return;
 
-    const { error } = await client.from('game_actions').insert(batch);
+      const { error } = await client.from('game_actions').insert(batch);
 
-    if (error) {
-      console.error('[Logger] Failed to flush actions:', error);
-      this.queue.unshift(...batch);
+      if (error) {
+        console.error('[Logger] Failed to flush actions:', error);
+        this.queue.unshift(...batch);
+      }
+    } finally {
+      this.isFlushing = false;
     }
   }
 
