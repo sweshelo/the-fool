@@ -12,7 +12,11 @@ export const effects: CardEffects = {
       {
         title: '無秩序の世界',
         description: '【秩序の盾】を破壊',
-        effect: () => targets.forEach(target => Effect.break(stack, stack.processing, target)),
+        effect: () => {
+          targets.forEach(target => {
+            Effect.break(stack, stack.processing, target);
+          });
+        },
         condition: targets.length > 0,
       },
       {
