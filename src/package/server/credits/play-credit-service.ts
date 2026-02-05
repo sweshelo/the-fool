@@ -13,12 +13,17 @@ export class PlayCreditService {
     if (creditsError) return { canPlay: false, reason: 'エラーが発生しました' }; // ゲスト → スキップ
 
     // 2. 1日の無料プレイ上限
-    const { data: dailyLimit } = await client.rpc('get_daily_free_plays');
+    const { data: dailyLimit, error: dailyLimitError } = await client.rpc('get_daily_free_plays');
+    if (dailyLimitError) return { canPlay: false, reason: 'エラーが発生しました' };
 
     // 3. 今日の無料プレイ消費数
-    const { data: todayCount } = await client.rpc('get_today_free_play_count', {
-      p_user_id: playerId,
-    });
+    const { data: todayCount, error: todayCountError } = await client.rpc(
+      'get_today_free_play_count',
+      {
+        p_user_id: playerId,
+      }
+    );
+    if (todayCountError) return { canPlay: false, reason: 'エラーが発生しました' };
 
     const freeRemaining = (dailyLimit ?? 0) - (todayCount ?? 0);
     const totalRemaining = freeRemaining + (credits ?? 0);
