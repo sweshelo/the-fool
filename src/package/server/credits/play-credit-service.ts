@@ -4,13 +4,13 @@ export class PlayCreditService {
   /** プレイ可否チェック */
   async checkEligibility(playerId: string): Promise<{ canPlay: boolean; reason?: string }> {
     const client = getSupabaseClient();
-    if (!client) return { canPlay: true }; // Supabase未設定 → スキップ
+    if (!client) return { canPlay: false, reason: 'エラーが発生しました' }; // Supabase未設定 → スキップ
 
     // 1. ユーザーのクレジット残高を確認（ゲスト判定を兼ねる）
     const { data: credits, error: creditsError } = await client.rpc('get_user_credits', {
       p_user_id: playerId,
     });
-    if (creditsError || credits === null) return { canPlay: true }; // ゲスト → スキップ
+    if (creditsError) return { canPlay: false, reason: 'エラーが発生しました' }; // ゲスト → スキップ
 
     // 2. 1日の無料プレイ上限
     const { data: dailyLimit } = await client.rpc('get_daily_free_plays');
