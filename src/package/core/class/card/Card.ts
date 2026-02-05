@@ -37,8 +37,14 @@ export abstract class Card extends Atom implements ICard {
   }
 
   get currentCost(): number {
-    const [, minStr] = this.catalog.ability?.match(/コストは(\d*)以下にならない/) ?? [, '0'];
-    const [, maxStr] = this.catalog.ability?.match(/コストは(\d*)以上にならない/) ?? [, '99'];
+    const [, minStr] = this.catalog.ability?.match(/コストは(\d*)以下にならない/) ?? [
+      undefined,
+      (this.catalog.cost - 1).toString(),
+    ];
+    const [, maxStr] = this.catalog.ability?.match(/コストは(\d*)以上にならない/) ?? [
+      undefined,
+      (this.catalog.cost + 1).toString(),
+    ];
     const min = parseInt(minStr);
     const max = parseInt(maxStr);
 
@@ -57,7 +63,7 @@ export abstract class Card extends Atom implements ICard {
         })
         .reduce((acc, cur) => acc + cur, 0);
 
-    return Math.min(Math.max(raw, min), max - 1);
+    return Math.min(Math.max(raw, min + 1), max - 1);
   }
 
   abstract clone(owner: Player): Card;
