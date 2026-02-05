@@ -102,7 +102,7 @@ export class Unit extends Card implements IUnit {
       .map(delta => {
         if (delta.effect.type === 'dynamic-cost') {
           // dynamic-costは計算して固定化する
-          const cost = delta.calculator?.(this) ?? 0;
+          const cost = delta.calculator?.(this) ?? delta.effect.diff ?? 0;
           return new Delta({
             type: 'cost',
             value: cost,
