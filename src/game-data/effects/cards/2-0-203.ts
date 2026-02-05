@@ -38,11 +38,7 @@ export const effects: CardEffects = {
 
     if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
 
-    await System.show(
-      stack,
-      '侵攻開始！',
-      'あなたの【昆虫】ユニットを1体選ぶ\nそれに【スピードムーブ】を与える'
-    );
+    await System.show(stack, '侵攻開始！', '【スピードムーブ】を与える');
 
     const [target] = await EffectHelper.pickUnit(
       stack,

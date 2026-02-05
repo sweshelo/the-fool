@@ -19,11 +19,7 @@ export const effects: CardEffects = {
   },
 
   onBootSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    await System.show(
-      stack,
-      '命紡ぐ運命の糸',
-      'あなたの【昆虫】ユニットを1体選ぶ\nそれを手札に戻す'
-    );
+    await System.show(stack, '起動・命紡ぐ運命の糸', '【昆虫】ユニットを手札に戻す');
 
     const [selected] = await EffectHelper.pickUnit(
       stack,
@@ -47,11 +43,7 @@ export const effects: CardEffects = {
     const exists = target.owner.field.some(unit => unit.id === target.id);
     if (!exists) return;
 
-    await System.show(
-      stack,
-      '狂い咲く束縛の糸',
-      '戦闘中の相手ユニットに【攻撃禁止】【防御禁止】を与える'
-    );
+    await System.show(stack, '狂い咲く束縛の糸', '【攻撃禁止】と【防御禁止】を与える');
 
     Effect.keyword(stack, stack.processing, target, '攻撃禁止', { event: 'turnEnd', count: 1 });
     Effect.keyword(stack, stack.processing, target, '防御禁止', { event: 'turnEnd', count: 1 });
