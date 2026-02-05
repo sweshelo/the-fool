@@ -100,13 +100,22 @@ export class Unit extends Card implements IUnit {
           !(delta.effect.type === 'banned')
       )
       .map(delta => {
-        // デスカウンター / 寿命カウンター はそのまま維持、それ以外は永続化
-        const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
-        return new Delta(delta.effect, {
-          ...delta,
-          event: isCounter ? delta.event : undefined,
-          source: isCounter ? delta.source : undefined,
-        });
+        if (delta.effect.type === 'dynamic-cost') {
+          // dynamic-costは計算して固定化する
+          const cost = delta.calculator?.(this) ?? 0;
+          return new Delta({
+            type: 'cost',
+            value: cost,
+          });
+        } else {
+          // デスカウンター / 寿命カウンター はそのまま維持、dynamic-costはcostに変換、それ以外は永続化
+          const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
+          return new Delta(delta.effect, {
+            ...delta,
+            event: isCounter ? delta.event : undefined,
+            source: isCounter ? delta.source : undefined,
+          });
+        }
       });
     unit.active = this.active;
     unit.lv = this.lv;
