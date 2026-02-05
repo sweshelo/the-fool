@@ -13,6 +13,8 @@ import { config } from '@/config';
 import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
 import { GameLogger } from '@/package/logging';
+import type { MatchingMode } from '@/package/server/matching/types';
+import { PlayCreditService } from '@/package/server/credits';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -25,6 +27,9 @@ export class Room {
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
   cache: string | undefined;
   logger: GameLogger;
+  matchingMode?: MatchingMode;
+  private creditService = new PlayCreditService();
+  private creditsConsumed = false;
 
   constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
@@ -101,6 +106,12 @@ export class Room {
         // 2人揃ったらマッチ開始ログを記録
         if (this.core.players.length === 2) {
           this.logger.logMatchStart(this.core).catch(console.error);
+
+          // マッチング対戦のみクレジット消費
+          if (this.matchingMode && !this.creditsConsumed) {
+            this.creditsConsumed = true;
+            this.consumeCreditsForPlayers().catch(console.error);
+          }
         }
       }
       this.sync(true);
@@ -350,6 +361,12 @@ export class Room {
     // 通信した場合はキャッシュを更新
     this.cache = currentHash;
   };
+
+  private async consumeCreditsForPlayers(): Promise<void> {
+    for (const player of this.core.players) {
+      await this.creditService.consumeCredit(player.id, this.id);
+    }
+  }
 
   /**
    * リソースを解放する

@@ -34,6 +34,10 @@ game:
   misc:
     # オーバーライドを厳密にするか
     strictOverride: false
+    # タイムアウトを強制するか
+    autoEndOnTimeout: true
+    # コスト分のライフダメージを与えるか
+    damageAsCost: false
   joker:
     # 自傷ダメージでジョーカーゲージを増加させるか
     suicide: false
