@@ -57,6 +57,8 @@ export class MatchingManager {
             return { success: false, error: 'deck_restriction_violation' };
         }
       }
+      // バリデーション失敗だがエラー詳細がない場合
+      return { success: false, error: 'deck_restriction_violation' };
     }
 
     // 3. キューに追加
