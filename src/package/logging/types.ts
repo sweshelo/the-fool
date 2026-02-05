@@ -22,10 +22,11 @@ export interface MatchStartLog {
   player2_jokers?: string[];
   first_player_index: number;
   seed?: number;
+  matching_mode?: 'freedom' | 'standard' | 'legacy' | 'limited';
 }
 
 /** マッチ終了理由 */
-export type MatchEndReason = 'life_zero' | 'deck_out' | 'disconnect' | 'surrender';
+export type MatchEndReason = 'life_zero' | 'surrender' | 'round_limit' | 'aborted';
 
 /** マッチ終了ログ */
 export interface MatchEndLog {

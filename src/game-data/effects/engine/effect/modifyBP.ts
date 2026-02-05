@@ -1,7 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
 import { Delta } from '@/package/core/class/delta';
-import { createMessage } from '@/submodule/suit/types';
 import type { ModifyBPOption } from './types';
 import { effectBreak } from './break';
 
@@ -32,23 +31,12 @@ export function effectModifyBP(
     );
   }
 
-  stack.core.room.broadcastToAll(
-    createMessage({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'VisualEffect',
-        body: {
-          effect: 'status',
-          type: 'isBaseBP' in option ? 'base-bp' : 'bp',
-          value,
-          unitId: target.id,
-        },
-      },
-    })
-  );
+  stack.core.room.visualEffect({
+    effect: 'status',
+    type: 'isBaseBP' in option ? 'base-bp' : 'bp',
+    value,
+    unitId: target.id,
+  });
 
   stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
 

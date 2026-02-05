@@ -1,4 +1,3 @@
-import { createMessage } from '@/submodule/suit/types';
 import { Player, type CardArrayKeys } from './Player';
 import type { Core } from '../index';
 import type { CatalogWithHandler } from '@/game-data/factory';
@@ -9,6 +8,7 @@ import { Color } from '@/submodule/suit/constant/color';
 import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
 import type { GameEvent } from '@/game-data/effects/schema/events';
+import { createMessage } from '@/submodule/suit/types';
 
 interface IStack {
   /**
@@ -127,6 +127,12 @@ export class Stack implements IStack {
         );
         core.room.soundEffect('clock-up-field');
         core.room.soundEffect('reboot');
+        core.room.visualEffect({
+          effect: 'status',
+          type: 'overclock',
+          unitId: this.target.id,
+          value: 3,
+        });
         core.room.sync();
       } else {
         // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
@@ -465,23 +471,12 @@ export class Stack implements IStack {
       if (!catalog) throw new Error('不正なカードが指定されました');
       if (typeof catalog[effectHandler] === 'function') {
         // 効果実行前に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'effect',
-              handler: 'client',
-            },
-            payload: {
-              type: 'VisualEffect',
-              body: {
-                effect: 'drive',
-                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                player: card.owner.id,
-                type: 'INTERCEPT',
-              },
-            },
-          })
-        );
+        core.room.visualEffect({
+          effect: 'drive',
+          image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+          player: card.owner.id,
+          type: 'INTERCEPT',
+        });
 
         // Intercept を使用した判定にする
         card.remain--;
@@ -620,23 +615,12 @@ export class Stack implements IStack {
           core.room.sync();
 
           // 効果実行前に通知
-          core.room.broadcastToAll(
-            createMessage({
-              action: {
-                type: 'effect',
-                handler: 'client',
-              },
-              payload: {
-                type: 'VisualEffect',
-                body: {
-                  effect: 'drive',
-                  image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                  player: owner.id,
-                  type: 'TRIGGER',
-                },
-              },
-            })
-          );
+          core.room.visualEffect({
+            effect: 'drive',
+            image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+            player: owner.id,
+            type: 'TRIGGER',
+          });
 
           // 呼び出す
           this.processing = card;

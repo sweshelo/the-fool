@@ -8,6 +8,45 @@ import { resolveStack } from './stack-resolver';
 import { setEffectDisplayHandler } from './effect-handler';
 import { attack } from './battle';
 import { MessageHelper } from '../helpers/message';
+import type { SituationCompletedPayload } from '@/submodule/suit/types';
+import type { MatchEndReason } from '@/package/logging/types';
+
+/**
+ * ゲーム終了処理を統一的に行う
+ * - SituationCompleted をブロードキャスト
+ * - Supabase にマッチ終了をログ
+ */
+export async function completeGame(
+  core: Core,
+  winnerId: string | undefined,
+  reason: 'damage' | 'limit' | 'surrender'
+): Promise<void> {
+  // 1. SituationCompleted をブロードキャスト
+  core.room.broadcastToAll(
+    createMessage({
+      action: {
+        type: 'situation',
+        handler: 'client',
+      },
+      payload: {
+        type: 'SituationCompleted',
+        winner: winnerId,
+        reason: reason,
+      } satisfies SituationCompletedPayload,
+    })
+  );
+
+  // 2. winnerIndex を算出（0 or 1, or null if draw）
+  const winnerIndex = winnerId ? core.players.findIndex(p => p.id === winnerId) : null;
+  const validWinnerIndex = winnerIndex === -1 ? null : winnerIndex;
+
+  // 3. MatchEndReason へマッピング
+  const endReason: MatchEndReason =
+    reason === 'damage' ? 'life_zero' : reason === 'surrender' ? 'surrender' : 'round_limit';
+
+  // 4. Supabase にログ記録
+  await core.room.logger.logMatchEnd(core, validWinnerIndex, endReason);
+}
 
 /**
  * ゲーム開始
@@ -162,6 +201,17 @@ export async function turnChange(
     }
 
     core.room.sync();
+
+    // ゲームの終了をチェック
+    if (core.round * 2 === core.turn && core.round === core.room.rule.system.round) {
+      // ライフの多いプレイヤーを取得する（降順ソート）
+      const [winner, loser] = core.players.sort((a, b) => b.life.current - a.life.current);
+      const winnerId =
+        winner?.life.current === loser?.life.current ? core.getTurnPlayer().id : winner?.id;
+
+      await completeGame(core, winnerId, 'limit');
+      return;
+    }
 
     // ターン開始処理
     core.turn++;

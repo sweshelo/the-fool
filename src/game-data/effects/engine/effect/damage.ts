@@ -1,7 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
 import { Delta } from '@/package/core/class/delta';
-import { createMessage } from '@/submodule/suit/types';
 import { effectBreak } from './break';
 
 export function effectDamage(
@@ -42,44 +41,22 @@ export function effectDamage(
     type === 'effect'
   ) {
     stack.core.room.soundEffect('block');
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'status',
-            type: 'base-bp',
-            value: damage,
-            unitId: target.id,
-          },
-        },
-      })
-    );
+    stack.core.room.visualEffect({
+      effect: 'status',
+      type: 'base-bp',
+      value: damage,
+      unitId: target.id,
+    });
     target.bp += damage;
     return false;
   }
 
-  stack.core.room.broadcastToAll(
-    createMessage({
-      action: {
-        type: 'effect',
-        handler: 'client',
-      },
-      payload: {
-        type: 'VisualEffect',
-        body: {
-          effect: 'status',
-          type: 'damage',
-          value: damage,
-          unitId: target.id,
-        },
-      },
-    })
-  );
+  stack.core.room.visualEffect({
+    effect: 'status',
+    type: 'damage',
+    value: damage,
+    unitId: target.id,
+  });
 
   target.delta.push(
     new Delta(

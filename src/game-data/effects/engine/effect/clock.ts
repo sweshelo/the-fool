@@ -1,6 +1,5 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
-import { createMessage } from '@/submodule/suit/types';
 import { effectBreak } from './break';
 import { effectKeyword } from './keyword';
 
@@ -34,23 +33,12 @@ export function effectClock(
       stack.core.room.soundEffect('damage');
     }
 
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'status',
-            type: 'level',
-            value: target.lv,
-            unitId: target.id,
-          },
-        },
-      })
-    );
+    stack.core.room.visualEffect({
+      effect: 'status',
+      type: 'level',
+      value: target.lv - before,
+      unitId: target.id,
+    });
 
     const beforeBBP = target.catalog.bp?.[before - 1] ?? 0;
     const afterBBP = target.catalog.bp?.[target.lv - 1] ?? 0;

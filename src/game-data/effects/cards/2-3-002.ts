@@ -17,7 +17,7 @@ export const effects: CardEffects = {
   // ■チクタクバーン
   // このユニットがプレイヤーアタックに成功した時、対戦相手の【防御禁止】の効果が発動しているユニットを1体選ぶ。
   // それに5000ダメージを与える。
-  onPlayerAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
+  onPlayerAttackSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const opponent = stack.processing.owner.opponent;
 
     // 選択可能なユニットをチェック（防御禁止状態の相手ユニット）

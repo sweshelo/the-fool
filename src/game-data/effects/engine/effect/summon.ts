@@ -2,7 +2,6 @@ import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
 import { Evolve } from '@/package/core/class/card';
 import { Delta } from '@/package/core/class/delta';
-import { createMessage } from '@/submodule/suit/types';
 import { effectKeyword } from './keyword';
 
 export async function effectSummon(
@@ -30,23 +29,12 @@ export async function effectSummon(
     }
     stack.core.room.soundEffect(isCopy ? 'copied' : 'drive');
 
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'drive',
-            image: `https://coj.sega.jp/player/img/${target.catalog.img}`,
-            player: target.owner.id,
-            type: 'UNIT',
-          },
-        },
-      })
-    );
+    stack.core.room.visualEffect({
+      effect: 'drive',
+      image: `https://coj.sega.jp/player/img/${target.catalog.img}`,
+      player: target.owner.id,
+      type: 'UNIT',
+    });
 
     effectKeyword(stack, target, target, '行動制限');
 

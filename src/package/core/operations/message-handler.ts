@@ -1,4 +1,4 @@
-import { createMessage, type Message } from '@/submodule/suit/types/message/message';
+import type { Message } from '@/submodule/suit/types/message/message';
 import type {
   DebugDrawPayload,
   IAtom,
@@ -24,7 +24,7 @@ import { Intercept } from '../class/card/Intercept';
 import { Trigger } from '../class/card/Trigger';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 import { handleEffectResponse, handleContinue } from './effect-handler';
-import { turnChange } from './game-flow';
+import { turnChange, completeGame } from './game-flow';
 import { attack } from './battle';
 import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
@@ -234,23 +234,12 @@ export async function handleMessage(core: Core, message: Message) {
       core.room.soundEffect('evolve');
       core.room.sync();
 
-      core.room.broadcastToAll(
-        createMessage({
-          action: {
-            type: 'effect',
-            handler: 'client',
-          },
-          payload: {
-            type: 'VisualEffect',
-            body: {
-              effect: 'drive',
-              image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
-              player: player.id,
-              type: 'JOKER',
-            },
-          },
-        })
-      );
+      core.room.visualEffect({
+        effect: 'drive',
+        image: `https://coj.sega.jp/player/img/${joker.catalog.img}`,
+        player: player.id,
+        type: 'JOKER',
+      });
 
       // Create and resolve joker stack
       core.histories.push({
@@ -418,6 +407,16 @@ export async function handleMessage(core: Core, message: Message) {
       return;
     }
 
+    case 'Surrender': {
+      const payload = message.payload;
+      await completeGame(
+        core,
+        core.players.find(player => player.id !== payload.player)?.id,
+        'surrender'
+      );
+      break;
+    }
+
     case 'DebugDraw': {
       const payload: DebugDrawPayload = message.payload;
       const target = core.players.find(player => player.id === payload.player);
@@ -479,5 +478,12 @@ export async function handleMessage(core: Core, message: Message) {
   } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
     console.error(e);
+  }
+
+  // ゲームの終了を確認
+  const loser = core.players.filter(player => player.life.current <= 0);
+  if (loser.length > 0) {
+    const winner = core.players.find(player => player.life.current > 0);
+    await completeGame(core, winner?.id, 'damage');
   }
 }

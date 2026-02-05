@@ -9,7 +9,13 @@ const effect = async (stack: StackWithCard, damage: number) => {
 };
 
 export const effects: CardEffects = {
-  checkAttack: stack => stack.source.id !== stack.processing.owner.id,
+  checkAttack: (stack: StackWithCard) => {
+    return (
+      stack.source.id !== stack.processing.owner.id &&
+      stack.processing.owner.opponent.field.some(unit => unit.id === stack.target?.id)
+    );
+  },
+
   onAttack: async (stack: StackWithCard) => {
     switch (stack.processing.lv) {
       case 1: {

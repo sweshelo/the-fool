@@ -1,19 +1,14 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect } from '..';
+import { Effect, EffectHelper } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { System } from '../engine/system';
-import { Color } from '@/submodule/suit/constant/color';
+import { GREEN_COMBO } from '../engine/helper/combo';
 
 export const effects: CardEffects = {
   // ユニット: 連撃・翔翼乱舞
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // このターンにコスト2以上の緑属性のカードを使用しているかチェック
-    const usedGreenCards = stack.core.histories.some(
-      history =>
-        history.card.id !== stack.processing.id && // このユニット以外
-        history.card.catalog.color === Color.GREEN && // 緑属性
-        history.card.catalog.cost >= 2 // コスト2以上
-    );
+    const usedGreenCards = EffectHelper.combo(stack.core, stack.processing, GREEN_COMBO(2));
 
     if (usedGreenCards) {
       await System.show(stack, '連撃・翔翼乱舞', '味方全体の基本BP+1000\n敵全体の基本BP-1000');

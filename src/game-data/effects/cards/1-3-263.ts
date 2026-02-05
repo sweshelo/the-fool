@@ -22,6 +22,8 @@ export const effects: CardEffects = {
 
   // checkDriveメソッド
   checkDrive: (stack: StackWithCard) => {
+    if (stack.source.id !== stack.processing.owner.id) return false;
+
     const ownerTrash = stack.processing.owner.trash.filter(
       card => card.catalog.cost <= 4 && card.catalog.type === 'unit'
     );

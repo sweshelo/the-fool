@@ -8,7 +8,7 @@ export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard) => {
     await System.show(stack, '聖なる領域', '味方全体に【加護】を付与');
     stack.processing.owner.field.forEach(unit =>
-      Effect.keyword(stack, stack.processing, unit, '加護')
+      Effect.keyword(stack, stack.processing, unit, '加護', { event: 'turnEnd', count: 1 })
     );
   },
 };

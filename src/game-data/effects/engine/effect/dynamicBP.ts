@@ -1,7 +1,6 @@
 import type { Stack } from '@/package/core/class/stack';
 import type { Card, Unit } from '@/package/core/class/card';
 import { Delta, type DeltaSource } from '@/package/core/class/delta';
-import { createMessage } from '@/submodule/suit/types';
 import { effectBreak } from './break';
 
 export function effectDynamicBP(
@@ -21,23 +20,12 @@ export function effectDynamicBP(
   );
 
   if (value !== 0) {
-    stack.core.room.broadcastToAll(
-      createMessage({
-        action: {
-          type: 'effect',
-          handler: 'client',
-        },
-        payload: {
-          type: 'VisualEffect',
-          body: {
-            effect: 'status',
-            type: 'bp',
-            value,
-            unitId: target.id,
-          },
-        },
-      })
-    );
+    stack.core.room.visualEffect({
+      effect: 'status',
+      type: 'bp',
+      value,
+      unitId: target.id,
+    });
     stack.core.room.soundEffect(value >= 0 ? 'grow' : 'damage');
   }
 

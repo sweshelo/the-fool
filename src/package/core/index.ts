@@ -142,4 +142,20 @@ export class Core {
   async handleMessage(message: Message) {
     return messageHandler.handleMessage(this, message);
   }
+
+  /**
+   * リソースを解放する
+   * 全プレイヤー切断時に呼び出される
+   */
+  dispose(): void {
+    // 効果応答ハンドラをクリア
+    this.effectResponses.clear();
+
+    // スタックと履歴をクリア
+    this.stack = [];
+    this.histories = [];
+
+    // プレイヤー参照をクリア
+    this.players = [];
+  }
 }
