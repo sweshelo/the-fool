@@ -1,8 +1,9 @@
 import type { Card } from '@/package/core/class/card';
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
+import { GREEN_COMBO } from '../engine/helper/combo';
 
 export const effects: CardEffects = {
   // このユニットがフィールドに出た時、このユニットに【秩序の盾】を付与する。
@@ -11,12 +12,10 @@ export const effects: CardEffects = {
     const self = stack.processing;
 
     // 連撃条件確認: このターンにコスト2以上の緑属性のカードを使用しているか
-    const hasUsedGreenCardThisTurn = stack.core.histories.some(
-      history =>
-        history.card.owner.id === self.owner.id && // あなたのカード
-        history.card.id !== self.id && // このユニット以外
-        history.card.catalog.color === Color.GREEN && // 緑属性
-        history.card.catalog.cost >= 2 // コスト2以上
+    const hasUsedGreenCardThisTurn = EffectHelper.combo(
+      stack.core,
+      stack.processing,
+      GREEN_COMBO(2)
     );
 
     // メッセージ構築と表示
