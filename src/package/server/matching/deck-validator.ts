@@ -80,16 +80,19 @@ export class DeckValidator {
       }
     }
 
-    // 5. 枚数チェック
-    const nameCounts = new Map<string, number>();
-    for (const card of deck) {
-      const count = (nameCounts.get(card.name) ?? 0) + 1;
-      nameCounts.set(card.name, count);
-      if (count > 3 && mode !== 'freedom') {
-        errors.push({
-          type: 'deck_restriction',
-          message: `カード「${card.name}」が3枚を超えています（${count}枚）`,
-        });
+    // 5. 同名カード枚数チェック（freedom以外は3枚まで）
+    if (mode !== 'freedom') {
+      const nameCounts = new Map<string, number>();
+      for (const card of deck) {
+        nameCounts.set(card.name, (nameCounts.get(card.name) ?? 0) + 1);
+      }
+      for (const [name, count] of nameCounts) {
+        if (count > 3) {
+          errors.push({
+            type: 'deck_restriction',
+            message: `カード「${name}」が3枚を超えています（${count}枚）`,
+          });
+        }
       }
     }
 
