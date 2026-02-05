@@ -656,6 +656,8 @@ export class Server {
    * 特定のクライアントにマッチング待機状況を送信する
    */
   private sendMatchingStatusTo(client: ServerWebSocket) {
+    if (client.readyState !== 1) return; // WebSocket.OPEN
+
     const queues = this.matchingManager.getAllQueueSizes();
 
     const payload: MatchingStatusPayload = {
