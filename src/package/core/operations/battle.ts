@@ -5,6 +5,7 @@ import { Stack } from '../class/stack';
 import { Parry } from '../class/parry';
 import { Effect, EffectHelper, System } from '@/game-data/effects';
 import { setEffectDisplayHandler } from './effect-handler';
+import { debug, error as logError } from '@/package/console-logger';
 
 // NOTE: createMessage はブロック候補選択のプロンプト送信で使用されているため、完全に削除しない
 
@@ -17,29 +18,32 @@ import { setEffectDisplayHandler } from './effect-handler';
 export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
   // アタックが可能かチェックする
   if (attacker.hasKeyword('行動制限') || attacker.hasKeyword('攻撃禁止') || !attacker.active) {
-    console.error(
-      '攻撃できないユニットがアタッカーとして指定されました: %s',
-      attacker.catalog.name
+    logError(
+      'Battle',
+      '攻撃できないユニットがアタッカーとして指定されました: %s (id: %s)',
+      attacker.catalog.name,
+      attacker.id
     );
-    console.error(attacker.id);
     return;
   }
 
   if (!attacker.owner.field.find(unit => unit.id === attacker.id)) {
-    console.error(
-      'ユニットのアタックが宣言されましたが、対象のユニットがフィールドに存在しません: %s',
-      attacker.catalog.name
+    logError(
+      'Battle',
+      'ユニットのアタックが宣言されましたが、対象のユニットがフィールドに存在しません: %s (id: %s)',
+      attacker.catalog.name,
+      attacker.id
     );
-    console.error(attacker.id);
     return;
   }
 
   if (core.room.rule.system.handicap.attack && core.round === 1 && core.turn === 1) {
-    console.error(
-      'ルール上アタックできない状況でアタックが宣言されました: %s',
-      attacker.catalog.name
+    logError(
+      'Battle',
+      'ルール上アタックできない状況でアタックが宣言されました: %s (id: %s)',
+      attacker.catalog.name,
+      attacker.id
     );
-    console.error(attacker.id);
     return;
   }
 
@@ -104,7 +108,7 @@ export async function attack(core: Core, attacker: Unit, parentStack?: Stack) {
     }
   } catch (e) {
     if (e instanceof Parry) {
-      console.log(`${e.card.catalog.name} によるパリィが行われました`);
+      debug('Battle', `${e.card.catalog.name} によるパリィが行われました`);
     }
   }
 
@@ -265,7 +269,7 @@ export async function preBattle(core: Core, attacker: Unit, blocker: Unit) {
     target: blocker,
     core: core,
   });
-  console.log('戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
+  debug('Battle', '戦闘Stack: %s vs %s', attacker.catalog.name, blocker.catalog.name);
   await battleStack.resolve(core);
   core.room.sync();
 }

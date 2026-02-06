@@ -9,6 +9,7 @@ import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
 import type { GameEvent } from '@/game-data/effects/schema/events';
 import { createMessage } from '@/submodule/suit/types';
+import { debug, error as logError } from '@/package/console-logger';
 
 interface IStack {
   /**
@@ -95,7 +96,8 @@ export class Stack implements IStack {
   async resolve(core: Core, onlySelfResolve: boolean = false): Promise<void> {
     // Log
     if (!this.type.startsWith('_'))
-      console.log(
+      debug(
+        'Stack',
         '[stack.resolve] Room: %s | event: %s | source: %s | target: %s',
         core.room.id,
         this.type,
@@ -314,7 +316,8 @@ export class Stack implements IStack {
 
     // Log
     if (!this.type.startsWith('_'))
-      console.log(
+      debug(
+        'Stack',
         '[stack.resolve] Finished. Room: %s | event: %s | source: %s | target: %s',
         core.room.id,
         this.type,
@@ -338,7 +341,7 @@ export class Stack implements IStack {
     };
 
     if (this.children.length > 0)
-      console.log('processing %d child stack(s) of %s stack', this.children.length, this.type);
+      debug('Stack', 'processing %d child stack(s) of %s stack', this.children.length, this.type);
 
     // NOTE: ハンデスやダメージ検知など、同時に積まれたStackで複数回反応するのを避けるため、同一のイベントで同一の対象を取る場合は、Stack解決時に本スタック以外を反応させない。
     // (type, owner.id) の組み合わせでユニークなものを追跡
@@ -394,7 +397,7 @@ export class Stack implements IStack {
 
     // destinationに送る
     if (isOnField) {
-      console.log('%s を %s に移動', target.catalog.name, destination);
+      debug('Stack', '%s を %s に移動', target.catalog.name, destination);
       this.core.room.soundEffect(sound);
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.reset();
@@ -549,7 +552,7 @@ export class Stack implements IStack {
         core.room.sync();
       } catch (error) {
         if (error instanceof Parry) throw error;
-        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
+        logError('Stack', `Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
   }
@@ -646,7 +649,7 @@ export class Stack implements IStack {
         return check;
       } catch (error) {
         if (error instanceof Parry) throw error;
-        console.error(`Error processing effect ${handlerName} for card ${card.id}:`, error);
+        logError('Stack', `Error processing effect ${handlerName} for card ${card.id}:`, error);
       }
     }
 

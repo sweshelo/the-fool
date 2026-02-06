@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■援軍／道化師
@@ -39,7 +40,7 @@ export const effects: CardEffects = {
         // 選んだユニットに5000ダメージを与える
         Effect.damage(stack, stack.processing, selected, 5000);
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     }
   },

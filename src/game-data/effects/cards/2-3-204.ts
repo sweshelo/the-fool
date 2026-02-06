@@ -3,6 +3,7 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
 import { Delta } from '@/package/core/class/delta';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // 【消滅効果耐性】
@@ -80,7 +81,7 @@ export const effects: CardEffects = {
           // 選択されたユニットを破壊
           Effect.break(stack, stack.processing, selected);
         } catch (error) {
-          console.error('ユニット選択エラー:', error);
+          logError('CardEffect', 'ユニット選択エラー:', error);
         }
       }
     }

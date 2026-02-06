@@ -10,6 +10,7 @@ import { attack } from './battle';
 import { MessageHelper } from '../helpers/message';
 import type { SituationCompletedPayload } from '@/submodule/suit/types';
 import type { MatchEndReason } from '@/package/logging/types';
+import { debug, info } from '@/package/console-logger';
 
 /**
  * ゲーム終了処理を統一的に行う
@@ -44,7 +45,16 @@ export async function completeGame(
   const endReason: MatchEndReason =
     reason === 'damage' ? 'life_zero' : reason === 'surrender' ? 'surrender' : 'round_limit';
 
-  // 4. Supabase にログ記録
+  // 4. ゲーム終了ログ
+  info(
+    'Matching',
+    'Game ended: room=%s, winner=%s, reason=%s',
+    core.room.id,
+    winnerId ?? 'draw',
+    reason
+  );
+
+  // 5. Supabase にログ記録
   await core.room.logger.logMatchEnd(core, validWinnerIndex, endReason);
 }
 
@@ -225,7 +235,8 @@ export async function turnChange(
   // CP初期化
   const turnPlayer = core.getTurnPlayer();
   if (turnPlayer) {
-    console.log(
+    debug(
+      'Core',
       `[turnChange] Room: %s | ROUND: %s / Turn: %s`,
       core.room.id,
       core.round,

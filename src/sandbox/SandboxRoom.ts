@@ -16,6 +16,7 @@ import type { Message } from '@/submodule/suit/types/message/message';
 import type { ServerWebSocket } from 'bun';
 import { getSandboxConfig } from './config';
 import { loadState } from './StateLoader';
+import { debug, info, warn } from '@/package/console-logger';
 
 export class SandboxRoom extends Room {
   override core: SandboxCore;
@@ -36,11 +37,11 @@ export class SandboxRoom extends Room {
    */
   startSandbox() {
     if (this.core.players.length === 0) {
-      console.warn('[Sandbox] No players in room, cannot start game');
+      warn('Sandbox', 'No players in room, cannot start game');
       return;
     }
 
-    console.log(`[Sandbox] Starting game with ${this.core.players.length} player(s)`);
+    info('Sandbox', `Starting game with ${this.core.players.length} player(s)`);
     // oxlint-disable-next-line no-floating-promises
     this.core.startSandbox();
   }
@@ -50,7 +51,7 @@ export class SandboxRoom extends Room {
    * @param syncBody SyncPayloadのbody部分
    */
   loadState(syncBody: SyncPayload['body']) {
-    console.log('[Sandbox] Loading state from SyncPayload');
+    debug('Sandbox', 'Loading state from SyncPayload');
     loadState(this.core, syncBody);
   }
 
@@ -73,10 +74,10 @@ export class SandboxRoom extends Room {
       // 既存プレイヤーにWebSocketクライアントを関連付ける
       this.clients.set(existingPlayer.id, socket);
       this.players.set(existingPlayer.id, existingPlayer);
-      console.log(`[Sandbox] Player ${playerName} (${playerId}) connected to existing session`);
+      debug('Sandbox', `Player ${playerName} (${playerId}) connected to existing session`);
     } else {
       // loadStateで設定されていないプレイヤーの場合、新規プレイヤーを作成
-      console.log(`[Sandbox] New player ${playerName} (${playerId}) joining sandbox`);
+      debug('Sandbox', `New player ${playerName} (${playerId}) joining sandbox`);
 
       const player = new Player(message.payload.player, this.core);
       this.clients.set(player.id, socket);

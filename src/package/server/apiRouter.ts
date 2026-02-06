@@ -3,6 +3,7 @@ import path from 'path';
 import { isSandboxEnabled, getSandboxConfig, SandboxRoom } from '@/sandbox';
 import type { SyncPayload } from '@/submodule/suit/types/message/payload/client';
 import { Server } from './index';
+import { info, error as logError } from '@/package/console-logger';
 
 type Handler = (req: Request, params: Record<string, string>) => Promise<Response> | Response;
 
@@ -138,7 +139,7 @@ function createSandboxRoomHandler(_req: Request): Response {
   // Register the sandbox room in the server's rooms map
   Server.registerRoom(sandboxRoom);
 
-  console.log(`[Sandbox] Room created with ID: ${sandboxRoom.id}`);
+  info('Sandbox', `Room created with ID: ${sandboxRoom.id}`);
 
   return new Response(
     JSON.stringify({
@@ -189,7 +190,7 @@ async function loadSandboxStateHandler(req: Request): Promise<Response> {
       { status: 200, headers: CORS_HEADERS }
     );
   } catch (error) {
-    console.error('[Sandbox] Failed to load state:', error);
+    logError('Sandbox', 'Failed to load state:', error);
     return new Response(
       JSON.stringify({
         error: 'Failed to load state',
@@ -255,7 +256,7 @@ function destroySandboxRoomHandler(_req: Request): Response {
 
   sandboxRoom = null;
 
-  console.log(`[Sandbox] Room ${roomId} destroyed`);
+  info('Sandbox', `Room ${roomId} destroyed`);
 
   return new Response(
     JSON.stringify({

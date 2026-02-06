@@ -1,6 +1,7 @@
 import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■スクラップ・ポリッシュ
@@ -45,7 +46,7 @@ export const effects: CardEffects = {
         // 選択されたユニットをデッキに戻す
         Effect.bounce(stack, stack.processing, selected, 'deck');
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     }
   },

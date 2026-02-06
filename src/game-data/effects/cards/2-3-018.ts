@@ -2,6 +2,7 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■起動・コンバットエクスチェンジャー
@@ -46,7 +47,7 @@ export const effects: CardEffects = {
           isBaseBP: true,
         });
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     }
   },

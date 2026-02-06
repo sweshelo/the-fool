@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { warn } from '@/package/console-logger';
 
 let supabaseClient: SupabaseClient | null = null;
 
@@ -9,7 +10,7 @@ export function getSupabaseClient(): SupabaseClient | null {
   const key = process.env.SUPABASE_SERVICE_KEY;
 
   if (!url || !key) {
-    console.warn('[Logger] Supabase credentials not configured. Logging disabled.');
+    warn('Logger', 'Supabase credentials not configured. Logging disabled.');
     return null;
   }
 

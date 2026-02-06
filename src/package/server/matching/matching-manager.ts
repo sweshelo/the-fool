@@ -1,5 +1,6 @@
 import { DeckValidator } from './deck-validator';
 import type { JoinResult, MatchingMode, MatchResult, QueuedPlayer } from './types';
+import { info } from '@/package/console-logger';
 
 /**
  * マッチングマネージャー
@@ -71,6 +72,7 @@ export class MatchingManager {
 
     queue.set(queueId, player);
     this.userToQueue.set(player.id, mode);
+    info('Matching', 'Player queued: mode=%s, position=%d', mode, queue.size);
 
     // 4. マッチング試行
     const matchResult = this.tryMatch(mode);
@@ -106,6 +108,7 @@ export class MatchingManager {
       if (player.id === userId) {
         queue.delete(queueId);
         this.userToQueue.delete(userId);
+        info('Matching', 'Player left queue: mode=%s', mode);
         return true;
       }
     }

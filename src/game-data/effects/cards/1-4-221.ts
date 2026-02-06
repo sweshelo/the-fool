@@ -24,23 +24,17 @@ export const effects: CardEffects = {
         '【侍】に【不屈】と【秩序の盾】を与える\n手札から【侍】を捨てる\nデッキから【侍】を選んで引く'
       );
 
-      // Let player choose a Samurai unit from deck
-      try {
-        const [selectedCard] = await EffectHelper.selectCard(
-          stack,
-          owner,
-          samuraiUnitsInDeck,
-          '手札に加えるカードを選択して下さい'
-        );
+      const [selectedCard] = await EffectHelper.selectCard(
+        stack,
+        owner,
+        samuraiUnitsInDeck,
+        '手札に加えるカードを選択して下さい'
+      );
 
-        // Add selected card to hand
-        Effect.move(stack, stack.processing, selectedCard, 'hand');
-        // Discard the selected card
-        Effect.break(stack, stack.processing, discardTarget);
-      } catch (error) {
-        // Failed to select a card, do nothing
-        console.error('Failed to select a card:', error);
-      }
+      // Add selected card to hand
+      Effect.move(stack, stack.processing, selectedCard, 'hand');
+      // Discard the selected card
+      Effect.break(stack, stack.processing, discardTarget);
     } else {
       await System.show(stack, '白拍子の舞子', '【侍】に【不屈】と【秩序の盾】を与える');
     }

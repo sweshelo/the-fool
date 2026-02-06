@@ -1,5 +1,6 @@
 import type { GameActionLog } from './types';
 import { getSupabaseClient } from './supabase-client';
+import { error as logError } from '@/package/console-logger';
 
 export class ActionQueue {
   private queue: GameActionLog[] = [];
@@ -33,7 +34,7 @@ export class ActionQueue {
       const { error } = await client.from('game_actions').insert(batch);
 
       if (error) {
-        console.error('[Logger] Failed to flush actions:', error);
+        logError('Logger', 'Failed to flush actions:', error);
         this.queue.unshift(...batch);
       }
     } finally {

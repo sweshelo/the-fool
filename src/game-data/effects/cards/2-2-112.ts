@@ -2,6 +2,7 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■起動・寒慄の咆哮
@@ -45,7 +46,7 @@ export const effects: CardEffects = {
         Effect.keyword(stack, stack.processing, selectedSelf, '沈黙');
         Effect.keyword(stack, stack.processing, selectedOpponent, '沈黙');
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     }
   },
@@ -74,7 +75,7 @@ export const effects: CardEffects = {
           // 選んだユニットを破壊
           Effect.break(stack, stack.processing, selected);
         } catch (error) {
-          console.error('ユニット選択エラー:', error);
+          logError('CardEffect', 'ユニット選択エラー:', error);
         }
       }
     }

@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '@/package/logging/supabase-client';
+import { error as logError } from '@/package/console-logger';
 
 export class PlayCreditService {
   /** プレイ可否チェック */
@@ -44,6 +45,6 @@ export class PlayCreditService {
       p_deck_id: null,
       p_room_id: roomId,
     });
-    if (error) console.error('[Credits] Failed to consume credit:', error);
+    if (error) logError('Credits', 'Failed to consume credit:', error);
   }
 }

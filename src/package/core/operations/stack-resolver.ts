@@ -1,6 +1,7 @@
 import type { Core } from '../index';
 import { Parry } from '../class/parry';
 import { System } from '@/game-data/effects';
+import { error as logError } from '@/package/console-logger';
 
 /**
  * 現在のスタックを解決する
@@ -25,7 +26,7 @@ export async function resolveStack(core: Core): Promise<void> {
       core.stack = [];
     } catch (error) {
       if (error instanceof Parry) throw error;
-      console.error('Error resolving stack:', error);
+      logError('Stack', 'Error resolving stack:', error);
       core.stack = [];
     }
   }

@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■ライジングストーム
@@ -43,7 +44,7 @@ export const effects: CardEffects = {
         // 選択されたユニットを消滅させる
         Effect.delete(stack, stack.processing, selected);
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     } else {
       await System.show(stack, 'イグナイトフォース', 'レベル+1');
@@ -118,7 +119,7 @@ export const effects: CardEffects = {
           Effect.keyword(stack, stack.processing, unit, '加護');
         });
       } catch (error) {
-        console.error('ユニット選択エラー:', error);
+        logError('CardEffect', 'ユニット選択エラー:', error);
       }
     }
   },
