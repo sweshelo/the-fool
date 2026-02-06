@@ -8,8 +8,7 @@ export const effects: CardEffects = {
   async onDriveSelf(stack: StackWithCard<Unit>) {
     // 全てのユニットを取得
     const allUnits = stack.core.players
-      .map(p => p.field)
-      .flat()
+      .flatMap(p => p.field)
       .filter(unit => unit.id !== stack.processing.id);
 
     if (allUnits.length > 0) {
@@ -26,12 +25,12 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const turnPlayer = stack.core.getTurnPlayer();
 
-    // 自分のターン開始時のみ発動
-    if (owner.id === turnPlayer.id) {
-      await System.show(stack, '母なる揺り籠', '全ユニットに3000ダメージ');
+    // 全てのユニットを取得
+    const allUnits = stack.core.players.flatMap(p => p.field);
 
-      // 全てのユニットを取得
-      const allUnits = stack.core.players.map(p => p.field).flat();
+    // 自分のターン開始時のみ発動
+    if (owner.id === turnPlayer.id && allUnits.length > 0) {
+      await System.show(stack, '母なる揺り籠', '全ユニットに3000ダメージ');
 
       // 全てのユニットに3000ダメージを与える
       for (const unit of allUnits) {
@@ -43,14 +42,18 @@ export const effects: CardEffects = {
   // ■生命の淘汰
   // このユニットが破壊された時、全てのユニットに5000ダメージを与える。
   async onBreakSelf(stack: StackWithCard<Unit>) {
-    await System.show(stack, '生命の淘汰', '全ユニットに5000ダメージ');
+    // 全てのユニットを取得（自身は破壊済なので除外）
+    const allUnits = stack.core.players
+      .flatMap(p => p.field)
+      .filter(unit => unit.id !== stack.processing.id);
 
-    // 全てのユニットを取得
-    const allUnits = stack.core.players.map(p => p.field).flat();
+    if (allUnits.length > 0) {
+      await System.show(stack, '生命の淘汰', '全ユニットに5000ダメージ');
 
-    // 全てのユニットに5000ダメージを与える
-    for (const unit of allUnits) {
-      Effect.damage(stack, stack.processing, unit, 5000);
+      // 全てのユニットに5000ダメージを与える
+      for (const unit of allUnits) {
+        Effect.damage(stack, stack.processing, unit, 5000);
+      }
     }
   },
 };
