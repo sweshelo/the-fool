@@ -401,6 +401,87 @@ class MatchingClient {
 }
 ```
 
+## MatchingStatus（リアルタイム配信）
+
+サーバーは全接続クライアントに対して、マッチングキューの状況とアクティブなゲーム数をリアルタイムで配信します。
+
+### MatchingStatusPayload
+
+```typescript
+interface MatchingStatusPayload {
+  type: 'MatchingStatus';
+  queues: {
+    freedom: number;   // フリーダムモードの待機人数
+    standard: number;  // スタンダードモードの待機人数
+    legacy: number;    // レガシーモードの待機人数
+    limited: number;   // リミテッドモードの待機人数
+  };
+  activeGames: number; // マッチングで作成された進行中の試合数
+  timestamp: number;
+}
+```
+
+### 配信タイミング
+
+以下のイベント発生時に全クライアントに自動配信されます:
+
+- プレイヤーがマッチングキューに参加したとき
+- マッチングが成立したとき（キューの減少 + アクティブゲーム数の増加）
+- プレイヤーがマッチングをキャンセルしたとき
+- プレイヤーが切断してキューから削除されたとき
+- マッチングルームが削除されたとき（全プレイヤー退室・切断時）
+- 定期クリーンアップで空のルームが削除されたとき
+
+### オンデマンド取得
+
+クライアントから `matchingStatus` アクションを送信することで、現在の状況を個別に取得できます。
+
+```typescript
+socket.send(JSON.stringify({
+  action: { type: 'matchingStatus', handler: 'server' },
+  payload: { type: 'MatchingStatusRequest' },
+}));
+```
+
+### 実装例
+
+```typescript
+function handleMatchingStatus(payload: MatchingStatusPayload) {
+  const totalWaiting = payload.queues.freedom + payload.queues.standard
+    + payload.queues.legacy + payload.queues.limited;
+
+  updateUI({
+    waitingPlayers: totalWaiting,
+    activeGames: payload.activeGames,
+    queuesByMode: payload.queues,
+  });
+}
+```
+
+## suit サブモジュール変更
+
+この機能の追加に伴い、[suit](https://github.com/sweshelo/suit) サブモジュールに以下の変更が必要です。
+
+### `types/message/payload/client.ts` - MatchingStatusPayload
+
+`activeGames` フィールドを追加する:
+
+```diff
+ export interface MatchingStatusPayload extends BasePayload {
+   type: 'MatchingStatus';
+   queues: {
+     freedom: number;
+     standard: number;
+     legacy: number;
+     limited: number;
+   };
++  activeGames: number;
+   timestamp: number;
+ }
+```
+
+suit リポジトリ側でこの変更をコミット・プッシュした後、the-fool 側でサブモジュールの参照を更新してください。
+
 ## 関連ドキュメント
 
 - [アーキテクチャ](./architecture.md) - プロジェクト構成の概要

@@ -9,6 +9,10 @@ export const effects: CardEffects = {
     const target = stack.processing.id === stack.target?.id ? stack.source : stack.target;
     if (!(target instanceof Unit)) return;
 
+    // 相手がフィールドに存在するか確認
+    const exists = target.owner.field.some(unit => unit.id === target.id);
+    if (!exists) return;
+
     await System.show(stack, '砂塵の抱擁', '基本BP-3000\n自身を破壊する');
 
     // 相手ユニットの基本BPを-3000する
