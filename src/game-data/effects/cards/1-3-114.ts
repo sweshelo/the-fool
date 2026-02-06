@@ -4,6 +4,10 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
+  onDriveSelf: async (stack: StackWithCard) => {
+    await System.show(stack, 'サポーター／不死', '【不死】のBP+1000');
+  },
+
   onBreak: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
