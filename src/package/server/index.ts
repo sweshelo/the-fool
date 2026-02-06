@@ -429,7 +429,6 @@ export class Server {
       id: user.id,
       socket: client,
       player: payload.player,
-      jokersOwned: payload.jokersOwned,
       queuedAt: Date.now(),
     };
 

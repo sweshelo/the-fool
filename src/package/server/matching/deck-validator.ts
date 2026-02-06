@@ -1,5 +1,5 @@
 import catalog from '@/game-data/catalog';
-import type { Catalog } from '@/submodule/suit/types';
+import type { Catalog, PlayerDeck } from '@/submodule/suit/types';
 import { evaluateCardRestriction, evaluateDeckRestriction } from './card-restrictions';
 import { getModeConfig } from './mode-restrictions';
 import type { MatchingMode, ValidationError, ValidationResult } from './types';
@@ -14,7 +14,8 @@ export class DeckValidator {
   /**
    * デッキを検証する
    */
-  validate(mode: MatchingMode, deckIds: string[]): ValidationResult {
+  validate(mode: MatchingMode, playerDeck: PlayerDeck): ValidationResult {
+    const deckIds = playerDeck.cards;
     const errors: ValidationError[] = [];
     const config = getModeConfig(mode);
 
@@ -71,7 +72,7 @@ export class DeckValidator {
 
     // 4. デッキ全体制限チェック
     if (config.deckRestriction) {
-      const result = evaluateDeckRestriction(deck, config.deckRestriction);
+      const result = evaluateDeckRestriction(playerDeck, config.deckRestriction);
       if (!result.valid) {
         errors.push({
           type: 'deck_restriction',

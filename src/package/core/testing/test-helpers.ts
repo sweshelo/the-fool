@@ -30,8 +30,14 @@ export function createTestContext(): TestContext {
   core = new Core(mockRoom);
   core.turn = 2; // ターン1では攻撃できないため
 
-  const player1 = new Player({ id: 'player1', name: 'Player 1', deck: [] }, core);
-  const player2 = new Player({ id: 'player2', name: 'Player 2', deck: [] }, core);
+  const player1 = new Player(
+    { id: 'player1', name: 'Player 1', deck: { cards: [], jokers: [] } },
+    core
+  );
+  const player2 = new Player(
+    { id: 'player2', name: 'Player 2', deck: { cards: [], jokers: [] } },
+    core
+  );
 
   core.players.push(player1, player2);
 
