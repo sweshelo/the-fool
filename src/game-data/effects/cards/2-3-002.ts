@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■援軍／道化師
@@ -28,20 +27,16 @@ export const effects: CardEffects = {
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'チクタクバーン', '【防御禁止】の敵ユニット1体に5000ダメージ');
 
-      try {
-        // ユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          'ダメージを与えるユニットを選択'
-        );
+      // ユニットを選択
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'ダメージを与えるユニットを選択'
+      );
 
-        // 選んだユニットに5000ダメージを与える
-        Effect.damage(stack, stack.processing, selected, 5000);
-      } catch (error) {
-        logError('CardEffect', 'ユニット選択エラー:', error);
-      }
+      // 選んだユニットに5000ダメージを与える
+      Effect.damage(stack, stack.processing, selected, 5000);
     }
   },
 };

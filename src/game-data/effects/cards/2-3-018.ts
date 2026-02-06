@@ -2,7 +2,6 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■起動・コンバットエクスチェンジャー
@@ -20,35 +19,31 @@ export const effects: CardEffects = {
     if (allUnits.length >= 2) {
       await System.show(stack, 'コンバットエクスチェンジャー', '2体のユニットのBPを入れ替え');
 
-      try {
-        // 1体目のユニットを選択
-        const [firstUnit] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          () => true,
-          'BPを入れ替えるユニットを選択'
-        );
+      // 1体目のユニットを選択
+      const [firstUnit] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        () => true,
+        'BPを入れ替えるユニットを選択'
+      );
 
-        const [secondUnit] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          (unit: Unit) => unit.id !== firstUnit.id,
-          'BPを入れ替えるユニットを選択'
-        );
+      const [secondUnit] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        (unit: Unit) => unit.id !== firstUnit.id,
+        'BPを入れ替えるユニットを選択'
+      );
 
-        // 現在のBPを取得
-        const firstBP = firstUnit.currentBP;
-        const secondBP = secondUnit.currentBP;
+      // 現在のBPを取得
+      const firstBP = firstUnit.currentBP;
+      const secondBP = secondUnit.currentBP;
 
-        // 過不足分を計算し Effect.modifyBP する
-        // FIXME: 間違っている
-        Effect.modifyBP(stack, stack.processing, firstUnit, secondBP - firstBP, { isBaseBP: true });
-        Effect.modifyBP(stack, stack.processing, secondUnit, firstBP - secondBP, {
-          isBaseBP: true,
-        });
-      } catch (error) {
-        logError('CardEffect', 'ユニット選択エラー:', error);
-      }
+      // 過不足分を計算し Effect.modifyBP する
+      // FIXME: 間違っている
+      Effect.modifyBP(stack, stack.processing, firstUnit, secondBP - firstBP, { isBaseBP: true });
+      Effect.modifyBP(stack, stack.processing, secondUnit, firstBP - secondBP, {
+        isBaseBP: true,
+      });
     }
   },
 };

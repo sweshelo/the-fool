@@ -1,7 +1,6 @@
 import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■スクラップ・ポリッシュ
@@ -34,20 +33,16 @@ export const effects: CardEffects = {
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'アージェント・アンガー', 'デッキに戻す');
 
-      try {
-        // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          'アージェント・アンガー'
-        );
+      // 対戦相手のユニットを選択
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'アージェント・アンガー'
+      );
 
-        // 選択されたユニットをデッキに戻す
-        Effect.bounce(stack, stack.processing, selected, 'deck');
-      } catch (error) {
-        logError('CardEffect', 'ユニット選択エラー:', error);
-      }
+      // 選択されたユニットをデッキに戻す
+      Effect.bounce(stack, stack.processing, selected, 'deck');
     }
   },
 };

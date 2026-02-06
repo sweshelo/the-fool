@@ -2,7 +2,6 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { error as logError } from '@/package/console-logger';
 
 export const effects: CardEffects = {
   // ■起動・カムランの決戦
@@ -22,22 +21,18 @@ export const effects: CardEffects = {
     if (opponent.field.length > 0) {
       await System.show(stack, 'カムランの決戦', 'CP-1\n敵ユニット1体に【強制防御】');
 
-      try {
-        // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          owner,
-          'opponents',
-          '【強制防御】を与えるユニットを選択して下さい'
-        );
+      // 対戦相手のユニットを選択
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'opponents',
+        '【強制防御】を与えるユニットを選択して下さい'
+      );
 
-        // 選んだユニットに【強制防御】を与える
-        Effect.keyword(stack, stack.processing, selected, '強制防御');
-        // CPを-1する
-        Effect.modifyCP(stack, stack.processing, owner, -1);
-      } catch (error) {
-        logError('CardEffect', 'ユニット選択エラー:', error);
-      }
+      // 選んだユニットに【強制防御】を与える
+      Effect.keyword(stack, stack.processing, selected, '強制防御');
+      // CPを-1する
+      Effect.modifyCP(stack, stack.processing, owner, -1);
     }
   },
 
