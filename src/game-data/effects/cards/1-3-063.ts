@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     await System.show(
       stack,
       '久遠の秘術',
-      '手札を1枚選んで消滅\n蒼属性のインターセプトカードを2枚引く'
+      '手札を1枚選んで消滅\n青属性のインターセプトカードを2枚引く'
     );
     const [target] = await EffectHelper.selectCard(
       stack,

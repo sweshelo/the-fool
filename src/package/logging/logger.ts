@@ -71,6 +71,7 @@ export class GameLogger {
       player2_deck: player2.library,
       player2_jokers: player2.joker.card.map(j => j.catalogId),
       first_player_index: core.firstPlayerIndex,
+      matching_mode: core.room.matchingMode,
     };
 
     const client = getSupabaseClient();
