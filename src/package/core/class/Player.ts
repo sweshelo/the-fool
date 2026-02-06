@@ -85,8 +85,17 @@ export class Player implements IPlayer {
     };
 
     // ライブラリからデッキを生成する
-    this.library = [...deck];
+    this.library = [...deck.cards];
     this.deck = this.initDeck();
+
+    // ジョーカーを初期化する
+    if (deck.jokers.length > 0) {
+      const jokerIds = core.room.rule.joker.single ? deck.jokers.slice(0, 1) : deck.jokers;
+
+      this.joker.card = jokerIds
+        .filter(jokerId => master.get(jokerId)?.type === 'joker')
+        .map(catalogId => new Joker(this, catalogId));
+    }
   }
 
   initDeck() {

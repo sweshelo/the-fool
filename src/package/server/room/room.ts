@@ -5,8 +5,6 @@ import type {
 } from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
 import { Core } from '../../core';
-import { Joker } from '../../core/class/card/Joker';
-import catalog from '@/game-data/catalog';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
@@ -79,24 +77,6 @@ export class Room {
         this.broadcastToAll(MessageHelper.defrost());
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
-
-        // Initialize jokers from owned JOKER card names
-        if (message.payload.jokersOwned) {
-          const jokerIds = this.rule.joker.single
-            ? message.payload.jokersOwned.slice(0, 1)
-            : message.payload.jokersOwned;
-
-          const ownedJokerAbilities: string[] = [];
-          jokerIds.forEach(jokerCardName => {
-            catalog.forEach(entry => {
-              if (entry.type === 'joker' && entry.id === jokerCardName) {
-                ownedJokerAbilities.push(entry.id);
-              }
-            });
-          });
-
-          player.joker.card = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
-        }
 
         // socket 登録
         this.clients.set(player.id, socket);
