@@ -43,6 +43,7 @@ export class Server {
   private clients: Map<ServerWebSocket, User> = new Map();
   private matchingManager: MatchingManager = new MatchingManager();
   private creditService = new PlayCreditService();
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(port?: number) {
     Server.instance = this;
@@ -107,6 +108,11 @@ export class Server {
         },
       });
     }
+
+    // 定期的に空のルームをクリーンアップする（60秒ごと）
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupEmptyRooms();
+    }, 60_000);
   }
 
   private onOpen(ws: ServerWebSocket) {
@@ -172,9 +178,15 @@ export class Server {
               .logMatchEnd(room.core, winnerIndex === -1 ? null : winnerIndex, 'aborted')
               .catch(console.error);
 
+            const wasMatchingRoom = !!room.matchingMode;
             room.dispose().catch(console.error);
             this.rooms.delete(roomId);
             console.log('room %s has been deleted.', roomId);
+
+            // マッチングルームが削除された場合、アクティブゲーム数の変動を配信
+            if (wasMatchingRoom) {
+              this.broadcastMatchingStatus();
+            }
           }
         }
       }
@@ -587,9 +599,15 @@ export class Server {
 
     // ルームが空になったら破棄
     if (room.clients.size === 0) {
+      const wasMatchingRoom = !!room.matchingMode;
       room.dispose().catch(console.error);
       this.rooms.delete(room.id);
       console.log('room %s has been deleted (all players left).', room.id);
+
+      // マッチングルームが削除された場合、アクティブゲーム数の変動を配信
+      if (wasMatchingRoom) {
+        this.broadcastMatchingStatus();
+      }
     }
   }
 
@@ -622,14 +640,53 @@ export class Server {
   }
 
   /**
+   * マッチングで作成されたアクティブなゲーム数を取得する
+   */
+  private getActiveMatchingGameCount(): number {
+    let count = 0;
+    for (const room of this.rooms.values()) {
+      if (room.matchingMode) count++;
+    }
+    return count;
+  }
+
+  /**
+   * 両プレイヤーが切断済みの空ルームをクリーンアップする
+   */
+  private cleanupEmptyRooms() {
+    const roomsToDelete: string[] = [];
+
+    for (const [roomId, room] of this.rooms.entries()) {
+      if (room.clients.size === 0) {
+        roomsToDelete.push(roomId);
+      }
+    }
+
+    for (const roomId of roomsToDelete) {
+      const room = this.rooms.get(roomId);
+      if (room) {
+        console.log(`[Cleanup] Removing empty room ${roomId}`);
+        room.dispose().catch(console.error);
+        this.rooms.delete(roomId);
+      }
+    }
+
+    if (roomsToDelete.length > 0) {
+      this.broadcastMatchingStatus();
+    }
+  }
+
+  /**
    * 全クライアントにマッチング待機状況を配信する
    */
   private broadcastMatchingStatus() {
     const queues = this.matchingManager.getAllQueueSizes();
+    const activeGames = this.getActiveMatchingGameCount();
 
     const payload: MatchingStatusPayload = {
       type: 'MatchingStatus',
       queues,
+      activeGames,
       timestamp: Date.now(),
     };
 
@@ -658,10 +715,12 @@ export class Server {
     if (client.readyState !== 1) return; // WebSocket.OPEN
 
     const queues = this.matchingManager.getAllQueueSizes();
+    const activeGames = this.getActiveMatchingGameCount();
 
     const payload: MatchingStatusPayload = {
       type: 'MatchingStatus',
       queues,
+      activeGames,
       timestamp: Date.now(),
     };
 
