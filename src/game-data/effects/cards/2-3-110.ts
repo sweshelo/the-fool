@@ -33,20 +33,16 @@ export const effects: CardEffects = {
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'アージェント・アンガー', 'デッキに戻す');
 
-      try {
-        // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          'アージェント・アンガー'
-        );
+      // 対戦相手のユニットを選択
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'アージェント・アンガー'
+      );
 
-        // 選択されたユニットをデッキに戻す
-        Effect.bounce(stack, stack.processing, selected, 'deck');
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
+      // 選択されたユニットをデッキに戻す
+      Effect.bounce(stack, stack.processing, selected, 'deck');
     }
   },
 };

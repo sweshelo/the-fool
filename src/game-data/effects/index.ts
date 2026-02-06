@@ -3,6 +3,7 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { jokerEffects } from './jokers';
 import type { CardEffects } from './schema/types';
+import { info, error as logError } from '@/package/console-logger';
 
 // カード効果のマップ（TDZ回避のためvarを使用）
 // oxlint-disable-next-line no-var
@@ -54,11 +55,11 @@ async function loadCardEffects() {
           effectMap.set(cardId, module.effects);
         }
       } catch (err) {
-        console.error(`Error loading card effect file ${file}:`, err);
+        logError('Effects', `Error loading card effect file ${file}:`, err);
       }
     }
 
-    console.log(`Loaded effects for ${effectMap.size} cards`);
+    info('Effects', `Loaded effects for ${effectMap.size} cards`);
 
     Object.entries(jokerEffects).forEach(([catalogId, effects]) => {
       if (effects) {
@@ -66,10 +67,10 @@ async function loadCardEffects() {
       }
     });
 
-    console.log(`Loaded joker effects for ${Object.entries(jokerEffects).length} abilities`);
+    info('Effects', `Loaded joker effects for ${Object.entries(jokerEffects).length} abilities`);
     effectsLoaded = true;
   } catch (error) {
-    console.error('Failed to load card effects:', error);
+    logError('Effects', 'Failed to load card effects:', error);
   }
 }
 

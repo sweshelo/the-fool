@@ -24,29 +24,25 @@ export const effects: CardEffects = {
     ) {
       await System.show(stack, '寒慄の咆哮', '味方と敵それぞれ1体に【沈黙】');
 
-      try {
-        // 自分のユニットを選択
-        const [selectedSelf] = await EffectHelper.pickUnit(
-          stack,
-          owner,
-          'owns',
-          '【沈黙】を与えるユニットを選択して下さい'
-        );
+      // 自分のユニットを選択
+      const [selectedSelf] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'owns',
+        '【沈黙】を与えるユニットを選択して下さい'
+      );
 
-        // 対戦相手のユニットを選択
-        const [selectedOpponent] = await EffectHelper.pickUnit(
-          stack,
-          owner,
-          'opponents',
-          '【沈黙】を与えるユニットを選択して下さい'
-        );
+      // 対戦相手のユニットを選択
+      const [selectedOpponent] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'opponents',
+        '【沈黙】を与えるユニットを選択して下さい'
+      );
 
-        // 選んだユニットに【沈黙】を与える
-        Effect.keyword(stack, stack.processing, selectedSelf, '沈黙');
-        Effect.keyword(stack, stack.processing, selectedOpponent, '沈黙');
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
+      // 選んだユニットに【沈黙】を与える
+      Effect.keyword(stack, stack.processing, selectedSelf, '沈黙');
+      Effect.keyword(stack, stack.processing, selectedOpponent, '沈黙');
     }
   },
 
@@ -62,20 +58,16 @@ export const effects: CardEffects = {
       if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
         await System.show(stack, 'ガンマレイ', '【沈黙】状態の敵ユニット1体を破壊');
 
-        try {
-          // ユニットを選択
-          const [selected] = await EffectHelper.pickUnit(
-            stack,
-            stack.processing.owner,
-            filter,
-            '破壊するユニットを選択して下さい'
-          );
+        // ユニットを選択
+        const [selected] = await EffectHelper.pickUnit(
+          stack,
+          stack.processing.owner,
+          filter,
+          '破壊するユニットを選択して下さい'
+        );
 
-          // 選んだユニットを破壊
-          Effect.break(stack, stack.processing, selected);
-        } catch (error) {
-          console.error('ユニット選択エラー:', error);
-        }
+        // 選んだユニットを破壊
+        Effect.break(stack, stack.processing, selected);
       }
     }
   },

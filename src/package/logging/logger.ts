@@ -11,6 +11,7 @@ import type {
 } from './types';
 import { ActionQueue } from './queue';
 import { getSupabaseClient } from './supabase-client';
+import { error as logError } from '@/package/console-logger';
 
 const defaultConfig: LoggerConfig = {
   enabled: true,
@@ -50,7 +51,7 @@ export class GameLogger {
     if (!client) return;
 
     const { error } = await client.from('rooms').insert(log);
-    if (error) console.error('[Logger] Failed to log room creation:', error);
+    if (error) logError('Logger', 'Failed to log room creation:', error);
   }
 
   /** マッチ開始をログ */
@@ -80,7 +81,7 @@ export class GameLogger {
     const { data, error } = await client.from('matches').insert(log).select('id').single();
 
     if (error) {
-      console.error('[Logger] Failed to log match start:', error);
+      logError('Logger', 'Failed to log match start:', error);
       return null;
     }
 
@@ -163,7 +164,7 @@ export class GameLogger {
       })
       .eq('id', this.matchId);
 
-    if (error) console.error('[Logger] Failed to log match end:', error);
+    if (error) logError('Logger', 'Failed to log match end:', error);
 
     this.matchId = null;
   }

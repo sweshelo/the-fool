@@ -26,25 +26,20 @@ export const effects: CardEffects = {
         '敵の行動済ユニット1体を消滅\nレベル+1'
       );
 
-      // ユニットを選択
-      try {
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          'ライジングストーム'
-        );
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        'ライジングストーム'
+      );
 
-        // 機械ユニットのレベルを+1する
-        machineUnits.forEach(unit => {
-          Effect.clock(stack, stack.processing, unit, 1);
-        });
+      // 機械ユニットのレベルを+1する
+      machineUnits.forEach(unit => {
+        Effect.clock(stack, stack.processing, unit, 1);
+      });
 
-        // 選択されたユニットを消滅させる
-        Effect.delete(stack, stack.processing, selected);
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
+      // 選択されたユニットを消滅させる
+      Effect.delete(stack, stack.processing, selected);
     } else {
       await System.show(stack, 'イグナイトフォース', 'レベル+1');
       // 機械ユニットのレベルを+1する
@@ -103,23 +98,19 @@ export const effects: CardEffects = {
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'デュアルシールド', '【機械】ユニットに【加護】');
 
-      try {
-        // ユニットを選択（最大2体）
-        const selected = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          filter,
-          '【加護】を与えるユニットを選択して下さい',
-          2
-        );
+      // ユニットを選択（最大2体）
+      const selected = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '【加護】を与えるユニットを選択して下さい',
+        2
+      );
 
-        // 選択されたユニットに【加護】を与える
-        selected.forEach(unit => {
-          Effect.keyword(stack, stack.processing, unit, '加護');
-        });
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
+      // 選択されたユニットに【加護】を与える
+      selected.forEach(unit => {
+        Effect.keyword(stack, stack.processing, unit, '加護');
+      });
     }
   },
 };

@@ -13,6 +13,7 @@ import { Intercept } from '@/package/core/class/card';
 import { GameLogger } from '@/package/logging';
 import type { MatchingMode } from '@/package/server/matching/types';
 import { PlayCreditService } from '@/package/server/credits';
+import { debug, warn } from '@/package/console-logger';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -39,7 +40,7 @@ export class Room {
 
   // メッセージを処理
   handleMessage(socket: ServerWebSocket, message: Message) {
-    console.log('handling message on Room: %s', message.action.type);
+    debug('Room', 'handling message on Room: %s', message.action.type);
     switch (message.action.type) {
       case 'join':
         this.join(socket, message);
@@ -117,7 +118,7 @@ export class Room {
     if (client) {
       client.send(JSON.stringify(message));
     } else {
-      console.warn(`Failed to broadcast to player ${playerId}: Player not found`);
+      warn('Room', `Failed to broadcast to player ${playerId}: Player not found`);
     }
   }
 

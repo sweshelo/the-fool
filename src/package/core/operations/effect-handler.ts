@@ -1,4 +1,5 @@
 import type { Core } from '../index';
+import { warn } from '@/package/console-logger';
 
 type EffectResponseCallback = Function;
 
@@ -34,7 +35,7 @@ export function handleEffectResponse(
     handler(response);
     core.effectResponses.delete(promptId);
   } else {
-    console.warn(`[Core ${core.id}] No handler found for prompt ${promptId}`);
+    warn('Core', `No handler found for prompt ${promptId} (core: ${core.id})`);
   }
 }
 
@@ -50,6 +51,6 @@ export function handleContinue(core: Core, promptId: string): void {
     handler();
     core.effectResponses.delete(promptId);
   } else {
-    console.warn(`[Core ${core.id}] No handler found for prompt ${promptId}`);
+    warn('Core', `No handler found for prompt ${promptId} (core: ${core.id})`);
   }
 }

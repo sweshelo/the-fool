@@ -11,6 +11,7 @@ import type { Player } from '@/package/core/class/Player';
 import { MessageHelper } from '@/package/core/helpers/message';
 import { createMessage } from '@/submodule/suit/types/message/message';
 import { Stack } from '@/package/core/class/stack';
+import { debug } from '@/package/console-logger';
 
 export class SandboxCore extends Core {
   /** サンドボックスモードかどうか */
@@ -28,13 +29,13 @@ export class SandboxCore extends Core {
     // 同じIDのプレイヤーが既に存在するか確認
     const existingPlayerIndex = this.players.findIndex(p => p.id === player.id);
     if (existingPlayerIndex >= 0) {
-      console.log(`[Sandbox] Player with ID ${player.id} already exists. Replacing.`);
+      debug('Sandbox', `Player with ID ${player.id} already exists. Replacing.`);
       this.players.splice(existingPlayerIndex, 1);
     }
 
     this.players.push(player);
     this.room.broadcastToPlayer(player.id, MessageHelper.freeze());
-    console.log('[Sandbox] Player %s added in room %s', player.id, this.room.id);
+    debug('Sandbox', 'Player %s added in room %s', player.id, this.room.id);
 
     // サンドボックスモードでは自動開始しない
     // startSandbox() を明示的に呼び出す必要がある
@@ -45,7 +46,7 @@ export class SandboxCore extends Core {
    * マリガンをスキップし、即座にゲームを開始する
    */
   async startSandbox() {
-    console.log('[Sandbox] Starting sandbox game...');
+    debug('Sandbox', 'Starting sandbox game...');
 
     // ターンプレイヤーを解凍
     if (this.players.length > 0) {
@@ -115,8 +116,9 @@ export class SandboxCore extends Core {
     // CP初期化
     const turnPlayer = this.getTurnPlayer();
     if (turnPlayer) {
-      console.log(
-        `[Sandbox][turnChange] Room: %s | ROUND: %s / Turn: %s`,
+      debug(
+        'Sandbox',
+        `[turnChange] Room: %s | ROUND: %s / Turn: %s`,
         this.room.id,
         this.round,
         this.turn

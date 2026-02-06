@@ -21,22 +21,18 @@ export const effects: CardEffects = {
     if (opponent.field.length > 0) {
       await System.show(stack, 'カムランの決戦', 'CP-1\n敵ユニット1体に【強制防御】');
 
-      try {
-        // 対戦相手のユニットを選択
-        const [selected] = await EffectHelper.pickUnit(
-          stack,
-          owner,
-          'opponents',
-          '【強制防御】を与えるユニットを選択して下さい'
-        );
+      // 対戦相手のユニットを選択
+      const [selected] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'opponents',
+        '【強制防御】を与えるユニットを選択して下さい'
+      );
 
-        // 選んだユニットに【強制防御】を与える
-        Effect.keyword(stack, stack.processing, selected, '強制防御');
-        // CPを-1する
-        Effect.modifyCP(stack, stack.processing, owner, -1);
-      } catch (error) {
-        console.error('ユニット選択エラー:', error);
-      }
+      // 選んだユニットに【強制防御】を与える
+      Effect.keyword(stack, stack.processing, selected, '強制防御');
+      // CPを-1する
+      Effect.modifyCP(stack, stack.processing, owner, -1);
     }
   },
 

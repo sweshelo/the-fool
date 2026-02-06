@@ -16,6 +16,7 @@ import { Delta } from '@/package/core/class/delta';
 import { DummyCard, DummyUnit } from './DummyCard';
 import catalog from '@/game-data/catalog';
 import { isGameEvent } from '@/game-data/effects/schema/events';
+import { debug, warn } from '@/package/console-logger';
 
 /**
  * IAtomまたはICard型のデータからカードオブジェクトを復元する
@@ -164,7 +165,7 @@ export function loadState(core: Core, syncBody: SyncPayload['body']): void {
       if (playerData) {
         const player = createSandboxPlayer(playerId, playerData, core);
         core.players.push(player);
-        console.log(`[StateLoader] Created player: ${player.name} (${player.id})`);
+        debug('StateLoader', `Created player: ${player.name} (${player.id})`);
       }
     }
   } else {
@@ -172,7 +173,7 @@ export function loadState(core: Core, syncBody: SyncPayload['body']): void {
     core.players.forEach(player => {
       const playerData = playersData[player.id];
       if (!playerData) {
-        console.warn(`Player data not found for ${player.id}`);
+        warn('StateLoader', `Player data not found for ${player.id}`);
         return;
       }
 

@@ -30,6 +30,7 @@ import { drive, fieldEffectUnmount } from './card-operations';
 import { resolveStack } from './stack-resolver';
 import { MessageHelper } from '../helpers/message';
 import { Joker } from '../class/card/Joker';
+import { debug, error as logError, warn } from '@/package/console-logger';
 
 /**
  * クライアントからのメッセージを処理する
@@ -37,7 +38,8 @@ import { Joker } from '../class/card/Joker';
  * @param message メッセージ
  */
 export async function handleMessage(core: Core, message: Message) {
-  console.log(
+  debug(
+    'Core',
     '[handleMessage] action: %s | payload: %s',
     message.action.type,
     message.payload.type
@@ -45,7 +47,8 @@ export async function handleMessage(core: Core, message: Message) {
 
   // Continue以外のアクションログを記録
   if (message.payload.type !== 'Continue') {
-    core.room.logger.logAction(core, message);
+    // TODO: UUIDをログに残してもゲーム状態の再現ができないため、一旦保留
+    // core.room.logger.logAction(core, message);
   }
 
   switch (message.payload.type) {
@@ -105,7 +108,7 @@ export async function handleMessage(core: Core, message: Message) {
       const player = core.players.find(p => p.id === payload.player);
       const { card } = player?.find({ ...payload.target } satisfies IAtom) ?? {};
       if (!card || !player) {
-        console.log(payload);
+        debug('Core', 'Invalid payload:', payload);
         throw new Error('指定されたCardかPlayerのどちらかが不正でした');
       }
 
@@ -142,12 +145,12 @@ export async function handleMessage(core: Core, message: Message) {
           source?.catalog.species?.includes('ウィルス') || source?.hasKeyword('進化禁止');
 
         if (notEvolvable) {
-          console.error('進化できないユニットが進化元に指定されました');
+          logError('Core', '進化できないユニットが進化元に指定されました');
           return;
         }
 
         if (!source) {
-          console.error('進化ユニットが召喚されようとしましたが source が不正でした');
+          logError('Core', '進化ユニットが召喚されようとしましたが source が不正でした');
           return;
         }
       }
@@ -400,7 +403,7 @@ export async function handleMessage(core: Core, message: Message) {
       if (mulliganPromptId) {
         handleEffectResponse(core, mulliganPromptId, [payload.action]);
       } else {
-        console.warn(`[Core ${core.id}] No mulligan handler found for player ${payload.player}`);
+        warn('Core', `No mulligan handler found for player ${payload.player} (core: ${core.id})`);
       }
 
       // マリガン中は後処理を実行させない
@@ -477,7 +480,7 @@ export async function handleMessage(core: Core, message: Message) {
     await resolveStack(core);
   } catch (e) {
     // ゲームが開始されるまでは getTurnPlayer()? は利用できないため握りつぶす
-    console.error(e);
+    logError('Core', 'Error in post-message processing:', e);
   }
 
   // ゲームの終了を確認

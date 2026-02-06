@@ -23,6 +23,7 @@ import { PlayCreditService } from '@/package/server/credits';
 import type { MatchingMode, QueuedPlayer, MatchResult } from './matching';
 import { config } from '@/config';
 import type { Rule } from '@/submodule/suit/types';
+import { info, error as logError } from '@/package/console-logger';
 
 class ServerError extends Error {
   constructor(
@@ -47,18 +48,18 @@ export class Server {
   constructor(port?: number) {
     Server.instance = this;
     const serverPort = port || process.env.PORT;
-    console.log(`PORT: ${serverPort}`);
+    info('Server', `PORT: ${serverPort}`);
 
     if (process.env.USE_TLS === 'true') {
-      console.log('Running server with TLS enabled');
+      info('Server', 'Running server with TLS enabled');
 
       // Use Bun's built-in file reading capability with full path from project root
       const projectRoot = process.cwd();
       const keyPath = `${projectRoot}/certs/key.pem`;
       const certPath = `${projectRoot}/certs/cert.pem`;
 
-      console.log(`Key path: ${keyPath}`);
-      console.log(`Cert path: ${certPath}`);
+      info('Server', `Key path: ${keyPath}`);
+      info('Server', `Cert path: ${certPath}`);
 
       import('fs')
         .then(fs => {
@@ -87,11 +88,11 @@ export class Server {
           });
         })
         .catch(err => {
-          console.error('Failed to read certificate files:', err);
+          logError('Server', 'Failed to read certificate files:', err);
           throw new Error('Unable to start TLS server due to certificate error');
         });
     } else {
-      console.log('Running server without TLS (HTTP mode)');
+      info('Server', 'Running server without TLS (HTTP mode)');
       Bun.serve({
         port: serverPort,
         fetch: async (req, server) => {
@@ -124,6 +125,7 @@ export class Server {
     if (disconnectedUser) {
       const wasInQueue = this.matchingManager.leave(disconnectedUser.id);
       if (wasInQueue) {
+        info('Matching', 'Player removed from queue on disconnect');
         // キューから削除されたので全クライアントにステータスを配信
         this.broadcastMatchingStatus();
       }
@@ -174,7 +176,7 @@ export class Server {
 
             room.dispose().catch(console.error);
             this.rooms.delete(roomId);
-            console.log('room %s has been deleted.', roomId);
+            info('Room', 'room %s has been deleted.', roomId);
           }
         }
       }
@@ -193,7 +195,7 @@ export class Server {
       const message: Message = JSON.parse(data);
       this.handleMessage(ws, message);
     } catch (error) {
-      console.error('Invalid message format:', error);
+      logError('Server', 'Invalid message format:', error);
 
       // JSONパースエラーの場合は適切なエラーコードを送信
       const errorPayload: ErrorPayload = {
@@ -288,7 +290,7 @@ export class Server {
           const room = this.getRoom(client);
           // oxlint-disable-next-line no-floating-promises
           room?.core.handleMessage(message).catch(e => {
-            console.error('メッセージハンドリング中にエラーが発生しました。', e);
+            logError('Server', 'メッセージハンドリング中にエラーが発生しました。', e);
             room.broadcastToPlayer(room.core.getTurnPlayer().id, MessageHelper.defrost());
           });
           break;
@@ -297,7 +299,7 @@ export class Server {
           this.handleMessageForServer(client, message);
       }
     } catch (e) {
-      console.error(e);
+      logError('Server', 'Error handling message:', e);
 
       let errorCode: ErrorCode;
       let message: string;
@@ -372,7 +374,7 @@ export class Server {
           // oxlint-disable-next-line no-unsafe-type-assertion
           this.handleMatchingStart(client, message as Message<MatchingStartRequestPayload>).catch(
             e => {
-              console.error('[Matching] Error during matching start:', e);
+              logError('Matching', 'Error during matching start:', e);
               this.sendError(
                 client,
                 ErrorCode.SYS_INTERNAL_ERROR,
@@ -564,10 +566,14 @@ export class Server {
     this.clientRooms.set(player1.socket, room.id);
     this.clientRooms.set(player2.socket, room.id);
 
-    console.log(
-      `[Matching] Room ${room.id} created for mode ${mode}: ${player1.player.name} vs ${player2.player.name}`
+    info(
+      'Matching',
+      'Match created: mode=%s, room=%s, %s vs %s',
+      mode,
+      room.id,
+      player1.player.name,
+      player2.player.name
     );
-    console.log(`[Matching] Waiting for PlayerEntry from both clients...`);
   }
 
   /**
@@ -583,13 +589,13 @@ export class Server {
     room.clients.delete(user.playerId);
     this.clientRooms.delete(client);
 
-    console.log(`[Room ${room.id}] Player ${user.playerId} left the room cleanly.`);
+    info('Room', `Player ${user.playerId} left room ${room.id} cleanly.`);
 
     // ルームが空になったら破棄
     if (room.clients.size === 0) {
       room.dispose().catch(console.error);
       this.rooms.delete(room.id);
-      console.log('room %s has been deleted (all players left).', room.id);
+      info('Room', 'room %s has been deleted (all players left).', room.id);
     }
   }
 
@@ -681,11 +687,11 @@ export class Server {
    */
   static registerRoom(room: Room): boolean {
     if (!Server.instance) {
-      console.error('[Server] No server instance available');
+      logError('Server', 'No server instance available');
       return false;
     }
     Server.instance.rooms.set(room.id, room);
-    console.log(`[Server] Room ${room.id} registered`);
+    info('Server', `Room ${room.id} registered`);
     return true;
   }
 
@@ -694,7 +700,7 @@ export class Server {
    */
   static unregisterRoom(roomId: string): boolean {
     if (!Server.instance) {
-      console.error('[Server] No server instance available');
+      logError('Server', 'No server instance available');
       return false;
     }
     const room = Server.instance.rooms.get(roomId);
@@ -703,7 +709,7 @@ export class Server {
     }
     const deleted = Server.instance.rooms.delete(roomId);
     if (deleted) {
-      console.log(`[Server] Room ${roomId} unregistered`);
+      info('Server', `Room ${roomId} unregistered`);
     }
     return deleted;
   }

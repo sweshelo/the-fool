@@ -11,6 +11,7 @@ import * as cardOperations from './operations/card-operations';
 import * as battle from './operations/battle';
 import * as gameFlow from './operations/game-flow';
 import * as messageHandler from './operations/message-handler';
+import { info } from '@/package/console-logger';
 
 export interface History {
   card: Card;
@@ -41,7 +42,7 @@ export class Core {
     // 同じIDのプレイヤーが既に存在するか確認
     const existingPlayerIndex = this.players.findIndex(p => p.id === player.id);
     if (existingPlayerIndex >= 0) {
-      console.log(`Player with ID ${player.id} already exists. Replacing.`);
+      info('Core', `Player with ID ${player.id} already exists. Replacing.`);
       // 既存のプレイヤーを削除
       this.players.splice(existingPlayerIndex, 1);
     }
@@ -51,13 +52,14 @@ export class Core {
       action: { type: 'operation', handler: 'client' },
       payload: { type: 'Operation', action: 'freeze' },
     });
-    console.log('Player %s added in room %s', player.id, this.room.id);
+    info('Core', 'Player %s added in room %s', player.id, this.room.id);
 
     // 2人が揃ったら開始
     if (this.players.length >= 2) {
       // 先攻をランダムに決定 (0 or 1)
       this.firstPlayerIndex = Math.floor(Math.random() * 2);
-      console.log(
+      info(
+        'Core',
         'First player decided: %s (index: %s)',
         this.players[this.firstPlayerIndex]?.id,
         this.firstPlayerIndex
