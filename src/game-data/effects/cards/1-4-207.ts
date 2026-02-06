@@ -17,13 +17,13 @@ export const effects: CardEffects = {
 
     if (damage <= 0) return;
 
-    await System.show(stack, '神炎無双剣', `[手札の枚数×1500]ダメージ`);
+    await System.show(stack, '神炎無双剣', '[手札の枚数×1500]ダメージ');
 
     const [target] = await EffectHelper.pickUnit(
       stack,
       owner,
       'opponents',
-      `ダメージを与えるユニットを選択してください`
+      'ダメージを与えるユニットを選択してください'
     );
 
     Effect.damage(stack, stack.processing, target, damage);
