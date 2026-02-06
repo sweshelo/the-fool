@@ -25,7 +25,7 @@ export const effects: CardEffects = {
       stack,
       stack.processing.owner,
       getExceptSelfOwnInsectFilter(stack.processing),
-      '命紡ぐ運命の糸'
+      '手札に戻すユニットを選択してください'
     );
 
     if (selected) {
