@@ -45,7 +45,8 @@ export async function handleMessage(core: Core, message: Message) {
 
   // Continue以外のアクションログを記録
   if (message.payload.type !== 'Continue') {
-    core.room.logger.logAction(core, message);
+    // TODO: UUIDをログに残してもゲーム状態の再現ができないため、一旦保留
+    // core.room.logger.logAction(core, message);
   }
 
   switch (message.payload.type) {
