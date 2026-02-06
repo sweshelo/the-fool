@@ -134,7 +134,7 @@ function createSandboxPlayer(playerId: string, data: IPlayer, core: Core): Playe
     {
       id: playerId,
       name: data.name,
-      deck: [], // 空のデッキで作成
+      deck: { cards: [], jokers: [] }, // 空のデッキで作成
     },
     core
   );

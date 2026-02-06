@@ -1,5 +1,5 @@
 import type { ServerWebSocket } from 'bun';
-import type { Rule } from '@/submodule/suit/types';
+import type { PlayerDeck, Rule } from '@/submodule/suit/types';
 
 /**
  * マッチングモード
@@ -15,9 +15,8 @@ export interface QueuedPlayer {
   player: {
     name: string;
     id: string;
-    deck: string[];
+    deck: PlayerDeck;
   };
-  jokersOwned?: string[];
   queuedAt: number;
 }
 
