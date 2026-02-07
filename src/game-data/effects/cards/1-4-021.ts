@@ -29,6 +29,7 @@ export const effects: CardEffects = {
         description: '【スピードムーブ】を得る',
         effect: () => Effect.speedMove(stack, self),
         condition: hasRedUnit,
+        order: 2,
       },
       // 黄属性の効果
       {
@@ -44,6 +45,7 @@ export const effects: CardEffects = {
           Effect.bounce(stack, self, target);
         },
         condition: canSelectOpponent,
+        order: 1,
       },
     ]);
   },

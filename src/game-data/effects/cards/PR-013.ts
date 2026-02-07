@@ -39,11 +39,10 @@ export const effects: CardEffects = {
       // トリガーゾーンに空きがあるか確認
       if (owner.trigger.length >= stack.core.room.rule.player.max.trigger) return;
 
-      // デッキに赤属性のインターセプトカードがあるか確認
+      // デッキ内の赤属性のインターセプトカード
       const intercepts = owner.deck.filter(
         card => card.catalog.type === 'intercept' && card.catalog.color === Color.RED
       );
-      if (intercepts.length === 0) return;
 
       await System.show(stack, '魔校マニフェスト', '赤属性のインターセプトカードをセット');
 
