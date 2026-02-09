@@ -25,7 +25,7 @@ export const effects: CardEffects = {
           'ダメージを与えるユニットを選択',
           1
         );
-        Effect.damage(stack, stack.processing, target, damage, 'effect', '墜天の刻印');
+        Effect.damage(stack, stack.processing, target, damage, 'effect');
       }
     }
   },
