@@ -20,7 +20,7 @@ export const effects: CardEffects = {
       stack.source instanceof Unit &&
       stack.source.catalog.species?.includes('道化師') === true &&
       stack.processing.owner.id === stack.source.owner.id &&
-      stack.processing.owner.opponent.field.length > 0
+      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     );
   },
 
