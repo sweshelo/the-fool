@@ -17,6 +17,6 @@ export const effects: CardEffects = {
     });
 
     // 捨札に送られる代わりに手札に戻る
-    Effect.move(stack, stack.processing, stack.processing, 'hand');
+    Effect.bounce(stack, stack.processing, stack.processing, 'hand');
   },
 };

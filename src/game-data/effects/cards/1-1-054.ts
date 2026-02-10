@@ -1,3 +1,4 @@
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -10,7 +11,7 @@ export const effects: CardEffects = {
   onBreakSelf: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
     const dragonUnits = owner.hand.filter(
-      card => card.catalog.type === 'unit' && card.catalog.species?.includes('ドラゴン')
+      card => card instanceof Unit && card.catalog.species?.includes('ドラゴン')
     );
 
     if (dragonUnits.length > 0) {

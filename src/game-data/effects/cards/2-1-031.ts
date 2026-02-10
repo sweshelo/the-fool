@@ -3,7 +3,7 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  checkAttack: async (stack: StackWithCard) => {
+  checkAttack: (stack: StackWithCard) => {
     return (
       stack.processing.owner.id !== stack.source.id &&
       stack.processing.owner.field.length <= 4 &&
