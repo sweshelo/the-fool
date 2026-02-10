@@ -204,8 +204,8 @@ export async function turnChange(
 
     // ゲームの終了をチェック
     if (core.round * 2 === core.turn && core.round === core.room.rule.system.round) {
-      // ライフの多いプレイヤーを取得する（降順ソート）
-      const [winner, loser] = core.players.sort((a, b) => b.life.current - a.life.current);
+      // ライフの多いプレイヤーを取得する（降順ソート、元配列を破壊しないようコピー）
+      const [winner, loser] = [...core.players].sort((a, b) => b.life.current - a.life.current);
       const winnerId =
         winner?.life.current === loser?.life.current ? core.getTurnPlayer().id : winner?.id;
 
