@@ -19,15 +19,13 @@ export const effects: CardEffects = {
     return (
       stack.source instanceof Unit &&
       stack.source.catalog.species?.includes('道化師') === true &&
-      stack.processing.owner.id === stack.source.owner.id
+      stack.processing.owner.id === stack.source.owner.id &&
+      stack.processing.owner.opponent.field.length > 0
     );
   },
 
   onPlayerAttack: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
-
-    // 対戦相手のフィールドにユニットがいるか確認
-    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
 
     await System.show(stack, 'ピエロ達の宴', '手札に戻す');
 

@@ -39,6 +39,8 @@ export const effects: CardEffects = {
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     if (!stack.processing.owner.purple || stack.processing.owner.purple < 3) return;
+    //相手フィールドが0体なら処理しない
+    if (stack.processing.owner.opponent.field.length === 0) return;
     const breakCount = stack.processing.owner.opponent.field.filter(
       unit => unit.currentBP - 3000 <= 0
     ).length;
