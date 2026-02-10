@@ -11,7 +11,7 @@ export const effects: CardEffects = {
   // 実際の効果本体
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
-    await System.show(stack, 'テトラクトュス', 'コスト7以上のユニットを2️枚引く');
+    await System.show(stack, 'テトラクトュス', 'コスト7以上のユニットを2枚引く');
     EffectHelper.random(
       stack.processing.owner.deck.filter(card => card instanceof Unit && card.catalog.cost >= 7),
       2

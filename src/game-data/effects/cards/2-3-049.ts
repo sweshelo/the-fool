@@ -5,7 +5,8 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard) => {
     return (
       EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner) &&
-      (stack.processing.owner.purple ?? 0) >= 3
+      (stack.processing.owner.purple ?? 0) >= 3 &&
+      stack.processing.owner.id === stack.source.id
     );
   },
 
