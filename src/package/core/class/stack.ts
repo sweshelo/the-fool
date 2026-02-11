@@ -334,6 +334,7 @@ export class Stack implements IStack {
       switch (stack.type) {
         case 'handes':
         case 'damage':
+        case 'lost':
           return true;
         default:
           return false;
