@@ -25,8 +25,13 @@ export const effects: CardEffects = {
         'opponents',
         'ダメージを与えるユニットを選択して下さい'
       );
-      Effect.damage(stack, stack.processing, stack.processing, stack.processing.currentBP);
-      Effect.damage(stack, stack.processing, target, stack.processing.currentBP);
+
+      [
+        { target: stack.processing, damage: stack.processing.currentBP },
+        { target: target, damage: stack.processing.currentBP },
+      ].forEach(set => {
+        Effect.damage(stack, stack.processing, set.target, set.damage);
+      });
     }
   },
 };
