@@ -126,7 +126,7 @@ export function fieldEffectUnmount(core: Core, target: Unit, stack: Stack) {
     .flatMap(player => player.field)
     .forEach(unit => {
       unmount(unit);
-      if (unit.currentBP <= 0 && unit.leaving) Effect.break(stack, unit, unit, 'system'); // システムによってユニットが自壊した扱いにする
+      if (unit.currentBP <= 0 && !unit.leaving) Effect.break(stack, unit, unit, 'system'); // システムによってユニットが自壊した扱いにする
     });
 
   // 非フィールド

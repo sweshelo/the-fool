@@ -82,7 +82,7 @@ export function effectDamage(
     stack.core.room.soundEffect('damage');
   }
 
-  if (target.currentBP <= 0) {
+  if (target.currentBP <= 0 && !target.leaving) {
     effectBreak(stack, source, target, 'damage');
     return true;
   }
