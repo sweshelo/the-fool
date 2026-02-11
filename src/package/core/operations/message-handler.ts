@@ -113,7 +113,8 @@ export async function handleMessage(core: Core, message: Message) {
       if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
       // Bannedチェック
-      if (card.delta.some(delta => delta.effect.type === 'banned')) return;
+      if (card.delta.some(delta => delta.effect.type === 'banned'))
+        throw new Error('使用できないカードが指定されました');
 
       // CPが足りている
       // 軽減チェック
