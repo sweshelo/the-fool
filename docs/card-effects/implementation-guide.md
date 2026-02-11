@@ -415,7 +415,8 @@ await System.show(stack, 'カード名', '捨札から【特殊召喚】\nレベ
 
 ```typescript
 onDriveSelf: async (stack: StackWithCard<Unit>) => {
-  const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
+  const owner = stack.processing.owner
+  const choice = await EffectHelper.choice(stack, owner, '選略・魔校法度', [
     { id: '1', description: '【悪魔】ユニットを1枚引く' },
     {
       id: '2',

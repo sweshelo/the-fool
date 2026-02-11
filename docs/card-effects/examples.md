@@ -410,7 +410,8 @@ export const effects: CardEffects = {
 ```typescript
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
+    const owner = stack.processing.owner
+    const choice = await EffectHelper.choice(stack, owner, '選略・魔校法度', [
       { id: '1', description: '【悪魔】ユニットを1枚引く' },
       {
         id: '2',
@@ -427,7 +428,8 @@ export const effects: CardEffects = {
 ```typescript
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const choice = await EffectHelper.choice(stack, stack.processing.owner.opponent, '選略・魔校法度', [
+    const owner = stack.processing.owner
+    const choice = await EffectHelper.choice(stack, owner.opponent, '選略・魔校法度', [
       { id: '1', description: '【悪魔】ユニットを1枚引く' },
       {
         id: '2',
