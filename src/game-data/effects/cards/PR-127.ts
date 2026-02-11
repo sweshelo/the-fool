@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -32,16 +32,7 @@ export const effects: CardEffects = {
     await System.show(stack, '滅王の暴虐', '手札を1枚捨てる');
 
     // 手札を1枚選んで捨てる
-    const [targetId] = await System.prompt(stack, owner.id, {
-      type: 'card',
-      title: '捨てるカードを選択',
-      items: owner.hand,
-      count: 1,
-    });
-
-    const target = owner.hand.find(card => card.id === targetId);
-    if (!target) return;
-
+    const [target] = await EffectHelper.selectCard(stack, owner, owner.hand, '捨てるカードを選択');
     Effect.break(stack, stack.processing, target);
   },
 };

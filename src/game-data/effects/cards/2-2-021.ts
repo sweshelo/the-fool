@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -19,15 +19,10 @@ export const effects: CardEffects = {
   onBattleSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 選択肢を提示
-    const [choice] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・希望の心',
-      items: [
-        { id: '1', description: 'ターン終了時までBP+2000' },
-        { id: '2', description: 'カードを1枚引く' },
-      ],
-    });
+    const choice = await EffectHelper.choice(stack, owner, '選略・希望の心', [
+      { id: '1', description: 'ターン終了時までBP+2000' },
+      { id: '2', description: 'カードを1枚引く' },
+    ]);
 
     // 選択した効果を発動
     switch (choice) {

@@ -9,17 +9,19 @@ export const effects: CardEffects = {
     ).length;
     if (spirit < 2 || stack.processing.owner.opponent.field.length === 0) return;
 
-    const [result] =
-      stack.processing.owner.cp.current >= 3
-        ? await System.prompt(stack, stack.processing.owner.id, {
-            type: 'option',
-            title: '選略・ジーニアスショー',
-            items: [
-              { id: '1', description: '[【精霊】×1]体の行動権を消費' },
-              { id: '2', description: 'CP-3\nランダムで2体デッキに戻す' },
-            ],
-          })
-        : ['1'];
+    const result = await EffectHelper.choice(
+      stack,
+      stack.processing.owner,
+      '選略・ジーニアスショー',
+      [
+        { id: '1', description: '[【精霊】×1]体の行動権を消費' },
+        {
+          id: '2',
+          description: 'CP-3\nランダムで2体デッキに戻す',
+          condition: stack.processing.owner.cp.current >= 3,
+        },
+      ]
+    );
 
     switch (result) {
       case '1': {

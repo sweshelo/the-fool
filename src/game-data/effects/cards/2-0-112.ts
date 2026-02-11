@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -37,17 +37,13 @@ export const effects: CardEffects = {
       await System.show(stack, '墓暴きの代償', '対戦相手の手札を1枚捨てる');
 
       // 対戦相手に手札を1枚選択させる
-      const [choice] = await System.prompt(stack, opponent.id, {
-        title: '捨てるカードを1枚選択',
-        type: 'card',
-        items: opponent.hand,
-        count: 1,
-      });
-
-      const selectedCard = opponent.hand.find(card => card.id === choice);
-      if (selectedCard) {
-        Effect.break(stack, stack.processing, selectedCard);
-      }
+      const [selectedCard] = await EffectHelper.selectCard(
+        stack,
+        opponent,
+        opponent.hand,
+        '捨てるカードを1枚選択'
+      );
+      Effect.break(stack, stack.processing, selectedCard);
     }
   },
 };

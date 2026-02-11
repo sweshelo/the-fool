@@ -1,5 +1,4 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -20,33 +19,25 @@ export const effects: CardEffects = {
     // Make sure processing is defined
     if (!stack.processing) throw new Error('Stack processing is undefined');
 
-    const owner = stack.processing.owner;
-
     if (stack.processing.lv <= 2) {
       await System.show(stack, '無限の魔法石', '手札を1枚選んで捨てる\nデッキから1枚選んで引く');
-      const discardChoices: Choices = {
-        title: '捨てるカードを選択してください',
-        type: 'card',
-        items: owner.hand,
-        count: 1,
-      };
-      const [discard] = await System.prompt(stack, owner.id, discardChoices);
-      const discardTarget = owner.hand.find(card => card.id === discard);
-      if (!discardTarget) throw new Error('正しいカードが選択されませんでした');
-      Effect.break(stack, stack.processing, discardTarget);
+      const [discard] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        stack.processing.owner.hand,
+        '捨てるカードを選択してください'
+      );
+      Effect.break(stack, stack.processing, discard);
     } else {
       await System.show(stack, '無限の魔法石', 'デッキから1枚選んで引く');
     }
 
-    const drawChoices: Choices = {
-      title: '手札に加えるカードを選択してください',
-      type: 'card',
-      items: owner.deck,
-      count: 1,
-    };
-    const [draw] = await System.prompt(stack, owner.id, drawChoices);
-    const drawTarget = owner.deck.find(card => card.id === draw);
-    if (!drawTarget) throw new Error('正しいカードが選択されませんでした');
-    Effect.move(stack, stack.processing, drawTarget, 'hand');
+    const [draw] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      stack.processing.owner.deck,
+      '手札に加えるカードを選択してください'
+    );
+    Effect.move(stack, stack.processing, draw, 'hand');
   },
 };

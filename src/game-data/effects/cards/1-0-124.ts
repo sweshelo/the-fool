@@ -1,5 +1,4 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -12,16 +11,14 @@ export const effects: CardEffects = {
 
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, 'ライトステップ', '2枚選んで捨てる\nカードを3枚引く');
-    const choices: Choices = {
-      title: '捨てるカードを選択してください',
-      type: 'card',
-      items: stack.processing.owner.hand,
-      count: 2,
-    };
 
-    const targets = (await System.prompt(stack, stack.processing.owner.id, choices))
-      .map(id => stack.processing.owner.hand.find(card => card.id === id))
-      .filter(card => card !== undefined);
+    const targets = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      stack.processing.owner.hand,
+      '捨てるカードを選択してください',
+      2
+    );
     targets.forEach(card => Effect.break(stack, stack.processing, card));
 
     [...Array(3)].forEach(() => EffectTemplate.draw(stack.processing.owner, stack.core));

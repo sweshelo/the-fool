@@ -7,17 +7,10 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    const [choice] =
-      opponent.hand.length === 0
-        ? ['2']
-        : await System.prompt(stack, owner.id, {
-            type: 'option',
-            title: '選略・呪詛発生装置',
-            items: [
-              { id: '1', description: '手札を1枚破壊' },
-              { id: '2', description: '【珍獣】ユニットを1枚引く' },
-            ],
-          });
+    const choice = await EffectHelper.choice(stack, owner, '選略・呪詛発生装置', [
+      { id: '1', description: '手札を1枚破壊', condition: opponent.hand.length > 0 },
+      { id: '2', description: '【珍獣】ユニットを1枚引く' },
+    ]);
 
     switch (choice) {
       case '1': {

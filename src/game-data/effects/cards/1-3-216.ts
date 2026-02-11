@@ -30,26 +30,15 @@ export const effects: CardEffects = {
 
     // 両方の選択肢が不可能な場合、加護のみ付与して終了
     if (option1Available || option2Available) {
-      // どちらか一方だけが可能な場合、自動的にその選択肢を実行
-      // 両方可能な場合のみプレイヤーに選択させる
-      let choice: string;
-
-      if (option1Available && option2Available) {
-        const result = await System.prompt(stack, stack.processing.owner.id, {
-          type: 'option',
-          title: '選略・だいてんしのおともだち',
-          items: [
-            { id: '1', description: '2体まで手札に戻す' },
-            { id: '2', description: 'CP-1\nランダムで2体デッキに戻す' },
-          ],
-        });
-        choice = result[0] || '1'; // デフォルト値として'1'を設定
-      } else if (option1Available) {
-        choice = '1';
-      } else {
-        // option2Available が true
-        choice = '2';
-      }
+      const choice = await EffectHelper.choice(
+        stack,
+        stack.processing.owner,
+        '選略・だいてんしのおともだち',
+        [
+          { id: '1', description: '2体まで手札に戻す', condition: option1Available },
+          { id: '2', description: 'CP-1\nランダムで2体デッキに戻す', condition: option2Available },
+        ]
+      );
 
       switch (choice) {
         case '1': {

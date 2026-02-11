@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -25,18 +25,14 @@ export const effects: CardEffects = {
     // 対戦相手のユニットを紫ゲージ×1以下のコストでフィルタ
     const destroyableUnits = opponent.field.filter(unit => unit.catalog.cost <= purpleGauge);
 
-    // 選択肢を提示（②が実行可能かどうかで自動選択する場合もある）
-    const [choice] =
-      destroyableUnits.length > 0 && purpleGauge > 0
-        ? await System.prompt(stack, owner.id, {
-            title: '選略・ピュアホワイトスピア',
-            type: 'option',
-            items: [
-              { id: '1', description: '効果なし' },
-              { id: '2', description: `敵全体のコスト[紫ゲージ×1]以下を破壊\n紫ゲージを全て消費` },
-            ],
-          })
-        : ['1'];
+    const choice = await EffectHelper.choice(stack, owner, '選略・ピュアホワイトスピア', [
+      { id: '1', description: '効果なし' },
+      {
+        id: '2',
+        description: `敵全体のコスト[紫ゲージ×1]以下を破壊\n紫ゲージを全て消費`,
+        condition: destroyableUnits.length > 0 && purpleGauge > 0,
+      },
+    ]);
 
     switch (choice) {
       case '1':
