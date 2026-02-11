@@ -16,7 +16,8 @@ export const effects: CardEffects = {
 
   onTurnStart: async (stack: StackWithCard<Card>): Promise<void> => {
     const triggerCount = stack.processing.owner.opponent.trigger.length;
-    await System.show(stack, '聖典の恩恵', `CP+${triggerCount}`);
+
+    await System.show(stack, '聖典の恩恵', 'CP+[対戦相手のトリガーゾーンにあるカード×1]');
     Effect.modifyCP(stack, stack.processing, stack.processing.owner, triggerCount);
   },
 
@@ -29,7 +30,8 @@ export const effects: CardEffects = {
 
   onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
     const handCount = stack.processing.owner.opponent.hand.length;
-    await System.show(stack, '聖典の恩恵', `CP+${handCount}`);
+
+    await System.show(stack, '聖典の恩恵', 'CP+[対戦相手の手札×1]');
     Effect.modifyCP(stack, stack.processing, stack.processing.owner, handCount);
   },
 };
