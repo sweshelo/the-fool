@@ -404,7 +404,7 @@ await System.show(stack, 'カード名', '捨札から【特殊召喚】\nレベ
 
 ## 選略・選告
 
-プレイヤーに2つの選択肢を提示し、どちらか一方を発動する効果です。
+プレイヤーに2つの選択肢を提示し、どちらか一方を発動する効果です。`EffectHelper.choice` を利用して実装します。この関数は `condition` に指定された条件を評価し、どちらも満たせる場合はプレイヤーに選択肢を提示し、どちらか片方しか発動できない場合は選択肢の提示をせずに発動可能な選択肢のIDを返却します。どちらも発動できない場合は `undefined` を返却します。得られたIDを `switch` で処理します。
 
 ### 選略と選告の違い
 
@@ -415,44 +415,15 @@ await System.show(stack, 'カード名', '捨札から【特殊召喚】\nレベ
 
 ```typescript
 onDriveSelf: async (stack: StackWithCard<Unit>) => {
-  const owner = stack.processing.owner;
-  const opponent = owner.opponent;
-
-  // 選略[1]は、相手にLv3以上のユニットが存在しないと発動できない
-  const canOption1 = opponent.field.some(u => u.lv >= 3);
-
-  // 選択肢の提示（どちらか一方しか選択できない場合は自動選択）
-  const [choice] = canOption1
-    ? await System.prompt(stack, owner.id, {  // 選略: owner.id
-        title: '選略・空間を統べる覇者',
-        type: 'option',
-        items: [
-          { id: '1', description: '敵全体のレベル3以上のユニットを破壊' },
-          { id: '2', description: '敵全体に【沈黙】を与える' },
-        ],
-      })
-    : ['2'];  // 選択肢[1]が選べない場合は[2]を自動選択
-
-  // 選択に応じた効果を実行
-  if (choice === '1') {
-    await System.show(stack, 'カード名', 'Lv3以上破壊');
-    // 効果実装
-  } else {
-    await System.show(stack, 'カード名', '【沈黙】付与');
-    // 効果実装
-  }
+  const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
+    { id: '1', description: '【悪魔】ユニットを1枚引く' },
+    {
+      id: '2',
+      description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
+      condition: owner.cp.current >= 1,
+    },
+  ]);
 }
-```
-
-### 重要な注意点
-
-- 選択肢を提示した時点で、どちらかの効果が発動することが確定します
-- **選択肢を提示した後に、if 文で効果を取り止めてはいけません**
-- 選告の場合は `opponent.id` を指定します
-
-```typescript
-// 選告の場合
-const [choice] = await System.prompt(stack, opponent.id, { /* ... */ });
 ```
 
 ## History の活用

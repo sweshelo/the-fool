@@ -651,69 +651,9 @@ await System.show(stack, 'ジャンプーダンス', '手札に戻す');
 
 プレイヤーに選択肢を提示します。
 
-```typescript
-static async prompt(
-  stack: Stack,
-  playerId: string,
-  choices: Choices
-): Promise<string[]>
-```
-
-**パラメータ:**
-
-- `stack` - スタック
-- `playerId` - 選択を行うプレイヤーの ID
-- `choices` - 選択肢オブジェクト
-
-**Choices の種類:**
-
-```typescript
-// ユニット選択
-{
-  title: string,
-  type: 'unit',
-  items: Unit[]
-}
-
-// カード選択
-{
-  title: string,
-  type: 'card',
-  items: Card[],
-  count: number  // 選択する枚数
-}
-
-// オプション選択（選略・選告）
-{
-  title: string,
-  type: 'option',
-  items: Array<{
-    id: string,
-    description: string
-  }>
-}
-```
-
-**使用例:**
-
-```typescript
-// ユニット選択（EffectHelper.pickUnit を推奨）
-const [unitId] = await System.prompt(stack, owner.id, {
-  title: '対象を選択',
-  type: 'unit',
-  items: opponent.field
-});
-
-// オプション選択（選略）
-const [choice] = await System.prompt(stack, owner.id, {
-  title: '選略',
-  type: 'option',
-  items: [
-    { id: '1', description: '効果1の説明' },
-    { id: '2', description: '効果2の説明' }
-  ]
-});
-```
+> [!Caution]
+> これはシステム用のメソッドですので、原則使用しないでください。
+> 代わりに `EffectHelper.choice()` や `EffectHelper.pickUnit()` を利用します。
 
 ---
 
@@ -838,55 +778,45 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 ### 永続効果の基本パターン
 
+`PermanentEffect.mount()` を利用します。
+
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  const self = stack.processing;
-
-  // 既存のDeltaを確認
-  const delta = self.delta.find(
-    d => d.source.unit === self.id && d.effect.type === 'bp'
-  );
-
-  if (delta) {
-    // Deltaを更新
-    delta.effect.diff = 1000;
-  } else {
-    // Deltaを新規作成
-    Effect.modifyBP(stack, self, self, 1000, {
-      source: { unit: self.id }
-    });
-  }
+  PermanentEffect.mount(stack.processing, {
+  targets: ['owns'],
+  effect: (unit, source) => {
+    if (unit instanceof Unit) {
+      Effect.modifyBP(stack, stack.processing, unit, 1000, { source });
+    }
+  },
+  effectCode: 'サポーター／天使',
+  condition: target => target.catalog.species?.includes('天使') ?? false,
+});
 }
 ```
 
 ### 選略・選告の基本パターン
 
+`EffectHelper.choice()` を利用します。
+
 ```typescript
 onDriveSelf: async (stack: StackWithCard<Unit>) => {
-  const owner = stack.processing.owner;
+  const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
+    { id: '1', description: '【悪魔】ユニットを1枚引く' },
+    {
+      id: '2',
+      description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
+      condition: owner.cp.current >= 1,
+    },
+  ]);
 
-  // 選択肢1が選べるか確認
-  const canOption1 = /* 条件 */;
-
-  // プロンプト表示（選べない選択肢がある場合は自動選択）
-  const [choice] = canOption1
-    ? await System.prompt(stack, owner.id, {
-        title: '選略',
-        type: 'option',
-        items: [
-          { id: '1', description: '効果1' },
-          { id: '2', description: '効果2' }
-        ]
-      })
-    : ['2'];  // 選択肢1が選べない場合は2を自動選択
-
-  // 選択に応じた効果を実行
-  if (choice === '1') {
-    await System.show(stack, 'カード名', '効果1');
-    // 実装
-  } else {
-    await System.show(stack, 'カード名', '効果2');
-    // 実装
+  switch(choice){
+    case '1': {
+      // ...
+    }
+    case '2': {
+      // ...
+    }
   }
 }
 ```
