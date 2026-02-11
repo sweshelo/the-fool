@@ -1,8 +1,9 @@
 import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
 import master from '@/game-data/catalog';
-import type { Player } from '../Player';
+import type { CardArrayKeys, Player } from '../Player';
 import { Delta } from '../delta';
+import type { Stack } from '../stack';
 
 export class Unit extends Card implements IUnit {
   /**
@@ -17,7 +18,10 @@ export class Unit extends Card implements IUnit {
   /**
    * フィールドから離れることが確定している場合、処理が完了後に転送される予定の領域
    */
-  destination?: string;
+  leaving?: {
+    destination: Exclude<CardArrayKeys, 'field'>;
+    stackId: Stack['id'];
+  };
   /**
    * Lv3にクロックアップ後、オーバークロック処理を完了しているか
    */
@@ -34,7 +38,7 @@ export class Unit extends Card implements IUnit {
 
     this.bp = this.catalog.bp?.[this.lv - 1] ?? 0;
     this.active = true;
-    this.destination = undefined;
+    this.leaving = undefined;
     this.delta = [];
     this.isCopy = false;
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
@@ -128,7 +132,7 @@ export class Unit extends Card implements IUnit {
     this.bp = 0;
     this.active = false;
     this.overclocked = undefined;
-    this.destination = undefined;
+    this.leaving = undefined;
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
     this.isBooted = false;
   }
@@ -138,7 +142,7 @@ export class Unit extends Card implements IUnit {
       ...super.toJSON(),
       bp: this.bp,
       active: this.active,
-      destination: this.destination,
+      leaving: this.leaving,
       overclocked: this.overclocked,
       isCopy: this.isCopy,
       hasBootAbility: this.hasBootAbility,

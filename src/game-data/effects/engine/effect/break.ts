@@ -16,7 +16,7 @@ export function effectBreak(
     EffectHelper.isUnit(target) &&
     exists.result &&
     exists.place?.name === 'field' &&
-    target.destination !== 'trash';
+    target.leaving?.destination !== 'trash';
   if (!exists.result) return;
 
   switch (exists.place?.name) {
@@ -34,12 +34,22 @@ export function effectBreak(
         return;
       }
 
-      stack.addChildStack('break', source, target, {
+      const breakStack = stack.addChildStack('break', source, target, {
         type: 'break',
         cause: cause === 'modifyBp' ? 'effect' : cause,
       });
 
-      target.destination = 'trash';
+      if (target.leaving) {
+        // 転送先を上書き
+        target.leaving.destination = 'trash';
+      } else {
+        // 離脱を設定
+        target.leaving = {
+          stackId: breakStack.id,
+          destination: 'trash',
+        };
+      }
+
       stack.core.room.soundEffect('bang');
       sendSelectedVisualEffect(stack, target);
       return;

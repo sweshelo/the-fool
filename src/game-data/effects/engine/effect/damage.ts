@@ -15,7 +15,7 @@ export function effectDamage(
   const isOnField = exists.result && exists.place?.name === 'field';
   if (!isOnField) throw new Error('対象が見つかりませんでした');
 
-  if (target.destination !== undefined) {
+  if (target.leaving) {
     stack.addChildStack('damage', source, target, {
       type: 'damage',
       cause: type,

@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     )
       return;
 
-    const filter = (unit: Unit) => unit.destination !== 'trash' && unit.lv < 3;
+    const filter = (unit: Unit) => !unit.leaving && unit.lv < 3;
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
       await System.show(stack, 'ブレイク・クロック', 'レベル+1');
       const [target] = await EffectHelper.pickUnit(
