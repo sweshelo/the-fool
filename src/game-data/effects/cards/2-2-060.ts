@@ -11,14 +11,10 @@ export const effects: CardEffects = {
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
-    const [choice] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・魔導の心得',
-      items: [
-        { id: '1', description: '紫ゲージ+1' },
-        { id: '2', description: 'デッキからインターセプトをセット' },
-      ],
-    });
+    const choice = await EffectHelper.choice(stack, owner, '選略・魔導の心得', [
+      { id: '1', description: '紫ゲージ+1' },
+      { id: '2', description: 'デッキからインターセプトをセット' },
+    ]);
 
     switch (choice) {
       case '1':

@@ -20,7 +20,6 @@ export const effects: CardEffects = {
   // 破壊時効果：手札に戻る
   onBreakSelf: async (stack: StackWithCard) => {
     if (stack.processing instanceof Unit) {
-      if (stack.processing.destination === 'hand') return;
       await System.show(stack, '冷酷なる裁き', '手札に戻す');
       Effect.bounce(stack, stack.processing, stack.processing, 'hand');
     }

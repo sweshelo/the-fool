@@ -15,7 +15,7 @@ export function effectModifyBP(
   const isOnField = exists.result && exists.place?.name === 'field';
   if (!isOnField) throw new Error('対象が見つかりませんでした');
 
-  if (target.destination !== undefined) return false;
+  if (target.leaving) return false;
 
   if (value === 0) return false;
 

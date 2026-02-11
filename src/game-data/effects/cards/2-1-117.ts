@@ -1,4 +1,4 @@
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -6,17 +6,10 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
 
-    const [choice] =
-      owner.cp.current >= 2
-        ? await System.prompt(stack, owner.id, {
-            type: 'option',
-            title: '選略・デルタの輝き',
-            items: [
-              { id: '1', description: '効果なし' },
-              { id: '2', description: 'CP-2\nカードを2枚引く' },
-            ],
-          })
-        : ['1'];
+    const choice = await EffectHelper.choice(stack, owner, '選略・デルタの輝き', [
+      { id: '1', description: '効果なし' },
+      { id: '2', description: 'CP-2\nカードを2枚引く', condition: owner.cp.current >= 2 },
+    ]);
 
     if (choice === '2') {
       await System.show(stack, '選略・デルタの輝き', 'CP-2\nカードを2枚引く');

@@ -35,7 +35,6 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    if (stack.processing.destination === 'hand') return;
     await System.show(stack, 'ダブルスピンアタック', '手札に戻る');
     Effect.bounce(stack, stack.processing, stack.processing, 'hand');
   },

@@ -33,20 +33,10 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    let choice: string | undefined = undefined;
-    if (isChoice1Avail && isChoice2Avail) {
-      [choice] = await System.prompt(stack, stack.processing.owner.id, {
-        title: '選略・モノクローム',
-        type: 'option',
-        items: [
-          { id: '1', description: 'CP-1\n手札に戻す' },
-          { id: '2', description: '【沈黙効果耐性】を与える' },
-        ],
-      });
-    } else {
-      if (isChoice1Avail) choice = '1';
-      if (isChoice2Avail) choice = '2';
-    }
+    const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・モノクローム', [
+      { id: '1', description: 'CP-1\n手札に戻す', condition: isChoice1Avail },
+      { id: '2', description: '【沈黙効果耐性】を与える', condition: isChoice2Avail },
+    ]);
 
     switch (choice) {
       case '1': {

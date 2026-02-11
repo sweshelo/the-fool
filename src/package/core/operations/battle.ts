@@ -323,8 +323,8 @@ export async function postBattle(core: Core, attacker: Unit, blocker: Unit) {
         : winnerDamage === loserDamage;
 
   // 破壊が決定したら破壊する
-  if (isLoserBreaked && !loser.destination) Effect.break(stack, winner, loser, 'battle');
-  if (isWinnerBreaked && !winner.destination) Effect.break(stack, loser, winner, 'battle');
+  if (isLoserBreaked && !loser.leaving) Effect.break(stack, winner, loser, 'battle');
+  if (isWinnerBreaked && !winner.leaving) Effect.break(stack, loser, winner, 'battle');
 
   await System.sleep(1000);
 

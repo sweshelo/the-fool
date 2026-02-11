@@ -14,11 +14,11 @@ export function helperIsUnitSelectable(
   const getFilterMethod = () => {
     switch (filter) {
       case 'owns':
-        return (unit: Unit) => unit.owner.id === selector.id && !unit.destination;
+        return (unit: Unit) => unit.owner.id === selector.id && !unit.leaving;
       case 'opponents':
-        return (unit: Unit) => unit.owner.id !== selector.id && !unit.destination;
+        return (unit: Unit) => unit.owner.id !== selector.id && !unit.leaving;
       case 'all':
-        return (unit: Unit) => !unit.destination;
+        return (unit: Unit) => !unit.leaving;
     }
     return filter;
   };

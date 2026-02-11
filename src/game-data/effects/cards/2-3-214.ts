@@ -11,17 +11,16 @@ export const effects: CardEffects = {
     const deckTop3 = stack.processing.owner.deck.slice(0, 3);
 
     if (deckTop3.length > 0) {
-      // プレイヤーに選択を促す
-      const [choice] = await System.prompt(stack, stack.processing.owner.id, {
-        title: '手札に加えるカードを選択してください',
-        type: 'card',
-        items: deckTop3,
-        count: 1,
-      });
+      const [selected] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        deckTop3,
+        '手札に加えるカードを選択してください'
+      );
 
       // 選んだカードを手札に加え、残りを捨札に送る
       for (const card of deckTop3) {
-        if (card.id === choice) {
+        if (card.id === selected.id) {
           Effect.move(stack, stack.processing, card, 'hand');
         } else {
           Effect.move(stack, stack.processing, card, 'trash');
@@ -90,19 +89,13 @@ export const effects: CardEffects = {
     );
 
     if (fourGodUnits.length > 0) {
-      // プレイヤーに選択を促す
-      const [choice] = await System.prompt(stack, stack.processing.owner.id, {
-        title: '捨てる【四聖獣】ユニットを選択してください',
-        type: 'card',
-        items: fourGodUnits,
-        count: 1,
-      });
-
-      // 選択したカードを捨札に送る
-      const target = fourGodUnits.find(card => card.id === choice);
-      if (target) {
-        Effect.move(stack, stack.processing, target, 'trash');
-      }
+      const [target] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        fourGodUnits,
+        '捨てる【四聖獣】ユニットを選択してください'
+      );
+      Effect.move(stack, stack.processing, target, 'trash');
     }
   },
 };

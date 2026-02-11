@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { Choices } from '@/submodule/suit/types/game/system';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -19,17 +18,13 @@ export const effects: CardEffects = {
         case '牽牛星アルタイル':
           if (stack.processing.owner.hand.length > 0) {
             await System.show(stack, '美しき白鳥の輝き', '手札を1枚捨てる\nカードを1枚引く');
-            const choices: Choices = {
-              title: '捨てるカードを選択してください',
-              type: 'card',
-              items: stack.processing.owner.hand,
-              count: 1,
-            };
-            const [cardId] = await System.prompt(stack, stack.processing.owner.id, choices);
-            const card = stack.processing.owner.hand.find(card => card.id === cardId);
-            if (card) {
-              Effect.break(stack, stack.processing, card);
-            }
+            const [card] = await EffectHelper.selectCard(
+              stack,
+              stack.processing.owner,
+              stack.processing.owner.hand,
+              '捨てるカードを選択してください'
+            );
+            Effect.break(stack, stack.processing, card);
             EffectTemplate.draw(stack.processing.owner, stack.core);
           }
           break;
