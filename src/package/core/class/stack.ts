@@ -234,7 +234,8 @@ export class Stack implements IStack {
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
-    while (turnPlayer.trigger.length > index) {
+    let alreadyChecked: Card[] = [];
+    while (alreadyChecked.length < turnPlayer.trigger.length) {
       const card = turnPlayer.trigger[index];
       if (card === undefined) {
         break;
@@ -248,17 +249,22 @@ export class Stack implements IStack {
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
         await this.resolveChild(core);
-        if (!result) index++;
+        if (!result) {
+          index++;
+          alreadyChecked.push(card);
+        }
       } else {
         index++;
+        alreadyChecked.push(card);
         continue;
       }
     }
 
     // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     index = 0;
+    alreadyChecked = [];
     if (nonTurnPlayer)
-      while (nonTurnPlayer.trigger.length > index) {
+      while (alreadyChecked.length < nonTurnPlayer.trigger.length) {
         const card = nonTurnPlayer.trigger[index];
         if (card === undefined) {
           break;
@@ -274,9 +280,13 @@ export class Stack implements IStack {
           const result = await this.processTriggerCardEffect(card, core);
           this.processing = undefined;
           await this.resolveChild(core);
-          if (!result) index++;
+          if (!result) {
+            index++;
+            alreadyChecked.push(card);
+          }
         } else {
           index++;
+          alreadyChecked.push(card);
           continue;
         }
       }
