@@ -182,8 +182,13 @@ export async function turnChange(
         unit.active = true;
         core.room.soundEffect('reboot');
       }
-      if (unit.delta.some(delta => delta.effect.type === 'death' && delta.count <= 0)) {
-        Effect.break(deathCounterCheckStack, unit, unit, 'death');
+
+      // デスカウンターと寿命カウンターが同時に0になった場合、寿命カウンターが優先され破壊効果は発動しない
+      if (
+        unit.delta.some(delta => delta.effect.type === 'death' && delta.count <= 0) &&
+        !unit.delta.some(delta => delta.effect.type === 'life' && delta.count <= 0)
+      ) {
+        Effect.break(deathCounterCheckStack, unit, unit, 'effect'); // デスカウンターは自壊(効果によるもの)扱い
       }
     });
     core.stack.push(deathCounterCheckStack);
