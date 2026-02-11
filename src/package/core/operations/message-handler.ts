@@ -272,7 +272,7 @@ export async function handleMessage(core: Core, message: Message) {
 
       if (target && player) {
         player.field = player.field.filter(u => u.id !== target.id);
-        player.trash.push(target);
+        if (!target.isCopy) player.trash.push(target);
         target.reset();
 
         // フィールド効果呼び出し
