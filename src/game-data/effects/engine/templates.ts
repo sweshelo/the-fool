@@ -45,7 +45,7 @@ export class EffectTemplate {
 
     if ((driver?.trash ?? []).length === 0) return;
 
-    const [target] = await EffectHelper.selectCard(
+    const targets = await EffectHelper.selectCard(
       stack,
       driver,
       driver.trash,
@@ -53,10 +53,9 @@ export class EffectTemplate {
       count
     );
 
-    // targetを引き抜き、手札に加える
-    if (target && stack.processing) {
-      Effect.move(stack, stack.processing, target, 'hand');
-    }
+    targets.forEach(card => {
+      Effect.move(stack, stack.processing, card, 'hand');
+    });
   }
 
   /**
