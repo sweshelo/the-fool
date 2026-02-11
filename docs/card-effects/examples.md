@@ -74,21 +74,13 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
 
-    // 相手のフィールドにユニットが存在するか確認
-    if (opponent.field.length === 0) return;
+    // 相手のフィールドに選択可能なユニットが存在するか確認
+    if(!EffectHelper.isUnitSelectable(stack, stack.processing.owner, 'opponents')) return;
 
     await System.show(stack, 'ジャンプーダンス', '手札に戻す');
 
-    // ユニット選択（System.prompt を直接使用）
-    const [choiceId] = await System.prompt(stack, owner.id, {
-      title: '手札に戻すユニットを選択',
-      type: 'unit',
-      items: opponent.field,
-    });
-
-    const target = opponent.field.find(unit => unit.id === choiceId) ?? opponent.field[0];
-    if (!target) throw new Error('対戦相手のフィールドにユニットが存在しません');
-
+    // ユニット選択
+    const target = await EffectHelper.pickUnit(stack, owner, 'opponents', '手札に戻すユニットを選択');
     Effect.bounce(stack, stack.processing, target, 'hand');
   },
 };
@@ -418,43 +410,15 @@ export const effects: CardEffects = {
 ```typescript
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const owner = stack.processing.owner;
-    const opponent = owner.opponent;
-
-    // 選略[1]は、相手にLv3以上のユニットが存在しないと発動できない
-    const canOption1 = opponent.field.some(u => u.lv >= 3);
-
-    // 選択肢の提示（どちらか一方しか選択できない場合は自動選択）
-    const [choice] = canOption1
-      ? await System.prompt(stack, owner.id, {  // 選略: owner.id
-          title: '選略・空間を統べる覇者',
-          type: 'option',
-          items: [
-            { id: '1', description: '敵全体のレベル3以上のユニットを破壊' },
-            { id: '2', description: '敵全体に【沈黙】を与える' },
-          ],
-        })
-      : ['2'];  // 選択肢[1]が選べない場合は[2]を自動選択
-
-    // 選択に応じた効果を実行
-    if (choice === '1') {
-      await System.show(stack, 'カード名', 'Lv3以上破壊');
-
-      // Lv3以上のユニットを全て破壊
-      opponent.field
-        .filter(unit => unit.lv >= 3)
-        .forEach(unit => Effect.break(stack, stack.processing, unit));
-    } else {
-      await System.show(stack, 'カード名', '【沈黙】付与');
-
-      // 全てのユニットに【沈黙】を付与
-      opponent.field.forEach(unit => {
-        Effect.keyword(stack, stack.processing, unit, '沈黙', {
-          event: 'turnEnd',
-          count: 1
-        });
-      });
-    }
+    const owner = stack.processing.owner
+    const choice = await EffectHelper.choice(stack, owner, '選略・魔校法度', [
+      { id: '1', description: '【悪魔】ユニットを1枚引く' },
+      {
+        id: '2',
+        description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
+        condition: owner.cp.current >= 1,
+      },
+    ]);
   },
 };
 ```
@@ -464,39 +428,15 @@ export const effects: CardEffects = {
 ```typescript
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
-    const owner = stack.processing.owner;
-    const opponent = owner.opponent;
-
-    const canOption1 = /* 条件 */;
-    const canOption2 = /* 条件 */;
-
-    let choice: string;
-    if (canOption1 && canOption2) {
-      // 両方選べる場合は対戦相手に選ばせる
-      [choice] = await System.prompt(stack, opponent.id, {  // 選告: opponent.id
-        title: '選告・カード名',
-        type: 'option',
-        items: [
-          { id: '1', description: '効果1の説明' },
-          { id: '2', description: '効果2の説明' },
-        ],
-      });
-    } else if (canOption1) {
-      choice = '1';
-    } else if (canOption2) {
-      choice = '2';
-    } else {
-      return;  // どちらも選べない場合は発動しない
-    }
-
-    // 選択に応じた効果を実行
-    if (choice === '1') {
-      await System.show(stack, 'カード名', '効果1');
-      // 実装
-    } else {
-      await System.show(stack, 'カード名', '効果2');
-      // 実装
-    }
+    const owner = stack.processing.owner
+    const choice = await EffectHelper.choice(stack, owner.opponent, '選略・魔校法度', [
+      { id: '1', description: '【悪魔】ユニットを1枚引く' },
+      {
+        id: '2',
+        description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
+        condition: owner.cp.current >= 1,
+      },
+    ]);
   },
 };
 ```

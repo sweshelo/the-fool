@@ -1,4 +1,3 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -22,16 +21,13 @@ export const effects: CardEffects = {
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.opponent.hand.length > 0) {
       await System.show(stack, '雪解けの一閃', '手札を公開する\n1枚選び破壊');
-      const choices: Choices = {
-        title: '破壊するカードを選択してください',
-        type: 'card',
-        items: stack.processing.owner.opponent.hand,
-        count: 1,
-      };
-      const [cardId] = await System.prompt(stack, stack.processing.owner.id, choices);
-      const card = stack.processing.owner.opponent.hand.find(card => card.id === cardId);
-
-      if (card) Effect.break(stack, stack.processing, card);
+      const [card] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        stack.processing.owner.opponent.hand,
+        '破壊するカードを選択してください'
+      );
+      Effect.break(stack, stack.processing, card);
     }
   },
 };

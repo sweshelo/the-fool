@@ -1,5 +1,4 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
@@ -11,18 +10,15 @@ const ability = async (stack: StackWithCard): Promise<void> => {
 
   if (hasFieldSpace && targets.length > 0) {
     await System.show(stack, '叢雲の覇気', 'コスト2以下の【武身】を【特殊召喚】');
-    const choices: Choices = {
-      title: '【特殊召喚】するユニットを選択してください',
-      type: 'card',
-      items: targets,
-      count: 1,
-    };
+    const [selected] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      targets,
+      '【特殊召喚】するユニットを選択してください'
+    );
+    if (!(selected instanceof Unit)) throw new Error('正しいカードが選択されませんでした');
 
-    const [unitId] = await System.prompt(stack, stack.processing.owner.id, choices);
-    const unit = stack.processing.owner.deck.find(card => card.id === unitId);
-    if (!unit || !(unit instanceof Unit)) throw new Error('正しいカードが選択されませんでした');
-
-    await Effect.summon(stack, stack.processing, unit);
+    await Effect.summon(stack, stack.processing, selected);
   }
 };
 

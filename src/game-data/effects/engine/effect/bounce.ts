@@ -15,7 +15,7 @@ export function effectBounce(
     EffectHelper.isUnit(target) &&
     exists.result &&
     exists.place?.name === 'field' &&
-    target.destination !== location;
+    target.leaving?.destination !== location;
 
   switch (exists.place?.name) {
     case 'field': {
@@ -28,11 +28,22 @@ export function effectBounce(
         return;
       }
 
-      stack.addChildStack('bounce', source, target, {
+      const bounceStack = stack.addChildStack('bounce', source, target, {
         type: 'bounce',
         location,
       });
-      target.destination = location;
+
+      if (target.leaving) {
+        // 転送先を上書き
+        target.leaving.destination = location;
+      } else {
+        // フィールドの離脱を設定
+        target.leaving = {
+          stackId: bounceStack.id,
+          destination: location,
+        };
+      }
+
       stack.core.room.soundEffect('bang');
       sendSelectedVisualEffect(stack, target);
       return;

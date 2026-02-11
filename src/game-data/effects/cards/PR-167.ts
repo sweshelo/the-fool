@@ -16,18 +16,10 @@ export const effects: CardEffects = {
     const filter = (unit: Unit) => unit.owner.id === owner.id && unit.id !== self.id;
     const canOption2 = EffectHelper.isUnitSelectable(stack.core, filter, owner);
 
-    // 選択肢の提示（どちらか一方しか選択できない場合は自動選択）
-    const [choice] = canOption2
-      ? await System.prompt(stack, owner.id, {
-          // 選略: owner.id
-          title: '選略・サプライズアップ',
-          type: 'option',
-          items: [
-            { id: '1', description: '効果なし' },
-            { id: '2', description: '自身を破壊\n味方1体に【加護】を付与。' },
-          ],
-        })
-      : ['1']; // 選択肢[2]が選べない場合は[1]を自動選択
+    const choice = await EffectHelper.choice(stack, owner, '選略・サプライズアップ', [
+      { id: '1', description: '効果なし' },
+      { id: '2', description: '自身を破壊\n味方1体に【加護】を付与。', condition: canOption2 },
+    ]);
 
     if (choice === '2') {
       await System.show(stack, '選略・サプライズアップ', '自身を破壊\n味方1体に【加護】を付与');

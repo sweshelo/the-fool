@@ -1,5 +1,4 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -15,18 +14,15 @@ export const effects: CardEffects = {
     const deck = stack.processing.owner.deck;
 
     const selectedCards = deck.slice(0, 5);
-    const choices: Choices = {
-      title: '手札に加えるカードを選択してください',
-      type: 'card',
-      items: selectedCards,
-      count: 1,
-    };
-    const [cardId] = await System.prompt(stack, stack.processing.owner.id, choices);
-    const card = selectedCards.find(card => card.id === cardId);
+    const [selected] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      selectedCards,
+      '手札に加えるカードを選択してください'
+    );
 
-    if (!card) throw new Error('正しいカードが選択されませんでした');
     selectedCards.forEach(card => {
-      Effect.move(stack, stack.processing, card, card.id === cardId ? 'hand' : 'delete');
+      Effect.move(stack, stack.processing, card, card.id === selected.id ? 'hand' : 'delete');
     });
   },
 };

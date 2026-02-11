@@ -50,8 +50,7 @@ export const effects: CardEffects = {
 
     // 単体3000ダメージの効果
     // 1回目の効果でユニットを破壊し、さらに選択対象がある場合に発動する
-    const filter = (unit: Unit) =>
-      unit.destination !== 'trash' && unit.owner.id !== stack.processing.owner.id;
+    const filter = (unit: Unit) => !unit.leaving && unit.owner.id !== stack.processing.owner.id;
     if (
       effect1activated &&
       EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
@@ -69,10 +68,7 @@ export const effects: CardEffects = {
 
     // 全体2000ダメージの効果
     // 2回目の効果でユニットを破壊し、さらに敵ユニットがいる場合に発動する
-    if (
-      effect2activated &&
-      stack.processing.owner.opponent.field.some(unit => unit.destination !== 'trash')
-    ) {
+    if (effect2activated && stack.processing.owner.opponent.field.length > 0) {
       await System.show(stack, 'ヘスティアのハピネスクッキング♪', '2000ダメージ');
       stack.processing.owner.opponent.field.forEach(unit =>
         Effect.damage(stack, stack.processing, unit, 2000, 'effect')

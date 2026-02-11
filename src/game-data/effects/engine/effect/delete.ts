@@ -10,7 +10,7 @@ export function effectDelete(stack: Stack, source: Card, target: Card): void {
     EffectHelper.isUnit(target) &&
     exists.result &&
     exists.place?.name === 'field' &&
-    target.destination !== 'delete';
+    target.leaving?.destination !== 'delete';
   if (!exists.result) return;
 
   switch (exists.place?.name) {
@@ -24,8 +24,18 @@ export function effectDelete(stack: Stack, source: Card, target: Card): void {
         return;
       }
 
-      stack.addChildStack('delete', source, target);
-      target.destination = 'delete';
+      const deleteStack = stack.addChildStack('delete', source, target);
+
+      if (target.leaving) {
+        // 転送先を上書き
+        target.leaving.destination = 'delete';
+      } else {
+        // 離脱を設定
+        target.leaving = {
+          stackId: deleteStack.id,
+          destination: 'delete',
+        };
+      }
       stack.core.room.soundEffect('bang');
       sendSelectedVisualEffect(stack, target);
       return;

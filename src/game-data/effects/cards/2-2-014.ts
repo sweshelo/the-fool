@@ -1,5 +1,4 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';
 import type { Core } from '@/package/core';
@@ -17,17 +16,13 @@ export const effects: CardEffects = {
 
   onBootSelf: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '起動・ワンダーステラ', '手札を1枚選んで捨てる\nカードを1枚引く');
-    const choices: Choices = {
-      title: '捨てるカードを選択してください',
-      type: 'card',
-      items: stack.processing.owner.hand,
-      count: 1,
-    };
-    const [response] = await System.prompt(stack, stack.processing.owner.id, choices);
-    const target = stack.processing.owner.hand.find(card => card.id === response);
-    if (target) {
-      Effect.break(stack, stack.processing, target);
-      EffectTemplate.draw(stack.processing.owner, stack.core);
-    }
+    const [target] = await EffectHelper.selectCard(
+      stack,
+      stack.processing.owner,
+      stack.processing.owner.hand,
+      '捨てるカードを選択してください'
+    );
+    Effect.break(stack, stack.processing, target);
+    EffectTemplate.draw(stack.processing.owner, stack.core);
   },
 };

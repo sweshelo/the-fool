@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -14,36 +14,36 @@ export const effects: CardEffects = {
 
     // 選略効果の実装
     if (opponentUnits.length > 0) {
-      // 選択肢を提示
-      const [choice] =
-        opponentUnits.filter(unit => unit.catalog.cost >= 3).length > 0
-          ? await System.prompt(stack, stack.processing.owner.id, {
-              title: '選略・光竜の双哮',
-              type: 'option',
-              items: [
-                { id: '1', description: '敵全体に【呪縛】を与える' },
-                { id: '2', description: 'コスト3以上の敵の行動権を消費' },
-              ],
-            })
-          : ['1'];
+      const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・光竜の双哮', [
+        { id: '1', description: '敵全体に【呪縛】を与える' },
+        {
+          id: '2',
+          description: 'コスト3以上の敵の行動権を消費',
+          condition: opponentUnits.filter(unit => unit.catalog.cost >= 3).length > 0,
+        },
+      ]);
 
-      // 選択に基づいて効果を適用
-      if (choice === '1') {
-        // ①：対戦相手の全てのユニットに【呪縛】を与える
-        await System.show(stack, '選略・光竜の双哮', '敵全体に【呪縛】を与える');
+      switch (choice) {
+        case '1': {
+          // ①：対戦相手の全てのユニットに【呪縛】を与える
+          await System.show(stack, '選略・光竜の双哮', '敵全体に【呪縛】を与える');
 
-        opponentUnits.forEach(unit => {
-          Effect.keyword(stack, stack.processing, unit, '呪縛');
-        });
-      } else {
-        // ②：対戦相手のコスト3以上の全てのユニットの行動権を消費する
-        await System.show(stack, '選略・光竜の双哮', 'コスト3以上の行動権を消費');
-
-        opponentUnits
-          .filter(unit => unit.catalog.cost >= 3)
-          .forEach(unit => {
-            Effect.activate(stack, stack.processing, unit, false);
+          opponentUnits.forEach(unit => {
+            Effect.keyword(stack, stack.processing, unit, '呪縛');
           });
+          break;
+        }
+        case '2': {
+          // ②：対戦相手のコスト3以上の全てのユニットの行動権を消費する
+          await System.show(stack, '選略・光竜の双哮', 'コスト3以上の行動権を消費');
+
+          opponentUnits
+            .filter(unit => unit.catalog.cost >= 3)
+            .forEach(unit => {
+              Effect.activate(stack, stack.processing, unit, false);
+            });
+          break;
+        }
       }
     }
 

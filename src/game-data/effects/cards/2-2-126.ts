@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
     if (stack.processing.owner.trigger.length > 0) {
-      await System.show(stack, 'GO！GO！アルカナパレード♪　', '紫ゲージ+[トリガーゾーンの枚数×1]');
+      await System.show(stack, 'GO!GO!アルカナパレード♪', '紫ゲージ+[トリガーゾーンの枚数×1]');
       await Effect.modifyPurple(
         stack,
         stack.processing,
@@ -15,6 +15,8 @@ export const effects: CardEffects = {
   },
 
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+    if (stack.processing.owner.id !== stack.core.getTurnPlayer().id) return;
+
     const intercept = stack.processing.owner.deck.filter(card => card.catalog.type === 'intercept');
     if (
       intercept.length > 0 &&

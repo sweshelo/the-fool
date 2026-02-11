@@ -21,14 +21,10 @@ export const effects: CardEffects = {
       '相手が選択：\n①ユニットに【加護】【破壊効果耐性】\n②トリガーカードを2枚引く\n【天使】のBPを+1000'
     );
 
-    const [selectedChoice] = await System.prompt(stack, opponent.id, {
-      type: 'option',
-      title: '選告・ラピッドラビット',
-      items: [
-        { id: '1', description: 'ユニットに【加護】と【破壊効果耐性】を与える' },
-        { id: '2', description: 'トリガーカードを2枚引く' },
-      ],
-    });
+    const selectedChoice = await EffectHelper.choice(stack, opponent, '選告・ラピッドラビット', [
+      { id: '1', description: 'ユニットに【加護】と【破壊効果耐性】を与える' },
+      { id: '2', description: 'トリガーカードを2枚引く' },
+    ]);
 
     // 選択した効果を発動
     switch (selectedChoice) {

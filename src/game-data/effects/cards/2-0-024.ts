@@ -1,4 +1,3 @@
-import type { Choices } from '@/submodule/suit/types/game/system';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
@@ -14,16 +13,12 @@ export const effects: CardEffects = {
 
     // 手札を選んで捨てる
     const owner = stack.processing.owner;
-    const choices: Choices = {
-      title: '捨てるカードを選択してください',
-      type: 'card',
-      items: owner.hand,
-      count: 1,
-    };
-
-    const [response] = await System.prompt(stack, owner.id, choices);
-    const target = owner.hand.find(card => card.id === response);
-    if (!target) throw new Error('正しいカードが選択されませんでした');
+    const [target] = await EffectHelper.selectCard(
+      stack,
+      owner,
+      owner.hand,
+      '捨てるカードを選択してください'
+    );
     Effect.break(stack, stack.processing, target);
 
     // コスト3のユニットを引く

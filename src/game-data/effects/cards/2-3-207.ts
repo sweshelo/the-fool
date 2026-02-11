@@ -1,5 +1,5 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -36,19 +36,13 @@ export const effects: CardEffects = {
     );
 
     if (fourGodUnits.length > 0) {
-      // プレイヤーに選択を促す
-      const [choice] = await System.prompt(stack, stack.processing.owner.id, {
-        title: '捨てる【四聖獣】ユニットを選択してください',
-        type: 'card',
-        items: fourGodUnits,
-        count: 1,
-      });
-
-      // 選択したカードを捨札に送る
-      const target = fourGodUnits.find(card => card.id === choice);
-      if (target) {
-        Effect.move(stack, stack.processing, target, 'trash');
-      }
+      const [target] = await EffectHelper.selectCard(
+        stack,
+        stack.processing.owner,
+        fourGodUnits,
+        '捨てる【四聖獣】ユニットを選択してください'
+      );
+      Effect.move(stack, stack.processing, target, 'trash');
     }
   },
 };

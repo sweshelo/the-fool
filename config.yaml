@@ -2,7 +2,7 @@
 game:
   system:
     round: 10
-    turnTime: 120 # ターン時間（秒）
+    turnTime: 60 # ターン時間（秒）
     draw:
       top: 2
       override: 1

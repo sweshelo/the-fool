@@ -113,7 +113,8 @@ export async function handleMessage(core: Core, message: Message) {
       if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
       // Bannedチェック
-      if (card.delta.some(delta => delta.effect.type === 'banned')) return;
+      if (card.delta.some(delta => delta.effect.type === 'banned'))
+        throw new Error('使用できないカードが指定されました');
 
       // CPが足りている
       // 軽減チェック
@@ -271,7 +272,7 @@ export async function handleMessage(core: Core, message: Message) {
 
       if (target && player) {
         player.field = player.field.filter(u => u.id !== target.id);
-        player.trash.push(target);
+        if (!target.isCopy) player.trash.push(target);
         target.reset();
 
         // フィールド効果呼び出し

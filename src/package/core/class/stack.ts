@@ -9,6 +9,7 @@ import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
 import type { GameEvent } from '@/game-data/effects/schema/events';
 import { createMessage } from '@/submodule/suit/types';
+import { nanoid } from 'nanoid';
 
 interface IStack {
   /**
@@ -68,6 +69,7 @@ type StackOption =
     };
 
 export class Stack implements IStack {
+  id: string;
   type: GameEvent;
   source: Card | Player;
   target?: Card | Player;
@@ -78,6 +80,7 @@ export class Stack implements IStack {
   option?: StackOption;
 
   constructor({ type, source, target, parent, core, option }: Omit<IStack, 'children'>) {
+    this.id = nanoid(10);
     this.type = type;
     this.source = source;
     this.target = target;
@@ -231,7 +234,8 @@ export class Stack implements IStack {
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
-    while (turnPlayer.trigger.length > index) {
+    let alreadyChecked: Card[] = [];
+    while (alreadyChecked.length < turnPlayer.trigger.length) {
       const card = turnPlayer.trigger[index];
       if (card === undefined) {
         break;
@@ -245,17 +249,22 @@ export class Stack implements IStack {
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
         await this.resolveChild(core);
-        if (!result) index++;
+        if (!result) {
+          index++;
+          alreadyChecked.push(card);
+        }
       } else {
         index++;
+        alreadyChecked.push(card);
         continue;
       }
     }
 
     // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     index = 0;
+    alreadyChecked = [];
     if (nonTurnPlayer)
-      while (nonTurnPlayer.trigger.length > index) {
+      while (alreadyChecked.length < nonTurnPlayer.trigger.length) {
         const card = nonTurnPlayer.trigger[index];
         if (card === undefined) {
           break;
@@ -271,9 +280,13 @@ export class Stack implements IStack {
           const result = await this.processTriggerCardEffect(card, core);
           this.processing = undefined;
           await this.resolveChild(core);
-          if (!result) index++;
+          if (!result) {
+            index++;
+            alreadyChecked.push(card);
+          }
         } else {
           index++;
+          alreadyChecked.push(card);
           continue;
         }
       }
@@ -331,6 +344,7 @@ export class Stack implements IStack {
       switch (stack.type) {
         case 'handes':
         case 'damage':
+        case 'lost':
           return true;
         default:
           return false;
@@ -363,20 +377,9 @@ export class Stack implements IStack {
     if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
       const target = stack.target;
-      if (target instanceof Unit) {
-        switch (stack.type) {
-          case 'break':
-            this.moveUnit(target, 'trash');
-            return true;
-          case 'delete':
-            this.moveUnit(target, 'delete', 'deleted');
-            return true;
-          case 'bounce':
-            if (stack.option?.type === 'bounce') {
-              this.moveUnit(target, stack.option?.location, 'bounce');
-            }
-            return true;
-        }
+      if (target instanceof Unit && target.leaving && target.leaving.stackId === stack.id) {
+        this.moveUnit(target, target.leaving.destination);
+        return true;
       }
     });
 
@@ -679,13 +682,6 @@ export class Stack implements IStack {
     return childStack;
   }
 
-  /**
-   * スタックのIDを取得する（ユニークな識別子として使用）
-   */
-  get id(): string {
-    return `${this.source.id}_${this.type}_${Date.now()}`;
-  }
-
   private processFieldEffect() {
     /*
     const target = this.target instanceof Card ? this.target.catalog.name : '?';
@@ -738,8 +734,7 @@ export class Stack implements IStack {
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {
-        if (unit.currentBP <= 0 && unit.destination === undefined)
-          Effect.break(this, effector, unit, 'effect');
+        if (unit.currentBP <= 0 && !unit.leaving) Effect.break(this, effector, unit, 'effect');
       });
   }
 }

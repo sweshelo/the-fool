@@ -3,6 +3,7 @@ import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from '../system';
+import { helperShuffle } from './shuffle';
 
 export async function helperSelectCard<T extends Card = Card>(
   stack: Stack,
@@ -19,6 +20,11 @@ export async function helperSelectCard<T extends Card = Card>(
   };
   const response = await System.prompt(stack, player.id, choices);
   const result = targets.filter(card => response.includes(card.id));
+
+  // デッキを参照した場合はシャッフルする
+  if (player.deck === targets) {
+    player.deck = helperShuffle(player.deck);
+  }
 
   // oxlint-disable-next-line no-unsafe-type-assertion
   if (result.length > 0) return result as [T, ...T[]];

@@ -50,41 +50,43 @@ export const effects: CardEffects = {
 
     if (!isOption1Available && !isOption2Available) return;
 
-    // どちらかしか選べない場合は自動選択
-    const [choice] = !isOption1Available
-      ? ['2']
-      : !isOption2Available
-        ? ['1']
-        : await System.prompt(stack, stack.processing.owner.id, {
-            title: '選略・魅惑のキャノンショット',
-            type: 'option',
-            items: [
-              { id: '1', description: '手札のユニットのレベル+1' },
-              { id: '2', description: 'フィールドのユニットのレベル+1' },
-            ],
-          });
+    const choice = await EffectHelper.choice(
+      stack,
+      stack.processing.owner,
+      '選略・魅惑のキャノンショット',
+      [
+        { id: '1', description: '手札のユニットのレベル+1', condition: isOption1Available },
+        { id: '2', description: 'フィールドのユニットのレベル+1', condition: isOption2Available },
+      ]
+    );
 
-    if (choice === '1' && isOption1Available) {
-      await System.show(stack, '魅惑のキャノンショット', '手札のユニットのレベル+1');
-      const [target] = await EffectHelper.selectCard(
-        stack,
-        stack.processing.owner,
-        handUnits,
-        'レベルを上げるユニットを選択',
-        1
-      );
-      if (target instanceof Unit) {
-        Effect.clock(stack, stack.processing, target, 1);
+    switch (choice) {
+      case '1': {
+        await System.show(stack, '魅惑のキャノンショット', '手札のユニットのレベル+1');
+        const [target] = await EffectHelper.selectCard(
+          stack,
+          stack.processing.owner,
+          handUnits,
+          'レベルを上げるユニットを選択',
+          1
+        );
+        if (target instanceof Unit) {
+          Effect.clock(stack, stack.processing, target, 1);
+        }
+        break;
       }
-    } else if (choice === '2' && isOption2Available) {
-      await System.show(stack, '魅惑のキャノンショット', 'フィールドのユニットのレベル+1');
-      const [target] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        'owns',
-        'レベルを上げるユニットを選択'
-      );
-      Effect.clock(stack, stack.processing, target, 1);
+      case '2':
+        {
+          await System.show(stack, '魅惑のキャノンショット', 'フィールドのユニットのレベル+1');
+          const [target] = await EffectHelper.pickUnit(
+            stack,
+            stack.processing.owner,
+            'owns',
+            'レベルを上げるユニットを選択'
+          );
+          Effect.clock(stack, stack.processing, target, 1);
+        }
+        break;
     }
   },
 };

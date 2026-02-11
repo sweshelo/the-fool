@@ -1,6 +1,5 @@
 import { Delta } from '@/package/core/class/delta';
-import type { Choices } from '@/submodule/suit/types/game/system';
-import { System } from '..';
+import { EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -23,20 +22,14 @@ export const effects: CardEffects = {
 
     await System.show(stack, '誰がために道化は嗤う', '手札のコスト-1');
 
-    // 手札からカードを1枚選択
-    const choices: Choices = {
-      title: 'コストを-1するカードを選択',
-      type: 'card',
-      items: owner.hand,
-      count: 1,
-    };
+    const [target] = await EffectHelper.selectCard(
+      stack,
+      owner,
+      owner.hand,
+      'コストを-1するカードを選択'
+    );
 
-    const [choice] = await System.prompt(stack, owner.id, choices);
-    const target = owner.hand.find(card => card.id === choice);
-
-    if (target) {
-      // コストを-1する
-      target.delta.push(new Delta({ type: 'cost', value: -1 }));
-    }
+    // コストを-1する
+    target.delta.push(new Delta({ type: 'cost', value: -1 }));
   },
 };

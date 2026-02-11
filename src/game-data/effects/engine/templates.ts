@@ -1,7 +1,6 @@
 import type { Player } from '@/package/core/class/Player';
 import type { Stack } from '@/package/core/class/stack';
 import type { Core } from '@/package/core';
-import type { Choices } from '@/submodule/suit/types/game/system';
 import { System } from './system';
 import { EffectHelper } from './helper';
 import { Effect } from './effect';
@@ -40,26 +39,23 @@ export class EffectTemplate {
 
     if (!driver) return;
 
-    // 召喚者に対して ChoisePayload を送信
-    const choices: Choices = {
-      title: '手札に加えるカードを選択してください',
-      type: 'card',
-      items: driver?.trash ?? [],
-      count,
-    };
-    const [response] = await System.prompt(stack, driver.id, choices);
-
     // 召喚者の手札が上限に達している場合は何もしない
     if (driver?.hand === undefined || driver?.hand?.length >= stack.core.room.rule.player.max.hand)
       return;
 
-    const target = driver.trash.find(c => c.id === response);
+    if ((driver?.trash ?? []).length === 0) return;
 
-    // targetを引き抜き、手札に加える
-    if (target && stack.processing) {
-      Effect.move(stack, stack.processing, target, 'hand');
-    }
-    return;
+    const targets = await EffectHelper.selectCard(
+      stack,
+      driver,
+      driver.trash,
+      '手札に加えるカードを選択してください',
+      count
+    );
+
+    targets.forEach(card => {
+      Effect.move(stack, stack.processing, card, 'hand');
+    });
   }
 
   /**

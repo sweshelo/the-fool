@@ -57,11 +57,11 @@ export const effects: CardEffects = {
   onTurnEnd: async (stack: StackWithCard): Promise<void> => {
     const candidate = stack.processing.owner.trash.filter(
       (card): card is Unit =>
-        card.catalog.type === 'unit' && card.catalog.color === Color.BLUE && card.catalog.cost <= 3
+        card.catalog.type === 'unit' && card.catalog.color === Color.BLUE && card.catalog.cost === 3
     );
 
     if (candidate.length > 0 && stack.processing.owner.id !== stack.core.getTurnPlayer().id) {
-      await System.show(stack, '創生の儀式・輪廻転生', 'コスト3以下の青属性ユニットを【特殊召喚】');
+      await System.show(stack, '創生の儀式・輪廻転生', 'コスト3の青属性ユニットを【特殊召喚】');
       const [target] = EffectHelper.random(candidate);
       if (target) await Effect.summon(stack, stack.processing, target);
     }

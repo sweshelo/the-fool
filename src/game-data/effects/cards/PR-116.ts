@@ -1,5 +1,5 @@
 import { Delta } from '@/package/core/class/delta';
-import { Effect, EffectTemplate, System } from '..';
+import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';
 
@@ -47,36 +47,28 @@ export const effects: CardEffects = {
   async onPlayerAttackSelf(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
 
-    // 選択肢
-    const options = [
+    const choice = await EffectHelper.choice(stack, owner, '選略・憂国の侵攻', [
       { id: '1', description: 'お互いに1ライフダメージ' },
       { id: '2', description: 'お互いに手札を全て捨てる\nカードを3枚引く' },
-    ];
+    ]);
 
-    let choice: string | undefined;
-    const promptResult = await System.prompt(stack, owner.id, {
-      title: '選略・憂国の侵攻',
-      type: 'option',
-      items: options,
-    });
-    if (promptResult && promptResult.length > 0) {
-      choice = promptResult[0];
-    } else {
-      return;
-    }
-
-    if (choice === '1') {
-      await System.show(stack, '憂国の侵攻', 'お互いに1ライフダメージ');
-      Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
-      Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
-    } else if (choice === '2') {
-      await System.show(stack, '憂国の侵攻', '手札を全て捨てる\nカードを3枚引く');
-      stack.core.players
-        .flatMap(player => player.hand)
-        .forEach(card => Effect.break(stack, stack.processing, card));
-      stack.core.players.forEach(player =>
-        [...Array(3)].forEach(() => EffectTemplate.draw(player, stack.core))
-      );
+    switch (choice) {
+      case '1': {
+        await System.show(stack, '憂国の侵攻', 'お互いに1ライフダメージ');
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
+        Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
+        break;
+      }
+      case '2': {
+        await System.show(stack, '憂国の侵攻', '手札を全て捨てる\nカードを3枚引く');
+        stack.core.players
+          .flatMap(player => player.hand)
+          .forEach(card => Effect.break(stack, stack.processing, card));
+        stack.core.players.forEach(player =>
+          [...Array(3)].forEach(() => EffectTemplate.draw(player, stack.core))
+        );
+        break;
+      }
     }
   },
 };

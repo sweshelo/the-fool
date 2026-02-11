@@ -1,8 +1,6 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect } from '../engine/effect';
-import { System } from '../engine/system';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { EffectHelper } from '../engine/helper';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -14,19 +12,12 @@ export const effects: CardEffects = {
 
     if (owner.hand.length === 0 || unitsToDestroy.length === 0) return;
 
-    // 選択肢を表示
-    const choices = [
+    const choice = await EffectHelper.choice(stack, owner, '選略・校則違反よ！', [
       { id: '1', description: '効果なし' },
       { id: '2', description: '手札を2枚捨てる\nユニットを破壊' },
-    ];
+    ]);
 
-    const [response] = await System.prompt(stack, owner.id, {
-      type: 'option',
-      title: '選略・校則違反よ！',
-      items: choices,
-    });
-
-    if (response === '2') {
+    if (choice === '2') {
       await System.show(stack, '選略・校則違反よ！', '手札を2枚捨てる\nユニットを破壊');
 
       // ランダムで2枚捨てる
