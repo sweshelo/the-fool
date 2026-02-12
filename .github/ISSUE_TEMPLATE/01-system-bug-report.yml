@@ -3,7 +3,6 @@ description: システム側の不具合を報告します
 title: "[システム]: "
 labels: ["bug", "core-system"]
 projects: ["sweshelo/revolutions"]
-type: bug
 body:
   - type: markdown
     attributes:
