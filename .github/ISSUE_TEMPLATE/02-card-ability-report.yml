@@ -34,7 +34,6 @@ body:
     id: card
     attributes:
       label: 対象のカード
-      value: "対象のカード"
       description: 問題のカードを選択して下さい。Ctrl+Fで検索すると便利です。
       options:
         - ＜ウィルス・炎＞
