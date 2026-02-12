@@ -17,7 +17,7 @@ body:
       label: 問題の概要
       description: どのような問題ですか？
       placeholder: 問題の概要
-      value: ""
+      value: "問題の概要"
     validations:
       required: true
   - type: dropdown
