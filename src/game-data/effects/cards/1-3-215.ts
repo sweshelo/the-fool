@@ -19,20 +19,20 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     // フィールドにいる【四聖獣】ユニットの数を数える
     const fourGodCount = countFourGodUnits(stack);
-
-    await System.show(
-      stack,
-      '四聖を統べる少女',
-      `対戦相手のユニットを${fourGodCount}体消滅\n四聖獣ユニットに【加護】と【貫通】を付与`
-    );
-
     // 対戦相手のユニットをランダムで消滅させる（四聖獣の数だけ）
-    if (fourGodCount > 0) {
-      const opponentUnits = stack.processing.owner.opponent.field;
+    const opponentUnits = stack.processing.owner.opponent.field;
+
+    if (fourGodCount > 0 && opponentUnits.length > 0) {
+      await System.show(
+        stack,
+        '四聖を統べる少女',
+        `対戦相手のユニットを${fourGodCount}体消滅\n四聖獣ユニットに【加護】と【貫通】を付与`
+      );
+
       // 消滅させる数（対戦相手のユニット数と四聖獣の数の小さい方）
       const deleteCount = Math.min(fourGodCount, opponentUnits.length);
 
-      if (deleteCount > 0 && opponentUnits.length > 0) {
+      if (deleteCount > 0) {
         // EffectHelper.randomを使ってランダムなユニットを選択
         const randomUnits = EffectHelper.random(opponentUnits, deleteCount);
 
@@ -41,6 +41,8 @@ export const effects: CardEffects = {
           Effect.delete(stack, stack.processing, unit);
         }
       }
+    } else {
+      await System.show(stack, '四聖を統べる少女', `四聖獣ユニットに【加護】と【貫通】を付与`);
     }
   },
 

@@ -6,15 +6,19 @@ import { EffectHelper } from '../engine/helper';
 
 const getCheckFunction = (cost: number) => {
   return async (stack: StackWithCard) => {
+    const owner = stack.processing.owner;
+    const target = stack.target;
+    if (!(target && target instanceof Unit)) return false;
+
     return (
-      !!stack.processing.owner.trash.find(
+      !!owner.trash.find(
         unit => unit instanceof Unit && unit.catalog.type === 'unit' && unit.catalog.cost <= cost
       ) &&
-      stack.target instanceof Unit &&
-      stack.target.owner.id === stack.processing.owner.id &&
-      stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
-      stack.processing.owner.field.length < stack.core.room.rule.player.max.field &&
-      (stack.option?.type === 'break' ? stack.option.cause !== 'battle' : true)
+      target.owner.id === owner.id &&
+      stack.core.getTurnPlayer().id !== owner.id &&
+      owner.field.length < stack.core.room.rule.player.max.field &&
+      (stack.option?.type === 'break' ? EffectHelper.isBreakByEffect(stack) : true) &&
+      (stack.option?.type === 'bounce' ? target.leaving?.destination === 'hand' : true)
     );
   };
 };

@@ -2,6 +2,20 @@ import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
+async function samuraiBattlEffect(stack: StackWithCard): Promise<void> {
+  const owner = stack.processing.owner;
+  // 戦闘中の自ユニットを特定
+  const ownUnit = [stack.source, stack.target].find(
+    (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
+  );
+  if (!(ownUnit && owner.field.some(unit => unit.id === ownUnit.id))) return;
+
+  if (ownUnit.catalog.species?.includes('侍')) {
+    await System.show(stack, '心眼の撫子', '基本BP+1000');
+    Effect.modifyBP(stack, stack.processing, ownUnit, 1000, { isBaseBP: true });
+  }
+}
+
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
     await System.show(
@@ -27,16 +41,10 @@ export const effects: CardEffects = {
     });
   },
 
+  onBattleSelf: samuraiBattlEffect,
   onBattle: async (stack: StackWithCard) => {
-    const owner = stack.processing.owner;
-    // 戦闘中の自ユニットを特定
-    const ownUnit = [stack.source, stack.target].find(
-      (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
-    );
-
-    if (ownUnit instanceof Unit && ownUnit.catalog.species?.includes('侍')) {
-      await System.show(stack, '心眼の撫子', '基本BP+1000');
-      Effect.modifyBP(stack, stack.processing, ownUnit, 1000, { isBaseBP: true });
-    }
+    if (stack.source.id === stack.processing.id) return;
+    if (stack.target instanceof Unit && stack.target.id === stack.processing.id) return;
+    await samuraiBattlEffect(stack);
   },
 };
