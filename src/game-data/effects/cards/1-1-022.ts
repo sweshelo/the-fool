@@ -2,7 +2,7 @@ import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
-async function samuraiBattlEffect(stack: StackWithCard): Promise<void> {
+async function samuraiBattleEffect(stack: StackWithCard): Promise<void> {
   const owner = stack.processing.owner;
   // 戦闘中の自ユニットを特定
   const ownUnit = [stack.source, stack.target].find(
@@ -41,10 +41,10 @@ export const effects: CardEffects = {
     });
   },
 
-  onBattleSelf: samuraiBattlEffect,
+  onBattleSelf: samuraiBattleEffect,
   onBattle: async (stack: StackWithCard) => {
     if (stack.source.id === stack.processing.id) return;
     if (stack.target instanceof Unit && stack.target.id === stack.processing.id) return;
-    await samuraiBattlEffect(stack);
+    await samuraiBattleEffect(stack);
   },
 };
