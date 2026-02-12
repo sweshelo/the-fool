@@ -16,14 +16,12 @@ body:
       label: 問題の概要
       description: どのような問題ですか？
       placeholder: 問題の概要
-      value: "問題の概要"
     validations:
       required: true
   - type: dropdown
     id: environment
     attributes:
       label: 環境
-      value: "発生した環境"
       description: どの環境でこのバグに遭遇しましたか？
       options:
         - revolution.sweshelo.jp
