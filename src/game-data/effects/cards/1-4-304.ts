@@ -1,4 +1,4 @@
-import { Unit } from '@/package/core/class/card';
+import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -82,34 +82,27 @@ export const effects: CardEffects = {
   },
 
   // トリガーカード効果発動時
+  checkTrigger: (stack: StackWithCard): boolean => {
+    return stack.target instanceof Card && stack.target.catalog.type === 'trigger';
+  },
+
   onTrigger: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 自分のトリガーカードの効果が発動したときのみ処理
-    // sourceがCardの場合のみ処理
-    if ('owner' in stack.source && stack.source.owner.id === owner.id) {
-      const opponent = owner.opponent;
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
+    if (stack.source.id !== owner.id) return;
 
-      // 相手のユニットが存在する場合のみ処理
-      if (opponent.field.length > 0) {
-        // 対象を選択可能なユニットを取得
-        const filter = (unit: Unit) => unit.owner.id === opponent.id;
+    await System.show(stack, '曲者討伐', '敵に2000ダメージ');
 
-        if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
-          await System.show(stack, '曲者討伐', '敵に2000ダメージ');
+    // ユニットを1体選択
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      owner,
+      'opponents',
+      'ダメージを与えるユニットを選択'
+    );
 
-          // ユニットを1体選択
-          const [target] = await EffectHelper.pickUnit(
-            stack,
-            owner,
-            filter,
-            'ダメージを与えるユニットを選択'
-          );
-
-          // 2000ダメージを与える
-          Effect.damage(stack, stack.processing, target, 2000);
-        }
-      }
-    }
+    // 2000ダメージを与える
+    Effect.damage(stack, stack.processing, target, 2000);
   },
 };

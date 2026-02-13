@@ -13,14 +13,15 @@ export const effects: CardEffects = {
     if (!(stack.target instanceof Unit)) return false;
     if ((stack.processing.owner.purple ?? 0) < 3) return false;
 
-    // 自分のユニットが出た場合
+    // 自分のユニットが出た場合、対戦相手のユニットが選択可能か確認
     if (stack.target.owner.id === stack.processing.owner.id) {
-      return true;
+      return EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner);
     }
 
-    // 対戦相手のユニットが出た場合
+    // 対戦相手のユニットが出た場合、召喚されたユニットがフィールドに存在するか確認
     if (stack.target.owner.id !== stack.processing.owner.id) {
-      return true;
+      const exists = stack.target.owner.find(stack.target);
+      return exists.result && exists.place?.name === 'field';
     }
 
     return false;
@@ -33,9 +34,6 @@ export const effects: CardEffects = {
 
     // 自分のユニットが出た場合の効果
     if (stack.target.owner.id === owner.id) {
-      // 対戦相手のフィールドにユニットがいるか確認
-      if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', owner)) return;
-
       await System.show(stack, '死んでくれる？', 'デスカウンター[1]\nカードを1枚引く');
 
       // 対戦相手のユニットを1体選ぶ

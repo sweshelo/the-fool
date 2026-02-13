@@ -22,10 +22,7 @@ export const effects: CardEffects = {
 
     // フィールドのユニットのレベルを+1する
     for (const unit of fieldUnits) {
-      if (unit.id !== stack.processing.id) {
-        // 自身以外
-        Effect.clock(stack, stack.processing, unit, 1);
-      }
+      Effect.clock(stack, stack.processing, unit, 1);
     }
   },
 
