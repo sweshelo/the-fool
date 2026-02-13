@@ -2,6 +2,27 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
+async function spiritAttackEffect(stack: StackWithCard<Unit>): Promise<void> {
+  // あなたの【精霊】ユニットがアタックした時
+  if (!stack.processing.catalog.species?.includes('精霊')) return;
+  const filter = (unit: Unit) =>
+    unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2;
+
+  if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
+    await System.show(stack, 'メディオクリティレスト', '行動権を消費');
+
+    const [target] = await EffectHelper.pickUnit(
+      stack,
+      stack.processing.owner,
+      filter,
+      '行動権を消費するユニットを選択'
+    );
+    if (!target) return;
+
+    Effect.activate(stack, stack.processing, target, false);
+  }
+}
+
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     const spirit = stack.processing.owner.field.filter(unit =>
@@ -41,5 +62,12 @@ export const effects: CardEffects = {
         break;
       }
     }
+  },
+
+  // アタック時の効果
+  onAttackSelf: spiritAttackEffect,
+  onAttack: async (stack: StackWithCard<Unit>) => {
+    if (stack.target instanceof Unit && stack.target.id === stack.processing.id) return;
+    await spiritAttackEffect(stack);
   },
 };
