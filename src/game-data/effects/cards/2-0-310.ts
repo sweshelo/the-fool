@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 
 async function spiritAttackEffect(stack: StackWithCard<Unit>): Promise<void> {
   // あなたの【精霊】ユニットがアタックした時
-  if (!stack.processing.catalog.species?.includes('精霊')) return;
+  if (!(stack.target instanceof Unit && stack.target.catalog.species?.includes('精霊'))) return;
   const filter = (unit: Unit) =>
     unit.owner.id !== stack.processing.owner.id && unit.catalog.cost <= 2;
 
