@@ -1,0 +1,33 @@
+name: システム不具合報告
+description: システム側の不具合を報告します
+title: "[システム]: "
+labels: ["bug", "core-system"]
+projects: ["sweshelo/revolutions"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグ報告ありがとうございます。以下の項目への記入へのご協力をお願いします。
+        
+        > [!Note] カード効果の不具合の場合、別のテンプレートを利用して下さい。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 問題の概要
+      description: どのような問題ですか？
+      placeholder: 問題の概要
+      value: "問題の概要"
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: 環境
+      description: どの環境でこのバグに遭遇しましたか？
+      options:
+        - revolution.sweshelo.jp
+        - home.sweshelo.jp
+        - ローカル環境
+      default: 0
+    validations:
+      required: true

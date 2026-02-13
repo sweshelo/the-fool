@@ -427,7 +427,7 @@ export class Server {
     }
 
     // プレイ可否チェック（キュー参加前）
-    const eligibility = await this.creditService.checkEligibility(payload.player.id);
+    const eligibility = await this.creditService.checkEligibility(payload.player.id, payload.mode);
     if (!eligibility.canPlay) {
       this.sendError(
         client,
