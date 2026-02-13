@@ -2,7 +2,10 @@ import { getSupabaseClient } from '@/package/logging/supabase-client';
 
 export class PlayCreditService {
   /** プレイ可否チェック */
-  async checkEligibility(playerId: string): Promise<{ canPlay: boolean; reason?: string }> {
+  async checkEligibility(
+    playerId: string,
+    mode: string
+  ): Promise<{ canPlay: boolean; reason?: string }> {
     const client = getSupabaseClient();
     if (!client) return { canPlay: false, reason: 'エラーが発生しました' }; // Supabase未設定 → スキップ
 
@@ -12,11 +15,14 @@ export class PlayCreditService {
     });
     if (creditsError) return { canPlay: false, reason: 'エラーが発生しました' }; // ゲスト → スキップ
 
-    // 2. 1日の無料プレイ上限
+    // 2. LIMITED_FREE_PLAY が有効なら Limited モードはクレジット不要
+    if (mode === 'limited' && process.env.LIMITED_FREE_PLAY === 'true') return { canPlay: true };
+
+    // 3. 1日の無料プレイ上限
     const { data: dailyLimit, error: dailyLimitError } = await client.rpc('get_daily_free_plays');
     if (dailyLimitError) return { canPlay: false, reason: 'エラーが発生しました' };
 
-    // 3. 今日の無料プレイ消費数
+    // 4. 今日の無料プレイ消費数
     const { data: todayCount, error: todayCountError } = await client.rpc(
       'get_today_free_play_count',
       {
