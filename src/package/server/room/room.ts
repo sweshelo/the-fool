@@ -88,7 +88,11 @@ export class Room {
           this.logger.logMatchStart(this.core).catch(console.error);
 
           // マッチング対戦のみクレジット消費
-          if (this.matchingMode && !this.creditsConsumed) {
+          if (
+            this.matchingMode &&
+            !this.creditsConsumed &&
+            !(this.matchingMode === 'limited' && process.env.LIMITED_FREE_PLAY === 'true')
+          ) {
             this.creditsConsumed = true;
             this.consumeCreditsForPlayers().catch(console.error);
           }
