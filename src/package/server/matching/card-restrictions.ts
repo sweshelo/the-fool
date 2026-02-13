@@ -61,13 +61,6 @@ export function evaluateDeckRestriction(
       return { valid: true };
     }
     case 'totalOriginality': {
-      const totalOp = calculateTotalOriginality(deck);
-      if (totalOp < restriction.min) {
-        return {
-          valid: false,
-          detail: `デッキのオリジナリティ合計が${restriction.min}未満です（${totalOp}）`,
-        };
-      }
       return { valid: true };
     }
   }
@@ -77,7 +70,7 @@ export function evaluateDeckRestriction(
  * デッキのオリジナリティ合計を計算する
  * originality が数値でない場合（"--"など）は 0 として計算
  */
-export function calculateTotalOriginality(deck: PlayerDeck): number {
+export async function calculateTotalOriginality(deck: PlayerDeck): Promise<number> {
   return [...deck.cards, ...deck.jokers].reduce((sum, cardId) => {
     const card = master.get(cardId);
     const op = card?.originality;
