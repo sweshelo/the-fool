@@ -17,8 +17,8 @@ const getCheckFunction = (cost: number) => {
       target.owner.id === owner.id &&
       stack.core.getTurnPlayer().id !== owner.id &&
       owner.field.length < stack.core.room.rule.player.max.field &&
-      (stack.option?.type === 'break' ? EffectHelper.isBreakByEffect(stack) : true) &&
-      (stack.option?.type === 'bounce' ? target.leaving?.destination === 'hand' : true)
+      (stack.option?.type !== 'break' || EffectHelper.isBreakByEffect(stack)) &&
+      (stack.option?.type !== 'bounce' || target.leaving?.destination === 'hand')
     );
   };
 };

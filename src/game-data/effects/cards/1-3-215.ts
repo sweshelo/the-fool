@@ -26,7 +26,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '四聖を統べる少女',
-        `対戦相手のユニットを${fourGodCount}体消滅\n四聖獣ユニットに【加護】と【貫通】を付与`
+        '【四聖獣】ユニットの数だけ消滅\n【四聖獣】ユニットに【加護】と【貫通】を付与'
       );
 
       // 消滅させる数（対戦相手のユニット数と四聖獣の数の小さい方）
@@ -42,7 +42,7 @@ export const effects: CardEffects = {
         }
       }
     } else {
-      await System.show(stack, '四聖を統べる少女', `四聖獣ユニットに【加護】と【貫通】を付与`);
+      await System.show(stack, '四聖を統べる少女', '【四聖獣】ユニットに【加護】と【貫通】を付与');
     }
   },
 
