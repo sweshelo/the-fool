@@ -82,7 +82,6 @@ export const effects: CardEffects = {
   },
 
   // トリガーカード効果発動時
-
   onTrigger: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
