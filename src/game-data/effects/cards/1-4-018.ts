@@ -1,19 +1,13 @@
-import { Card, Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // ■トリガー・クロック
   // 対戦相手のトリガーカードの効果が発動するたび
-  checkTrigger: (stack: StackWithCard): boolean => {
-    return (
-      stack.source.id === stack.processing.owner.opponent.id &&
-      stack.target instanceof Card &&
-      stack.target.catalog.type === 'trigger'
-    );
-  },
-
   onTrigger: async (stack: StackWithCard): Promise<void> => {
+    if (stack.source.id !== stack.processing.owner.opponent.id) return;
+
     const filter = (unit: Unit) => unit.owner.id === stack.processing.owner.opponent.id;
 
     if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {

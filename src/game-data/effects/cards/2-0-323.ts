@@ -13,7 +13,7 @@ export const effects: CardEffects = {
         {
           id: '1',
           description: 'デッキから【魔導士】ユニットを【特殊召喚】',
-          condition: stack.processing.owner.field.length < stack.core.room.rule.player.max.field,
+          condition: stack.processing.owner.field.length <= 4,
         },
         {
           id: '2',
@@ -31,15 +31,14 @@ export const effects: CardEffects = {
             (card.catalog.species?.includes('魔導士') ?? false) &&
             card.catalog.type === 'unit'
         );
-        if (deck.length > 0) {
-          const [randomCard] = EffectHelper.random(deck, 1);
-          await System.show(
-            stack,
-            '選略・まじかるツヴァイ',
-            'デッキから【魔導士】ユニットを【特殊召喚】'
-          );
-          if (randomCard) await Effect.summon(stack, stack.processing, randomCard);
-        }
+        const [randomCard] = EffectHelper.random(deck, 1);
+
+        await System.show(
+          stack,
+          '選略・まじかるツヴァイ',
+          'デッキから【魔導士】ユニットを【特殊召喚】'
+        );
+        if (randomCard) await Effect.summon(stack, stack.processing, randomCard);
         break;
       }
       case '2': {
@@ -53,5 +52,9 @@ export const effects: CardEffects = {
         break;
       }
     }
+
+    await System.show(stack, '貫通', 'ブロックを貫通してプレイヤーにダメージを与える');
+    // 貫通を付与
+    Effect.keyword(stack, stack.processing, stack.processing, '貫通');
   },
 };

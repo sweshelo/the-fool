@@ -2,6 +2,16 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
+async function unitAttackEffect(stack: StackWithCard<Unit>): Promise<void> {
+  // どのユニットがアタックしてもこの効果は発動する
+  await System.show(stack, 'ラッキー☆スター', '基本BP+1000');
+
+  // 基本BPを+1000する
+  Effect.modifyBP(stack, stack.processing, stack.processing, 1000, {
+    isBaseBP: true,
+  });
+}
+
 export const effects: CardEffects = {
   // 【不屈】
   // ■ラッキー☆スター
@@ -18,14 +28,10 @@ export const effects: CardEffects = {
   },
 
   // アタック時の効果
-  onAttack: async (stack: StackWithCard<Unit>): Promise<void> => {
-    // どのユニットがアタックしてもこの効果は発動する
-    await System.show(stack, 'ラッキー☆スター', '基本BP+1000');
-
-    // 基本BPを+1000する
-    Effect.modifyBP(stack, stack.processing, stack.processing, 1000, {
-      isBaseBP: true,
-    });
+  onAttackSelf: unitAttackEffect,
+  onAttack: async (stack: StackWithCard<Unit>) => {
+    if (stack.target instanceof Unit && stack.target.id === stack.processing.id) return;
+    await unitAttackEffect(stack);
   },
 
   // フィールド効果：天使ユニットに貫通を与える
