@@ -8,8 +8,7 @@ export const effects: CardEffects = {
     // 自分の【昆虫】ユニットと対戦相手のユニットを選択
     const filter = (unit: Unit) =>
       unit.owner.id === stack.processing.owner.id &&
-      (unit.catalog.species?.includes('昆虫') || false) &&
-      unit.id !== stack.processing.id;
+      (unit.catalog.species?.includes('昆虫') || false);
 
     // どちらも選択可能なユニットがある場合のみ発動
     if (
