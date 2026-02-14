@@ -1,4 +1,4 @@
-import { Card, Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -82,9 +82,6 @@ export const effects: CardEffects = {
   },
 
   // トリガーカード効果発動時
-  checkTrigger: (stack: StackWithCard): boolean => {
-    return stack.target instanceof Card && stack.target.catalog.type === 'trigger';
-  },
 
   onTrigger: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;

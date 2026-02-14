@@ -34,7 +34,7 @@ export const effects: CardEffects = {
 
     // 自分のユニットが出た場合の効果
     if (stack.target.owner.id === owner.id) {
-      await System.show(stack, '死んでくれる？', 'デスカウンター[1]\nカードを1枚引く');
+      await System.show(stack, '死んでくれる？', 'デスカウンター[1]を付与\nカードを1枚引く');
 
       // 対戦相手のユニットを1体選ぶ
       const [target] = await EffectHelper.pickUnit(
@@ -53,7 +53,7 @@ export const effects: CardEffects = {
 
     // 対戦相手のユニットが出た場合の効果
     if (stack.target.owner.id !== owner.id) {
-      await System.show(stack, '死んでくれる？', '破壊\n紫ゲージ-3');
+      await System.show(stack, '死んでくれる？', 'ユニットを破壊\n紫ゲージ-3');
 
       // そのユニットを破壊する
       Effect.break(stack, stack.processing, stack.target);
