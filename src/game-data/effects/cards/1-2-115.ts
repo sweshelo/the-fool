@@ -49,8 +49,11 @@ export const effects: CardEffects = {
         break;
       }
       default: {
+        const targets = owner.trash.filter(unit => unit instanceof Unit);
+        if (targets.length === 0) return;
+
         await System.show(stack, 'スリーピングホロウ', '捨札から1枚回収');
-        const [target] = EffectHelper.random(owner.trash);
+        const [target] = EffectHelper.random(targets);
 
         if (target) Effect.move(stack, stack.processing, target, 'hand');
         break;

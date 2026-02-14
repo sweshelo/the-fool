@@ -43,7 +43,7 @@ export const effects: CardEffects = {
     await System.show(stack, '永遠を授かりし者', '捨札からユニットカードを2枚回収');
 
     // 捨札のユニットカードをフィルタリング
-    const unitCards = owner.trash.filter(card => card.catalog.type === 'unit');
+    const unitCards = owner.trash.filter(card => card instanceof Unit);
     if (unitCards.length === 0) return;
 
     // ランダムで2体まで選んで手札に加える
