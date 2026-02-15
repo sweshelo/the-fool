@@ -427,7 +427,11 @@ export class Server {
     }
 
     // プレイ可否チェック（キュー参加前）
-    const eligibility = await this.creditService.checkEligibility(payload.player.id, payload.mode);
+    const eligibility = await this.creditService.checkEligibility(
+      payload.player.id,
+      payload.mode,
+      payload.player.deck
+    );
     if (!eligibility.canPlay) {
       this.sendError(
         client,
@@ -543,6 +547,14 @@ export class Server {
     // ルーム作成
     const room = new Room(`Matching: ${mode}`, rule);
     room.matchingMode = mode;
+
+    // 強制クレジット消費カードを含むプレイヤーを記録
+    for (const player of [player1, player2]) {
+      if (PlayCreditService.containsForceCreditCards(player.player.deck)) {
+        room.forceCreditPlayerIds.add(player.player.id);
+      }
+    }
+
     this.rooms.set(room.id, room);
 
     // ルーム作成ログを記録

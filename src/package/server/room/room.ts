@@ -26,6 +26,7 @@ export class Room {
   cache: string | undefined;
   logger: GameLogger;
   matchingMode?: MatchingMode;
+  forceCreditPlayerIds: Set<string> = new Set();
   private creditService = new PlayCreditService();
   private creditsConsumed = false;
 
@@ -88,11 +89,7 @@ export class Room {
           this.logger.logMatchStart(this.core).catch(console.error);
 
           // マッチング対戦のみクレジット消費
-          if (
-            this.matchingMode &&
-            !this.creditsConsumed &&
-            !(this.matchingMode === 'limited' && process.env.LIMITED_FREE_PLAY === 'true')
-          ) {
+          if (this.matchingMode && !this.creditsConsumed) {
             this.creditsConsumed = true;
             this.consumeCreditsForPlayers().catch(console.error);
           }
@@ -348,6 +345,17 @@ export class Room {
 
   private async consumeCreditsForPlayers(): Promise<void> {
     for (const player of this.core.players) {
+      // 強制クレジット消費対象 → 常にクレジット消費
+      if (this.forceCreditPlayerIds.has(player.id)) {
+        await this.creditService.consumeCredit(player.id, this.id);
+        continue;
+      }
+
+      // Limited + FREE_PLAY 有効 → スキップ
+      if (this.matchingMode === 'limited' && process.env.LIMITED_FREE_PLAY === 'true') {
+        continue;
+      }
+
       await this.creditService.consumeCredit(player.id, this.id);
     }
   }
