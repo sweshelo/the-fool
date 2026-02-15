@@ -1,6 +1,7 @@
 # config
 game:
   system:
+    version: '2019-05-23'
     round: 10
     turnTime: 60 # ターン時間（秒）
     draw:

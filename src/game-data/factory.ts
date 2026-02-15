@@ -3,7 +3,6 @@ import type { Catalog, ICard } from '../submodule/suit/types/game/card';
 import type { Stack } from '@/package/core/class/stack';
 import { getCardEffect } from './effects';
 import type {
-  EventCheckHandlers,
   EventOnHandlers,
   EventOnHandlersWithTargetSuffix,
   EventOnHandlersWithEventSuffix,
@@ -15,9 +14,6 @@ export interface HandlerFunction {
   (stack: Stack, card: ICard, core: Core): Promise<void>;
 }
 
-// イベントハンドラー型の具体化
-type CheckMethod = (stack: Stack) => boolean;
-
 // 全てのサフィックス付きハンドラーを展開
 type AllSuffixHandlers = Partial<
   EventOnHandlersWithTargetSuffix<HandlerFunction, (typeof HANDLER_SUFFIXES_TARGET)[number]> &
@@ -25,11 +21,7 @@ type AllSuffixHandlers = Partial<
 >;
 
 export interface CatalogWithHandler
-  extends
-    Catalog,
-    Omit<Partial<EventCheckHandlers<CheckMethod>>, 'checkJoker'>,
-    Partial<EventOnHandlers<HandlerFunction>>,
-    AllSuffixHandlers {
+  extends Catalog, Partial<EventOnHandlers<HandlerFunction>>, AllSuffixHandlers {
   fieldEffect?: (stack: Stack) => void;
   handEffect?: (core: Core, card: ICard) => void;
   checkJoker?: (player: import('@/package/core/class/Player').Player, core: Core) => boolean;

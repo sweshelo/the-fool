@@ -27,7 +27,8 @@
 
     // import aliases
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@effect/*": ["./src/game-data/effects/*"],
     }
   }
 }
