@@ -6,6 +6,7 @@ import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
 import { Color } from '@/submodule/suit/constant/color';
 import master from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 import { EffectHelper } from '../engine/helper';
 
 export const effects: CardEffects = {
@@ -49,7 +50,9 @@ export const effects: CardEffects = {
 
   onBootSelf: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '起動・エインヘリャル', 'ランダムな【機械】を3枚作成');
+    const version = stack.core.room.rule.system.version;
     const candidate: string[] = Array.from(master.values())
+      .map(entry => resolveCatalog(entry, version))
       .filter(catalog => catalog.species?.includes('機械'))
       .map(catalog => catalog.id);
     EffectHelper.random(candidate, 3).forEach(id => {

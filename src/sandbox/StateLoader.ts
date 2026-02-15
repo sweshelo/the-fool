@@ -15,6 +15,7 @@ import { Joker } from '@/package/core/class/card/Joker';
 import { Delta } from '@/package/core/class/delta';
 import { DummyCard, DummyUnit } from './DummyCard';
 import catalog from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 import { isGameEvent } from '@/game-data/effects/schema/events';
 
 /**
@@ -25,7 +26,8 @@ import { isGameEvent } from '@/game-data/effects/schema/events';
 function restoreCard(owner: Player, data: IAtom | ICard): Card {
   // catalogIdが存在するかチェック
   if ('catalogId' in data && data.catalogId) {
-    const master = catalog.get(data.catalogId);
+    const entry = catalog.get(data.catalogId);
+    const master = entry ? resolveCatalog(entry, 'default') : undefined;
     if (master) {
       let card: Card;
       switch (master.type) {
@@ -84,7 +86,8 @@ function restoreCard(owner: Player, data: IAtom | ICard): Card {
  * DummyUnit は Unit を継承しているため、戻り値は Unit 型として統一される
  */
 function restoreUnit(owner: Player, data: IUnit): Unit {
-  const master = catalog.get(data.catalogId);
+  const entry = catalog.get(data.catalogId);
+  const master = entry ? resolveCatalog(entry, 'default') : undefined;
 
   if (master && (master.type === 'unit' || master.type === 'advanced_unit')) {
     const unit =

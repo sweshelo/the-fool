@@ -18,6 +18,7 @@ import type {
 } from '@/submodule/suit/types';
 import type { Core } from '../index';
 import catalog from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 import { Stack } from '../class/stack';
 import { Evolve, Unit } from '../class/card';
 import { Intercept } from '../class/card/Intercept';
@@ -73,8 +74,8 @@ export async function handleMessage(core: Core, message: Message) {
 
       // 2つのカードが同じである
       const isSameCard = core.room.rule.misc.strictOverride
-        ? catalog.get(parent.card.catalogId)?.id === catalog.get(target.card.catalogId)?.id
-        : catalog.get(parent.card.catalogId)?.name === catalog.get(target.card.catalogId)?.name;
+        ? parent.card.catalog.id === target.card.catalog.id
+        : parent.card.catalog.name === target.card.catalog.name;
 
       // 受け皿がLv3未満
       const isUnderLv3 = parent?.card?.lv < 3;
@@ -108,9 +109,6 @@ export async function handleMessage(core: Core, message: Message) {
         console.log(payload);
         throw new Error('指定されたCardかPlayerのどちらかが不正でした');
       }
-
-      const cardCatalog = catalog.get(card.catalogId);
-      if (!cardCatalog) throw new Error('カタログに存在しないカードが指定されました');
 
       // Bannedチェック
       if (card.delta.some(delta => delta.effect.type === 'banned'))
@@ -430,7 +428,9 @@ export async function handleMessage(core: Core, message: Message) {
     case 'DebugMake': {
       const payload: DebugMakePayload = message.payload;
       const target = core.players.find(player => player.id === payload.player);
-      const master = catalog.get(payload.catalogId);
+      const version = core.room.rule.system.version;
+      const entry = catalog.get(payload.catalogId);
+      const master = entry ? resolveCatalog(entry, version) : undefined;
       if (target && master) {
         switch (master.type) {
           case 'unit':
@@ -453,7 +453,9 @@ export async function handleMessage(core: Core, message: Message) {
     case 'DebugDrive': {
       const payload: DebugDrivePayload = message.payload;
       const target = core.players.find(player => player.id === payload.player);
-      const master = catalog.get(payload.catalogId);
+      const version = core.room.rule.system.version;
+      const entry = catalog.get(payload.catalogId);
+      const master = entry ? resolveCatalog(entry, version) : undefined;
       if (target && master) {
         switch (master.type) {
           case 'unit':

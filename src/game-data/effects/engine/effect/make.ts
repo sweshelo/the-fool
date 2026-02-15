@@ -3,6 +3,7 @@ import type { Card } from '@/package/core/class/card';
 import { Unit, Evolve, Intercept, Trigger } from '@/package/core/class/card';
 import type { Player } from '@/package/core/class/Player';
 import master from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 
 export function effectMake(
   stack: Stack,
@@ -24,7 +25,8 @@ export function effectMake(
   }
 
   if (typeof target === 'string') {
-    const catalog = master.get(target);
+    const entry = master.get(target);
+    const catalog = entry ? resolveCatalog(entry, stack.core.room.rule.system.version) : undefined;
     if (catalog) {
       switch (catalog.type) {
         case 'unit': {

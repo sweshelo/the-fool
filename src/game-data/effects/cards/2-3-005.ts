@@ -1,7 +1,8 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import master from '@/submodule/suit/catalog/catalog';
+import master from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -82,8 +83,11 @@ export const effects: CardEffects = {
 
     if (stack.processing.owner.hand.length < stack.core.room.rule.player.max.hand) {
       await System.show(stack, '笑顔のハートフルキッチン♪', 'ランダムな【魔導士】を1枚作成');
+      const version = stack.core.room.rule.system.version;
       const [target] = EffectHelper.random(
-        Array.from(master.values()).filter(catalog => catalog.species?.includes('魔導士'))
+        Array.from(master.values())
+          .map(entry => resolveCatalog(entry, version))
+          .filter(catalog => catalog.species?.includes('魔導士'))
       );
 
       if (target) Effect.make(stack, stack.processing.owner, target.id);

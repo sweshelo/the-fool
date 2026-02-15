@@ -16,18 +16,20 @@ export abstract class Card extends Atom implements ICard {
     this.delta = [];
   }
 
+  protected get version(): string {
+    return this.owner.core.room.rule.system.version;
+  }
+
   get catalog(): CatalogWithHandler {
     // 遅延ロードを使用して循環依存を回避
     // Lazy load to avoid circular dependency
-    const getCatalog = () => {
-      const { default: master } = require('@/game-data/catalog');
-      return master;
-    };
+    const { default: master } = require('@/game-data/catalog');
+    const { resolveCatalog } = require('@/game-data/factory');
 
-    const c: CatalogWithHandler = getCatalog().get(this.catalogId);
-    if (!c) throw new Error('カタログに存在しないカードが指定されました');
+    const versions = master.get(this.catalogId);
+    if (!versions) throw new Error('カタログに存在しないカードが指定されました');
 
-    return c;
+    return resolveCatalog(versions, this.version);
   }
 
   reset(forceReset: boolean = false) {

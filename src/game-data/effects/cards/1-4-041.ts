@@ -1,5 +1,4 @@
 import { EffectHelper, EffectTemplate, System } from '..';
-import master from '@/game-data/catalog';
 import type { StackWithCard } from '../schema/types';
 import { Card } from '@/package/core/class/card';
 import { Color } from '@/submodule/suit/constant';
@@ -16,7 +15,7 @@ export const effects = {
     // 召喚者のフィールドに4属性揃っているか確認する
     const colors = new Set(
       player.field
-        .map(unit => master.get(unit.catalogId)?.color)
+        .map(unit => unit.catalog.color)
         .filter(color => color !== Color.NONE && color != null)
     ).size;
     const isGreaterThan4Colors = colors >= 4;

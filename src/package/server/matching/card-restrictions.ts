@@ -1,6 +1,7 @@
 import type { Catalog, PlayerDeck } from '@/submodule/suit/types';
 import type { CardRestriction, DeckRestriction } from './types';
 import master from '@/game-data/catalog';
+import { resolveCatalog } from '@/game-data/factory';
 
 /**
  * カード単体の制限条件を評価する
@@ -43,12 +44,13 @@ export function evaluateDeckRestriction(
     case 'sameNameLimit': {
       const nameCounts = new Map<string, number>();
       for (const cardId of deck.cards) {
-        const card = master.get(cardId);
-        if (!card)
+        const entry = master.get(cardId);
+        if (!entry)
           return {
             valid: false,
             detail: '不明なカードが含まれています',
           };
+        const card = resolveCatalog(entry, 'default');
         const count = (nameCounts.get(card.name) ?? 0) + 1;
         nameCounts.set(card.name, count);
         if (count > restriction.max) {
@@ -72,7 +74,8 @@ export function evaluateDeckRestriction(
  */
 export async function calculateTotalOriginality(deck: PlayerDeck): Promise<number> {
   return [...deck.cards, ...deck.jokers].reduce((sum, cardId) => {
-    const card = master.get(cardId);
+    const entry = master.get(cardId);
+    const card = entry ? resolveCatalog(entry, 'default') : undefined;
     const op = card?.originality;
     return sum + (typeof op === 'number' ? op : 0);
   }, 0);

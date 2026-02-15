@@ -1,6 +1,5 @@
 import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
-import master from '@/game-data/catalog';
 import type { CardArrayKeys, Player } from '../Player';
 import { Delta } from '../delta';
 import type { Stack } from '../stack';
@@ -45,8 +44,7 @@ export class Unit extends Card implements IUnit {
   }
 
   initBP() {
-    const catalog = master.get(this.catalogId);
-    this.bp = catalog?.bp?.[this.lv - 1] ?? 0;
+    this.bp = this.catalog.bp?.[this.lv - 1] ?? 0;
   }
 
   get currentBP() {

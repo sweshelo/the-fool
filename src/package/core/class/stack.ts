@@ -1,7 +1,6 @@
 import { Player, type CardArrayKeys } from './Player';
 import type { Core } from '../index';
 import type { CatalogWithHandler } from '@/game-data/factory';
-import master from '@/game-data/catalog';
 import { Card, Intercept, Unit } from './card';
 import { Effect, System } from '@/game-data/effects';
 import { Color } from '@/submodule/suit/constant/color';
@@ -241,12 +240,7 @@ export class Stack implements IStack {
         break;
       }
 
-      const catalog = master.get(card?.catalogId);
-      if (catalog === undefined) {
-        throw new Error('不正なカードが指定されました');
-      }
-
-      if (catalog.type === 'trigger') {
+      if (card.catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
         await this.resolveChild(core);
         if (!result) {
@@ -269,13 +263,7 @@ export class Stack implements IStack {
         if (card === undefined) {
           break;
         }
-
-        const catalog = master.get(card?.catalogId);
-        if (catalog === undefined) {
-          throw new Error('不正なカードが指定されました');
-        }
-
-        if (catalog.type === 'trigger') {
+        if (card.catalog.type === 'trigger') {
           this.processing = card;
           const result = await this.processTriggerCardEffect(card, core);
           this.processing = undefined;
@@ -424,17 +412,15 @@ export class Stack implements IStack {
     // 使用可能なカードを列挙
     const targets = player.trigger.filter((card): card is Intercept => {
       const checkerName = `check${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
-      const catalog = master.get(card.catalogId);
-      if (!catalog) throw new Error('不正なカードが指定されました');
+      const catalog = card.catalog;
 
       // 使用者のフィールドに該当色のユニットが存在するか
       const isOnFieldSameColor =
-        card.catalog.color === Color.NONE ||
-        player.field.some(u => u.catalog.color === card.catalog.color);
+        catalog.color === Color.NONE || player.field.some(u => u.catalog.color === catalog.color);
 
       // CPが足りているか
       const isEnoughCP =
-        card.catalog.cost +
+        catalog.cost +
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0) <=
@@ -470,8 +456,7 @@ export class Stack implements IStack {
       if (!card) throw new Error('対象がトリガーゾーンに存在しません');
 
       const effectHandler = `on${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`;
-      const catalog = master.get(card.catalogId);
-      if (!catalog) throw new Error('不正なカードが指定されました');
+      const catalog = card.catalog;
       if (typeof catalog[effectHandler] === 'function') {
         // 効果実行前に通知
         core.room.visualEffect({
@@ -568,8 +553,8 @@ export class Stack implements IStack {
     if (!catalogId) return false;
 
     // カードのカタログデータを取得
-    const cardCatalog: CatalogWithHandler | undefined = master.get(catalogId);
-    if (!cardCatalog) return false;
+    const cardCatalog: CatalogWithHandler = card.catalog;
+    console.log(cardCatalog);
 
     // Banされていないか
     if (card.delta.some(delta => delta.effect.type === 'banned')) return false;
@@ -601,7 +586,7 @@ export class Stack implements IStack {
               type: 'DebugPrint',
               message: {
                 stackId: this.id,
-                card: master.get(card.catalogId)?.name,
+                card: card.catalog.name,
                 effectType: this.type,
                 state: check ? 'call' : 'through',
               },

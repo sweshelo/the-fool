@@ -1,6 +1,7 @@
 import catalog from '@/game-data/catalog';
 import type { Catalog, PlayerDeck } from '@/submodule/suit/types';
 import { evaluateCardRestriction, evaluateDeckRestriction } from './card-restrictions';
+import { resolveCatalog } from '@/game-data/factory';
 import { getModeConfig } from './mode-restrictions';
 import type { MatchingMode, ValidationError, ValidationResult } from './types';
 
@@ -32,11 +33,11 @@ export class DeckValidator {
     const notFoundCards: string[] = [];
 
     for (const cardId of deckIds) {
-      const card = catalog.get(cardId);
-      if (!card) {
+      const entry = catalog.get(cardId);
+      if (!entry) {
         notFoundCards.push(cardId);
       } else {
-        deck.push(card);
+        deck.push(resolveCatalog(entry, 'default'));
       }
     }
 

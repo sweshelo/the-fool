@@ -3,7 +3,7 @@ import { config } from '../../../config';
 import type { Action } from './action';
 import { Card } from './card/Card';
 import { Unit, Evolve } from './card/Unit';
-import master from '@/game-data/catalog';
+import { resolveCatalog, type VersionedCatalogEntry } from '@/game-data/factory';
 import { Intercept } from './card/Intercept';
 import { Trigger } from './card/Trigger';
 import { Joker } from './card/Joker';
@@ -92,17 +92,25 @@ export class Player implements IPlayer {
     if (deck.jokers.length > 0) {
       const jokerIds = core.room.rule.joker.single ? deck.jokers.slice(0, 1) : deck.jokers;
 
+      const version = core.room.rule.system.version;
+      const { default: master } = require('@/game-data/catalog');
       this.joker.card = jokerIds
-        .filter(jokerId => master.get(jokerId)?.type === 'joker')
+        .filter(jokerId => {
+          const entry: VersionedCatalogEntry | undefined = master.get(jokerId);
+          return entry && resolveCatalog(entry, version).type === 'joker';
+        })
         .map(catalogId => new Joker(this, catalogId));
     }
   }
 
   initDeck() {
+    const version = this.#core.room.rule.system.version;
+    const { default: master } = require('@/game-data/catalog');
     return this.library
       .map(id => {
-        const catalog = master.get(id);
-        if (!catalog) throw new Error('不正なカードがデッキに含まれています');
+        const entry: VersionedCatalogEntry | undefined = master.get(id);
+        if (!entry) throw new Error('不正なカードがデッキに含まれています');
+        const catalog = resolveCatalog(entry, version);
 
         switch (catalog.type) {
           case 'unit':

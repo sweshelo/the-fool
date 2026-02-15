@@ -1,6 +1,5 @@
 import { Card } from './Card';
 import type { Player } from '../Player';
-import catalog from '@/game-data/catalog';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 export class Joker extends Card {
@@ -11,13 +10,12 @@ export class Joker extends Card {
   constructor(owner: Player, catalogId: string) {
     super(owner, catalogId);
 
-    // Load from catalog
-    const catalogEntry = catalog.get(catalogId);
-    if (!catalogEntry || catalogEntry.type !== 'joker') {
+    const catalogEntry = this.catalog;
+    if (catalogEntry.type !== 'joker') {
       throw new Error(`Invalid joker catalogId: ${catalogId}`);
     }
 
-    this.chara = catalogEntry.name; // JOKERカード名（例："THE HERMIT"）
+    this.chara = catalogEntry.name;
     this.cost = catalogEntry.cost;
   }
 

@@ -20,11 +20,8 @@ let Stack: typeof StackClass;
 // テストユーティリティを遅延インポート
 beforeAll(async () => {
   // System.sleep をモック化（即座に解決）
-  const { System, applyEffectsToCatalog } = await import('@/game-data/effects');
+  const { System } = await import('@/game-data/effects');
   System.sleep = mock(() => Promise.resolve());
-
-  // カタログに効果を適用（循環依存で効果がロードされる前にカタログが初期化された場合の対策）
-  await applyEffectsToCatalog();
 
   // テストユーティリティを遅延インポート
   const testing = await import('../testing');
