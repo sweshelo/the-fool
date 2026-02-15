@@ -5,9 +5,8 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   checkDrive: stack =>
-    stack.processing.owner.field.length > 0 &&
-    stack.processing.owner.opponent.field.length > 0 &&
-    stack.processing.owner.id === stack.source.id,
+    stack.processing.owner.field.length > 0 && stack.processing.owner.opponent.field.length > 0,
+
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, '両成敗', 'お互いの最高BPユニットを消滅');
     stack.core.players.forEach(player => {
