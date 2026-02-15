@@ -25,8 +25,7 @@ export const effects: CardEffects = {
 
     // 選択肢2が可能か（CPが1以上あるか、かつ対戦相手のユニットが存在するか）
     const option2Available =
-      stack.processing.owner.cp.current >= 1 &&
-      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner);
+      stack.processing.owner.cp.current >= 1 && stack.processing.owner.opponent.field.length > 0;
 
     // 両方の選択肢が不可能な場合、加護のみ付与して終了
     if (option1Available || option2Available) {
