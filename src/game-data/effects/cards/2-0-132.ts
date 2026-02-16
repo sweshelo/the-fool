@@ -16,7 +16,6 @@ export const effects: CardEffects = {
     ) {
       // 条件を満たさない場合：セレクトハックのみ
       await System.show(stack, 'セレクトハック', 'このユニットを選ばなければならない');
-      Effect.keyword(stack, self, self, 'セレクトハック');
     } else {
       // 条件を満たす場合は、3体まで選択して手札に戻し、さらに自身に【セレクトハック】を付与
       await System.show(
@@ -24,23 +23,21 @@ export const effects: CardEffects = {
         '軍姫砲・えりすびーむ',
         '3体まで手札に戻す\nこのユニットを選ばなければならない'
       );
-      Effect.keyword(stack, self, self, 'セレクトハック');
+      // 3体まで選択
+      const selected = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        'opponents',
+        '手札に戻すユニットを選択',
+        3
+      );
+
+      selected.forEach(unit => Effect.bounce(stack, self, unit, 'hand'));
+
+      // 紫ゲージを-4
+      await Effect.modifyPurple(stack, self, owner, -4);
     }
-
-    // 3体まで選択
-    const selected = await EffectHelper.pickUnit(
-      stack,
-      owner,
-      'opponents',
-      '手札に戻すユニットを選択',
-      3
-    );
-    if (selected.length === 0) return;
-
-    selected.forEach(unit => Effect.bounce(stack, self, unit, 'hand'));
-
-    // 紫ゲージを-4
-    await Effect.modifyPurple(stack, self, owner, -4);
+    Effect.keyword(stack, self, self, 'セレクトハック');
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
