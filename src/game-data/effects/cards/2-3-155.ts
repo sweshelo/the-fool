@@ -44,7 +44,7 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         'インキュベーション',
-        `フィールドに出たを破壊\nユニットを【特殊召喚】`
+        `フィールドに出た【昆虫】を破壊\nユニットを【特殊召喚】`
       );
       Effect.break(stack, stack.processing, stack.target, 'effect');
 

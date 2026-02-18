@@ -351,8 +351,13 @@ export class Stack implements IStack {
       }
     };
 
-    if (this.children.length > 0)
+    if (this.children.length > 0) {
       console.log('processing %d child stack(s) of %s stack', this.children.length, this.type);
+      console.log(
+        '=> ',
+        this.children.map(stack => stack.type)
+      );
+    }
 
     // NOTE: ハンデスやダメージ検知など、同時に積まれたStackで複数回反応するのを避けるため、同一のイベントで同一の対象を取る場合は、Stack解決時に本スタック以外を反応させない。
     // (type, owner.id) の組み合わせでユニークなものを追跡
@@ -410,7 +415,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-      this.core.fieldEffectUnmount(target, this);
+      this.core.fieldEffectUnmount(target);
       owner[actualDestination].push(target);
     }
   }

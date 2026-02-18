@@ -37,7 +37,7 @@ export const effects: CardEffects = {
       if (targets.length > 0) {
         await System.show(stack, 'ヴァイス・オア・シュヴァルツ', '手札に戻す');
         for (const unit of targets) {
-          Effect.move(stack, stack.processing, unit, 'hand');
+          Effect.bounce(stack, stack.processing, unit, 'hand');
         }
       }
     } else if (choice === '2') {

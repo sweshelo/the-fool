@@ -69,8 +69,8 @@ export const effects: CardEffects = {
 
     // 対戦相手のターン終了時のみ発動
     if (opponent.id === stack.core.getTurnPlayer().id) {
-      // フィールド上の行動権消費状態のユニットをフィルタリング
-      const filter = (unit: Unit) => !unit.active;
+      // フィールド上の行動権消費状態の相手ユニットをフィルタリング
+      const filter = (unit: Unit) => unit.owner.id === opponent.id && !unit.active;
 
       if (EffectHelper.isUnitSelectable(stack.core, filter, owner)) {
         // 自分の機械ユニットをカウント

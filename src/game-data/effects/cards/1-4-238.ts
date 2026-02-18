@@ -17,7 +17,12 @@ export const effects: CardEffects = {
 
   // トリガー: あなたのターン終了時
   checkTurnEnd: (stack: StackWithCard<Card>): boolean => {
-    return stack.source.id === stack.processing.owner.id;
+    return (
+      stack.source.id === stack.processing.owner.id &&
+      stack.processing.owner.trash.some(
+        card => card instanceof Unit && (card.catalog.species?.includes('武身') ?? false)
+      )
+    );
   },
 
   onTurnEnd: async (stack: StackWithCard<Card>): Promise<void> => {
@@ -25,19 +30,15 @@ export const effects: CardEffects = {
       card => card instanceof Unit && (card.catalog.species?.includes('武身') ?? false)
     );
 
-    if (bushiInTrash.length > 0) {
-      const toReturn = EffectHelper.random(bushiInTrash, Math.min(2, bushiInTrash.length));
+    const toReturn = EffectHelper.random(bushiInTrash, Math.min(2, bushiInTrash.length));
 
-      if (toReturn.length > 0) {
-        await System.show(stack, '武具コレクター', '【武身】をデッキに戻す\nカードを2枚引く');
+    await System.show(stack, '武具コレクター', '【武身】をデッキに戻す\nカードを2枚引く');
 
-        for (const card of toReturn) {
-          Effect.move(stack, stack.processing, card, 'deck');
-        }
-
-        EffectTemplate.draw(stack.processing.owner, stack.core);
-        EffectTemplate.draw(stack.processing.owner, stack.core);
-      }
+    for (const card of toReturn) {
+      Effect.move(stack, stack.processing, card, 'deck');
     }
+
+    EffectTemplate.draw(stack.processing.owner, stack.core);
+    EffectTemplate.draw(stack.processing.owner, stack.core);
   },
 };

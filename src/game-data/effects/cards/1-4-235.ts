@@ -9,7 +9,11 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 自分のユニットが出た時のみ発動
-    return stack.source.id === owner.id && stack.target instanceof Unit;
+    return (
+      stack.source.id === owner.id &&
+      stack.target instanceof Unit &&
+      owner.field.some(unit => unit.id === stack.target?.id)
+    );
   },
 
   onDrive: async (stack: StackWithCard): Promise<void> => {

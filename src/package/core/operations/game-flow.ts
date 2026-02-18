@@ -310,16 +310,15 @@ export async function turnChange(
   await resolveStack(core);
 
   // 狂戦士 アタックさせる
-  for (const unit of core
-    .getTurnPlayer()
-    .field.filter(
-      unit =>
-        unit.hasKeyword('狂戦士') &&
-        !unit.hasKeyword('攻撃禁止') &&
-        !unit.hasKeyword('行動制限') &&
-        unit.active
-    )) {
-    await attack(core, unit);
+  const field = [...core.getTurnPlayer().field];
+  for (const unit of field) {
+    if (
+      unit.hasKeyword('狂戦士') &&
+      !unit.hasKeyword('行動制限') &&
+      !unit.hasKeyword('攻撃禁止') &&
+      unit.active
+    )
+      await attack(core, unit);
   }
 
   // defrost

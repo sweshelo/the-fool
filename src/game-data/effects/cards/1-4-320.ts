@@ -5,7 +5,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   // 【秩序の盾】を付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    await System.show(stack, 'パンドラ', '【秩序の盾】を得る');
+    await System.show(stack, '秩序の盾', '相手の効果によるダメージを受けない');
     Effect.keyword(stack, stack.processing, stack.processing, '秩序の盾');
   },
 
