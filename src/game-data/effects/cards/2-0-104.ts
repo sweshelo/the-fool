@@ -3,7 +3,7 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
-const effect = async (stack: StackWithCard) => {
+async function driveEffect(stack: StackWithCard): Promise<void> {
   const owner = stack.processing.owner;
   const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
 
@@ -24,21 +24,22 @@ const effect = async (stack: StackWithCard) => {
       Effect.damage(stack, stack.processing, target, 2000);
     }
   }
-};
+}
 
 export const effects: CardEffects = {
   // ■マシン・バースト
   // あなたの【機械】ユニットがフィールドに出た時、対戦相手のユニットを1体選ぶ。それに2000ダメージを与える。
-  onDriveSelf: effect,
-  onDrive: async (stack: StackWithCard) => {
+  onDriveSelf: driveEffect,
+  onDrive: async (stack: StackWithCard): Promise<void> => {
+    const owner = stack.processing.owner;
     // 召喚されたユニットが機械タイプかつ自分の所有ユニットかチェック
     if (
       stack.target instanceof Unit &&
-      Array.isArray(stack.target.catalog.species) &&
-      stack.target.catalog.species.includes('機械') &&
-      stack.target.owner.id === stack.processing.owner.id
+      stack.target.id !== stack.processing.id &&
+      stack.target.catalog.species?.includes('機械') &&
+      stack.target.owner.id === owner.id
     ) {
-      await effect(stack);
+      await driveEffect(stack);
     }
   },
 

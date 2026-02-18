@@ -52,15 +52,19 @@ export const effects: CardEffects = {
     if (stack.target?.id !== stack.processing.owner.id) return;
 
     const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id && unit.lv >= 2;
-    if (!EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) return;
-    await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
-    const [target] = await EffectHelper.pickUnit(
-      stack,
-      stack.processing.owner,
-      filter,
-      '破壊するユニットを選択'
-    );
-    Effect.break(stack, stack.processing, target, 'effect');
+
+    if (EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)) {
+      await System.show(stack, '信仰の歪み', 'ユニットを破壊\n紫ゲージ+1');
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '破壊するユニットを選択'
+      );
+      Effect.break(stack, stack.processing, target, 'effect');
+    } else {
+      await System.show(stack, '信仰の歪み', '紫ゲージ+1');
+    }
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
 };

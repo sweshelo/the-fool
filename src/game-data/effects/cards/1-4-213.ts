@@ -19,7 +19,8 @@ export const effects: CardEffects = {
     if (
       !stack.target ||
       !(stack.target instanceof Unit) ||
-      stack.target.owner.id !== stack.processing.owner.id
+      stack.target.owner.id !== stack.processing.owner.id ||
+      stack.target.id === stack.processing.id
     ) {
       return;
     }

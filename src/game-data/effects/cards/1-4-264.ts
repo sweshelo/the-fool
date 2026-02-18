@@ -24,7 +24,11 @@ export const effects: CardEffects = {
   },
 
   checkPlayerAttack: (stack: StackWithCard) => {
-    return stack.source instanceof Unit && stack.processing.owner.id === stack.source.owner.id;
+    return (
+      stack.source instanceof Unit &&
+      stack.processing.owner.opponent.hand.length > 0 &&
+      stack.processing.owner.id === stack.source.owner.id
+    );
   },
 
   onTurnEnd: effect,
