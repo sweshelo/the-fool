@@ -388,12 +388,11 @@ export class Stack implements IStack {
       }
     });
 
+    this.children = [];
     if (isProcessed.includes(true)) {
       this.core.room.sync();
       await System.sleep(1000);
     }
-
-    this.children = [];
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
