@@ -116,7 +116,7 @@ export class Core {
     return cardOperations.drive(this, player, card, source);
   }
 
-  fieldEffectUnmount(target: Unit, stack: Stack) {
+  fieldEffectUnmount(target: Unit, stack?: Stack) {
     return cardOperations.fieldEffectUnmount(this, target, stack);
   }
 

@@ -116,7 +116,7 @@ export async function drive(
  * @param target 対象のユニット
  * @param stack 処理用のスタック
  */
-export function fieldEffectUnmount(core: Core, target: Unit, stack: Stack) {
+export function fieldEffectUnmount(core: Core, target: Unit, stack?: Stack) {
   const unmount = (card: Card) =>
     // delta.event に 値が設定されていれば、それは source.unit によるフィールド効果ではないとみなす
     (card.delta = card.delta.filter(delta => delta.event || delta.source?.unit !== target.id));
@@ -126,7 +126,16 @@ export function fieldEffectUnmount(core: Core, target: Unit, stack: Stack) {
     .flatMap(player => player.field)
     .forEach(unit => {
       unmount(unit);
-      if (unit.currentBP <= 0 && !unit.leaving) Effect.break(stack, unit, unit, 'system'); // システムによってユニットが自壊した扱いにする
+      if (unit.currentBP <= 0 && !unit.leaving) {
+        if (stack) {
+          Effect.break(stack, unit, unit, 'system'); // システムによってユニットが自壊した扱いにする
+        } else {
+          // フィールドエフェクトの終了による破壊を処理させるため、Core.stackに新しいStackを積み直す
+          const stack = new Stack({ type: '_fieldEffectUnmounting', source: target, core });
+          core.stack.push(stack);
+          Effect.break(stack, unit, unit, 'system');
+        }
+      }
     });
 
   // 非フィールド
