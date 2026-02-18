@@ -351,8 +351,13 @@ export class Stack implements IStack {
       }
     };
 
-    if (this.children.length > 0)
+    if (this.children.length > 0) {
       console.log('processing %d child stack(s) of %s stack', this.children.length, this.type);
+      console.log(
+        '=> ',
+        this.children.map(stack => stack.type)
+      );
+    }
 
     // NOTE: ハンデスやダメージ検知など、同時に積まれたStackで複数回反応するのを避けるため、同一のイベントで同一の対象を取る場合は、Stack解決時に本スタック以外を反応させない。
     // (type, owner.id) の組み合わせでユニークなものを追跡
@@ -383,26 +388,12 @@ export class Stack implements IStack {
       }
     });
 
-    // 移動によってアンマウントされたフィールド効果によって発生したスタックを解決する
-    for (const child of this.children) {
-      // target が Card の場合、owner.id を取得してユニーク判定
-      const ownerId = child.target instanceof Card ? child.target.owner.id : undefined;
-      const key = `${child.type}_${ownerId}`;
-
-      if (ownerId === undefined || !seen.has(key) || !isPreventDuplicateEventHandling(child)) {
-        // 最初のヒット: onlySelfResolve = false
-        if (ownerId !== undefined) seen.add(key);
-        await child.resolve(core, false);
-      } else {
-        // 2回目以降または: onlySelfResolve = true
-        await child.resolve(core, true);
-      }
-    }
-
     if (isProcessed.includes(true)) {
       this.core.room.sync();
       await System.sleep(1000);
     }
+
+    this.children = [];
   }
 
   private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
@@ -425,7 +416,7 @@ export class Stack implements IStack {
           ? 'trash'
           : destination;
       if (actualDestination !== 'hand' && actualDestination !== 'trigger') target.delta = []; // 手札領域でない場合はDeltaを完全に除去する
-      this.core.fieldEffectUnmount(target, this);
+      this.core.fieldEffectUnmount(target);
       owner[actualDestination].push(target);
     }
   }

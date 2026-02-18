@@ -36,6 +36,7 @@ export const internalEvents = [
   '_messageReceived',
   '_deathCounterCheckStack',
   '_preDrive',
+  '_fieldEffectUnmounting',
 ] as const;
 
 // Union型として抽出
