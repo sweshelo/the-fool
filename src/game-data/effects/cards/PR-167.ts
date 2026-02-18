@@ -1,0 +1,41 @@
+import { Effect, EffectHelper, System } from '..';
+import type { CardEffects, StackWithCard } from '../schema/types';
+import { Unit } from '@/package/core/class/card';
+
+export const effects: CardEffects = {
+  //■選略・サプライズアップ
+  //このユニットがフィールドに出た時、以下の効果から1つを選び発動する。
+  //①：効果なし
+  //②：このユニットを破壊する。あなたのユニットを1体選ぶ。それに【加護】を与える。
+
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
+    const self = stack.processing;
+    const owner = self.owner;
+
+    // 選略[2]は、選択可能なユニットが1体以上いる場合のみ選択可能
+    const filter = (unit: Unit) => unit.owner.id === owner.id && unit.id !== self.id;
+    const canOption2 = EffectHelper.isUnitSelectable(stack.core, filter, owner);
+
+    const choice = await EffectHelper.choice(stack, owner, '選略・サプライズアップ', [
+      { id: '1', description: '効果なし' },
+      { id: '2', description: '自身を破壊\n味方1体に【加護】を付与。', condition: canOption2 },
+    ]);
+
+    if (choice === '2') {
+      await System.show(stack, '選略・サプライズアップ', '自身を破壊\n味方1体に【加護】を付与');
+
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        owner,
+        filter,
+        '【加護】を与えるユニットを1体選択して下さい'
+      );
+
+      //【加護】を与える
+      Effect.keyword(stack, self, target, '加護');
+
+      //自身を破壊
+      Effect.break(stack, self, self);
+    }
+  },
+};

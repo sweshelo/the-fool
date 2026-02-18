@@ -1,14 +1,18 @@
 import { createMessage, type Message } from '@/submodule/suit/types/message/message';
-import type { PlayerReconnectedPayload } from '@/submodule/suit/types/message/payload/client';
+import type {
+  PlayerReconnectedPayload,
+  VisualEffectPayloadBody,
+} from '@/submodule/suit/types/message/payload/client';
 import { Player } from '../../core/class/Player';
-import { Core } from '../../core/core';
-import { Joker } from '../../core/class/card/Joker';
-import catalog from '@/database/catalog';
+import { Core } from '../../core';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
 import { config } from '@/config';
-import { MessageHelper } from '@/package/core/message';
+import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
+import { GameLogger } from '@/package/logging';
+import type { MatchingMode } from '@/package/server/matching/types';
+import { PlayCreditService } from '@/package/server/credits';
 
 export class Room {
   id = Math.floor(Math.random() * 99999)
@@ -20,11 +24,16 @@ export class Room {
   clients: Map<string, ServerWebSocket> = new Map<string, ServerWebSocket>();
   rule: Rule = { ...config.game }; // デフォルトのルールをコピー
   cache: string | undefined;
+  logger: GameLogger;
+  matchingMode?: MatchingMode;
+  private creditService = new PlayCreditService();
+  private creditsConsumed = false;
 
   constructor(name: string, rule?: Rule) {
     this.core = new Core(this);
     this.name = name;
     this.cache = undefined;
+    this.logger = new GameLogger();
     if (rule) this.rule = rule;
   }
 
@@ -63,31 +72,31 @@ export class Room {
           exists.id
         );
 
-        // 再接続で自分のターン中の場合は defrost する
-        if (this.core.getTurnPlayer().id === message.payload.player.id) {
-          this.broadcastToPlayer(message.payload.player.id, MessageHelper.defrost());
-        }
+        // 再接続で defrost する
+        this.sync(true);
+        this.broadcastToAll(MessageHelper.defrost());
       } else if (this.core.players.length < 2) {
         const player = new Player(message.payload.player, this.core);
-
-        // Initialize jokers from owned JOKER card names
-        if (message.payload.jokersOwned) {
-          const ownedJokerAbilities: string[] = [];
-          message.payload.jokersOwned.forEach(jokerCardName => {
-            catalog.forEach(entry => {
-              if (entry.type === 'joker' && entry.id === jokerCardName) {
-                ownedJokerAbilities.push(entry.id);
-              }
-            });
-          });
-
-          player.joker.card = ownedJokerAbilities.map(catalogId => new Joker(player, catalogId));
-        }
 
         // socket 登録
         this.clients.set(player.id, socket);
         this.core.entry(player);
         this.players.set(player.id, player);
+
+        // 2人揃ったらマッチ開始ログを記録
+        if (this.core.players.length === 2) {
+          this.logger.logMatchStart(this.core).catch(console.error);
+
+          // マッチング対戦のみクレジット消費
+          if (
+            this.matchingMode &&
+            !this.creditsConsumed &&
+            !(this.matchingMode === 'limited' && process.env.LIMITED_FREE_PLAY === 'true')
+          ) {
+            this.creditsConsumed = true;
+            this.consumeCreditsForPlayers().catch(console.error);
+          }
+        }
       }
       this.sync(true);
       return true;
@@ -160,6 +169,21 @@ export class Room {
     }
   }
 
+  // VisualEffectを送信
+  visualEffect(body: VisualEffectPayloadBody) {
+    const message = createMessage({
+      action: {
+        type: 'effect',
+        handler: 'client',
+      },
+      payload: {
+        type: 'VisualEffect',
+        body,
+      },
+    });
+    this.broadcastToAll(message);
+  }
+
   // 現在のステータスを全て送信
   sync = (force: boolean = false) => {
     // Colorマッピング
@@ -204,6 +228,14 @@ export class Room {
       game: {
         round: this.core.round,
         turn: this.core.turn,
+        turnPlayer:
+          this.core.players.length >= 2 && this.core.turn > 0
+            ? this.core.getTurnPlayer().id
+            : undefined,
+        firstPlayer:
+          this.core.players.length >= 2
+            ? this.core.players[this.core.firstPlayerIndex]?.id
+            : undefined,
       },
       players: playersState,
     });
@@ -287,11 +319,21 @@ export class Room {
         },
         payload: {
           type: 'Sync',
+          selfId: playerId,
+          role: 'player' as const,
           body: {
             rule: this.rule,
             game: {
               round: this.core.round,
               turn: this.core.turn,
+              turnPlayer:
+                this.core.players.length >= 2 && this.core.turn > 0
+                  ? this.core.getTurnPlayer().id
+                  : undefined,
+              firstPlayer:
+                this.core.players.length >= 2
+                  ? this.core.players[this.core.firstPlayerIndex]?.id
+                  : undefined,
             },
             players,
           },
@@ -303,4 +345,29 @@ export class Room {
     // 通信した場合はキャッシュを更新
     this.cache = currentHash;
   };
+
+  private async consumeCreditsForPlayers(): Promise<void> {
+    for (const player of this.core.players) {
+      await this.creditService.consumeCredit(player.id, this.id);
+    }
+  }
+
+  /**
+   * リソースを解放する
+   * 全プレイヤー切断時に呼び出される
+   */
+  async dispose(): Promise<void> {
+    // GameLogger のリソースを解放
+    await this.logger.dispose();
+
+    // Core のリソースを解放
+    this.core.dispose();
+
+    // マップをクリア
+    this.players.clear();
+    this.clients.clear();
+
+    // キャッシュをクリア
+    this.cache = undefined;
+  }
 }

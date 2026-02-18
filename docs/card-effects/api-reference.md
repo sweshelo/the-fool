@@ -6,8 +6,9 @@
 
 1. [Effect クラス](#effect-クラス)
 2. [EffectHelper クラス](#effecthelper-クラス)
-3. [System クラス](#system-クラス)
-4. [EffectTemplate クラス](#effecttemplate-クラス)
+3. [PermanentEffect クラス](#permanenteffect-クラス)
+4. [System クラス](#system-クラス)
+5. [EffectTemplate クラス](#effecttemplate-クラス)
 
 ---
 
@@ -314,6 +315,49 @@ Effect.activate(stack, self, target, true);
 Effect.activate(stack, self, target, false);
 ```
 
+#### `Effect.modifyCost()`
+
+手札・トリガーゾーンにあるカードのコストを固定値で操作します。
+
+```ts
+static modifyCost(
+  target: Card,
+  value: number,
+  option?: DeltaConstructorOptionParams,
+)
+```
+
+#### `Effect.dynamicCost()`
+
+手札・トリガーゾーンにあるカードのコストを動的な値で操作します。
+効果の発生源 `source` と、差分計算を行う計算機 `calculator` が必須パラメータです。 
+
+この効果は `PermanentEffect` と併用することが前提です。効果の発生源は `PermanentEffect.mount` の第2引数に与えるオブジェクトの `effect` 関数に引き渡される `source` をそのまま渡すことを想定しています。  
+
+カード効果の上下限はシステム側で自動的に考慮されます。
+
+```ts
+static dynamicCost(
+  target: Card,
+  option: { source: DeltaSource } & { calculator: DeltaCalculator }
+)
+```
+
+**使用例:**
+
+```ts
+// 自身の所有者の消滅カードの数 × -1 を返却する差分計算関数
+const calculator = (self: Card) => -self.owner.delete.length;
+
+// PermanentEffect.mount() で必要になった際に自動的に効果を適用
+PermanentEffect.mount(self, {
+  // 関数 effect が受け取る source を dynamicCost にそのまま渡す
+  effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+  effectCode: 'ドラゴニックオーラ',
+  targets: ['self'],
+});
+```
+
 ---
 
 ## EffectHelper クラス
@@ -361,11 +405,7 @@ if(EffectHelper.isUnitSelectable(
 
 #### `EffectHelper.pickUnit()`
 
-フィールド上のユニットから1体以上を選択します。
-
-> [!Important]
-> 以前存在した `EffectHelper.selectUnit()` は現在非推奨です。これは、`candidate()` + `selectUnit()` では、複数のユニットを選択する際に【セレクトハック】を十分に考慮できていないためです。
-> `isUnitSelectable()` + `pickUnit()` を使用して下さい。
+フィールド上のユニットから1体以上を選択します。【加護】【セレクトハック】を自動的に考慮します。
 
 ```typescript
 static async pickUnit(
@@ -528,6 +568,47 @@ onBreak: async (stack: StackWithCard<Unit>) => {
 
 ---
 
+## PermanentEffect クラス
+
+`PermanentEffect` クラスは、fieldEffect及びhandEffectを簡単に実装するためのクラスで、冪等性を担保した関数呼び出しの機能を提供します。
+
+### メソッド一覧
+
+#### `PermanentEffect.mount()`
+
+永続効果を登録します。
+
+```typescript
+static mount(
+  source: Card,
+  details: EffectDetails
+): void
+```
+
+**パラメータ:**
+- `source` - 効果の発動元
+- `details` - 効果の詳細オブジェクト
+
+**使用例:**
+
+```typescript
+// フィールド効果：ライフが6以下の時、天使ユニットに加護を与える
+fieldEffect: (stack: StackWithCard<Unit>): void => {
+  PermanentEffect.mount(stack.processing, {
+    effect: (target, source) => {
+      if (target instanceof Unit)
+        Effect.keyword(stack, stack.processing, target, '加護', { source });
+    },
+    effectCode: 'エンジェリックシールド',
+    condition: target =>
+      target.catalog.species?.includes('天使') && stack.processing.owner.life.current <= 6,
+    targets: ['owns'],
+  });
+},
+```
+
+---
+
 ## System クラス
 
 `System` クラスは、UI 表示や選択プロンプトを提供します。
@@ -570,69 +651,9 @@ await System.show(stack, 'ジャンプーダンス', '手札に戻す');
 
 プレイヤーに選択肢を提示します。
 
-```typescript
-static async prompt(
-  stack: Stack,
-  playerId: string,
-  choices: Choices
-): Promise<string[]>
-```
-
-**パラメータ:**
-
-- `stack` - スタック
-- `playerId` - 選択を行うプレイヤーの ID
-- `choices` - 選択肢オブジェクト
-
-**Choices の種類:**
-
-```typescript
-// ユニット選択
-{
-  title: string,
-  type: 'unit',
-  items: Unit[]
-}
-
-// カード選択
-{
-  title: string,
-  type: 'card',
-  items: Card[],
-  count: number  // 選択する枚数
-}
-
-// オプション選択（選略・選告）
-{
-  title: string,
-  type: 'option',
-  items: Array<{
-    id: string,
-    description: string
-  }>
-}
-```
-
-**使用例:**
-
-```typescript
-// ユニット選択（EffectHelper.pickUnit を推奨）
-const [unitId] = await System.prompt(stack, owner.id, {
-  title: '対象を選択',
-  type: 'unit',
-  items: opponent.field
-});
-
-// オプション選択（選略）
-const [choice] = await System.prompt(stack, owner.id, {
-  title: '選略',
-  type: 'option',
-  items: [
-    { id: '1', description: '効果1の説明' },
-    { id: '2', description: '効果2の説明' }
-  ]
-});
-```
+> [!Caution]
+> これはシステム用のメソッドですので、原則使用しないでください。
+> 代わりに `EffectHelper.choice()` や `EffectHelper.pickUnit()` を利用します。
 
 ---
 
@@ -757,55 +778,45 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 ### 永続効果の基本パターン
 
+`PermanentEffect.mount()` を利用します。
+
 ```typescript
 fieldEffect: (stack: StackWithCard<Unit>) => {
-  const self = stack.processing;
-
-  // 既存のDeltaを確認
-  const delta = self.delta.find(
-    d => d.source.unit === self.id && d.effect.type === 'bp'
-  );
-
-  if (delta) {
-    // Deltaを更新
-    delta.effect.diff = 1000;
-  } else {
-    // Deltaを新規作成
-    Effect.modifyBP(stack, self, self, 1000, {
-      source: { unit: self.id }
-    });
-  }
+  PermanentEffect.mount(stack.processing, {
+  targets: ['owns'],
+  effect: (unit, source) => {
+    if (unit instanceof Unit) {
+      Effect.modifyBP(stack, stack.processing, unit, 1000, { source });
+    }
+  },
+  effectCode: 'サポーター／天使',
+  condition: target => target.catalog.species?.includes('天使') ?? false,
+});
 }
 ```
 
 ### 選略・選告の基本パターン
 
+`EffectHelper.choice()` を利用します。
+
 ```typescript
 onDriveSelf: async (stack: StackWithCard<Unit>) => {
-  const owner = stack.processing.owner;
+  const choice = await EffectHelper.choice(stack, stack.processing.owner, '選略・魔校法度', [
+    { id: '1', description: '【悪魔】ユニットを1枚引く' },
+    {
+      id: '2',
+      description: 'CP-1\n【スピードムーブ】を得る\n【悪魔】ユニットを1枚引く',
+      condition: owner.cp.current >= 1,
+    },
+  ]);
 
-  // 選択肢1が選べるか確認
-  const canOption1 = /* 条件 */;
-
-  // プロンプト表示（選べない選択肢がある場合は自動選択）
-  const [choice] = canOption1
-    ? await System.prompt(stack, owner.id, {
-        title: '選略',
-        type: 'option',
-        items: [
-          { id: '1', description: '効果1' },
-          { id: '2', description: '効果2' }
-        ]
-      })
-    : ['2'];  // 選択肢1が選べない場合は2を自動選択
-
-  // 選択に応じた効果を実行
-  if (choice === '1') {
-    await System.show(stack, 'カード名', '効果1');
-    // 実装
-  } else {
-    await System.show(stack, 'カード名', '効果2');
-    // 実装
+  switch(choice){
+    case '1': {
+      // ...
+    }
+    case '2': {
+      // ...
+    }
   }
 }
 ```
@@ -821,3 +832,4 @@ onDriveSelf: async (stack: StackWithCard<Unit>) => {
 
 - [アーキテクチャ](../architecture.md)
 - [環境構築](../getting-started.md)
+

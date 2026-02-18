@@ -1,11 +1,12 @@
 import { Card } from './Card';
 import type { Player } from '../Player';
-import catalog from '@/database/catalog';
+import catalog from '@/game-data/catalog';
 import { JOKER_GAUGE_AMOUNT } from '@/submodule/suit/constant/joker';
 
 export class Joker extends Card {
   chara: string;
   cost: number;
+  hasBeenInHand: boolean = false; // inHand設定で一度手札に加わったかどうか
 
   constructor(owner: Player, catalogId: string) {
     super(owner, catalogId);
@@ -32,10 +33,13 @@ export class Joker extends Card {
       // このターンに使用済みならば呼び出し不可
       const hasActivatedJoker = core.histories.find(history => history.action === 'joker');
 
-      // ジョーカーゲージ量チェック (>の演算子を利用)
-      const hasJokerGauge = this.catalog.gauge
-        ? player.joker.gauge >= JOKER_GAUGE_AMOUNT[this.catalog.gauge]
-        : false;
+      // 手札にあるJokerはゲージチェックをスキップ（既に消費済み）
+      const isInHand = player.hand.some(card => card.id === this.id);
+      const hasJokerGauge = isInHand
+        ? true
+        : this.catalog.gauge
+          ? player.joker.gauge >= JOKER_GAUGE_AMOUNT[this.catalog.gauge]
+          : false;
 
       const hasEnoughCp = player.cp.current >= this.cost;
       const meetsConditions = this.catalog.checkJoker?.(player, core) ?? false;
@@ -48,5 +52,15 @@ export class Joker extends Card {
 
   clone(): never {
     throw new Error('Joker.clone() メソッドを呼び出すことは出来ません');
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      chara: this.chara,
+      cost: this.cost,
+      hasBeenInHand: this.hasBeenInHand,
+      isAvailable: this.isAvailable,
+    };
   }
 }

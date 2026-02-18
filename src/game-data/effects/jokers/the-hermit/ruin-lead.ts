@@ -1,0 +1,31 @@
+import { System } from '../../engine/system';
+import { EffectHelper } from '../../engine/helper';
+import type { CardEffects, StackWithCard } from '../../schema/types';
+import type { Card } from '@/package/core/class/card/Card';
+import { Effect } from '../../engine/effect';
+import { EffectTemplate } from '../../engine/templates';
+
+export const effects: CardEffects = {
+  checkJoker: (player, _core) => {
+    // Check if player has at least 2 cards in hand
+    return player.hand.length >= 2;
+  },
+
+  onJokerSelf: async (stack: StackWithCard) => {
+    await System.show(stack, 'ルインリード', '手札を2枚捨てる\nカードを3枚引く');
+
+    const player = stack.processing.owner;
+
+    // Prompt player to select 2 cards from hand to discard
+    const selectedCards = await EffectHelper.selectCard(
+      stack,
+      player,
+      player.hand,
+      '捨てるカードを2枚選んでください',
+      2
+    );
+
+    selectedCards.forEach((card: Card) => Effect.break(stack, stack.processing, card));
+    EffectHelper.repeat(3, () => EffectTemplate.draw(stack.processing.owner, stack.core));
+  },
+};

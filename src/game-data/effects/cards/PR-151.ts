@@ -1,0 +1,41 @@
+import { Unit } from '@/package/core/class/card';
+import { Effect, EffectHelper, System } from '..';
+import type { CardEffects, StackWithCard } from '../schema/types';
+
+export const effects: CardEffects = {
+  // 召喚時に【スピードムーブ】を付与
+  onDriveSelf: async (stack: StackWithCard<Unit>) => {
+    await System.show(stack, 'スピードムーブ', '行動制限の影響を受けない');
+    Effect.speedMove(stack, stack.processing);
+  },
+
+  // アタック時効果
+  onAttackSelf: async (stack: StackWithCard<Unit>) => {
+    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
+      await System.show(stack, '天魔二断討', 'BP+2000\n1000ダメージ');
+      const [target] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        '1000ダメージを与えるユニットを選択',
+        1
+      );
+      Effect.damage(stack, stack.processing, target, 1000);
+    } else {
+      await System.show(stack, '天魔二断討', 'BP+2000');
+    }
+    Effect.modifyBP(stack, stack.processing, stack.processing, 2000, {
+      event: 'turnEnd',
+      count: 1,
+    });
+  },
+
+  // プレイヤーアタック成功時効果
+  onPlayerAttackSelf: async (stack: StackWithCard<Unit>) => {
+    if (!stack.processing.hasKeyword('貫通')) {
+      await System.show(stack, 'ダイロク天魔剣', '【貫通】を付与\n行動権を回復');
+      Effect.keyword(stack, stack.processing, stack.processing, '貫通');
+      Effect.activate(stack, stack.processing, stack.processing, true);
+    }
+  },
+};

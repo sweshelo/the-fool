@@ -1,14 +1,15 @@
-import { createMessage } from '@/submodule/suit/types';
 import { Player, type CardArrayKeys } from './Player';
-import type { Core } from '../core';
-import type { CatalogWithHandler } from '@/database/factory';
-import master from '@/database/catalog';
+import type { Core } from '../index';
+import type { CatalogWithHandler } from '@/game-data/factory';
+import master from '@/game-data/catalog';
 import { Card, Intercept, Unit } from './card';
-import { Effect, System } from '@/database/effects';
+import { Effect, System } from '@/game-data/effects';
 import { Color } from '@/submodule/suit/constant/color';
-import type { StackWithCard } from '@/database/effects/classes/types';
+import type { StackWithCard } from '@/game-data/effects/schema/types';
 import { Parry } from './parry';
-import type { GameEvent } from '@/database/effects/classes/event';
+import type { GameEvent } from '@/game-data/effects/schema/events';
+import { createMessage } from '@/submodule/suit/types';
+import { nanoid } from 'nanoid';
 
 interface IStack {
   /**
@@ -68,6 +69,7 @@ type StackOption =
     };
 
 export class Stack implements IStack {
+  id: string;
   type: GameEvent;
   source: Card | Player;
   target?: Card | Player;
@@ -78,6 +80,7 @@ export class Stack implements IStack {
   option?: StackOption;
 
   constructor({ type, source, target, parent, core, option }: Omit<IStack, 'children'>) {
+    this.id = nanoid(10);
     this.type = type;
     this.source = source;
     this.target = target;
@@ -127,6 +130,12 @@ export class Stack implements IStack {
         );
         core.room.soundEffect('clock-up-field');
         core.room.soundEffect('reboot');
+        core.room.visualEffect({
+          effect: 'status',
+          type: 'overclock',
+          unitId: this.target.id,
+          value: 3,
+        });
         core.room.sync();
       } else {
         // NOTE: Effect.clock()で onClockup効果解決後に対象のユニットがフィールドを去った or レベルが下がる場合がある
@@ -161,6 +170,8 @@ export class Stack implements IStack {
         if (this.source instanceof Unit && this.target instanceof Unit) {
           const targets = [this.source, this.target];
           for (const target of targets) {
+            // ユニットが破壊されている場合、resolve自体を中断する
+            if (!target.owner.field.some(unit => unit.id === target.id)) return;
             if (target instanceof Unit && !target.hasKeyword('沈黙')) {
               await this.processCardEffect(target, core, 'Self');
               this.processFieldEffect(); //field-effect
@@ -223,7 +234,8 @@ export class Stack implements IStack {
 
     // ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     let index = 0;
-    while (turnPlayer.trigger.length > index) {
+    let alreadyChecked: Card[] = [];
+    while (alreadyChecked.length < turnPlayer.trigger.length) {
       const card = turnPlayer.trigger[index];
       if (card === undefined) {
         break;
@@ -237,17 +249,22 @@ export class Stack implements IStack {
       if (catalog.type === 'trigger') {
         const result = await this.processTriggerCardEffect(card, core);
         await this.resolveChild(core);
-        if (!result) index++;
+        if (!result) {
+          index++;
+          alreadyChecked.push(card);
+        }
       } else {
         index++;
+        alreadyChecked.push(card);
         continue;
       }
     }
 
     // 非ターンプレイヤーのトリガーゾーン上のトリガーカードを処理
     index = 0;
+    alreadyChecked = [];
     if (nonTurnPlayer)
-      while (nonTurnPlayer.trigger.length > index) {
+      while (alreadyChecked.length < nonTurnPlayer.trigger.length) {
         const card = nonTurnPlayer.trigger[index];
         if (card === undefined) {
           break;
@@ -263,9 +280,13 @@ export class Stack implements IStack {
           const result = await this.processTriggerCardEffect(card, core);
           this.processing = undefined;
           await this.resolveChild(core);
-          if (!result) index++;
+          if (!result) {
+            index++;
+            alreadyChecked.push(card);
+          }
         } else {
           index++;
+          alreadyChecked.push(card);
           continue;
         }
       }
@@ -313,6 +334,8 @@ export class Stack implements IStack {
         this.source instanceof Card ? this.source.catalog.name : this.source.id,
         this.target instanceof Card ? this.target.catalog.name : this.target?.id
       );
+
+    core.room.sync();
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -321,6 +344,7 @@ export class Stack implements IStack {
       switch (stack.type) {
         case 'handes':
         case 'damage':
+        case 'lost':
           return true;
         default:
           return false;
@@ -350,23 +374,12 @@ export class Stack implements IStack {
     }
 
     // Stackによって移動が約束されたユニットを移動させる
-    if (this.children.length > 0) await new Promise(resolve => setTimeout(resolve, 500));
+    if (this.children.length > 0) await System.sleep(500);
     const isProcessed = this.children.map(stack => {
       const target = stack.target;
-      if (target instanceof Unit) {
-        switch (stack.type) {
-          case 'break':
-            this.moveUnit(target, 'trash');
-            return true;
-          case 'delete':
-            this.moveUnit(target, 'delete', 'deleted');
-            return true;
-          case 'bounce':
-            if (stack.option?.type === 'bounce') {
-              this.moveUnit(target, stack.option?.location, 'bounce');
-            }
-            return true;
-        }
+      if (target instanceof Unit && target.leaving && target.leaving.stackId === stack.id) {
+        this.moveUnit(target, target.leaving.destination);
+        return true;
       }
     });
 
@@ -388,7 +401,7 @@ export class Stack implements IStack {
 
     if (isProcessed.includes(true)) {
       this.core.room.sync();
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await System.sleep(1000);
     }
   }
 
@@ -476,23 +489,12 @@ export class Stack implements IStack {
       if (!catalog) throw new Error('不正なカードが指定されました');
       if (typeof catalog[effectHandler] === 'function') {
         // 効果実行前に通知
-        core.room.broadcastToAll(
-          createMessage({
-            action: {
-              type: 'effect',
-              handler: 'client',
-            },
-            payload: {
-              type: 'VisualEffect',
-              body: {
-                effect: 'drive',
-                image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                player: card.owner.id,
-                type: 'INTERCEPT',
-              },
-            },
-          })
-        );
+        core.room.visualEffect({
+          effect: 'drive',
+          image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+          player: card.owner.id,
+          type: 'INTERCEPT',
+        });
 
         // Intercept を使用した判定にする
         card.remain--;
@@ -528,6 +530,12 @@ export class Stack implements IStack {
         core.room.sync();
 
         // インターセプトカード発動スタックを積む
+        // 履歴追加
+        core.histories.push({
+          card: card,
+          action: 'drive',
+          generation: card.generation,
+        });
         this.addChildStack('intercept', player, card, { type: 'lv', value: lv });
         return false;
       }
@@ -552,7 +560,7 @@ export class Stack implements IStack {
     if (typeof effectHandler === 'function') {
       try {
         // 効果を実行
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await System.sleep(500);
         this.processing = card;
         await effectHandler(this);
         this.processing = undefined;
@@ -625,23 +633,12 @@ export class Stack implements IStack {
           core.room.sync();
 
           // 効果実行前に通知
-          core.room.broadcastToAll(
-            createMessage({
-              action: {
-                type: 'effect',
-                handler: 'client',
-              },
-              payload: {
-                type: 'VisualEffect',
-                body: {
-                  effect: 'drive',
-                  image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
-                  player: owner.id,
-                  type: 'TRIGGER',
-                },
-              },
-            })
-          );
+          core.room.visualEffect({
+            effect: 'drive',
+            image: `https://coj.sega.jp/player/img/${card.catalog.img}`,
+            player: owner.id,
+            type: 'TRIGGER',
+          });
 
           // 呼び出す
           this.processing = card;
@@ -655,6 +652,12 @@ export class Stack implements IStack {
           owner.trash.push(card);
 
           // トリガーカード発動スタックを積む
+          // 履歴追加
+          core.histories.push({
+            card: card,
+            action: 'drive',
+            generation: card.generation,
+          });
           this.addChildStack('trigger', owner, card, { type: 'lv', value: lv });
         }
         core.room.sync();
@@ -694,13 +697,6 @@ export class Stack implements IStack {
     return childStack;
   }
 
-  /**
-   * スタックのIDを取得する（ユニークな識別子として使用）
-   */
-  get id(): string {
-    return `${this.source.id}_${this.type}_${Date.now()}`;
-  }
-
   private processFieldEffect() {
     /*
     const target = this.target instanceof Card ? this.target.catalog.name : '?';
@@ -718,10 +714,17 @@ export class Stack implements IStack {
           this.processing = unit;
           unit.catalog.fieldEffect(this);
           this.processing = undefined;
-
-          // このフィールド効果による影響を確認
-          this.breakCheck(unit);
         }
+
+        // フィールド効果による dynamic-bp を計算
+        unit.delta.forEach(delta => {
+          if (delta.effect.type === 'dynamic-bp') {
+            delta.effect.diff = delta.calculator?.(unit) ?? 0;
+          }
+        });
+
+        // このフィールド効果による影響を確認
+        this.breakCheck(unit);
       });
 
     this.core.players
@@ -730,6 +733,13 @@ export class Stack implements IStack {
         if ('handEffect' in card.catalog && typeof card.catalog.handEffect === 'function') {
           card.catalog.handEffect(this.core, card);
         }
+
+        // 手札効果による dynamic-cost を計算
+        card.delta.forEach(delta => {
+          if (delta.effect.type === 'dynamic-cost') {
+            delta.effect.diff = delta.calculator?.(card) ?? 0;
+          }
+        });
       });
 
     this.core.room.sync(true);
@@ -739,8 +749,7 @@ export class Stack implements IStack {
     this.core.players
       .flatMap(player => player.field)
       .forEach(unit => {
-        if (unit.currentBP <= 0 && unit.destination === undefined)
-          Effect.break(this, effector, unit, 'effect');
+        if (unit.currentBP <= 0 && !unit.leaving) Effect.break(this, effector, unit, 'effect');
       });
   }
 }

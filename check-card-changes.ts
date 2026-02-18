@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * mainブランチとの間のカード変更を確認するスクリプト
+ *releaseブランチとの間のカード変更を確認するスクリプト
  * 使用方法: bun run check-card-changes.ts
  */
 
@@ -14,12 +14,13 @@ interface CatalogCard {
   [key: string]: any;
 }
 
-console.log('Checking card changes between current branch and main...');
+console.log('Checking card changes between current branch and release...');
 console.log('================================================================\n');
 
-// mainブランチとの差分を取得
+// releaseブランチとの差分を取得
+// core.quotepath=false で日本語ファイル名のエスケープを防ぐ
 const gitDiff = execSync(
-  'git diff origin/release --name-status -- "src/database/effects/cards/*.ts"',
+  'git -c core.quotepath=false diff origin/release --name-status -- "src/game-data/effects/cards/*.ts"',
   {
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'ignore'], // stderrを無視してwarningを非表示に
@@ -86,11 +87,11 @@ for (const status of statusOrder) {
   switch (status) {
     case 'A':
       _statusLabel = '[NEW]     ';
-      groupTitle = '新規追加';
+      groupTitle = '## 追加\n\n- 以下のカードを追加しました。\n';
       break;
     case 'M':
       _statusLabel = '[MODIFIED]';
-      groupTitle = '変更';
+      groupTitle = '## 修正\n\n- 以下のカードの不具合を修正しました。\n';
       break;
     case 'D':
       _statusLabel = '[DELETED] ';
@@ -101,7 +102,7 @@ for (const status of statusOrder) {
       groupTitle = status;
   }
 
-  console.log(`\n■ ${groupTitle} (${group.length}件)`);
+  console.log(`\n${groupTitle}`);
   console.log(`| カードID | カード名 |${status === 'M' ? ' 内容 |' : ''}`);
   console.log(`| -- | -- |${status === 'M' ? ' -- |' : ''}`);
   for (const change of group) {

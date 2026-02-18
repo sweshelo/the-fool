@@ -18,6 +18,10 @@ CODE OF JOKER のシミュレータを WebSocket サーバの形で提供する�
 - [API リファレンス](./card-effects/api-reference.md) - Effect、EffectHelper、System などの API ドキュメント
 - [実装例](./card-effects/examples.md) - よくあるカード効果の実装例
 
+### サーバー API
+
+- [マッチング API](./matching-api.md) - マッチングシステムのクライアント実装ガイド
+
 ## プロジェクト概要
 
 このリポジトリは CODE OF JOKER のシミュレータを WebSocket サーバの形で提供します。
@@ -25,7 +29,7 @@ CODE OF JOKER のシミュレータを WebSocket サーバの形で提供する�
 ### 主要な構成要素
 
 - **コアシステム** (`src/package/core`) - ゲームロジックとルール実装
-- **データベース** (`src/database`) - カードデータと効果実装
+- **ゲームデータ** (`src/game-data`) - カードデータと効果実装
 - **サーバー** (`src/package/server`) - WebSocket サーバーとルーム管理
 
 ### 関連リポジトリ

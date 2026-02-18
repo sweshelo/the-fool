@@ -1,0 +1,69 @@
+import { Unit } from '@/package/core/class/card';
+import { Effect, EffectHelper, System } from '..';
+import type { CardEffects, StackWithCard } from '../schema/types';
+import { Color } from '@/submodule/suit/constant/color';
+
+export const effects: CardEffects = {
+  // 自身が召喚された時に発動する効果を記述
+  onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
+    const candidate = stack.processing.owner.trash.filter(
+      (card): card is Unit =>
+        card.catalog.color === Color.BLUE && card.catalog.type === 'unit' && card.catalog.cost <= 2
+    );
+
+    if (candidate.length > 0) {
+      await System.show(
+        stack,
+        '創生の儀式・輪廻転生',
+        'コスト2以下の青属性ユニットを4体まで【特殊召喚】'
+      );
+      const target = EffectHelper.random(candidate, 4);
+      for (const unit of target) {
+        await Effect.summon(stack, stack.processing, unit);
+      }
+    }
+  },
+
+  onAttackSelf: async (stack: StackWithCard): Promise<void> => {
+    const candidateCard = stack.processing.owner.opponent.trash.filter(
+      (card): card is Unit => card.catalog.type === 'unit' && card.catalog.cost <= 1
+    );
+    const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
+    const [summonTarget] = EffectHelper.random(candidateCard);
+
+    if (
+      candidateCard.length > 0 &&
+      EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner) &&
+      stack.processing.owner.opponent.field.length < stack.core.room.rule.player.max.field &&
+      summonTarget
+    ) {
+      await System.show(
+        stack,
+        '創生の儀式・輪廻転生',
+        'コスト1以下を【特殊召喚】\nユニットを1体破壊'
+      );
+      const [breakTarget] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        filter,
+        '破壊するユニットを選択して下さい'
+      );
+
+      await Effect.summon(stack, stack.processing, summonTarget);
+      Effect.break(stack, stack.processing, breakTarget, 'effect');
+    }
+  },
+
+  onTurnEnd: async (stack: StackWithCard): Promise<void> => {
+    const candidate = stack.processing.owner.trash.filter(
+      (card): card is Unit =>
+        card.catalog.type === 'unit' && card.catalog.color === Color.BLUE && card.catalog.cost === 3
+    );
+
+    if (candidate.length > 0 && stack.processing.owner.id !== stack.core.getTurnPlayer().id) {
+      await System.show(stack, '創生の儀式・輪廻転生', 'コスト3の青属性ユニットを【特殊召喚】');
+      const [target] = EffectHelper.random(candidate);
+      if (target) await Effect.summon(stack, stack.processing, target);
+    }
+  },
+};

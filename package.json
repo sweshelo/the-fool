@@ -5,11 +5,12 @@
   "module": "index.ts",
   "scripts": {
     "preinstall": "git submodule update --init --recursive",
-    "dev": "bun --hot run index.ts",
+    "dev": "bun --hot run src/index.ts",
     "prepare": "lefthook install",
     "lint": "bunx oxlint --type-aware && bunx eslint --fix"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
     "js-yaml": "^4.1.0",
     "nanoid": "^5.1.5",
     "ws": "^8.18.1"
@@ -22,7 +23,6 @@
     "dependency-cruiser": "^16.10.0",
     "eslint": "^9.39.2",
     "globals": "^16.0.0",
-    "knip": "^5.46.5",
     "lefthook": "^2.0.13",
     "oxfmt": "^0.20.0",
     "oxlint-tsgolint": "^0.10.0",
@@ -30,14 +30,5 @@
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ]
   }
 }

@@ -1,0 +1,31 @@
+import { System } from '../../engine/system';
+import { EffectHelper } from '../../engine/helper';
+import { EffectTemplate } from '../../engine/templates';
+import { Effect } from '../../engine/effect';
+import type { CardEffects, StackWithCard } from '../../schema/types';
+
+export const effects: CardEffects = {
+  checkJoker: (player, core) => {
+    return player.trash.length > 0 && player.hand.length < core.room.rule.player.max.hand;
+  },
+
+  onJokerSelf: async (stack: StackWithCard) => {
+    const owner = stack.processing.owner;
+
+    if (owner.trash.length === 0) return;
+
+    await System.show(stack, 'フォースリベレーション', '捨札から2枚回収\nカードを2枚引く');
+
+    // 捨札にあるカードを2枚ランダムで手札に加える
+    const recoverCount = Math.min(2, owner.trash.length);
+    const cardsToRecover = EffectHelper.random(owner.trash, recoverCount);
+
+    cardsToRecover.forEach(card => {
+      Effect.move(stack, stack.processing, card, 'hand');
+    });
+
+    // カードを2枚引く
+    EffectTemplate.draw(owner, stack.core);
+    EffectTemplate.draw(owner, stack.core);
+  },
+};

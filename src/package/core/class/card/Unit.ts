@@ -1,8 +1,9 @@
 import type { IUnit, KeywordEffect } from '@/submodule/suit/types/game/card';
 import { Card } from './Card';
-import master from '@/database/catalog';
-import type { Player } from '../Player';
+import master from '@/game-data/catalog';
+import type { CardArrayKeys, Player } from '../Player';
 import { Delta } from '../delta';
+import type { Stack } from '../stack';
 
 export class Unit extends Card implements IUnit {
   /**
@@ -17,7 +18,10 @@ export class Unit extends Card implements IUnit {
   /**
    * フィールドから離れることが確定している場合、処理が完了後に転送される予定の領域
    */
-  destination?: string;
+  leaving?: {
+    destination: Exclude<CardArrayKeys, 'field'>;
+    stackId: Stack['id'];
+  };
   /**
    * Lv3にクロックアップ後、オーバークロック処理を完了しているか
    */
@@ -34,7 +38,7 @@ export class Unit extends Card implements IUnit {
 
     this.bp = this.catalog.bp?.[this.lv - 1] ?? 0;
     this.active = true;
-    this.destination = undefined;
+    this.leaving = undefined;
     this.delta = [];
     this.isCopy = false;
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
@@ -50,7 +54,8 @@ export class Unit extends Card implements IUnit {
       this.bp +
       this.delta
         .map(delta => {
-          if (delta.effect.type === 'bp') return delta.effect.diff;
+          if (delta.effect.type === 'bp' || delta.effect.type === 'dynamic-bp')
+            return delta.effect.diff;
           if (delta.effect.type === 'damage') return -delta.effect.value;
           return 0;
         })
@@ -99,13 +104,22 @@ export class Unit extends Card implements IUnit {
           !(delta.effect.type === 'banned')
       )
       .map(delta => {
-        // デスカウンター / 寿命カウンター はそのまま維持、それ以外は永続化
-        const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
-        return new Delta(delta.effect, {
-          ...delta,
-          event: isCounter ? delta.event : undefined,
-          source: isCounter ? delta.source : undefined,
-        });
+        if (delta.effect.type === 'dynamic-cost') {
+          // dynamic-costは計算して固定化する
+          const cost = delta.calculator?.(this) ?? delta.effect.diff ?? 0;
+          return new Delta({
+            type: 'cost',
+            value: cost,
+          });
+        } else {
+          // デスカウンター / 寿命カウンター はそのまま維持、dynamic-costはcostに変換、それ以外は永続化
+          const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
+          return new Delta(delta.effect, {
+            ...delta,
+            event: isCounter ? delta.event : undefined,
+            source: isCounter ? delta.source : undefined,
+          });
+        }
       });
     unit.active = this.active;
     unit.lv = this.lv;
@@ -118,9 +132,23 @@ export class Unit extends Card implements IUnit {
     this.bp = 0;
     this.active = false;
     this.overclocked = undefined;
-    this.destination = undefined;
+    this.leaving = undefined;
     this.hasBootAbility = typeof this.catalog.onBootSelf === 'function' ? true : undefined;
     this.isBooted = false;
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      bp: this.bp,
+      active: this.active,
+      leaving: this.leaving,
+      overclocked: this.overclocked,
+      isCopy: this.isCopy,
+      hasBootAbility: this.hasBootAbility,
+      isBooted: this.isBooted,
+      currentBP: this.currentBP,
+    };
   }
 }
 

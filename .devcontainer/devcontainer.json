@@ -1,0 +1,20 @@
+{
+  "name": "the-fool",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "forwardPorts": [5000],
+  "postCreateCommand": "git submodule update --init --recursive && bun install && bunx lefthook install && cp -n .env.sample .env 2>/dev/null && curl -fsSL https://claude.ai/install.sh | bash || true",
+  "customizations": {
+    "vscode": {
+      "extensions": ["oven.bun-vscode", "dbaeumer.vscode-eslint"],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "remoteUser": "bun"
+}
