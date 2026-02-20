@@ -22,14 +22,14 @@ export const effects: CardEffects = {
     return (
       stack.target instanceof Unit &&
       stack.target.catalog.species?.includes('不死') === true &&
-      stack.processing.owner.id === stack.target.owner.id
+      stack.processing.owner.id === stack.target.owner.id &&
+      stack.processing.owner.trash.some(card => card instanceof Unit)
     );
   },
 
   onBreak: async (stack: StackWithCard): Promise<void> => {
     const owner = stack.processing.owner;
     const unitCards = owner.trash.filter(card => card instanceof Unit);
-    if (unitCards.length === 0) return;
     await System.show(stack, '冥界の門', '捨札から1枚回収');
     EffectHelper.random(unitCards, 1).forEach(unit =>
       Effect.move(stack, stack.processing, unit, 'hand')

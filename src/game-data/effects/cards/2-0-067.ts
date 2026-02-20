@@ -21,7 +21,7 @@ export const effects: CardEffects = {
     const purple = owner.purple ?? 0;
 
     if (purple >= 3) {
-      const targets = EffectHelper.random(opponent.trigger, Math.min(2, opponent.trigger.length));
+      const targets = EffectHelper.random(opponent.trigger, 2);
       await System.show(stack, 'ダークプリズン', 'トリガーゾーンのカードを2枚破壊');
       targets.forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
     } else {
