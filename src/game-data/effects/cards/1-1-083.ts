@@ -10,7 +10,9 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing, '不滅');
   },
   onTurnEnd: async (stack: StackWithCard) => {
-    await System.show(stack, '魂の代償', '1ライフダメージ');
-    Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
+    if (stack.source.id === stack.processing.owner.id) {
+      await System.show(stack, '魂の代償', '1ライフダメージ');
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
+    }
   },
 };
