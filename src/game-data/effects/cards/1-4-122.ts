@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/type
 
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard) => {
-    return [...stack.processing.owner.field, ...stack.processing.owner.opponent.field].length >= 9;
+    return stack.processing.owner.field.length + stack.processing.owner.opponent.field.length >= 9;
   },
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, '定員オーバー', '1ライフダメージ');
