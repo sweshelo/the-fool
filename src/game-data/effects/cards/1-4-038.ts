@@ -5,7 +5,7 @@ import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/type
 import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
-  checkDrive: () => true,
+  checkDrive: (stack: StackWithCard) => stack.source.id === stack.processing.owner.id,
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, 'クローン生成', '同じユニットを引く');
     const drivenUnit = stack.target;
