@@ -3,7 +3,7 @@ import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  // あなたのユニットが戦闘した時、、それがアタック中だった場合
+  // あなたのユニットが戦闘した時、それがアタック中だった場合
   checkBattle: (stack: StackWithCard): boolean => {
     const owner = stack.processing.owner;
 
