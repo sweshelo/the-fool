@@ -10,11 +10,12 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, '狂犬の採掘', 'コスト4以上のインターセプトカードを1枚引く');
 
-    const [target] = EffectHelper.random(
+    const targets = EffectHelper.random(
       stack.processing.owner.deck.filter(
         card => card.catalog.type === 'intercept' && card.catalog.cost >= 4
-      )
+      ),
+      2
     );
-    if (target) Effect.move(stack, stack.processing, target, 'hand');
+    targets.forEach(card => Effect.move(stack, stack.processing, card, 'hand'));
   },
 };
