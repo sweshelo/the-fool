@@ -4,7 +4,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 import { System } from '../engine/system';
 
 export const effects: CardEffects = {
-  // トリガー: あなたのターン終了時
+  // トリガー: あなたのターン開始時
   checkTurnStart: (stack: StackWithCard<Card>): boolean => {
     return stack.source.id === stack.processing.owner.id;
   },
