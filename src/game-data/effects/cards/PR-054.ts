@@ -3,28 +3,43 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 const effect = async (stack: StackWithCard<Unit>) => {
-  if (
-    EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) &&
-    EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
-  ) {
+  const isOwnUnitSelectable = EffectHelper.isUnitSelectable(
+    stack.core,
+    'owns',
+    stack.processing.owner
+  );
+  const isOpponentUnitSelectable = EffectHelper.isUnitSelectable(
+    stack.core,
+    'opponents',
+    stack.processing.owner
+  );
+
+  if (isOwnUnitSelectable || isOpponentUnitSelectable) {
+    let myTarget: Unit | undefined;
+    let opponentTarget: Unit | undefined;
+
     await System.show(stack, 'バニシング・ポイント', 'お互いのユニットを消滅');
 
-    const [myTarget] = await EffectHelper.pickUnit(
-      stack,
-      stack.processing.owner,
-      'owns',
-      '消滅させる自分のユニットを選択'
-    );
+    if (isOwnUnitSelectable) {
+      [myTarget] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'owns',
+        '消滅させる自分のユニットを選択'
+      );
+    }
 
-    const [opponentTarget] = await EffectHelper.pickUnit(
-      stack,
-      stack.processing.owner,
-      'opponents',
-      '消滅させる相手のユニットを選択'
-    );
+    if (isOpponentUnitSelectable) {
+      [opponentTarget] = await EffectHelper.pickUnit(
+        stack,
+        stack.processing.owner,
+        'opponents',
+        '消滅させる相手のユニットを選択'
+      );
+    }
 
-    Effect.delete(stack, stack.processing, myTarget);
-    Effect.delete(stack, stack.processing, opponentTarget);
+    if (myTarget) Effect.delete(stack, stack.processing, myTarget);
+    if (opponentTarget) Effect.delete(stack, stack.processing, opponentTarget);
   }
 };
 

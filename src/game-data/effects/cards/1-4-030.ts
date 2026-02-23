@@ -53,19 +53,13 @@ export const effects: CardEffects = {
     const owner = self.owner;
     const opponent = owner.opponent;
 
+    if (owner.life.current > 1) return;
+
     // 効果で破壊された場合のみ発動
     if (stack.option?.type === 'break' && stack.option.cause === 'effect') {
-      const effects: string[] = [];
-      if (owner.life.current <= 1) effects.push('ライフ+1');
-      effects.push('相手に1ダメージ');
-
-      await System.show(stack, '義賊の技巧', effects.join('\n'));
-
-      // ライフが1以下の場合、ライフを+1
-      if (owner.life.current <= 1) {
-        Effect.modifyLife(stack, self, owner, 1);
-      }
-
+      await System.show(stack, '義賊の技巧', 'ライフ+1\n1ライフダメージ');
+      // ライフを+1
+      Effect.modifyLife(stack, self, owner, 1);
       // 対戦相手に1ライフダメージ
       Effect.modifyLife(stack, self, opponent, -1);
     }

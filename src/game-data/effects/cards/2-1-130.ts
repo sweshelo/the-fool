@@ -7,7 +7,8 @@ export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard) => {
     return (
       EffectHelper.isUnitSelectable(stack.core, 'owns', stack.processing.owner) &&
-      stack.processing.owner.id !== stack.core.getTurnPlayer().id
+      stack.processing.owner.id !== stack.core.getTurnPlayer().id &&
+      stack.processing.owner.field.length <= 2
     );
   },
 
