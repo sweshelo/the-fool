@@ -7,19 +7,11 @@ export const effects: CardEffects = {
   // 召喚した際に【固着】【秩序の盾】【セレクトハック】を付与
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
     const self = stack.processing;
-    if (self.owner.life.current <= 3) {
-      await System.show(
-        stack,
-        '固着＆秩序の盾＆セレクトハック＆貫通',
-        '手札に戻らない\n相手の効果によるダメージを受けない\nこのユニットを選ばなければならない\nブロックを貫通してプレイヤーにダメージを与える'
-      );
-    } else {
-      await System.show(
-        stack,
-        '固着＆秩序の盾＆セレクトハック',
-        '手札に戻らない\n相手の効果によるダメージを受けない\nこのユニットを選ばなければならない'
-      );
-    }
+    await System.show(
+      stack,
+      '固着＆秩序の盾＆セレクトハック',
+      '手札に戻らない\n相手の効果によるダメージを受けない\nこのユニットを選ばなければならない'
+    );
     Effect.keyword(stack, self, self, '固着');
     Effect.keyword(stack, self, self, '秩序の盾');
     Effect.keyword(stack, self, self, 'セレクトハック');
