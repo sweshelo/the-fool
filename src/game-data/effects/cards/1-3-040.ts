@@ -14,15 +14,15 @@ export const effects: CardEffects = {
       (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
     );
     // 戦闘中の相手ユニットを特定
-    const oponnentUnit = [stack.source, stack.target].find(
+    const opponentUnit = [stack.source, stack.target].find(
       (object): object is Unit => object instanceof Unit && object.owner.id === opponent.id
     );
 
     // ユニットが存在し、フィールドにまだいる場合のみ発動
     return (
       !!ownUnit &&
-      !!oponnentUnit &&
-      ownUnit.currentBP < oponnentUnit.currentBP &&
+      !!opponentUnit &&
+      ownUnit.currentBP < opponentUnit.currentBP &&
       owner.field.some(unit => unit.id === ownUnit.id)
     );
   },
