@@ -40,6 +40,16 @@ const routes: { method: string; path: RegExp; handler: Handler }[] = [
     path: /^\/api\/sandbox\/destroy$/,
     handler: destroySandboxRoomHandler,
   },
+  {
+    method: 'HEAD',
+    path: /^\/live$/,
+    handler: liveHandler,
+  },
+  {
+    method: 'GET',
+    path: /^\/matching$/,
+    handler: matchingHandler,
+  },
 ];
 
 export async function apiRouter(req: Request): Promise<Response | undefined> {
@@ -264,6 +274,30 @@ function destroySandboxRoomHandler(_req: Request): Response {
     }),
     { status: 200, headers: CORS_HEADERS }
   );
+}
+
+/**
+ * 死活監視エンドポイント（HEAD /live）
+ */
+function liveHandler(_req: Request): Response {
+  return new Response(null, { status: 200 });
+}
+
+/**
+ * マッチング状況取得エンドポイント（GET /matching）
+ */
+function matchingHandler(_req: Request): Response {
+  const info = Server.getMatchingInfo();
+  if (!info) {
+    return new Response(JSON.stringify({ error: 'Server not initialized' }), {
+      status: 503,
+      headers: CORS_HEADERS,
+    });
+  }
+  return new Response(JSON.stringify(info), {
+    status: 200,
+    headers: CORS_HEADERS,
+  });
 }
 
 /**

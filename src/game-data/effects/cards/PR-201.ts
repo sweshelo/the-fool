@@ -22,6 +22,7 @@ export const effects: CardEffects = {
   },
 
   onTurnStartInTrash: async (stack: StackWithCard<Unit>): Promise<void> => {
+    if (stack.source.id !== stack.processing.owner.id) return;
     if (stack.processing.owner.field.length === 0) {
       await System.show(stack, '蘇る爛漫少女', '【特殊召喚】');
       await Effect.summon(stack, stack.processing, stack.processing);

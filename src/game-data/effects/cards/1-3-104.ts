@@ -5,7 +5,11 @@ import { System } from '../engine/system';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 const effect = async (stack: StackWithCard) => {
-  if (stack.target instanceof Unit && stack.target.catalog.species?.includes('侍')) {
+  if (
+    stack.target instanceof Unit &&
+    stack.target.owner.id === stack.processing.owner.id &&
+    stack.target.catalog.species?.includes('侍')
+  ) {
     await System.show(stack, '扶翼の天才剣士', 'BP+1000');
     Effect.modifyBP(stack, stack.processing, stack.target, 1000, { event: 'turnEnd', count: 1 });
   }

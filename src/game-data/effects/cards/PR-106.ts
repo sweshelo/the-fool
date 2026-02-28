@@ -3,8 +3,6 @@ import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  // あなたのユニットが戦闘した時、そのユニットが戦闘中の相手ユニットよりBPが低い場合、
-  // ターン終了時まで戦闘中のあなたのユニットのBPを+4000する
   checkBattle: (stack: StackWithCard): boolean => {
     const owner = stack.processing.owner;
     const opponent = owner.opponent;
@@ -13,17 +11,10 @@ export const effects: CardEffects = {
     const ownUnit = [stack.source, stack.target].find(
       (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
     );
-    // 戦闘中の相手ユニットを特定
-    const opponentUnit = [stack.source, stack.target].find(
-      (object): object is Unit => object instanceof Unit && object.owner.id === opponent.id
-    );
 
     // ユニットが存在し、フィールドにまだいる場合のみ発動
     return (
-      !!ownUnit &&
-      !!opponentUnit &&
-      ownUnit.currentBP < opponentUnit.currentBP &&
-      owner.field.some(unit => unit.id === ownUnit.id)
+      !!ownUnit && owner.field.some(unit => unit.id === ownUnit.id) && opponent.field.length > 0
     );
   },
 
@@ -31,16 +22,16 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
 
     // 戦闘中の自ユニットを特定
-    const ownUnit = [stack.source, stack.target].find(
+    const [target] = [stack.source, stack.target].filter(
       (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
     );
 
-    if (ownUnit) {
-      await System.show(stack, '勇猛なる決起', 'BP+4000');
-      Effect.modifyBP(stack, stack.processing, ownUnit, 4000, {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+    if (!target) return;
+
+    await System.show(stack, '蜀漢の英雄・趙雲', 'BP+4000\n敵全体の基本BP+1000');
+    Effect.modifyBP(stack, stack.processing, target, 4000, { event: 'turnEnd', count: 1 });
+    owner.opponent.field.forEach(unit =>
+      Effect.modifyBP(stack, stack.processing, unit, 1000, { isBaseBP: true })
+    );
   },
 };

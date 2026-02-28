@@ -163,6 +163,25 @@ export class MatchingManager {
   }
 
   /**
+   * 全モードのキュー詳細（プレイヤー名・待機開始時刻）を取得する
+   */
+  getQueueDetails(): Record<MatchingMode, { name: string; queuedAt: number }[]> {
+    const result: Record<MatchingMode, { name: string; queuedAt: number }[]> = {
+      freedom: [],
+      standard: [],
+      legacy: [],
+      limited: [],
+    };
+    for (const [mode, queue] of this.queues) {
+      result[mode] = Array.from(queue.values()).map(p => ({
+        name: p.player.name,
+        queuedAt: p.queuedAt,
+      }));
+    }
+    return result;
+  }
+
+  /**
    * 全モードのキューサイズを取得する
    */
   getAllQueueSizes(): Record<MatchingMode, number> {

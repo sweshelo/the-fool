@@ -738,6 +738,31 @@ export class Server {
   /**
    * Register a room in the server's rooms map (for sandbox)
    */
+  /**
+   * 現在のマッチング待機状況とアクティブルーム情報を取得する
+   */
+  static getMatchingInfo(): {
+    waitingPlayers: Record<MatchingMode, { name: string; queuedAt: number }[]>;
+    activeRooms: { roomId: string; mode: MatchingMode; players: string[] }[];
+  } | null {
+    if (!Server.instance) return null;
+
+    const waitingPlayers = Server.instance.matchingManager.getQueueDetails();
+
+    const activeRooms: { roomId: string; mode: MatchingMode; players: string[] }[] = [];
+    for (const room of Server.instance.rooms.values()) {
+      if (room.matchingMode) {
+        activeRooms.push({
+          roomId: room.id,
+          mode: room.matchingMode,
+          players: Array.from(room.players.values()).map(p => p.name),
+        });
+      }
+    }
+
+    return { waitingPlayers, activeRooms };
+  }
+
   static registerRoom(room: Room): boolean {
     if (!Server.instance) {
       console.error('[Server] No server instance available');

@@ -3,11 +3,9 @@ import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
-  // あなたのユニットが戦闘した時、そのユニットが戦闘中の相手ユニットよりBPが低い場合、
-  // ターン終了時まで戦闘中のあなたのユニットのBPを+4000する
+  // あなたのユニットが戦闘した時、そのユニットが戦闘中の相手ユニットよりBPが低い場合
   checkBattle: (stack: StackWithCard): boolean => {
     const owner = stack.processing.owner;
-    const opponent = owner.opponent;
 
     // 戦闘中の自ユニットを特定
     const ownUnit = [stack.source, stack.target].find(
@@ -15,10 +13,10 @@ export const effects: CardEffects = {
     );
     // 戦闘中の相手ユニットを特定
     const opponentUnit = [stack.source, stack.target].find(
-      (object): object is Unit => object instanceof Unit && object.owner.id === opponent.id
+      (object): object is Unit => object instanceof Unit && object.owner.id !== owner.id
     );
-
     // ユニットが存在し、フィールドにまだいる場合のみ発動
+    // 自ユニットが相手ユニットよりBPが低い場合
     return (
       !!ownUnit &&
       !!opponentUnit &&
@@ -27,20 +25,21 @@ export const effects: CardEffects = {
     );
   },
 
-  onBattle: async (stack: StackWithCard): Promise<void> => {
+  // 戦闘終了時までそれに【不滅】を与える
+  onBattle: async (stack: StackWithCard) => {
     const owner = stack.processing.owner;
 
     // 戦闘中の自ユニットを特定
-    const ownUnit = [stack.source, stack.target].find(
+    const [target] = [stack.source, stack.target].filter(
       (object): object is Unit => object instanceof Unit && object.owner.id === owner.id
     );
 
-    if (ownUnit) {
-      await System.show(stack, '勇猛なる決起', 'BP+4000');
-      Effect.modifyBP(stack, stack.processing, ownUnit, 4000, {
-        event: 'turnEnd',
-        count: 1,
-      });
-    }
+    if (!target) return;
+
+    await System.show(stack, 'ハニートラップ', '【不滅】を付与');
+    Effect.keyword(stack, stack.processing, target, '不滅', {
+      event: 'turnEnd',
+      count: 1,
+    });
   },
 };

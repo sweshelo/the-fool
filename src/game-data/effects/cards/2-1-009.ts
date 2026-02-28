@@ -63,7 +63,7 @@ export const effects: CardEffects = {
       );
 
       // Select target unit
-      const [target] = await EffectHelper.pickUnit(
+      const targets = await EffectHelper.pickUnit(
         stack,
         stack.processing.owner,
         targetsFilter,
@@ -71,7 +71,9 @@ export const effects: CardEffects = {
         stack.processing.lv >= 2 ? 2 : 1
       );
 
-      Effect.activate(stack, stack.processing, target, false);
+      targets.forEach(target => {
+        Effect.activate(stack, stack.processing, target, false);
+      });
     } else {
       await System.show(stack, 'ビタミン供給', '手札の黄属性のコスト-1');
     }
