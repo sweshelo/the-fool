@@ -9,12 +9,10 @@ export const effects: CardEffects = {
       await System.show(
         stack,
         '満月の護り&秩序の盾',
-        '捨札からユニットを回収\n紫ゲージ+1\n対戦相手の効果によってダメージを受けない'
+        '捨札から1枚回収\n紫ゲージ+1\n対戦相手の効果によってダメージを受けない'
       );
       const [target] = EffectHelper.random(
-        stack.processing.owner.trash.filter(
-          card => card instanceof Unit && card.catalog.color === Color.PURPLE
-        ),
+        stack.processing.owner.trash.filter(card => card.catalog.color === Color.PURPLE),
         1
       );
       if (target) Effect.move(stack, stack.processing, target, 'hand');
