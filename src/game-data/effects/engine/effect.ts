@@ -296,7 +296,7 @@ export class Effect {
   static clock(
     stack: Stack,
     source: Card,
-    target: Unit,
+    target: Card,
     value: number,
     withoutOverClock: boolean = false
   ): void {
