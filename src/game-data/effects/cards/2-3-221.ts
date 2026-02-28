@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 import { PermanentEffect } from '../engine/permanent';
 import { Color } from '@/submodule/suit/constant';
 
@@ -30,15 +29,11 @@ export const effects: CardEffects = {
   },
 
   // 対戦相手は手札からコスト1のユニットをフィールドに出すことができない。
-  fieldEffect: (stack: StackWithCard<Unit>): void => {
+  fieldEffect: async (stack: StackWithCard): Promise<void> => {
     PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
       targets: ['opponents', 'hand'],
-      effect: (unit, source) => {
-        if (unit instanceof Unit) {
-          unit.delta.push(new Delta({ type: 'banned' }, { source }));
-        }
-      },
-      condition: target => target instanceof Unit && target.catalog.cost === 1,
+      condition: card => card.catalog.cost === 1,
       effectCode: '翠龍の眼光',
     });
   },

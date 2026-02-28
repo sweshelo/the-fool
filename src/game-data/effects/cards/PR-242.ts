@@ -1,6 +1,5 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard) => {
@@ -19,9 +18,7 @@ export const effects: CardEffects = {
     );
     stack.processing.owner.opponent.hand
       .filter(card => card.catalog.cost >= 7)
-      .forEach(card =>
-        card.delta.push(new Delta({ type: 'banned' }, { event: 'turnEnd', count: 1 }))
-      );
+      .forEach(card => Effect.ban(stack, stack.processing, card, { event: 'turnEnd', count: 1 }));
 
     if (intercepts.length > 0) {
       const [target] = await EffectHelper.selectCard(

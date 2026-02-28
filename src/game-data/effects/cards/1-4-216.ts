@@ -1,7 +1,7 @@
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -56,15 +56,11 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: async (stack: StackWithCard): Promise<void> => {
-    stack.processing.owner.opponent.hand.forEach(card => {
-      if (
-        !card.delta.some(
-          delta => delta.effect.type === 'banned' && delta.source?.unit === stack.processing.id
-        ) &&
-        card.catalog.cost >= 7
-      ) {
-        card.delta.push(new Delta({ type: 'banned' }, { source: { unit: stack.processing.id } }));
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
+      targets: ['opponents', 'hand'],
+      condition: card => card.catalog.cost >= 7,
+      effectCode: '神制の耀矢',
     });
   },
 };

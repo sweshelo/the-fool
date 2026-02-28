@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -33,22 +33,12 @@ export const effects: CardEffects = {
     Effect.keyword(stack, stack.processing, stack.processing, '進化禁止');
   },
 
-  fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.opponent.hand
-      .filter(
-        card =>
-          card.catalog.cost >= 6 &&
-          !card.delta.find(delta => delta.source?.unit === stack.processing.id)
-      )
-      .forEach(card =>
-        card.delta.push(
-          new Delta(
-            { type: 'banned' },
-            {
-              source: { unit: stack.processing.id },
-            }
-          )
-        )
-      );
+  fieldEffect: async (stack: StackWithCard): Promise<void> => {
+    PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
+      targets: ['opponents', 'hand'],
+      condition: card => card.catalog.cost >= 7,
+      effectCode: '神制の耀矢',
+    });
   },
 };
