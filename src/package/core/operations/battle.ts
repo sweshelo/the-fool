@@ -176,6 +176,8 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
                 return delta.effect.cost <= unit.catalog.cost;
               }
             }
+
+            return false;
           })
       : false;
 
