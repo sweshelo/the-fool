@@ -14,7 +14,7 @@ export interface DeltaEvent {
 }
 
 export type DeltaCalculator = (self: Card) => number;
-export type DeltaCondition = (self?: Unit, blocker?: Unit) => boolean | unknown;
+export type DeltaCondition = (self?: Unit, blocker?: Unit) => boolean;
 
 export type DeltaConstructorOptionParams = {
   onlyForOwnersTurn?: boolean;
