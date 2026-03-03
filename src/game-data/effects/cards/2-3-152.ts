@@ -8,11 +8,12 @@ export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard) => stack.source.id !== stack.processing.owner.id,
   onTurnStart: async (stack: StackWithCard) => {
     await System.show(stack, 'アンデッドパレード', 'ランダムな【不死】を3枚作成');
+    const undeads = Array.from(master.values()).filter(catalog =>
+      catalog.species?.includes('不死')
+    );
     [stack.processing.owner, stack.processing.owner.opponent].forEach(player => {
       EffectHelper.repeat(3, () => {
-        const [card] = EffectHelper.random(
-          Array.from(master.values()).filter(catalog => catalog.species?.includes('不死'))
-        );
+        const [card] = EffectHelper.random(undeads);
         if (card?.id) {
           Effect.make(stack, player, card?.id);
         }
