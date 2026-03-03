@@ -1,6 +1,5 @@
-import type { Delta, DeltaSource } from '@/package/core/class/delta';
+import type { Delta, DeltaCondition, DeltaSource } from '@/package/core/class/delta';
 import type { GameEvent } from '../../schema/events';
-import type { Unit } from '@/package/core/class/card';
 
 export interface KeywordOptionParams {
   event?: GameEvent;
@@ -14,7 +13,7 @@ export interface KeywordOptionParams {
    * @param blocker ブロッカーの候補
    * @returns falseでブロック可能、trueでブロック不可能
    */
-  condition?: (self?: Unit, blocker?: Unit) => boolean | unknown;
+  condition?: DeltaCondition;
 }
 
 export type ModifyBPOption =
