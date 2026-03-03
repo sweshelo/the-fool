@@ -8,7 +8,7 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     if (
       (stack.processing.owner.purple ?? 0) < 4 ||
-      stack.processing.owner.field.length + stack.processing.owner.opponent.field.length === 1
+      stack.processing.owner.field.length + stack.processing.owner.opponent.field.length <= 1
     )
       return;
     await System.show(stack, 'せんじん再臨', '自身以外のユニットを破壊\n紫ゲージ-4');
