@@ -29,11 +29,11 @@ export const effects: CardEffects = {
   },
 
   // 対戦相手は手札からコスト1のユニットをフィールドに出すことができない。
-  fieldEffect: async (stack: StackWithCard): Promise<void> => {
+  fieldEffect: (stack: StackWithCard) => {
     PermanentEffect.mount(stack.processing, {
       effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
       targets: ['opponents', 'hand'],
-      condition: card => card.catalog.cost === 1,
+      condition: card => card instanceof Unit && card.catalog.cost === 1,
       effectCode: '翠龍の眼光',
     });
   },
