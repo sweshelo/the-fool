@@ -14,15 +14,13 @@ export const effects: CardEffects = {
         description: '紫属性のインターセプトカードを1枚セット\n紫ゲージ+1',
         condition: (stack.processing.owner.purple ?? 0) <= 2,
         effect: async () => {
-          if (stack.processing.owner.trigger.length < stack.core.room.rule.player.max.trigger) {
-            EffectHelper.random(
-              stack.processing.owner.deck.filter(
-                card => card.catalog.type === 'intercept' && card.catalog.color === Color.PURPLE
-              )
-            ).forEach(card => {
-              Effect.move(stack, stack.processing, card, 'trigger');
-            });
-          }
+          EffectHelper.random(
+            stack.processing.owner.deck.filter(
+              card => card.catalog.type === 'intercept' && card.catalog.color === Color.PURPLE
+            )
+          ).forEach(card => {
+            Effect.move(stack, stack.processing, card, 'trigger');
+          });
           await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
         },
       },

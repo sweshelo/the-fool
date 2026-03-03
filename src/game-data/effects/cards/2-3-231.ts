@@ -10,7 +10,7 @@ export const effects: CardEffects = {
     stack.target.catalog.cost >= 5,
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, 'LIVEラリー', '[LIVEラリー]を作成\n対戦相手のトリガーゾーンにセット');
-    Effect.make(stack, stack.processing.owner, '2-3-231', 'trigger');
+    Effect.make(stack, stack.processing.owner.opponent, '2-3-231', 'trigger');
   },
   checkTurnEnd: (stack: StackWithCard) => {
     return stack.source.id === stack.processing.owner.id;

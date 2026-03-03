@@ -10,7 +10,7 @@ export const effects: CardEffects = {
   onModifyPurple: async (stack: StackWithCard) => {
     if (
       stack.target?.id !== stack.processing.owner.id ||
-      EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
+      !EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)
     )
       return;
     await System.show(stack, '怪火の機術', '2000ダメージ');

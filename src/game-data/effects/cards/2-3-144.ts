@@ -11,7 +11,7 @@ export const effects: CardEffects = {
       ...stack.processing.owner.field,
       ...stack.processing.owner.hand,
       ...stack.processing.owner.opponent.field,
-      stack.processing.owner.opponent.hand,
+      ...stack.processing.owner.opponent.hand,
     ].forEach(card => {
       if (card instanceof Unit) Effect.clock(stack, stack.processing, card, -2);
     });
