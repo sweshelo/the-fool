@@ -161,8 +161,6 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
   if (!blockerOwner || !attackerOwner)
     throw new Error('存在しないプレイヤーまたはユニットが指定されました');
 
-  console.log('block');
-
   // ブロック側ユニットのブロック可能ユニットを列挙
   const blockable = blockerOwner.field.filter((unit: Unit) => {
     // 次元干渉／コストN を発動している場合、指定コスト以上のユニットはブロックできない
