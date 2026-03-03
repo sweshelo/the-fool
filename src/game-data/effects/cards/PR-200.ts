@@ -7,8 +7,8 @@ export const effects: CardEffects = {
     if (stack.processing.owner.opponent.hand.length === 0) return;
 
     await System.show(stack, 'スウィート・リトル・ブレス', '手札のレベル-2');
-    stack.processing.owner.opponent.hand.forEach(card =>
-      Effect.clock(stack, stack.processing, card, -2)
-    );
+    stack.processing.owner.opponent.hand.forEach(card => {
+      Effect.clock(stack, stack.processing, card, -2);
+    });
   },
 };

@@ -9,8 +9,8 @@ export const effects: CardEffects = {
     stack.processing.owner.opponent.hand.length > 0,
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, '迷子', '手札を1枚破壊');
-    EffectHelper.random(stack.processing.owner.opponent.hand).forEach(card =>
-      Effect.break(stack, stack.processing, card)
-    );
+    EffectHelper.random(stack.processing.owner.opponent.hand).forEach(card => {
+      Effect.break(stack, stack.processing, card);
+    });
   },
 };

@@ -19,7 +19,9 @@ export const effects: CardEffects = {
               stack.processing.owner.deck.filter(
                 card => card.catalog.type === 'intercept' && card.catalog.color === Color.PURPLE
               )
-            ).forEach(card => Effect.move(stack, stack.processing, card, 'trigger'));
+            ).forEach(card => {
+              Effect.move(stack, stack.processing, card, 'trigger');
+            });
           }
           await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
         },

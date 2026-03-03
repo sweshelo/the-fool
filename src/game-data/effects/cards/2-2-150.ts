@@ -26,9 +26,9 @@ export const effects: CardEffects = {
       }
       case '2': {
         await System.show(stack, '選略・ウロボロスの刻印', '捨札から2枚回収\n紫ゲージ-1');
-        EffectHelper.random(stack.processing.owner.trash, 2).forEach(card =>
-          Effect.move(stack, stack.processing, card, 'hand')
-        );
+        EffectHelper.random(stack.processing.owner.trash, 2).forEach(card => {
+          Effect.move(stack, stack.processing, card, 'hand');
+        });
         await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -1);
         break;
       }
