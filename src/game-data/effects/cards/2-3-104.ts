@@ -17,7 +17,7 @@ export const effects: CardEffects = {
         'お互いのフィールドに＜ウィルス・炎＞を【特殊召喚】'
       );
       for (const player of [stack.processing.owner, stack.processing.owner.opponent]) {
-        await EffectTemplate.virusInject(stack, player, 'ウィルス・炎');
+        await EffectTemplate.virusInject(stack, player, '＜ウィルス・炎＞');
       }
     }
   },
