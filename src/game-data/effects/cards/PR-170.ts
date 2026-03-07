@@ -6,6 +6,7 @@ import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/type
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
     await System.show(stack, 'ダークチャージ', '紫ゲージ+1');
+    await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, 1);
   },
   onModifyPurple: async (stack: StackWithCard) => {
     if (

@@ -44,6 +44,7 @@ export const effects: CardEffects = {
           Effect.keyword(stack, stack.processing, target, '不屈', { source });
         }
       },
+      condition: target => (target.owner.purple ?? 0) >= 3,
       effectCode: '栄光の凱歌',
       targets: ['self'],
     });

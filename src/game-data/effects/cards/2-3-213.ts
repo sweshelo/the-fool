@@ -25,7 +25,9 @@ export const effects: CardEffects = {
         {
           id: '2',
           description: 'CP-3\nユニットを破壊',
-          condition: EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
+          condition:
+            stack.processing.owner.cp.current >= 3 &&
+            EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
         },
       ]
     );

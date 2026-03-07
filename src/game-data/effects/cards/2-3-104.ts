@@ -1,3 +1,4 @@
+import { Unit } from '@/package/core/class/card';
 import { Effect } from '../engine/effect';
 import { EffectHelper } from '../engine/helper';
 import { System } from '../engine/system';
@@ -23,6 +24,8 @@ export const effects: CardEffects = {
   onDamage: async (stack: StackWithCard) => {
     if (
       stack.core.getTurnPlayer().id !== stack.processing.owner.id &&
+      stack.target instanceof Unit &&
+      stack.target.owner.id === stack.processing.owner.id &&
       stack.option?.type === 'damage' &&
       stack.option.cause === 'effect'
     ) {

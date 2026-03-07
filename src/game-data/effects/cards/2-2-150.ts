@@ -13,7 +13,8 @@ export const effects: CardEffects = {
         {
           id: '2',
           description: '捨札から2枚回収\n紫ゲージ-1',
-          condition: (stack.processing.owner.purple ?? 0) >= 1,
+          condition:
+            (stack.processing.owner.purple ?? 0) >= 1 && stack.processing.owner.trash.length >= 2,
         },
       ]
     );
