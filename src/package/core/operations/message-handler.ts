@@ -157,7 +157,7 @@ export async function handleMessage(core: Core, message: Message) {
         // 軽減前のcostが0でない場合はmitigateをtriggerからtrashに移動させる
         if (card.currentCost > 0 && mitigate) {
           player.trigger = player.trigger.filter(c => c.id !== mitigate.id);
-          mitigate.lv = 1;
+          mitigate.reset(true);
           player.trash.push(mitigate);
         }
 
@@ -382,7 +382,7 @@ export async function handleMessage(core: Core, message: Message) {
 
         if (!(target.card instanceof Joker)) {
           player.trash.push(target.card);
-          target.card.reset();
+          target.card.reset(true);
         }
         core.room.sync();
         core.room.soundEffect('trash');
