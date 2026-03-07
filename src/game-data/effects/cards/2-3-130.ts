@@ -2,7 +2,7 @@ import { Effect } from '@/game-data/effects/engine/effect';
 import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { System } from '@/game-data/effects/engine/system';
 import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/types';
-import type { Unit } from '@/package/core/class/card';
+import { Intercept, type Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -17,7 +17,8 @@ export const effects: CardEffects = {
     PermanentEffect.mount(stack.processing, {
       effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
       effectCode: '禁忌の呪法',
-      condition: card => stack.core.getTurnPlayer().id !== card.owner.id,
+      condition: card =>
+        stack.core.getTurnPlayer().id !== card.owner.id && card instanceof Intercept,
       targets: ['opponents', 'trigger'],
     });
   },
