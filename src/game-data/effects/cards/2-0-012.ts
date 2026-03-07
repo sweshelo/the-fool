@@ -50,7 +50,7 @@ export const effects: CardEffects = {
     PermanentEffect.mount(stack.processing, {
       effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
       targets: ['opponents', 'hand'],
-      condition: card => card.catalog.cost >= 6,
+      condition: card => card.catalog.cost >= 6 && card instanceof Unit,
       effectCode: '神征の楔',
     });
   },
