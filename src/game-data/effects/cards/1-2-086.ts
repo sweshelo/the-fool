@@ -8,7 +8,7 @@ import { Color } from '@/submodule/suit/constant';
 const getYellowFilter = (self: Card) => (unit: Unit) =>
   unit.catalog.color === Color.YELLOW && unit.owner.id === self.owner.id;
 
-export const effect: CardEffects = {
+export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard) =>
     EffectHelper.isUnitSelectable(
       stack.core,
