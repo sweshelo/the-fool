@@ -4,6 +4,7 @@ import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/type
 
 export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard) =>
+    stack.source.id === stack.processing.owner.id &&
     stack.processing.owner.field.length + stack.processing.owner.opponent.field.length > 0,
   onDrive: async (stack: StackWithCard) => {
     await System.show(stack, '皆既日食', '全ユニットの行動権を回復');
