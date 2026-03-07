@@ -25,9 +25,10 @@ export const effects: CardEffects = {
       'マルブリッサの神術',
       'インターセプトカードを1枚引きレベル+1\n紫ゲージ-1'
     );
-    EffectHelper.random(targets).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'hand')
-    );
+    EffectHelper.random(targets).forEach(card => {
+      Effect.move(stack, stack.processing, card, 'hand');
+      Effect.clock(stack, stack.processing, card, 1);
+    });
     await Effect.modifyPurple(stack, stack.processing, stack.processing.owner, -1);
   },
 };

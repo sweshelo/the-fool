@@ -1,6 +1,7 @@
 import { Effect } from '@/game-data/effects/engine/effect';
 import { EffectHelper } from '@/game-data/effects/engine/helper';
 import { System } from '@/game-data/effects/engine/system';
+import { EffectTemplate } from '@/game-data/effects/engine/templates';
 import type { CardEffects, StackWithCard } from '@/game-data/effects/schema/types';
 import type { Unit } from '@/package/core/class/card';
 
@@ -25,5 +26,9 @@ export const effects: CardEffects = {
     );
     Effect.keyword(stack, stack.processing, target, '強制防御');
     Effect.modifyBP(stack, stack.processing, target, 2000, { isBaseBP: true });
+  },
+  onBreakSelf: async (stack: StackWithCard) => {
+    await System.show(stack, 'お茶会への招待状', '【天使】を1枚引く');
+    EffectTemplate.reinforcements(stack, stack.processing.owner, { species: '天使' });
   },
 };
