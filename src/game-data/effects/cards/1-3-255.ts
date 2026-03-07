@@ -12,7 +12,7 @@ export const effects: CardEffects = {
     if (stack.target instanceof Unit) {
       Effect.keyword(stack, stack.processing, stack.target, '次元干渉', {
         condition: (self, blocker) => (self?.currentBP ?? 0) < (blocker?.currentBP ?? 0),
-        event: 'turnEnd',
+        event: '_postBattle',
         count: 1,
       });
     }
