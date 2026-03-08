@@ -163,25 +163,25 @@ export async function block(core: Core, attacker: Unit): Promise<Unit | undefine
 
   // ブロック側ユニットのブロック可能ユニットを列挙
   const blockable = blockerOwner.field.filter((unit: Unit) => {
-    // 次元干渉を発動している場合、指定コスト以上のユニットはブロックできない
-    const blockableCost = attacker.hasKeyword('次元干渉')
-      ? Math.min(
-          ...attacker.delta
-            .map(delta =>
-              delta.effect.type === 'keyword' && delta.effect.name === '次元干渉'
-                ? delta.effect.cost
-                : undefined
-            )
-            .filter(v => v !== undefined)
-        )
-      : undefined;
-    const isNumber = blockableCost !== undefined && Number.isInteger(blockableCost);
+    // 次元干渉／コストN を発動している場合、指定コスト以上のユニットはブロックできない
+    // Delta内の少なくとも1つがブロック不可能と判定すれば対象のunitにはブロックされない
+    const isUnblockable = attacker.hasKeyword('次元干渉')
+      ? attacker.delta
+          .filter(delta => delta.effect.type === 'keyword' && delta.effect.name === '次元干渉')
+          .some(delta => {
+            if (delta.effect.type === 'keyword' && delta.effect.name === '次元干渉') {
+              if (delta.condition) {
+                return delta.condition(attacker, unit);
+              } else {
+                return delta.effect.cost <= unit.catalog.cost;
+              }
+            }
 
-    return (
-      unit.active &&
-      !unit.hasKeyword('防御禁止') &&
-      (isNumber ? unit.catalog.cost < blockableCost : true)
-    );
+            return false;
+          })
+      : false;
+
+    return unit.active && !unit.hasKeyword('防御禁止') && !isUnblockable;
   });
 
   const forceBlock = blockable.filter((unit: Unit) => {

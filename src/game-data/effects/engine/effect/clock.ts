@@ -1,12 +1,12 @@
 import type { Stack } from '@/package/core/class/stack';
-import type { Card, Unit } from '@/package/core/class/card';
+import { Unit, type Card } from '@/package/core/class/card';
 import { effectBreak } from './break';
 import { effectKeyword } from './keyword';
 
 export function effectClock(
   stack: Stack,
   source: Card,
-  target: Unit,
+  target: Card,
   value: number,
   withoutOverClock: boolean = false
 ): void {
@@ -16,7 +16,10 @@ export function effectClock(
   if (target.lv > 3) target.lv = 3;
   if (target.lv < 1) target.lv = 1;
 
-  if (target.owner.hand.find(card => card.id === target.id)) {
+  if (
+    target.owner.hand.find(card => card.id === target.id) ||
+    target.owner.trigger.find(card => card.id === target.id)
+  ) {
     if (target.lv !== before) {
       if (value > 0) stack.core.room.soundEffect('clock-up');
       if (value < 0) stack.core.room.soundEffect('trash');
@@ -24,7 +27,7 @@ export function effectClock(
     return;
   }
 
-  if (target.lv !== before) {
+  if (target.lv !== before && target instanceof Unit) {
     if (value > 0) {
       target.delta = target.delta.filter(delta => delta.effect.type !== 'damage');
       stack.core.room.soundEffect('clock-up');
