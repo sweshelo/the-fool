@@ -9,21 +9,19 @@ export const effects: CardEffects = {
   },
 
   onTurnStart: async (stack: StackWithCard<Unit>) => {
-    // 自分のターン開始時のみ発動
-    if (stack.processing.owner.id !== stack.core.getTurnPlayer().id) {
-      return;
-    }
-
-    // 【神託】を持っているか確認
-    if (!stack.processing.hasKeyword('神託')) {
-      return;
-    }
-
-    // デッキからカードを1枚選ぶ
     const deck = stack.processing.owner.deck;
-    if (deck.length === 0) {
+
+    if (
+      // 自分のターン開始時のみ発動
+      stack.processing.owner.id !== stack.core.getTurnPlayer().id ||
+      // 神託チェック
+      !stack.processing.hasKeyword('神託') ||
+      // デッキ選択可能か
+      deck.length === 0 ||
+      // ドロー可能か
+      stack.processing.owner.hand.length >= stack.core.room.rule.player.max.hand
+    )
       return;
-    }
 
     await System.show(stack, '奇跡・出会いは必然', 'デッキから1枚引く');
     const [selectedCard] = await EffectHelper.selectCard(
@@ -55,6 +53,6 @@ export const effects: CardEffects = {
       return;
     }
 
-    Effect.move(stack, stack.processing, selectedCard, 'hand');
+    Effect.bounce(stack, stack.processing, selectedCard, 'hand');
   },
 };

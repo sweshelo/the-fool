@@ -21,7 +21,7 @@ export const effects: CardEffects = {
       const triggerCards = [...opponent.trigger];
 
       for (const card of triggerCards) {
-        Effect.move(stack, stack.processing, card, 'hand');
+        Effect.bounce(stack, stack.processing, card, 'hand');
       }
     }
   },
