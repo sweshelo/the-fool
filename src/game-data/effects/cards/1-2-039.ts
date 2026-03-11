@@ -34,27 +34,29 @@ export const effects: CardEffects = {
       stack.processing.owner
     );
 
-    const messages = [
-      reviveCard ? '捨札から1枚回収' : undefined,
-      isUnitSelectable ? 'ユニットを1体破壊' : undefined,
-    ].filter(message => !!message);
-
-    if (messages.length > 0) {
-      await System.show(stack, '極楽浄土', messages.join('\n'));
-
-      if (isUnitSelectable) {
-        const [target] = await EffectHelper.pickUnit(
-          stack,
-          stack.processing.owner,
-          'owns',
-          '破壊するユニットを選択'
-        );
-        Effect.break(stack, stack.processing, target);
-      }
-
-      if (reviveCard) {
-        Effect.move(stack, stack.processing, reviveCard, 'hand');
-      }
-    }
+    await EffectHelper.combine(stack, [
+      {
+        title: '極楽浄土',
+        description: '捨札から1枚回収',
+        effect: () => {
+          if (reviveCard) Effect.move(stack, stack.processing, reviveCard, 'hand');
+        },
+        condition: reviveCard ? true : false,
+      },
+      {
+        title: '極楽浄土',
+        description: 'ユニットを1体破壊',
+        effect: async () => {
+          const [target] = await EffectHelper.pickUnit(
+            stack,
+            stack.processing.owner,
+            'owns',
+            '破壊するユニットを選択'
+          );
+          Effect.break(stack, stack.processing, target);
+        },
+        condition: isUnitSelectable,
+      },
+    ]);
   },
 };

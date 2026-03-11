@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
@@ -35,26 +36,14 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    if (
-      stack.processing.delta.some(
-        delta =>
-          delta.source?.unit === stack.processing.id && delta.source.effectCode === '神速の一閃'
-      )
-    ) {
-      if (stack.processing.lv !== 1)
-        stack.processing.delta = stack.processing.delta.filter(
-          delta =>
-            !(
-              delta.source?.unit === stack.processing.id && delta.source.effectCode === '神速の一閃'
-            )
-        );
-    } else {
-      if (stack.processing.lv === 1 && stack.processing instanceof Unit) {
-        Effect.keyword(stack, stack.processing, stack.processing, '次元干渉', {
-          cost: 0,
-          source: { unit: stack.processing.id, effectCode: '神速の一閃' },
-        });
-      }
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '次元干渉', { source });
+      },
+      effectCode: '神速の一閃',
+      targets: ['self'],
+      condition: target => target.lv === 1,
+    });
   },
 };

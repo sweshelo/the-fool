@@ -1,3 +1,4 @@
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
@@ -10,31 +11,17 @@ export const effects: CardEffects = {
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
     // 【神獣】ユニットのBPを+3000し、【不滅】を付与
-    stack.processing.owner.field
-      .filter(unit => unit.catalog.species?.includes('神獣'))
-      .forEach(unit => {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source?.effectCode === '黄金蝶の鱗粉'
-        );
-
-        if (delta) {
-          // Deltaを編集する
-          if (delta.effect.type === 'bp') {
-            delta.effect.diff = 3000;
-          }
-        } else {
-          // 新しいDeltaを発行
-          Effect.modifyBP(stack, stack.processing, unit, 3000, {
-            source: { unit: stack.processing.id, effectCode: '黄金蝶の鱗粉' },
-          });
-          Effect.keyword(stack, stack.processing, unit, '不滅', {
-            source: { unit: stack.processing.id, effectCode: '黄金蝶の鱗粉' },
-          });
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, target, 3000, { source });
+          Effect.keyword(stack, stack.processing, target, '不滅', { source });
         }
-      });
+      },
+      effectCode: '黄金蝶の鱗粉',
+      condition: target => target instanceof Unit && target.catalog.species?.includes('神獣'),
+      targets: ['owns'],
+    });
   },
 
   onTurnEnd: async (stack: StackWithCard<Unit>) => {

@@ -1,3 +1,4 @@
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
@@ -27,17 +28,13 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    const owner = stack.processing.owner;
-    owner.field.forEach(unit => {
-      if (
-        unit.catalog.species?.includes('侍') &&
-        !unit.delta.some(delta => delta.source?.unit === stack.processing.id)
-      ) {
-        // 【不屈】を付与
-        Effect.keyword(stack, stack.processing, unit, '不屈', {
-          source: { unit: stack.processing.id },
-        });
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => {
+        if (card instanceof Unit) Effect.keyword(stack, stack.processing, card, '不屈', { source });
+      },
+      effectCode: '心眼の撫子',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('侍'),
     });
   },
 

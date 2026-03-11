@@ -13,29 +13,30 @@ export const effects: CardEffects = {
 
   onOverclockSelf: async (stack: StackWithCard): Promise<void> => {
     if (!(stack.processing instanceof Unit)) return;
-
     const owner = stack.processing.owner;
 
-    const hasTargets = EffectHelper.isUnitSelectable(
-      stack.core,
-      'opponents',
-      stack.processing.owner
-    );
-
-    await System.show(stack, '爆発する寄生魚', `${hasTargets ? 'レベル+1\n' : ''}自身を破壊`);
-    if (hasTargets) {
-      // ユニットの選択を実施する
-      const selection: Unit[] = await EffectHelper.pickUnit(
-        stack,
-        owner,
-        'opponents',
-        'レベルを+1するユニットを選択',
-        2
-      );
-
-      selection.forEach(unit => Effect.clock(stack, stack.processing, unit, 1));
-    }
-
-    Effect.break(stack, stack.processing, stack.processing, 'effect');
+    await EffectHelper.combine(stack, [
+      {
+        title: '爆発する寄生魚',
+        description: 'レベル+1',
+        effect: async () => {
+          (
+            await EffectHelper.pickUnit(
+              stack,
+              owner,
+              'opponents',
+              'レベルを+1するユニットを選択',
+              2
+            )
+          ).forEach(unit => Effect.clock(stack, stack.processing, unit, 1));
+        },
+        condition: EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
+      },
+      {
+        title: '爆発する寄生魚',
+        description: '自身を破壊',
+        effect: () => Effect.break(stack, stack.processing, stack.processing, 'effect'),
+      },
+    ]);
   },
 };

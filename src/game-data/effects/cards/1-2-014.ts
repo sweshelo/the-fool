@@ -48,31 +48,20 @@ export const effects: CardEffects = {
     // 自分のレベル2以上のユニット
     const ownTargets = owner.field.filter(unit => unit.lv >= 2);
 
-    // 両方のターゲットがいない場合は何もしない
-    if (opponentTargets.length === 0 && ownTargets.length === 0) {
-      return;
-    }
-
-    // メッセージを条件に応じて構築
-    let message = '';
-    if (opponentTargets.length > 0 && ownTargets.length > 0) {
-      message = '敵のレベル2以上に6000ダメージ\n味方のレベル2以上に【スピードムーブ】を付与';
-    } else if (opponentTargets.length > 0) {
-      message = '敵のレベル2以上に6000ダメージ';
-    } else {
-      message = '味方のレベル2以上に【スピードムーブ】を付与';
-    }
-
-    await System.show(stack, '堕天使の鎮魂歌', message);
-
-    // 対戦相手のレベル2以上のユニットに6000ダメージ
-    if (opponentTargets.length > 0) {
-      opponentTargets.forEach(unit => Effect.damage(stack, stack.processing, unit, 6000));
-    }
-
-    // 自分のレベル2以上のユニットに【スピードムーブ】
-    if (ownTargets.length > 0) {
-      ownTargets.forEach(unit => Effect.speedMove(stack, unit));
-    }
+    await EffectHelper.combine(stack, [
+      {
+        title: '堕天使の鎮魂歌',
+        description: '敵のレベル2以上に6000ダメージ',
+        effect: () =>
+          opponentTargets.forEach(unit => Effect.damage(stack, stack.processing, unit, 6000)),
+        condition: opponentTargets.length > 0,
+      },
+      {
+        title: '堕天使の鎮魂歌',
+        description: '味方のレベル2以上に【スピードムーブ】',
+        effect: () => ownTargets.forEach(unit => Effect.speedMove(stack, unit)),
+        condition: ownTargets.length > 0,
+      },
+    ]);
   },
 };

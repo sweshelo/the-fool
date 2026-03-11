@@ -10,12 +10,14 @@ export const effects: CardEffects = {
     // 対戦相手のフィールドにユニットがいる場合
     if (opponent.field.length > 0) {
       await System.show(stack, '破滅谷の神獣', '【加護】\nユニットを破壊');
-      Effect.keyword(stack, stack.processing, stack.processing, '加護');
 
       // 対戦相手のBPが最も高いユニットからランダムで1体破壊する
       const max = Math.max(...opponent.field.map(unit => unit.currentBP));
       const candidate = opponent.field.filter(unit => unit.currentBP === max);
       EffectHelper.random(candidate).forEach(unit => Effect.break(stack, stack.processing, unit));
+    } else {
+      await System.show(stack, '加護', '効果に選ばれない');
     }
+    Effect.keyword(stack, stack.processing, stack.processing, '加護');
   },
 };

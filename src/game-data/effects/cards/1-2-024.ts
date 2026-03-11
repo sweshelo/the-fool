@@ -1,33 +1,20 @@
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
 export const effects: CardEffects = {
   // ■八咫鏡
-  // 様々なレベルに応じた効果を持つカード
-
   // フィールド効果: レベル1の時に【加護】を与える
   fieldEffect(stack: StackWithCard<Unit>) {
-    const self = stack.processing;
-
-    // 自身が与えた加護の効果があるか確認
-    const delta = self.delta.find(
-      delta => delta.source?.unit === self.id && delta.source?.effectCode === 'level1_protection'
-    );
-
-    if (self.lv === 1) {
-      // レベル1の時に【加護】を与える
-      if (!delta) {
-        Effect.keyword(stack, self, self, '加護', {
-          source: { unit: self.id, effectCode: 'level1_protection' },
-        });
-      }
-    } else if (delta) {
-      // レベル1以外では自身が与えた【加護】を除外
-      self.delta = self.delta.filter(
-        d => d.source?.unit !== self.id || d.source?.effectCode !== 'level1_protection'
-      );
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '加護', { source });
+      },
+      targets: ['self'],
+      effectCode: '八咫鏡',
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
@@ -37,20 +24,28 @@ export const effects: CardEffects = {
   // プレイヤーアタックを受けた時の効果
   async onPlayerAttack(stack: StackWithCard<Unit>) {
     const owner = stack.processing.owner;
+    const source = stack.source;
 
     // 自分がプレイヤーアタックを受けた時のみ発動
     if (
-      stack.source instanceof Unit &&
-      stack.source.owner.id === owner.opponent.id && // 相手のユニットがアタックしている
+      source instanceof Unit &&
+      source.owner.id === owner.opponent.id && // 相手のユニットがアタックしている
       stack.target?.id === owner.id // 自分がプレイヤーアタックを受けている
     ) {
-      await System.show(stack, '八咫鏡', 'ユニットを消滅\nレベル+1');
-
-      // アタックしてきたユニットを消滅させる
-      Effect.delete(stack, stack.processing, stack.source);
-
-      // 自身のレベルを+1する
-      Effect.clock(stack, stack.processing, stack.processing, 1);
+      await EffectHelper.combine(stack, [
+        {
+          title: '八咫鏡',
+          description: 'ユニットを消滅',
+          effect: () => Effect.delete(stack, stack.processing, source),
+          condition: source.owner.field.some(unit => unit.id === source.id),
+        },
+        {
+          title: '八咫鏡',
+          description: 'レベル+1',
+          effect: () => Effect.clock(stack, stack.processing, stack.processing, 1),
+          condition: stack.processing.lv < 3,
+        },
+      ]);
     }
   },
 
