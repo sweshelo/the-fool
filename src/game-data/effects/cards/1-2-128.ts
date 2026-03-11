@@ -21,7 +21,7 @@ export const effects = {
       '消滅させるカードを選択して下さい',
       3
     );
-    targets.forEach(card => Effect.move(stack, stack.processing, card, 'delete'));
+    targets.forEach(card => Effect.delete(stack, stack.processing, card));
 
     EffectTemplate.draw(stack.processing.owner, stack.core);
   },

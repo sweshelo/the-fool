@@ -26,6 +26,6 @@ export const effects: CardEffects = {
       '破壊するカードを選択'
     );
 
-    Effect.move(stack, stack.processing, target, 'trash');
+    Effect.break(stack, stack.processing, target);
   },
 };

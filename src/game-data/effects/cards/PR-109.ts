@@ -57,7 +57,7 @@ export const effects: CardEffects = {
 
       Effect.move(stack, stack.processing, draw, 'hand');
       targets.forEach(card => {
-        if (card.id !== draw.id) Effect.move(stack, stack.processing, card, 'delete');
+        if (card.id !== draw.id) Effect.delete(stack, stack.processing, card);
       });
     }
   },

@@ -18,7 +18,7 @@ export const effects = {
         Effect.break(stack, stack.processing, unit, 'effect')
       );
       EffectHelper.random(stack.processing.owner.trigger, 2).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
     }
   },

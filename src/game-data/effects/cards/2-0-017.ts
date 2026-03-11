@@ -6,7 +6,7 @@ import { Unit } from '@/package/core/class/card';
 const onBattle = async (stack: StackWithCard) => {
   await System.show(stack, 'オーシャンヒロイン', '捨札を2枚消滅');
   EffectHelper.random(stack.processing.owner.trash, 2).forEach(card =>
-    Effect.move(stack, stack.processing, card, 'delete')
+    Effect.delete(stack, stack.processing, card)
   );
 };
 

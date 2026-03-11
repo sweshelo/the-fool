@@ -45,7 +45,7 @@ export const effects: CardEffects = {
 
     await System.show(stack, '食欲旺盛', '捨札から3枚消滅');
     EffectHelper.random(opponent.trash, 3).forEach(card => {
-      Effect.move(stack, stack.processing, card, 'delete');
+      Effect.delete(stack, stack.processing, card);
     });
   },
 };

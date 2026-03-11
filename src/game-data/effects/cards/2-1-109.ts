@@ -29,7 +29,7 @@ export const effects: CardEffects = {
       // 手札を1枚ランダムで消滅
       const [handCard] = EffectHelper.random(owner.hand, 1);
       if (handCard) {
-        Effect.move(stack, self, handCard, 'delete');
+        Effect.delete(stack, self, handCard);
       }
 
       // フィールドのユニットを1体ランダムで手札に戻す

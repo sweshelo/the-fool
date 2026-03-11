@@ -25,7 +25,7 @@ export const effects: CardEffects = {
     const filter = (unit: Unit) =>
       unit.owner.id === stack.processing.owner.id && unit.catalog.cost >= 3;
     EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
     const [target] = await EffectHelper.pickUnit(
       stack,

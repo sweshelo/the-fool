@@ -34,6 +34,6 @@ export const effects: CardEffects = {
     if (!target) return;
 
     await System.show(stack, 'えんじぇりっく・ろすと', 'トリガーゾーンを1枚破壊');
-    Effect.move(stack, stack.processing, target, 'trash');
+    Effect.break(stack, stack.processing, target);
   },
 };

@@ -15,7 +15,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '微笑の占い師', 'トリガーゾーンを2枚まで破壊');
     EffectHelper.random(stack.processing.owner.opponent.trigger, 2).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
   },
 };

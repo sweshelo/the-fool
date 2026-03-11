@@ -14,7 +14,7 @@ export const effects = {
         if (card instanceof Unit && opponent.field.some(unit => unit.id === card.id)) {
           Effect.delete(stack, stack.processing, card);
         } else {
-          Effect.move(stack, stack.processing, card, 'delete');
+          Effect.delete(stack, stack.processing, card);
         }
       });
 

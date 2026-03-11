@@ -13,7 +13,7 @@ export const effects: CardEffects = {
     await System.show(stack, '文明崩壊', 'お互いのデッキと捨札を消滅させる\nカードを1枚引く');
     stack.core.players.forEach(player => {
       [...player.deck, ...player.trash].forEach(card =>
-        Effect.move(stack, stack.processing, card, 'delete')
+        Effect.delete(stack, stack.processing, card)
       );
       EffectTemplate.draw(player, stack.core);
     });

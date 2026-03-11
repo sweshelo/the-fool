@@ -17,7 +17,7 @@ export const effects: CardEffects = {
         opponent.trigger,
         Math.min(2, opponent.trigger.length)
       );
-      cardsToDestroy.forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
+      cardsToDestroy.forEach(card => Effect.break(stack, stack.processing, card));
     } else {
       // 対戦相手のトリガーゾーンにカードがない場合、デッキからインターセプトカードをセット
       const interceptCards = owner.deck.filter(card => card.catalog.type === 'intercept');

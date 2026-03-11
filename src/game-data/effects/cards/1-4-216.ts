@@ -39,7 +39,7 @@ export const effects: CardEffects = {
 
     await System.show(stack, '醒命の光矢', '捨札を消滅させる');
     const [target] = EffectHelper.random(stack.processing.owner.trash);
-    if (target) Effect.move(stack, stack.processing, target, 'delete');
+    if (target) Effect.delete(stack, stack.processing, target);
   },
 
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {

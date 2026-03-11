@@ -43,12 +43,12 @@ export const effects: CardEffects = {
 
     //自分のトリガーゾーンからランダムで1枚破壊
     EffectHelper.random(owner.trigger, 1).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
 
     //相手のトリガーゾーンからランダムで1枚破壊
     EffectHelper.random(opponent.trigger, 1).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
   },
 };

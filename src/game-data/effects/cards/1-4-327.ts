@@ -12,7 +12,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '紅蓮の命', 'トリガーゾーンを全て破壊\n1ライフダメージ');
     [...stack.processing.owner.trigger, ...stack.processing.owner.opponent.trigger].forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
     Effect.modifyLife(stack, stack.processing, stack.processing.owner, -1);
   },

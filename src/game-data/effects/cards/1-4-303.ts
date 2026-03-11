@@ -12,7 +12,7 @@ const triggerDestroy = async (stack: StackWithCard<Unit>): Promise<void> => {
 
   // トリガーゾーンからランダムで1枚選ぶ
   const [targetCard] = EffectHelper.random(opponent.trigger, 1);
-  if (targetCard) Effect.move(stack, stack.processing, targetCard, 'trash');
+  if (targetCard) Effect.break(stack, stack.processing, targetCard);
 };
 
 export const effects: CardEffects = {

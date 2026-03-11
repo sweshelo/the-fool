@@ -37,7 +37,7 @@ export const effects: CardEffects = {
         const handCards = [...opponent.hand]; // コピーを作成して操作
         handCards.forEach(card => {
           if (card.catalog.name === selectedName) {
-            Effect.move(stack, stack.processing, card, 'delete');
+            Effect.delete(stack, stack.processing, card);
           }
         });
 
@@ -45,7 +45,7 @@ export const effects: CardEffects = {
         const trashCards = [...opponent.trash]; // コピーを作成して操作
         trashCards.forEach(card => {
           if (card.catalog.name === selectedName) {
-            Effect.move(stack, stack.processing, card, 'delete');
+            Effect.delete(stack, stack.processing, card);
           }
         });
 
@@ -53,7 +53,7 @@ export const effects: CardEffects = {
         const deckCards = [...opponent.deck]; // コピーを作成して操作
         deckCards.forEach(card => {
           if (card.catalog.name === selectedName) {
-            Effect.move(stack, stack.processing, card, 'delete');
+            Effect.delete(stack, stack.processing, card);
           }
         });
       } catch (error) {

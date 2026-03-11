@@ -24,7 +24,7 @@ export const effects: CardEffects = {
       if (opponent.trash.length > 0) {
         await System.show(stack, '恩寵の牙', '捨札を3枚消滅');
         EffectHelper.random(opponent.trash, Math.min(3, opponent.trash.length)).forEach(card =>
-          Effect.move(stack, stack.processing, card, 'delete')
+          Effect.delete(stack, stack.processing, card)
         );
       }
     }

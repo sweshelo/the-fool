@@ -43,7 +43,7 @@ export const effects: CardEffects = {
 
     // トリガーカードがある場合、全て破壊
     triggerCards.forEach(card => {
-      Effect.move(stack, stack.processing, card, 'trash');
+      Effect.break(stack, stack.processing, card);
     });
   },
 };

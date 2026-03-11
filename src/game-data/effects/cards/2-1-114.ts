@@ -27,7 +27,7 @@ export const effects: CardEffects = {
 
         if (cardToMove) {
           // 捨札に送る
-          Effect.move(stack, stack.processing, cardToMove, 'trash');
+          Effect.break(stack, stack.processing, cardToMove);
         }
       }
     }

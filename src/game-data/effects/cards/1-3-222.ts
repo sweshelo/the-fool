@@ -60,7 +60,7 @@ export const effects: CardEffects = {
             if (card.id === selected.id) {
               Effect.move(stack, stack.processing, card, 'hand');
             } else {
-              Effect.move(stack, stack.processing, card, 'trash');
+              Effect.break(stack, stack.processing, card);
             }
           }
         },

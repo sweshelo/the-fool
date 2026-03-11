@@ -29,7 +29,7 @@ export const effects: CardEffects = {
         );
 
         // 選択したカードを消滅させる
-        Effect.move(stack, stack.processing, selectedCard, 'delete');
+        Effect.delete(stack, stack.processing, selectedCard);
 
         // 捨札からトリガーカードを2枚までランダムで手札に加える
         const triggerCards = stack.processing.owner.trash.filter(

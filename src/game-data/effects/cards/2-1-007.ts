@@ -11,7 +11,7 @@ export const effects = {
         stack.processing.owner.hand,
         '消滅させるカードを選択して下さい'
       );
-      Effect.move(stack, stack.processing, target, 'delete');
+      Effect.delete(stack, stack.processing, target);
       EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['trigger'] });
     }
   },

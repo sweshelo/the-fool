@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     const [target] = EffectHelper.random(candidates);
     if (target instanceof Unit) {
       // ← ここで念のため型確認
-      Effect.move(stack, stack.processing, target, 'delete');
+      Effect.delete(stack, stack.processing, target);
     }
   },
 

@@ -38,7 +38,7 @@ export const effects: CardEffects = {
           stack.processing.owner.hand,
           '消滅させるカードを選択して下さい'
         );
-        Effect.move(stack, stack.processing, sacrifice, 'delete');
+        Effect.delete(stack, stack.processing, sacrifice);
         EffectHelper.random(
           stack.processing.owner.trash.filter(card => card.catalog.type === 'trigger'),
           2

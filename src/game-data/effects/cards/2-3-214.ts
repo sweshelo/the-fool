@@ -23,7 +23,7 @@ export const effects: CardEffects = {
         if (card.id === selected.id) {
           Effect.move(stack, stack.processing, card, 'hand');
         } else {
-          Effect.move(stack, stack.processing, card, 'trash');
+          Effect.break(stack, stack.processing, card);
         }
       }
     }
@@ -95,7 +95,7 @@ export const effects: CardEffects = {
         fourGodUnits,
         '捨てる【四聖獣】ユニットを選択してください'
       );
-      Effect.move(stack, stack.processing, target, 'trash');
+      Effect.break(stack, stack.processing, target);
     }
   },
 };

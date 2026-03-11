@@ -20,6 +20,6 @@ export const effects: CardEffects = {
       stack.processing.owner.opponent.trigger,
       '破壊するカードを選択して下さい'
     );
-    Effect.move(stack, stack.processing, target, 'trash');
+    Effect.break(stack, stack.processing, target);
   },
 };

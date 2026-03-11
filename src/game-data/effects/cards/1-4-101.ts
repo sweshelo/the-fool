@@ -6,7 +6,7 @@ export const effects = {
     if (stack.processing.owner.opponent.trigger.length > 0) {
       await System.show(stack, 'ペローネ・ブラスト', 'トリガーゾーンを2枚破壊');
       EffectHelper.random(stack.processing.owner.opponent.trigger, 2).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
     }
   },

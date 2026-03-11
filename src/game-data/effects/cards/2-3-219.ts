@@ -100,7 +100,7 @@ export const effects: CardEffects = {
         fourGodUnits,
         '捨てる【四聖獣】ユニットを選択してください'
       );
-      Effect.move(stack, stack.processing, target, 'trash');
+      Effect.break(stack, stack.processing, target);
     }
   },
 };

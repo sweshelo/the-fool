@@ -36,7 +36,7 @@ export const effects: CardEffects = {
         cards
           .filter(card => card !== selected)
           .forEach(card => {
-            Effect.move(stack, self, card, 'delete');
+            Effect.delete(stack, self, card);
           });
       }
     }

@@ -43,7 +43,7 @@ export const effects: CardEffects = {
     ) {
       await System.show(stack, '闇を蝕む混沌', '捨札に5枚送る');
       EffectHelper.random(stack.processing.owner.deck, 5).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
     }
   },

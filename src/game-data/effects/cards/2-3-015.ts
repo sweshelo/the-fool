@@ -57,7 +57,7 @@ export const effects: CardEffects = {
     });
 
     EffectHelper.random(stack.processing.owner.trash, 3).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'delete')
+      Effect.delete(stack, stack.processing, card)
     );
   },
 };

@@ -33,7 +33,7 @@ export const effects: CardEffects = {
       await System.show(stack, '死への誘い', 'トリガーゾーンのカードを1枚破壊');
       const [target] = EffectHelper.random(triggerZone, 1);
       if (target) {
-        Effect.move(stack, stack.processing, target, 'trash');
+        Effect.break(stack, stack.processing, target);
       }
     }
   },
