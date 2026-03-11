@@ -49,7 +49,10 @@ export function effectBounce(
       return;
     }
     default: {
-      effectMove(stack, source, target, location);
+      const overflow =
+        location !== 'deck' &&
+        target.owner[location].length < stack.core.room.rule.player.max[location];
+      effectMove(stack, source, target, overflow ? 'trash' : location);
     }
   }
 }
