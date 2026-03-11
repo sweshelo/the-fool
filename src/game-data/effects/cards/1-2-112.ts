@@ -39,7 +39,10 @@ export const effects: CardEffects = {
     PermanentEffect.mount(stack.processing, {
       effect: (target, source) => {
         if (target instanceof Unit)
-          Effect.keyword(stack, stack.processing, target, '次元干渉', { source });
+          Effect.keyword(stack, stack.processing, target, '次元干渉', {
+            source,
+            condition: () => true,
+          });
       },
       effectCode: '神速の一閃',
       targets: ['self'],
