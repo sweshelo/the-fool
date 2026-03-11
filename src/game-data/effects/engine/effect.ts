@@ -34,6 +34,7 @@ import {
   type ModifyBPOption,
   type KeywordOptionParams,
 } from './effect/index';
+import { effectBan } from '@/game-data/effects/engine/effect/ban';
 
 export type { ModifyBPOption, KeywordOptionParams };
 
@@ -296,7 +297,7 @@ export class Effect {
   static clock(
     stack: Stack,
     source: Card,
-    target: Unit,
+    target: Card,
     value: number,
     withoutOverClock: boolean = false
   ): void {
@@ -523,5 +524,18 @@ export class Effect {
     option: { source: DeltaSource } & { calculator: DeltaCalculator }
   ) {
     target.delta.push(new Delta({ type: 'dynamic-cost', diff: option.calculator(target) }, option));
+  }
+
+  /**
+   * 対象のカードを使用不能にする
+   *
+   * @param stack - Stack
+   * @param source - 効果の発生元
+   * @param target - 使用不能にするカード
+   * @param options -
+   * @returns
+   */
+  static ban(stack: Stack, source: Card, target: Card, options: DeltaConstructorOptionParams) {
+    return effectBan(stack, source, target, options);
   }
 }

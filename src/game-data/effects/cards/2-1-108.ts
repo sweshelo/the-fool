@@ -1,7 +1,7 @@
-import { Unit } from '@/package/core/class/card';
+import { Trigger, Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -9,22 +9,13 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.opponent.trigger
-      .filter(
-        card =>
-          card.catalog.type === 'trigger' &&
-          !card.delta.find(delta => delta.source?.unit === stack.processing.id)
-      )
-      .forEach(card =>
-        card.delta.push(
-          new Delta(
-            { type: 'banned' },
-            {
-              source: { unit: stack.processing.id },
-            }
-          )
-        )
-      );
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Trigger) Effect.ban(stack, stack.processing, target, { source });
+      },
+      targets: ['opponents', 'trigger'],
+      effectCode: '王頂よりの威光',
+    });
   },
 
   onBlockSelf: async (stack: StackWithCard<Unit>) => {
