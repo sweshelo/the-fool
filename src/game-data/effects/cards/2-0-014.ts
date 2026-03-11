@@ -4,6 +4,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
 
 const onBattle = async (stack: StackWithCard) => {
+  if (stack.processing.owner.trash.length === 0) return;
   await System.show(stack, 'ミーナ頑張る！', '捨札を1枚消滅');
   EffectHelper.random(stack.processing.owner.trash).forEach(card =>
     Effect.delete(stack, stack.processing, card)
@@ -18,7 +19,8 @@ export const effects: CardEffects = {
     const isOpponentTurn = stack.processing.owner.id !== stack.core.getTurnPlayer().id;
     const isAtLeast15BlueCardsInTrash =
       stack.processing.owner.trash.filter(card => card.catalog.color === Color.BLUE).length >= 15;
-    const hasFieldSpace = stack.processing.owner.field.length <= 4;
+    const hasFieldSpace =
+      stack.processing.owner.field.length < stack.core.room.rule.player.max.field;
 
     if (isOpponentTurn && isAtLeast15BlueCardsInTrash && hasFieldSpace) {
       // oxlint-disable-next-line no-floating-promises

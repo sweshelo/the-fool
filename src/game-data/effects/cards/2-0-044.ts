@@ -17,7 +17,7 @@ export const effects: CardEffects = {
     // 紫ゲージが4以上の場合、捨札からコスト3以下の紫属性ユニットを2体特殊召喚
     if (
       purpleGauge >= 4 &&
-      trashCards.length > 0 &&
+      trashCards.length >= 2 &&
       stack.core.room.rule.player.max.field - stack.processing.owner.field.length >= 2
     ) {
       await System.show(
@@ -58,10 +58,7 @@ export const effects: CardEffects = {
     // 紫属性ユニットに【貫通】を付与
     owner.field.forEach(unit => {
       if (unit.catalog.color === Color.PURPLE) {
-        Effect.keyword(stack, stack.processing, unit, '貫通', {
-          event: 'turnEnd',
-          count: 1,
-        });
+        Effect.keyword(stack, stack.processing, unit, '貫通');
       }
     });
 
