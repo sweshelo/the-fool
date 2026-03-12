@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import type { KeywordEffect } from '@/submodule/suit/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 const ability = async (stack: StackWithCard): Promise<void> => {
   await System.show(
@@ -39,18 +39,23 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.field
-      .filter(unit => unit.catalog.species?.includes('武身'))
-      .forEach(unit => {
-        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-          (['不屈', '貫通'] satisfies KeywordEffect[]).forEach(keyword =>
-            Effect.keyword(stack, stack.processing, unit, keyword, {
-              source: {
-                unit: stack.processing.id,
-              },
-            })
-          );
-        }
-      });
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '不屈', { source });
+      },
+      effectCode: '護剣の戦舞_不屈',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('武身'),
+    });
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '貫通', { source });
+      },
+      effectCode: '護剣の戦舞_貫通',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('武身'),
+    });
   },
 };

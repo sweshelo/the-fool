@@ -1,3 +1,4 @@
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
@@ -20,6 +21,7 @@ export const effects: CardEffects = {
         filter,
         '対象のユニットを選択してください'
       );
+
       if (life <= 8) await Effect.clone(stack, stack.processing, target, stack.processing.owner);
       if (life <= 6) Effect.make(stack, stack.processing.owner, target);
       if (life <= 4) Effect.delete(stack, stack.processing, target);
@@ -29,22 +31,19 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // BP増加量を計算
-    const bpBoost = (stack.processing.owner.life.max - stack.processing.owner.life.current) * 1000;
-
-    // 既にこのユニットが発行したDeltaが存在するか確認
-    const delta = stack.processing.delta.find(
-      d => d.source?.unit === stack.processing.id && d.source?.effectCode === '悦び'
-    );
-
-    if (delta && delta.effect.type === 'bp') {
-      // Deltaを編集する
-      delta.effect.diff = bpBoost;
-    } else {
-      // 新しいDeltaを追加
-      Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-        source: { unit: stack.processing.id, effectCode: '悦び' },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.dynamicBP(
+            stack,
+            stack.processing,
+            target,
+            self => self.owner.life.current * 1000,
+            { source }
+          );
+      },
+      effectCode: '悦び',
+      targets: ['self'],
+    });
   },
 };

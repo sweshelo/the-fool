@@ -1,8 +1,8 @@
 import { Card, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 import { Core } from '@/package/core';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // ■起動・アウトレイジ
@@ -31,39 +31,16 @@ export const effects: CardEffects = {
   // ■忍び寄る羽音
   // 手札のこのカードのコストは-［あなたのフィールドの【昆虫】ユニット×1］される。このユニットのコストは4以下にならない。
   handEffect: (_core: Core, self: Card): void => {
-    if (self instanceof Unit) {
-      // プレイヤーのフィールド上の昆虫ユニット数を数える
-      const insectCount = self.owner.field.filter(unit =>
-        unit.catalog.species?.includes('昆虫')
-      ).length;
-
-      // コスト減少量（昆虫の数だけ減少）
-      const costReduction = -Math.min(insectCount, self.catalog.cost - 4); // 最小コストは4
-
-      // 既存のコスト変更Deltaを探す
-      const existingDelta = self.delta.find(
-        d => d.effect.type === 'cost' && d.source?.effectCode === '忍び寄る羽音'
-      );
-
-      if (existingDelta && existingDelta.effect.type === 'cost') {
-        // 既存のDeltaを更新
-        // costタイプのdeltaは'value'を使用
-        existingDelta.effect.value = costReduction;
-      } else if (costReduction < 0) {
-        // 新しいDeltaを追加（コスト減少がある場合のみ）
-        self.delta.push(
-          new Delta(
-            { type: 'cost', value: costReduction },
-            {
-              source: {
-                unit: self.id,
-                effectCode: '忍び寄る羽音',
-              },
-            }
-          )
-        );
-      }
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: self =>
+            -self.owner.field.filter(unit => unit.catalog.species?.includes('昆虫')).length,
+        }),
+      effectCode: '忍び寄る羽音',
+      targets: ['self'],
+    });
   },
 
   // ■鍬獄のカンニバル

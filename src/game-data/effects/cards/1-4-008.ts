@@ -2,7 +2,7 @@ import type { Unit } from '@/package/core/class/card';
 import { EffectHelper, System, Effect } from '..';
 import type { StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects = {
   // 自身が召喚された時に発動する効果を記述
@@ -48,12 +48,11 @@ export const effects = {
 
   // 手札効果：自分の赤のユニットが場にいる場合、このユニットのコスト-1
   handEffect: (core: unknown, self: Unit) => {
-    if (!self.delta.some(delta => delta.source?.unit === self.id)) {
-      if (self.owner.field.some(unit => unit.catalog.color === Color.RED))
-        self.delta.push(new Delta({ type: 'cost', value: -1 }, { source: { unit: self.id } }));
-    } else {
-      if (!self.owner.field.some(unit => unit.catalog.color === Color.RED))
-        self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) => Effect.modifyCost(target, -1, { source }),
+      effectCode: '破界炎舞・絶華繚乱',
+      targets: ['self'],
+      condition: target => target.owner.field.some(unit => unit.catalog.color === Color.RED),
+    });
   },
 };

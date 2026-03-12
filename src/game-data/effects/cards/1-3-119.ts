@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数
 const hasFourGodCard = (stack: StackWithCard<Unit>, name: string): boolean => {
@@ -60,28 +61,14 @@ export const effects: CardEffects = {
 
   // あなたの【四聖獣】ユニットに【不屈】を与える。（フィールド効果）
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // 自分の四聖獣ユニットを取得
-    const fourGodUnits = stack.processing.owner.field.filter(unit =>
-      unit.catalog.species?.includes('四聖獣')
-    );
-
-    // 各四聖獣ユニットに【不屈】を付与（自身が付与したもののみを管理）
-    for (const unit of fourGodUnits) {
-      // このカードから既に付与された【不屈】があるか確認
-      const fortitudeDelta = unit.delta.find(
-        delta =>
-          delta.source?.unit === stack.processing.id &&
-          delta.source.effectCode === '不屈' &&
-          delta.effect.type === 'keyword' &&
-          delta.effect.name === '不屈'
-      );
-
-      // まだ付与されていない場合は付与する
-      if (!fortitudeDelta) {
-        Effect.keyword(stack, stack.processing, unit, '不屈', {
-          source: { unit: stack.processing.id, effectCode: '不屈' },
-        });
-      }
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '不屈', { source });
+      },
+      effectCode: '翠檄叡智',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('四聖獣'),
+    });
   },
 };
