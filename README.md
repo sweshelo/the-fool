@@ -2,6 +2,10 @@
 
 CODE OF JOKERのシミュレーションシステムを提供するWebSocketサーバ
 
+> [!Tip]
+> 個人のサーバを建てたくてここに訪れている場合は、[the-highpriestess](https://github.com/sweshelo/the-highpriestess) を利用するとより簡単です  
+> サーバ構築や開発で疑問点があれば、お気軽にIssueまたはDiscordなどでご連絡下さい  
+
 ## ドキュメント
 
 開発を始める前に、以下のドキュメントを参照してください：

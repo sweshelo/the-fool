@@ -16,7 +16,7 @@ export const effects: CardEffects = {
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, 'ダークマター', 'トリガーゾーンを全て破壊');
     [...stack.processing.owner.trigger, ...stack.processing.owner.opponent.trigger].forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
   },
 };

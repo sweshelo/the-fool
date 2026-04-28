@@ -1,8 +1,9 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { EffectHelper } from '../engine/helper';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -32,16 +33,20 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const delta = stack.processing.delta.find(delta => delta.source?.unit === stack.processing.id);
-    const value =
-      stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('忍者')).length *
-      1000;
-    if (delta && delta.effect.type === 'bp') {
-      delta.effect.diff = value;
-    } else {
-      Effect.modifyBP(stack, stack.processing, stack.processing, value, {
-        source: { unit: stack.processing.id },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.dynamicBP(
+            stack,
+            stack.processing,
+            target,
+            self =>
+              self.owner.field.filter(unit => unit.catalog.species?.includes('忍者')).length * 1000,
+            { source }
+          );
+      },
+      effectCode: '闘士／忍者',
+      targets: ['self'],
+    });
   },
 };

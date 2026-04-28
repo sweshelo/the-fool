@@ -25,7 +25,7 @@ export const effects: CardEffects = {
       // ランダムで1枚選んで破壊
       const targetCard = EffectHelper.random(opponent.trigger, 1)[0];
       if (targetCard) {
-        Effect.move(stack, stack.processing, targetCard, 'trash');
+        Effect.break(stack, stack.processing, targetCard);
       }
     }
   },

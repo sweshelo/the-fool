@@ -20,7 +20,7 @@ export const effects: CardEffects = {
       stack.processing.owner.hand,
       '消滅させるカードを選択して下さい'
     );
-    Effect.move(stack, stack.processing, target, 'delete');
+    Effect.delete(stack, stack.processing, target);
     EffectHelper.repeat(2, () =>
       EffectTemplate.reinforcements(stack, stack.processing.owner, {
         type: ['intercept'],

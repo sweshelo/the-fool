@@ -11,7 +11,17 @@ export const effects: CardEffects = {
     }
 
     // 自分のユニットがフィールドに出た時のみ発動
-    return stack.target.owner.id === stack.processing.owner.id;
+    if (stack.target.owner.id !== stack.processing.owner.id) return false;
+
+    // 【神獣】ユニットがフィールドに出た時は、存在チェックを行う
+    if (
+      stack.target.catalog.species?.includes('神獣') &&
+      !stack.target.owner.field.some(unit => unit.id === stack.target?.id)
+    ) {
+      return false;
+    }
+
+    return true;
   },
 
   // トリガー効果

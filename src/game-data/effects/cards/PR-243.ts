@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   checkTurnStart: (stack: StackWithCard) => {
@@ -18,14 +17,10 @@ export const effects: CardEffects = {
       'コスト2以下のユニットを出せない\nジョーカーゲージ-20%\nCP+2\nトリガーカードを1枚引く'
     );
 
-    // 対戦相手の手札にあるコスト2以下のユニット
-    const bannedUnits = opponent.hand.filter(
-      unit => unit instanceof Unit && unit.catalog.cost <= 2
-    );
-    // ターン終了時までフィールドに出すことができない。
-    bannedUnits.forEach(unit =>
-      unit.delta.push(new Delta({ type: 'banned' }, { event: 'turnEnd', count: 1 }))
-    );
+    // 対戦相手の手札にあるコスト2以下のユニットを使用不能に
+    opponent.hand
+      .filter(unit => unit instanceof Unit && unit.catalog.cost <= 2)
+      .forEach(unit => Effect.ban(stack, stack.processing, unit, { event: 'turnEnd', count: 1 }));
 
     // ジョーカーゲージを20%減少させる
     Effect.modifyJokerGauge(stack, stack.processing, owner, -20);

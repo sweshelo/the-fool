@@ -23,11 +23,11 @@ export const effects: CardEffects = {
     if (purple >= 3) {
       const targets = EffectHelper.random(opponent.trigger, 2);
       await System.show(stack, 'ダークプリズン', 'トリガーゾーンのカードを2枚破壊');
-      targets.forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
+      targets.forEach(card => Effect.break(stack, stack.processing, card));
     } else {
       await System.show(stack, 'ダークプリズン', 'トリガーゾーンのカードを1枚破壊');
       EffectHelper.random(opponent.trigger, 1).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
     }
   },

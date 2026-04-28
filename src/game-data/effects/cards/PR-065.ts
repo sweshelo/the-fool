@@ -20,7 +20,7 @@ export const effects: CardEffects = {
     if (stack.processing.owner.delete.length > 0 && stack.processing.owner.id === stack.source.id) {
       await System.show(stack, '禁忌の霊符', '消滅カードを3枚まで捨札に送る');
       EffectHelper.random(stack.processing.owner.delete, 3).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
     }
   },

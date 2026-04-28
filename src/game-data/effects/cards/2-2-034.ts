@@ -6,9 +6,8 @@ export const effects: CardEffects = {
   checkDrive: (stack: StackWithCard): boolean => {
     return (
       stack.processing.owner.id === stack.source.id &&
-      Array.from(
-        new Set(stack.core.players.flatMap(player => player.field).map(card => card.catalog.color))
-      ).length === 5
+      new Set(stack.core.players.flatMap(player => player.field).map(card => card.catalog.color))
+        .size === 5
     );
   },
 

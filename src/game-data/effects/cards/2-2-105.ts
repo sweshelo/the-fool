@@ -1,6 +1,6 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Unit } from '@/package/core/class/card';
+import { Intercept, Trigger, Unit } from '@/package/core/class/card';
 import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
@@ -11,12 +11,12 @@ export const effects: CardEffects = {
     const handCards = owner.hand;
     const fieldUnits = owner.field;
 
-    await System.show(stack, '推理とは爆発だァ！', '手札とフィールドのユニットのレベル+1');
+    await System.show(stack, '推理とは爆発だァ！', '手札のカードとフィールドのユニットのレベル+1');
 
     // 手札のカードのレベルを+1する
     for (const card of handCards) {
-      if (card instanceof Unit) {
-        card.lv = Math.min(card.lv + 1, 3);
+      if (card instanceof Unit || card instanceof Intercept || card instanceof Trigger) {
+        Effect.clock(stack, stack.processing, card, 1);
       }
     }
 

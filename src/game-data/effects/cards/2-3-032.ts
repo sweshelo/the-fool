@@ -1,3 +1,4 @@
+import { Unit } from '@/package/core/class/card';
 import { Delta } from '@/package/core/class/delta';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
@@ -39,7 +40,11 @@ export const effects: CardEffects = {
 
   checkDrive: (stack: StackWithCard) => {
     return (
+      stack.target instanceof Unit &&
       stack.source.id === stack.processing.owner.id &&
+      (stack.target.catalog.name === '織女星ベガ' ||
+        stack.target.catalog.name === '牽牛星アルタイル' ||
+        stack.target.catalog.name === '天川星デネブ') &&
       stack.processing.owner.hand.filter(
         unit =>
           unit.catalog.name === '織女星ベガ' ||

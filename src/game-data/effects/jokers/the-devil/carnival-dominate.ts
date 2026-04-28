@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     );
 
     EffectHelper.random(opponent.trigger, 2).forEach(card =>
-      Effect.move(stack, stack.processing, card, 'trash')
+      Effect.break(stack, stack.processing, card)
     );
     EffectHelper.repeat(2, () => EffectTemplate.draw(owner, stack.core));
   },

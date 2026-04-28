@@ -17,6 +17,8 @@ export const effects: CardEffects = {
       stack.source.owner.id === stack.processing.owner.id &&
       stack.target instanceof Unit &&
       stack.target.owner.id !== stack.processing.owner.id &&
+      stack.option?.type === 'damage' &&
+      stack.option?.cause === 'effect' &&
       // 効果発動の条件を確認
       (EffectHelper.isUnitSelectable(stack.core, 'opponents', owner) ||
         owner.trigger.length < stack.core.room.rule.player.max.trigger)

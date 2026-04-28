@@ -1,10 +1,14 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+    if (!EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
+      return;
+    }
+
     await System.show(stack, '黙滅の烏羽', '【沈黙】を与える');
     const filter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
     const [target] = await EffectHelper.pickUnit(
@@ -17,6 +21,11 @@ export const effects: CardEffects = {
   },
 
   onBreakSelf: async (stack: StackWithCard): Promise<void> => {
+    const targets = stack.processing.owner.trash.filter(
+      card => card instanceof Unit && card.catalog.species?.includes('盗賊')
+    );
+    if (targets.length === 0) return;
+
     await System.show(stack, '蒼き渡り鴉', '捨札から【盗賊】を1枚回収');
     EffectHelper.random(
       stack.processing.owner.trash.filter(card => card.catalog.species?.includes('盗賊')),

@@ -5,7 +5,7 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
-    await System.show(stack, '胎動＆固着', '手札に戻らない\nコスト3以下に【狂戦士】を与える');
+    await System.show(stack, '胎動＆固着', 'コスト3以下に【狂戦士】を与える\n手札に戻らない');
     Effect.keyword(stack, stack.processing, stack.processing, '固着');
   },
 

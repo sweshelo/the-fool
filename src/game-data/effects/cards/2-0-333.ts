@@ -69,9 +69,6 @@ export const effects: CardEffects = {
   onIntercept: async (stack: StackWithCard<Unit>): Promise<void> => {
     const owner = stack.processing.owner;
 
-    // 自分のインターセプトカードが発動した場合のみ処理
-    if (stack.source.id !== owner.id) return;
-
     // ユニットを選べるか確認
     if (!EffectHelper.isUnitSelectable(stack.core, 'all', owner)) return;
 

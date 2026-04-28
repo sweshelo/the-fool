@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // ■煌めく筋肉
@@ -15,29 +16,14 @@ export const effects: CardEffects = {
 
   // フィールド効果：巨人ユニットに加護を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 自分のフィールドの巨人ユニットを対象にする
-    owner.field.forEach(unit => {
-      // 巨人ユニットか確認
-      if (unit.catalog.species?.includes('巨人')) {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          d => d.source?.unit === stack.processing.id && d.source?.effectCode === '煌めく筋肉'
-        );
-
-        // 既にDeltaが存在しない場合のみ加護を付与
-        if (!delta) {
-          Effect.keyword(stack, stack.processing, unit, '加護', {
-            source: { unit: stack.processing.id, effectCode: '煌めく筋肉' },
-          });
-        }
-      } else {
-        // 巨人でなくなった場合、このユニットが付与した加護を削除
-        unit.delta = unit.delta.filter(
-          d => !(d.source?.unit === stack.processing.id && d.source?.effectCode === '煌めく筋肉')
-        );
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '加護', { source });
+      },
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('巨人'),
+      effectCode: '煌めく筋肉',
     });
   },
 

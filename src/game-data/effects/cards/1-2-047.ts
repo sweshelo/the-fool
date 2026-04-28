@@ -27,23 +27,8 @@ export const effects: CardEffects = {
     await System.show(stack, '繁殖', '【昆虫】ユニットの基本BP+1000');
 
     // プレイヤーのフィールド上の昆虫ユニットすべてにBP+1000
-    const insectUnits = stack.processing.owner.field.filter(unit =>
-      unit.catalog.species?.includes('昆虫')
-    );
-
-    for (const unit of insectUnits) {
-      // 既にこのユニットが発行したDeltaが存在するか確認
-      const delta = unit.delta.find(
-        d => d.source?.unit === stack.processing.id && d.source?.effectCode === '繁殖'
-      );
-
-      if (delta && delta.effect.type === 'bp') {
-        // Deltaを編集する
-        delta.effect.diff = 1000;
-      } else {
-        // 新しいDeltaを追加
-        Effect.modifyBP(stack, stack.processing, unit, 1000, { isBaseBP: true });
-      }
-    }
+    stack.processing.owner.field
+      .filter(unit => unit.catalog.species?.includes('昆虫'))
+      .forEach(unit => Effect.modifyBP(stack, stack.processing, unit, 1000, { isBaseBP: true }));
   },
 };

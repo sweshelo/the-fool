@@ -26,7 +26,7 @@ export const effects: CardEffects = {
     const [target] = EffectHelper.random(stack.processing.owner.opponent.trigger);
     if (target) {
       await System.show(stack, '罪と罰', 'トリガーゾーンを1枚破壊');
-      Effect.move(stack, stack.processing, target, 'trash');
+      Effect.break(stack, stack.processing, target);
     }
   },
 };

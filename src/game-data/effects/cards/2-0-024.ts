@@ -11,16 +11,17 @@ export const effects: CardEffects = {
       '自分の手札を選んで捨てる\nコスト3のユニットを1枚引く\n【秩序の盾】を得る'
     );
 
-    // 手札を選んで捨てる
     const owner = stack.processing.owner;
-    const [target] = await EffectHelper.selectCard(
-      stack,
-      owner,
-      owner.hand,
-      '捨てるカードを選択してください'
-    );
-    Effect.break(stack, stack.processing, target);
-
+    if (owner.hand.length > 0) {
+      // 手札を選んで捨てる
+      const [target] = await EffectHelper.selectCard(
+        stack,
+        owner,
+        owner.hand,
+        '捨てるカードを選択してください'
+      );
+      Effect.break(stack, stack.processing, target);
+    }
     // コスト3のユニットを引く
     const [card] = EffectHelper.random(
       owner.deck.filter(card => card.catalog.cost === 3 && card instanceof Unit),

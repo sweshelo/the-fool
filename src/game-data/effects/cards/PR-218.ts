@@ -22,7 +22,7 @@ export const effects: CardEffects = {
     const [target] = EffectHelper.random(stack.processing.owner.opponent.trigger);
     if (target) {
       await System.show(stack, '焔に染まる少女の想い', 'トリガーゾーンを1枚破壊');
-      Effect.move(stack, stack.processing, target, 'trash');
+      Effect.break(stack, stack.processing, target);
 
       await onLost(stack);
     }

@@ -41,7 +41,7 @@ export const effects: CardEffects = {
       // ランダムで2枚選んで破壊
       const destroyTargets = EffectHelper.random(triggers, 2);
       for (const card of destroyTargets) {
-        Effect.move(stack, stack.processing, card, 'trash');
+        Effect.break(stack, stack.processing, card);
       }
 
       // このユニットを手札に戻す

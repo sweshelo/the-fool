@@ -5,8 +5,16 @@ import type { CardEffects, StackWithCard } from '../schema/types';
 export const effects: CardEffects = {
   // ■不可侵光壁
   // あなたのユニットが戦闘した時
-  checkBattle: (_stack: StackWithCard) => {
-    return true;
+  checkBattle: (stack: StackWithCard) => {
+    const owner = stack.processing.owner;
+    const opponent = owner.opponent;
+    const fields = [...owner.field, ...opponent.field];
+
+    // 戦闘中のユニットがフィールドにまだいる場合のみ発動
+    return (
+      fields.some(unit => unit.id === stack.source?.id) &&
+      fields.some(unit => unit.id === stack.target?.id)
+    );
   },
 
   onBattle: async (stack: StackWithCard): Promise<void> => {

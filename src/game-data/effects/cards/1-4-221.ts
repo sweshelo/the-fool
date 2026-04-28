@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -47,54 +48,30 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const owner = stack.processing.owner;
-    // Count Samurai units on the field
-    const samuraiUnitsOnField = owner.field.filter(unit => unit.catalog.species?.includes('侍'));
-    const samuraiCount = samuraiUnitsOnField.length;
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '不屈', { source });
+      },
+      effectCode: '白拍子の鼓舞_不屈',
+      targets: ['owns'],
+      condition: target =>
+        target instanceof Unit &&
+        target.owner.field.filter(unit => unit.catalog.species?.includes('侍')).length <= 2 &&
+        target.catalog.species?.includes('侍'),
+    });
 
-    // Check if the condition is met (2 or fewer Samurai units)
-    if (samuraiCount <= 2) {
-      // For each Samurai unit, give Fortitude and Order Shield
-      samuraiUnitsOnField.forEach(unit => {
-        // Check for existing delta from this unit
-        const fortitudeDelta = unit.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source?.effectCode === '白拍子の鼓舞_不屈'
-        );
-
-        const orderShieldDelta = unit.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source?.effectCode === '白拍子の鼓舞_秩序の盾'
-        );
-
-        // Apply Fortitude if not already applied
-        if (!fortitudeDelta) {
-          Effect.keyword(stack, stack.processing, unit, '不屈', {
-            source: { unit: stack.processing.id, effectCode: '白拍子の鼓舞_不屈' },
-          });
-        }
-
-        // Apply Order Shield if not already applied
-        if (!orderShieldDelta) {
-          Effect.keyword(stack, stack.processing, unit, '秩序の盾', {
-            source: { unit: stack.processing.id, effectCode: '白拍子の鼓舞_秩序の盾' },
-          });
-        }
-      });
-    } else {
-      // Remove the keywords if condition is no longer met
-      samuraiUnitsOnField.forEach(unit => {
-        unit.delta = unit.delta.filter(
-          delta =>
-            !(
-              delta.source?.unit === stack.processing.id &&
-              (delta.source?.effectCode === '白拍子の鼓舞_不屈' ||
-                delta.source?.effectCode === '白拍子の鼓舞_秩序の盾')
-            )
-        );
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '秩序の盾', { source });
+      },
+      effectCode: '白拍子の鼓舞_秩序の盾',
+      targets: ['owns'],
+      condition: target =>
+        target instanceof Unit &&
+        target.owner.field.filter(unit => unit.catalog.species?.includes('侍')).length <= 2 &&
+        target.catalog.species?.includes('侍'),
+    });
   },
 };

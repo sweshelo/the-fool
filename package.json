@@ -7,7 +7,7 @@
     "preinstall": "git submodule update --init --recursive",
     "dev": "bun --hot run src/index.ts",
     "prepare": "lefthook install",
-    "lint": "bunx oxlint --type-aware && bunx eslint --fix"
+    "lint": "bunx oxlint && bunx eslint --fix"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",

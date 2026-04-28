@@ -28,14 +28,24 @@ export const effects: CardEffects = {
     );
 
     // 2000ダメージを与える
-    const destroyed = Effect.damage(stack, stack.processing, target, 2000, 'effect');
+    Effect.damage(stack, stack.processing, target, 2000, 'effect');
 
     // 紫ゲージ+1
     await Effect.modifyPurple(stack, stack.processing, owner, 1);
+  },
+
+  onBreak: async (stack: StackWithCard<Unit>): Promise<void> => {
+    // 自分の効果で破壊されたかチェック
+    if (
+      stack.source.id !== stack.processing.id ||
+      stack.option?.type !== 'break' ||
+      stack.option.cause !== 'damage'
+    )
+      return;
 
     // この効果でユニットを破壊した場合、追加で紫ゲージ+1
-    if (destroyed) {
-      await Effect.modifyPurple(stack, stack.processing, owner, 1);
-    }
+    const owner = stack.processing.owner;
+    await System.show(stack, '熱々のキスはいかが？', '紫ゲージ+1');
+    await Effect.modifyPurple(stack, stack.processing, owner, 1);
   },
 };

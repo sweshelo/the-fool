@@ -34,7 +34,7 @@ export const effects: CardEffects = {
       '【加護】\n【沈黙効果耐性】\nお互いのフィールドと捨札の【ドラゴン】以外を消滅'
     );
     targetUnits.forEach(unit => Effect.delete(stack, stack.processing, unit));
-    targetCards.forEach(card => Effect.move(stack, stack.processing, card, 'delete'));
+    targetCards.forEach(card => Effect.delete(stack, stack.processing, card));
     Effect.keyword(stack, stack.processing, stack.processing, '加護');
     Effect.keyword(stack, stack.processing, stack.processing, '沈黙効果耐性');
   },

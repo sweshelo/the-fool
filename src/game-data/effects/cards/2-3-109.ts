@@ -29,7 +29,7 @@ export const effects: CardEffects = {
         owner.hand,
         '消滅させるカードを選択'
       );
-      Effect.move(stack, self, card, 'delete');
+      Effect.delete(stack, self, card);
       EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['trigger'] });
     }
   },

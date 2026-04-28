@@ -66,7 +66,7 @@ export const effects: CardEffects = {
       if (targets.length > 0) {
         await System.show(stack, '次元的アルゴリズム', 'デッキからランダムで3枚消滅');
         for (const card of targets) {
-          Effect.move(stack, stack.processing, card, 'delete');
+          Effect.delete(stack, stack.processing, card);
         }
       }
     }

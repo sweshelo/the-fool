@@ -3,6 +3,11 @@ import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
+  // 召喚時効果
+  onDriveSelf: async (stack: StackWithCard): Promise<void> => {
+    await System.show(stack, '聖なる悪意', 'レベル2の時【加護】を得る');
+  },
+
   // ターン開始時効果
   onTurnStart: async (stack: StackWithCard<Unit>) => {
     if (!EffectHelper.isUnitSelectable(stack.core, 'all', stack.processing.owner)) return;

@@ -11,12 +11,13 @@ export const effects: CardEffects = {
 
     const attacker = stack.target;
     const owner = stack.processing.owner;
-
-    // 相手が攻撃した場合は常に発動可能
-    if (attacker.owner.id !== owner.id) return true;
-
-    // 自分が攻撃した場合は、対戦相手に行動済ユニットが存在する時のみ発動可能
     const opponent = owner.opponent;
+
+    // 相手が攻撃した場合は、攻撃ユニットが存在している時のみ発動可能
+    if (attacker.owner.id === opponent.id) {
+      return opponent.field.some(unit => unit.id === attacker.id);
+    }
+    // 自分が攻撃した場合は、対戦相手に行動済ユニットが存在する時のみ発動可能
     return opponent.field.some(u => !u.active);
   },
 

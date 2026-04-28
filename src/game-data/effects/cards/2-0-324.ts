@@ -10,6 +10,7 @@ export const effects: CardEffects = {
     );
 
     if (candidate.length > 0 && stack.processing.owner.field.length <= 4) {
+      await System.show(stack, '私の救世主さま', 'コスト7以下を【特殊召喚】');
       const [target] = await EffectHelper.selectCard<Unit>(
         stack,
         stack.processing.owner,
@@ -34,7 +35,7 @@ export const effects: CardEffects = {
       target instanceof Unit &&
       stack.processing.owner.field.length <= 4
     ) {
-      await System.show(stack, '私の救世主さま', 'コスト3以下を【特殊召喚】');
+      await System.show(stack, '星は巡る', 'コスト3以下を【特殊召喚】');
       await Effect.summon(stack, stack.processing, target);
     }
   },

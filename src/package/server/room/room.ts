@@ -13,11 +13,10 @@ import { Intercept } from '@/package/core/class/card';
 import { GameLogger } from '@/package/logging';
 import type { MatchingMode } from '@/package/server/matching/types';
 import { PlayCreditService } from '@/package/server/credits';
+import { nanoid } from 'nanoid';
 
 export class Room {
-  id = Math.floor(Math.random() * 99999)
-    .toString()
-    .padStart(5, '0');
+  id = nanoid(6);
   name: string;
   core: Core;
   players: Map<string, Player> = new Map<string, Player>();

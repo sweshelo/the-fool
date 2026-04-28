@@ -67,7 +67,13 @@ export const effects: CardEffects = {
   // アタック時の効果
   onAttackSelf: spiritAttackEffect,
   onAttack: async (stack: StackWithCard<Unit>) => {
-    if (stack.target instanceof Unit && stack.target.id === stack.processing.id) return;
-    await spiritAttackEffect(stack);
+    if (stack.target instanceof Unit) {
+      if (
+        stack.target.id === stack.processing.id ||
+        stack.target.owner.id === stack.processing.owner.opponent.id
+      )
+        return;
+      await spiritAttackEffect(stack);
+    }
   },
 };

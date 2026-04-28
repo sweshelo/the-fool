@@ -42,37 +42,36 @@ export const effects: CardEffects = {
     const opponent = stack.processing.owner.opponent;
     const opponentUnits = opponent.field;
 
-    // 対戦相手のユニットがいるかチェック
-    const message: string[] = [];
+    await EffectHelper.combine(stack, [
+      {
+        title: 'ウィーゼル・ディソーダー',
+        description: '敵全体の基本BP-1000',
+        effect: () =>
+          opponentUnits.forEach(unit => {
+            Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
+          }),
+        condition: opponentUnits.length > 0,
+      },
+      {
+        title: 'ウィーゼル・ディソーダー',
+        description: 'コスト3ユニットを【特殊召喚】',
+        effect: async () => {
+          const summonTargets = stack.processing.owner.deck.filter(
+            card => card instanceof Unit && !(card instanceof Evolve) && card.catalog.cost === 3
+          );
 
-    if (opponentUnits.length > 0) message.push('敵全体の基本BP-1000');
-    if (stack.processing.owner.field.length <= 4) message.push('コスト3ユニットを【特殊召喚】');
+          if (summonTargets.length > 0) {
+            // ランダムで1体選択
+            const [target] = EffectHelper.random(summonTargets);
 
-    if (message.length === 0) return;
-
-    await System.show(stack, 'ウィーゼル・ディソーダー', message.join('\n'));
-
-    // 対戦相手の全てのユニットの基本BPを-1000する
-    opponentUnits.forEach(unit => {
-      Effect.modifyBP(stack, stack.processing, unit, -1000, { isBaseBP: true });
-    });
-
-    // あなたのフィールドのユニットが4体以下の場合、特殊召喚
-    if (stack.processing.owner.field.length <= 4) {
-      // デッキから進化ユニット以外のコスト3のユニットをフィルタリング
-      const summonTargets = stack.processing.owner.deck.filter(
-        card => card instanceof Unit && !(card instanceof Evolve) && card.catalog.cost === 3
-      );
-
-      if (summonTargets.length > 0) {
-        // ランダムで1体選択
-        const [target] = EffectHelper.random(summonTargets);
-
-        if (target instanceof Unit) {
-          // 特殊召喚
-          await Effect.summon(stack, stack.processing, target);
-        }
-      }
-    }
+            if (target instanceof Unit) {
+              // 特殊召喚
+              await Effect.summon(stack, stack.processing, target);
+            }
+          }
+        },
+        condition: stack.processing.owner.field.length <= 4,
+      },
+    ]);
   },
 };

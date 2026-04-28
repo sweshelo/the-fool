@@ -2,33 +2,27 @@ import { Unit } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { System } from '../engine/system';
 import { Effect } from '../engine/effect';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // ■増殖
   // このユニットのBPはあなたのフィールドの【昆虫】ユニット1体につき+2000される。
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // プレイヤーのフィールド上の昆虫ユニット数を数える
-    const insectCount = stack.processing.owner.field.filter(unit =>
-      unit.catalog.species?.includes('昆虫')
-    ).length;
-
-    // BP増加量を計算（昆虫1体につき+2000）
-    const bpBoost = insectCount * 2000;
-
-    // 既にこのユニットが発行したDeltaが存在するか確認
-    const delta = stack.processing.delta.find(
-      d => d.source?.unit === stack.processing.id && d.source?.effectCode === '増殖'
-    );
-
-    if (delta && delta.effect.type === 'bp') {
-      // Deltaを編集する
-      delta.effect.diff = bpBoost;
-    } else {
-      // 新しいDeltaを追加
-      Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-        source: { unit: stack.processing.id, effectCode: '増殖' },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => {
+        if (card instanceof Unit)
+          Effect.dynamicBP(
+            stack,
+            stack.processing,
+            card,
+            self =>
+              self.owner.field.filter(unit => unit.catalog.species?.includes('昆虫')).length * 2000,
+            { source }
+          );
+      },
+      effectCode: '増殖',
+      targets: ['self'],
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {

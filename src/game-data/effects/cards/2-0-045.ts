@@ -11,6 +11,8 @@ export const effects: CardEffects = {
   // 関数名に self は付かない
   onDrive: async (stack: StackWithCard): Promise<void> => {
     await System.show(stack, '愛しき来訪者', 'ユニットカードを1枚引く');
-    EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['unit'] });
+    EffectTemplate.reinforcements(stack, stack.processing.owner, {
+      type: ['unit', 'advanced_unit'],
+    });
   },
 };

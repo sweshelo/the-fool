@@ -36,7 +36,7 @@ export const effects: CardEffects = {
         // 残りのカードを捨札に送る
         randomCards.forEach(card => {
           if (card.id !== selected.id) {
-            Effect.move(stack, stack.processing, card, 'trash');
+            Effect.break(stack, stack.processing, card);
           }
         });
       } else {
@@ -44,7 +44,7 @@ export const effects: CardEffects = {
 
         // 対象がない場合は全て捨札に送る
         randomCards.forEach(card => {
-          Effect.move(stack, stack.processing, card, 'trash');
+          Effect.break(stack, stack.processing, card);
         });
       }
     }

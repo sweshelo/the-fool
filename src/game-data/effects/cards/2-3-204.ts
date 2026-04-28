@@ -106,7 +106,7 @@ async function destroyAllTriggers(
 
     // 全てのトリガーカードを破壊
     allTriggers.forEach(({ card }) => {
-      Effect.move(stack, stack.processing, card, 'trash');
+      Effect.break(stack, stack.processing, card);
     });
 
     if (drive) Effect.keyword(stack, stack.processing, stack.processing, '消滅効果耐性');

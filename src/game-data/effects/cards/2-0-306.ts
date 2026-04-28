@@ -34,10 +34,10 @@ export const effects: CardEffects = {
       );
 
       EffectHelper.random(stack.processing.owner.trigger, 1).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
       EffectHelper.random(stack.processing.owner.opponent.trigger, 1).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
 
       if (opponentsSelectable) {

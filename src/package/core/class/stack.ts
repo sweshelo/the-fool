@@ -395,15 +395,30 @@ export class Stack implements IStack {
     }
   }
 
-  private moveUnit(target: Unit, destination: CardArrayKeys, sound: string = 'leave') {
+  private moveUnit(target: Unit, destination: CardArrayKeys, sound?: string) {
     const owner = target.owner;
     // ターゲットがフィールドに残留しているかチェック
     const isOnField = owner.field.some(unit => unit.id === target.id);
 
+    // サウンドキーを得る
+    const getSoundKey = () => {
+      switch (destination) {
+        case 'deck':
+        case 'hand':
+          return 'bounce';
+        case 'delete':
+          return 'deleted';
+        case 'trash':
+        case 'trigger':
+        default:
+          return 'leave';
+      }
+    };
+
     // destinationに送る
     if (isOnField) {
       console.log('%s を %s に移動', target.catalog.name, destination);
-      this.core.room.soundEffect(sound);
+      this.core.room.soundEffect(sound ?? getSoundKey());
       owner.field = owner.field.filter(unit => unit.id !== target.id);
       target.reset();
 

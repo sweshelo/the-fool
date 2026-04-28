@@ -35,22 +35,32 @@ export const effects: CardEffects = {
 
   onBreakSelf: async (stack: StackWithCard<Unit>) => {
     const isOwnTurn = stack.processing.owner.id === stack.core.getTurnPlayer().id;
-    if (EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner)) {
-      await System.show(
-        stack,
-        '選ばれし殉葬',
-        isOwnTurn ? 'BP+2000\nユニットを1体破壊' : 'BP+2000\nCP+1\nユニットを1体破壊'
-      );
-      const [target] = await EffectHelper.pickUnit(
-        stack,
-        stack.processing.owner,
-        'opponents',
-        '破壊するユニットを選択して下さい'
-      );
-      Effect.break(stack, stack.processing, target, 'effect');
-    } else {
-      await System.show(stack, '禍々しき厄災', isOwnTurn ? 'BP+2000' : 'BP+2000\nCP+1');
-    }
-    await effect(stack);
+    await EffectHelper.combine(stack, [
+      {
+        title: '選ばれし殉葬',
+        description: 'ユニットを1体破壊',
+        effect: async () => {
+          const [target] = await EffectHelper.pickUnit(
+            stack,
+            stack.processing.owner,
+            'opponents',
+            '破壊するユニットを選択して下さい'
+          );
+          Effect.break(stack, stack.processing, target, 'effect');
+        },
+        condition: EffectHelper.isUnitSelectable(stack.core, 'opponents', stack.processing.owner),
+      },
+      {
+        title: '禍々しき厄災',
+        description: 'BP+2000',
+        effect: async () => effect(stack),
+      },
+      {
+        title: '禍々しき厄災',
+        description: 'CP+1',
+        effect: () => {},
+        condition: !isOwnTurn,
+      },
+    ]);
   },
 };

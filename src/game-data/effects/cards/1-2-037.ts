@@ -39,7 +39,7 @@ export const effects: CardEffects = {
         // トリガーゾーンからランダムで1枚選択して破壊
         const randomTriggers = EffectHelper.random(triggerCards, 1);
         randomTriggers.forEach(trigger => {
-          Effect.move(stack, stack.processing, trigger, 'trash');
+          Effect.break(stack, stack.processing, trigger);
         });
 
         // アタックしたユニットを破壊

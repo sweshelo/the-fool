@@ -80,7 +80,7 @@ export const effects: CardEffects = {
     // 残りのカードを捨札に送る
     const remainingCard = randomCards.find(c => c.id !== selectedCard.id);
     if (remainingCard) {
-      Effect.move(stack, stack.processing, remainingCard, 'trash');
+      Effect.break(stack, stack.processing, remainingCard);
     }
   },
 };

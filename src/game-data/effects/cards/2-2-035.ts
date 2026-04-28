@@ -7,7 +7,7 @@ export const effects: CardEffects = {
     const owner = stack.processing.owner;
     return (
       owner.id === stack.source.id &&
-      Array.from(new Set(owner.field.map(card => card.catalog.color))).length >= 3 &&
+      new Set(owner.field.map(card => card.catalog.color)).size >= 3 &&
       owner.hand.length >= 2 &&
       owner.deck.length >= 2
     );

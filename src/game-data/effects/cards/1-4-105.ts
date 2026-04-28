@@ -15,7 +15,7 @@ export const effects: CardEffects = {
       );
       const [target] = EffectHelper.random(opponentTrigger, 1);
       if (target) {
-        Effect.move(stack, stack.processing, target, 'trash');
+        Effect.break(stack, stack.processing, target);
       }
     } else {
       await System.show(stack, '消滅効果耐性', '対戦相手の効果によって消滅しない');

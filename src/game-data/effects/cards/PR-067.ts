@@ -49,7 +49,7 @@ export const effects: CardEffects = {
         if (target) Effect.damage(stack, stack.processing, target, 10000);
         Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -1);
         EffectHelper.random(stack.processing.owner.opponent.trigger).forEach(card =>
-          Effect.move(stack, stack.processing, card, 'trash')
+          Effect.break(stack, stack.processing, card)
         );
         break;
       }
@@ -72,7 +72,7 @@ export const effects: CardEffects = {
         if (target) Effect.damage(stack, stack.processing, target, 10000);
         Effect.modifyLife(stack, stack.processing, stack.processing.owner.opponent, -2);
         EffectHelper.random(stack.processing.owner.opponent.trigger, 2).forEach(card =>
-          Effect.move(stack, stack.processing, card, 'trash')
+          Effect.break(stack, stack.processing, card)
         );
         break;
       }

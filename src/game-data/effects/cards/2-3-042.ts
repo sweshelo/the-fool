@@ -26,7 +26,7 @@ export const effects: CardEffects = {
 
       // デッキのカードを捨札へ
       deckCards.forEach(card => {
-        Effect.move(stack, stack.processing, card, 'trash');
+        Effect.break(stack, stack.processing, card);
       });
 
       // デッキをシャッフル

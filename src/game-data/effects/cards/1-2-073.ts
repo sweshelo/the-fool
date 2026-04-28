@@ -10,7 +10,7 @@ export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard) => {
     await System.show(stack, '換金所', 'トリガーゾーンのカードを1枚破壊\nCP+2');
     const [target] = EffectHelper.random(stack.processing.owner.trigger);
-    if (target) Effect.move(stack, stack.processing, target, 'trash');
+    if (target) Effect.break(stack, stack.processing, target);
     Effect.modifyCP(stack, stack.processing, stack.processing.owner, 2);
   },
 };

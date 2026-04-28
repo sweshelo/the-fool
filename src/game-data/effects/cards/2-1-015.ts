@@ -22,7 +22,7 @@ export const effects: CardEffects = {
       const cardsToDiscard = owner.deck.slice(0, discardCount);
 
       for (const card of cardsToDiscard) {
-        Effect.move(stack, stack.processing, card, 'trash');
+        Effect.break(stack, stack.processing, card);
       }
 
       for (const unit of unitsToDestroy) {

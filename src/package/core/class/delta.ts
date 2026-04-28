@@ -1,6 +1,6 @@
 import type { DeltaEffect, IDelta, IUnit } from '@/submodule/suit/types';
 import type { StackWithCard } from '@/game-data/effects/schema/types';
-import type { Card } from './card';
+import type { Card, Unit } from './card';
 import type { GameEvent } from '@/game-data/effects/schema/events';
 
 export interface DeltaSource {
@@ -14,12 +14,14 @@ export interface DeltaEvent {
 }
 
 export type DeltaCalculator = (self: Card) => number;
+export type DeltaCondition = (self?: Unit, blocker?: Unit) => boolean;
 
 export type DeltaConstructorOptionParams = {
   onlyForOwnersTurn?: boolean;
   source?: DeltaSource;
   permanent?: boolean;
   calculator?: DeltaCalculator;
+  condition?: DeltaCondition;
 } & (DeltaEvent | {});
 
 export class Delta implements IDelta {
@@ -30,7 +32,8 @@ export class Delta implements IDelta {
   source?: DeltaSource;
   onlyForOwnersTurn: boolean; // このパラメータが true のとき、eventに合致するイベントが発生しても自分のターン中でない場合はcountを減算しない
   permanent: boolean; // このパラメータが true のとき、unit.reset() しても残す (効果が永続するという意味ではない。その場合はeventにundefiendを設定する。)
-  calculator?: (self: Card) => number; // 数値の変動を動的に計算する
+  calculator?: DeltaCalculator; // 数値の変動を動的に計算する
+  condition?: DeltaCondition; // 特殊条件次元干渉用
 
   constructor(effect: DeltaEffect, options: DeltaConstructorOptionParams | undefined = {}) {
     this.id = crypto.randomUUID();
@@ -45,6 +48,7 @@ export class Delta implements IDelta {
     this.source = options.source;
     this.permanent = options.permanent ?? false;
     this.calculator = options.calculator;
+    this.condition = options.condition;
   }
 
   /**

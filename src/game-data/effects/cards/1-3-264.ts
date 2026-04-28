@@ -17,7 +17,7 @@ export const effects: CardEffects = {
         '捨てるカードを選んで下さい',
         3
       )
-    ).forEach(card => Effect.move(stack, stack.processing, card, 'trash'));
+    ).forEach(card => Effect.break(stack, stack.processing, card));
     EffectTemplate.reinforcements(stack, stack.processing.owner, { type: ['intercept'] });
   },
 };

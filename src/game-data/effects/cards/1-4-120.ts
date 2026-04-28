@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 async function unitAttackEffect(stack: StackWithCard<Unit>): Promise<void> {
   // どのユニットがアタックしてもこの効果は発動する
@@ -36,33 +37,14 @@ export const effects: CardEffects = {
 
   // フィールド効果：天使ユニットに貫通を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 自分のフィールドの天使ユニットを対象にする
-    owner.field.forEach(unit => {
-      // 天使ユニットか確認
-      if (unit.catalog.species?.includes('天使')) {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          d =>
-            d.source?.unit === stack.processing.id && d.source?.effectCode === 'フェイタル☆アロー'
-        );
-
-        // 既にDeltaが存在しない場合のみ貫通を付与
-        if (!delta) {
-          Effect.keyword(stack, stack.processing, unit, '貫通', {
-            source: { unit: stack.processing.id, effectCode: 'フェイタル☆アロー' },
-          });
-        }
-      } else {
-        // 天使でなくなった場合、このユニットが付与した貫通を削除
-        unit.delta = unit.delta.filter(
-          d =>
-            !(
-              d.source?.unit === stack.processing.id && d.source?.effectCode === 'フェイタル☆アロー'
-            )
-        );
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '貫通', { source });
+      },
+      effectCode: 'フェイタル☆アロー',
+      condition: target => target instanceof Unit && target.catalog.species?.includes('天使'),
+      targets: ['owns'],
     });
   },
 };

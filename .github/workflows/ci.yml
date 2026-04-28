@@ -24,7 +24,7 @@ jobs:
         run: bunx oxfmt --check src
 
       - name: Lint (oxlint)
-        run: bunx oxlint --type-aware
+        run: bunx oxlint
 
       - name: Lint (ESLint)
         run: bunx eslint

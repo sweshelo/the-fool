@@ -24,11 +24,9 @@ export const effects: CardEffects = {
       );
       const ownUnit =
         stack.source.owner.id === stack.processing.owner.id ? stack.source : stack.target;
-      stack.processing.owner.trash.forEach(card =>
-        Effect.move(stack, stack.processing, card, 'delete')
-      );
+      stack.processing.owner.trash.forEach(card => Effect.delete(stack, stack.processing, card));
       EffectHelper.random(stack.processing.owner.deck, 5).forEach(card =>
-        Effect.move(stack, stack.processing, card, 'trash')
+        Effect.break(stack, stack.processing, card)
       );
       Effect.modifyBP(
         stack,

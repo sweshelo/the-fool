@@ -15,7 +15,10 @@ export const effects: CardEffects = {
 
     // Check if no units have been summoned this turn by checking histories
     const hasNotSummonedUnits = !stack.core.histories.some(
-      history => history.action === 'drive' && history.card.owner.id === owner.id
+      history =>
+        history.action === 'drive' &&
+        history.card.owner.id === owner.id &&
+        history.card instanceof Unit
     );
 
     // Apply or remove cost reduction to blue units in hand

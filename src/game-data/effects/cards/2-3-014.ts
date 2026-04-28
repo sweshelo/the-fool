@@ -54,7 +54,7 @@ export const effects: CardEffects = {
       );
 
       // Move it to trash
-      Effect.move(stack, stack.processing, target, 'trash');
+      Effect.break(stack, stack.processing, target);
     }
   },
 

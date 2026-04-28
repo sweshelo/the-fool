@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 // カードがフィールドにあるかをカタログの name で判断するヘルパー関数
 const hasFourGodCard = (stack: StackWithCard<Unit>, name: string): boolean => {
@@ -48,44 +49,24 @@ export const effects: CardEffects = {
 
   // あなたの【四聖獣】ユニットに【加護】と【貫通】を与える（フィールド効果）
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // 自分の四聖獣ユニットを取得
-    const fourGodUnits = stack.processing.owner.field.filter(unit =>
-      unit.catalog.species?.includes('四聖獣')
-    );
-
-    // 各四聖獣ユニットに【加護】と【貫通】を付与
-    for (const unit of fourGodUnits) {
-      // このカードから既に付与された【加護】があるか確認
-      const protectDelta = unit.delta.find(
-        delta =>
-          delta.source?.unit === stack.processing.id &&
-          delta.source.effectCode === '加護' &&
-          delta.effect.type === 'keyword' &&
-          delta.effect.name === '加護'
-      );
-
-      // このカードから既に付与された【貫通】があるか確認
-      const penetrateDelta = unit.delta.find(
-        delta =>
-          delta.source?.unit === stack.processing.id &&
-          delta.source.effectCode === '貫通' &&
-          delta.effect.type === 'keyword' &&
-          delta.effect.name === '貫通'
-      );
-
-      // まだ付与されていない場合は付与する
-      if (!protectDelta) {
-        Effect.keyword(stack, stack.processing, unit, '加護', {
-          source: { unit: stack.processing.id, effectCode: '加護' },
-        });
-      }
-
-      if (!penetrateDelta) {
-        Effect.keyword(stack, stack.processing, unit, '貫通', {
-          source: { unit: stack.processing.id, effectCode: '貫通' },
-        });
-      }
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '加護', { source });
+      },
+      effectCode: '四聖を統べる少女_加護',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('四聖獣'),
+    });
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '貫通', { source });
+      },
+      effectCode: '四聖を統べる少女_貫通',
+      targets: ['owns'],
+      condition: target => target instanceof Unit && target.catalog.species?.includes('四聖獣'),
+    });
   },
 
   // あなたのターン開始時、あなたのフィールドに［青龍］［朱雀］［白虎］［玄武］がいる場合、対戦相手に4ライフダメージを与える。
