@@ -101,7 +101,8 @@ export class Unit extends Card implements IUnit {
           !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限') &&
           !(delta.effect.type === 'bp') &&
           !(delta.effect.type === 'damage') &&
-          !(delta.effect.type === 'banned')
+          !(delta.effect.type === 'banned') &&
+          !(delta.effect.type === 'dynamic-bp')
       )
       .map(delta => {
         if (delta.effect.type === 'dynamic-cost') {
