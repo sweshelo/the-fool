@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
-    "js-yaml": "^4.1.0",
-    "nanoid": "^5.1.5",
-    "ws": "^8.18.1"
+    "js-yaml": "^4.3.2",
+    "nanoid": "^5.1.16",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -24,7 +24,7 @@
     "eslint": "^9.39.2",
     "globals": "^16.0.0",
     "lefthook": "^2.0.13",
-    "oxfmt": "^0.20.0",
+    "oxfmt": "^0.75.0",
     "oxlint-tsgolint": "^0.10.0",
     "typescript-eslint": "^8.52.0"
   },
