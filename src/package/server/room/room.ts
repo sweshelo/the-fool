@@ -7,6 +7,7 @@ import { Player } from '../../core/class/Player';
 import { Core } from '../../core';
 import type { ServerWebSocket } from 'bun';
 import type { Rule } from '@/submodule/suit/types';
+import type { PlayerEntryPayload } from '@/submodule/suit/types/message/payload/room';
 import { config } from '@/config';
 import { MessageHelper } from '@/package/core/helpers/message';
 import { Intercept } from '@/package/core/class/card';
@@ -25,6 +26,8 @@ export class Room {
   cache: string | undefined;
   logger: GameLogger;
   matchingMode?: MatchingMode;
+  /** マッチング成立時に確定したプレイヤー情報（デッキ検証済み）。設定時はこのプレイヤーのみ参加できる */
+  reservedPlayers?: Map<string, PlayerEntryPayload['player']>;
   private creditService = new PlayCreditService();
   private creditsConsumed = false;
 
@@ -75,7 +78,13 @@ export class Room {
         this.sync(true);
         this.broadcastToAll(MessageHelper.defrost());
       } else if (this.core.players.length < 2) {
-        const player = new Player(message.payload.player, this.core);
+        // マッチングルームでは、マッチングしたプレイヤー以外の参加を拒否し、検証済みのデッキを使用する
+        const entry = this.reservedPlayers
+          ? this.reservedPlayers.get(message.payload.player.id)
+          : message.payload.player;
+        if (!entry) return false;
+
+        const player = new Player(entry, this.core);
 
         // socket 登録
         this.clients.set(player.id, socket);
