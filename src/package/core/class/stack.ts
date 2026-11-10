@@ -515,7 +515,7 @@ export class Stack implements IStack {
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0);
-        player.cp.current -= cost;
+        player.cp.current -= Math.min(cost, 0);
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
 
