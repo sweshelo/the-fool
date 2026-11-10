@@ -325,6 +325,9 @@ export class Stack implements IStack {
       this.processing = undefined;
     });
 
+    // フィールド効果が解決するまで呼び出し
+    this.recursiveResolveFieldEffect(core);
+
     // Log
     if (!this.type.startsWith('_'))
       console.log(
@@ -336,6 +339,12 @@ export class Stack implements IStack {
       );
 
     core.room.sync();
+  }
+
+  private async recursiveResolveFieldEffect(core: Core): Promise<void> {
+    this.processFieldEffect();
+    this.resolveChild(core);
+    if (this.children.length > 0) this.recursiveResolveFieldEffect(core);
   }
 
   private async resolveChild(core: Core): Promise<void> {
