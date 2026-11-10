@@ -48,6 +48,8 @@ interface Targets {
 export class PermanentEffect {
   /**
    * フィールド効果を登録します。
+   * 与えられた details.condition を満たす場合、未だ効果を受けていなければ適用します。
+   * details.condition を満たさなくなった場合、既に適用済みの効果を探して無効化します。
    * @param self フィールド効果の発生源
    * @param details フィールド効果詳細
    */

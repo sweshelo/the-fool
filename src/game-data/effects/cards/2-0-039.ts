@@ -1,6 +1,7 @@
 import type { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard): Promise<void> => {
@@ -16,24 +17,15 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    // 既にこのユニットが発行したDeltaが存在するか確認
-    const delta = stack.processing.delta.find(d => d.source?.unit === stack.processing.id);
-
-    if (!stack.processing.owner.purple || stack.processing.owner.purple <= 0) {
-      // 紫ゲージが0で、次元干渉を持っていなければ付与
-      if (!delta) {
+    // 紫ゲージが0のとき、次元干渉を付与
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) =>
         Effect.keyword(stack, stack.processing, stack.processing, '次元干渉', {
-          cost: 0,
-          source: { unit: stack.processing.id },
-        });
-      }
-    } else {
-      // 紫ゲージが0より大の場合、このユニットが付与した次元干渉を削除
-      if (delta) {
-        stack.processing.delta = stack.processing.delta.filter(
-          d => !(d.source?.unit === stack.processing.id)
-        );
-      }
-    }
+          condition: () => true,
+          source,
+        }),
+      targets: ['self'],
+      effectCode: '清麗の飛燕',
+    });
   },
 };
