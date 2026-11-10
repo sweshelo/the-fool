@@ -3,7 +3,9 @@ import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 const getClownFilter = (self: Unit) => (unit: Unit) =>
-  unit.id !== self.id && unit.catalog.species?.includes('道化師');
+  unit.id !== self.id &&
+  unit.catalog.species?.includes('道化師') &&
+  self.owner.id === unit.owner.id;
 
 export const effects: CardEffects = {
   // ■起動・結びリバーブ
