@@ -17,7 +17,12 @@ export const effects: CardEffects = {
         count: 1,
         onlyForOwnersTurn: true,
       });
-      Effect.modifyCP(stack, stack.processing, stack.processing.owner, unit.catalog.cost);
+      Effect.modifyCP(
+        stack,
+        stack.processing,
+        stack.processing.owner,
+        Math.min(unit.catalog.cost, 7)
+      );
     });
   },
 
