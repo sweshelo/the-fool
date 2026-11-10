@@ -14,6 +14,7 @@ export const effects: CardEffects = {
       },
       targets: ['self'],
       effectCode: '八咫鏡',
+      condition: target => target.lv === 1,
     });
   },
 
