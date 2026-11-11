@@ -8,7 +8,7 @@ export const effects: CardEffects = {
         2 &&
       stack.processing.owner.trash.length > 0
     ) {
-      await System.show(stack, '生存戦略', '捨札から【獣】を回収');
+      await System.show(stack, '生存戦略', '捨札から1枚回収');
       EffectHelper.random(stack.processing.owner.trash).forEach(card =>
         Effect.move(stack, stack.processing, card, 'hand')
       );

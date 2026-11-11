@@ -13,5 +13,6 @@ export const effects: CardEffects = {
     if (!(stack.processing.hasKeyword('神託') && target instanceof Unit)) return;
     await System.show(stack, '奇跡・戦亡の風韻', 'デッキに戻す');
     Effect.bounce(stack, stack.processing, target, 'deck');
+    Effect.removeKeyword(stack, stack.processing, '神託');
   },
 };
