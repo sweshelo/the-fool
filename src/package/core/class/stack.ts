@@ -10,6 +10,8 @@ import { Parry } from './parry';
 import type { GameEvent } from '@/game-data/effects/schema/events';
 import { createMessage } from '@/submodule/suit/types';
 import { nanoid } from 'nanoid';
+import { completeGame } from '@/package/core/operations/game-flow';
+import { Terminate } from '@/package/core/class/terminate';
 
 interface IStack {
   /**
@@ -327,6 +329,14 @@ export class Stack implements IStack {
 
     // フィールド効果が解決するまで呼び出し
     this.recursiveResolveFieldEffect(core);
+
+    // 勝敗をチェック
+    const loser = core.players.filter(player => player.life.current <= 0);
+    if (loser.length > 0) {
+      const winner = core.players.find(player => player.life.current > 0);
+      await completeGame(core, winner?.id, 'damage');
+      throw new Terminate('game-set');
+    }
 
     // Log
     if (!this.type.startsWith('_'))
