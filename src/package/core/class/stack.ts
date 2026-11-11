@@ -343,7 +343,7 @@ export class Stack implements IStack {
 
   private async recursiveResolveFieldEffect(core: Core): Promise<void> {
     this.processFieldEffect();
-    this.resolveChild(core);
+    await this.resolveChild(core);
     if (this.children.length > 0) this.recursiveResolveFieldEffect(core);
   }
 
@@ -524,7 +524,7 @@ export class Stack implements IStack {
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0);
-        player.cp.current -= Math.min(cost, 0);
+        player.cp.current -= Math.max(cost, 0);
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
 

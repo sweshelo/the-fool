@@ -43,7 +43,7 @@ export const effects: CardEffects = {
         title: 'メロンソーラー♪',
         description: '手札を1枚選んで捨てる',
         effect: discard,
-        condition: stack.processing.lv === 1,
+        condition: stack.processing.lv === 1 && stack.processing.owner.hand.length > 0,
       },
       {
         title: 'メロンソーラー♪',
@@ -51,6 +51,7 @@ export const effects: CardEffects = {
         effect: () => {
           EffectTemplate.draw(owner, stack.core);
         },
+        condition: stack.processing.lv > 1 || stack.processing.owner.hand.length > 0,
       },
       { title: '安心をあなたに', description: '手札の緑属性のコスト-1', effect: () => {} },
     ]);

@@ -24,6 +24,7 @@ export const effects: CardEffects = {
           condition: () => true,
           source,
         }),
+      condition: target => target.owner.purple === 0,
       targets: ['self'],
       effectCode: '清麗の飛燕',
     });

@@ -50,7 +50,7 @@ export const effects: CardEffects = {
         if (target instanceof Unit)
           Effect.keyword(stack, stack.processing, target, '狂戦士', { source });
       },
-      condition: target => target.catalog.cost <= 2,
+      condition: target => target.catalog.cost <= 3,
       effectCode: '胎動',
       targets: ['opponents'],
     });
