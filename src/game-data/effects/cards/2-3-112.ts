@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // ■ラブリーシュート
@@ -20,32 +21,17 @@ export const effects: CardEffects = {
 
   // フィールド効果：天使ユニットが2体以上いる場合、加護を付与
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 天使ユニットの数を取得
-    const angelCount = owner.field.filter(unit => unit.catalog.species?.includes('天使')).length;
-
-    // 加護の付与・削除処理
-    // 既にこのユニットが発行したDeltaが存在するか確認
-    const delta = stack.processing.delta.find(
-      d => d.source?.unit === stack.processing.id && d.source?.effectCode === 'アステルの守護'
-    );
-
-    if (angelCount >= 2) {
-      // 天使が2体以上いて、まだ加護を持っていなければ付与
-      if (!delta) {
-        Effect.keyword(stack, stack.processing, stack.processing, '加護', {
-          source: { unit: stack.processing.id, effectCode: 'アステルの守護' },
-        });
-      }
-    } else {
-      // 天使が2体未満の場合、このユニットが付与した加護を削除
-      if (delta) {
-        stack.processing.delta = stack.processing.delta.filter(
-          d =>
-            !(d.source?.unit === stack.processing.id && d.source?.effectCode === 'アステルの守護')
-        );
-      }
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.keyword(stack, stack.processing, target, '加護', { source });
+        }
+      },
+      condition: () =>
+        stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('天使'))
+          .length >= 2,
+      effectCode: 'アステルの守護',
+      targets: ['self'],
+    });
   },
 };

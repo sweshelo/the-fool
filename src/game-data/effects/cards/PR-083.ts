@@ -1,6 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -32,12 +33,14 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.opponent.field.forEach(unit => {
-      if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        Effect.modifyBP(stack, stack.processing, unit, -2000, {
-          source: { unit: stack.processing.id },
-        });
-      }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['opponents'],
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, target, -2000, { source });
+        }
+      },
+      effectCode: '炎王獣の闘気',
     });
   },
 };

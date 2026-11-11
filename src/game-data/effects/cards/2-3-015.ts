@@ -1,35 +1,22 @@
 import { Unit, type Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { Delta } from '@/package/core/class/delta';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
 import { Color } from '@/submodule/suit/constant/color';
 import master from '@/game-data/catalog';
 import { EffectHelper } from '../engine/helper';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
-  handEffect: (core: Core, self: Card) => {
-    const targetDelta = self.delta.find(delta => delta.source?.unit === self.id);
-    if (targetDelta && targetDelta.effect.type === 'cost') {
-      targetDelta.effect.value = Math.max(
-        -self.owner.trash.filter(card => card.catalog.color === Color.BLUE).length,
-        -16
-      );
-    } else {
-      self.delta.push(
-        new Delta(
-          {
-            type: 'cost',
-            value: Math.max(
-              -self.owner.trash.filter(card => card.catalog.color === Color.BLUE).length,
-              -16
-            ),
-          },
-          { source: { unit: self.id } }
-        )
-      );
-    }
+  handEffect: (_core: Core, self: Card) => {
+    const calculator = (card: Card) =>
+      -card.owner.trash.filter(c => c.catalog.color === Color.BLUE).length;
+    PermanentEffect.mount(self, {
+      effect: (card, source) => Effect.dynamicCost(card, { source, calculator }),
+      effectCode: 'ミーミルの泉',
+      targets: ['self'],
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard<Unit>) => {

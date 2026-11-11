@@ -1,5 +1,4 @@
-import { Delta } from '@/package/core/class/delta';
-import { EffectHelper, System } from '..';
+import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
 export const effects: CardEffects = {
@@ -30,6 +29,6 @@ export const effects: CardEffects = {
     );
 
     // コストを-1する
-    target.delta.push(new Delta({ type: 'cost', value: -1 }));
+    Effect.modifyCost(target, -1);
   },
 };
