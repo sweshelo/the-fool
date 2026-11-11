@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   onTurnStart: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -49,20 +50,15 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    if (stack.processing.lv >= 3) {
-      stack.processing.owner.opponent.field.forEach(unit => {
-        if (!unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-          Effect.modifyBP(stack, stack.processing, unit, -1000, {
-            source: { unit: stack.processing.id },
-          });
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, target, -1000, { source });
         }
-      });
-    } else {
-      stack.processing.owner.opponent.field.forEach(unit => {
-        if (unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-          unit.delta = unit.delta.filter(delta => delta.source?.unit !== stack.processing.id);
-        }
-      });
-    }
+      },
+      condition: () => stack.processing.lv >= 3,
+      effectCode: '龍宮の刻煙',
+      targets: ['opponents'],
+    });
   },
 };

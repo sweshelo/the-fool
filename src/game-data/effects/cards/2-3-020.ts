@@ -1,6 +1,7 @@
 import { Evolve, Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -91,44 +92,17 @@ export const effects: CardEffects = {
   // ■森聖なる護封陣
   // あなたのフィールドに【獣】ユニットが4体以上いる場合、あなたの【獣】ユニットに【秩序の盾】を与える。
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 自分のフィールドの【獣】ユニットをフィルタリング
-    const beastUnits = owner.field.filter(
-      unit =>
-        unit.catalog.species &&
-        Array.isArray(unit.catalog.species) &&
-        unit.catalog.species.includes('獣')
-    );
-
-    // フィールドに【獣】ユニットが4体以上いる場合の効果
-    if (beastUnits.length >= 4) {
-      beastUnits.forEach(unit => {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          delta =>
-            delta.source?.unit === stack.processing.id &&
-            delta.source.effectCode === '森聖なる護封陣'
-        );
-
-        if (!delta) {
-          // 【秩序の盾】を付与
-          Effect.keyword(stack, stack.processing, unit, '秩序の盾', {
-            source: { unit: stack.processing.id, effectCode: '森聖なる護封陣' },
-          });
-        }
-      });
-    } else {
-      // 条件を満たさなくなった場合、効果を解除
-      owner.field.forEach(unit => {
-        unit.delta = unit.delta.filter(
-          delta =>
-            !(
-              delta.source?.unit === stack.processing.id &&
-              delta.source.effectCode === '森聖なる護封陣'
-            )
-        );
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (card, source) => {
+        if (card instanceof Unit)
+          Effect.keyword(stack, stack.processing, card, '秩序の盾', { source });
+      },
+      condition: target =>
+        target.catalog.species?.includes('獣') &&
+        stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('獣')).length >=
+          4,
+      effectCode: '森聖なる護封陣',
+      targets: ['owns'],
+    });
   },
 };

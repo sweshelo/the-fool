@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // ■隻眼の光刃
@@ -21,34 +22,21 @@ export const effects: CardEffects = {
 
   // あなたのフィールドに【機械】ユニットが3体以上いる場合、ブロックされない効果（フィールド効果）
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-    const self = stack.processing;
-
-    // 自分の機械ユニットをカウント
-    const machineUnits = owner.field.filter(
-      unit => Array.isArray(unit.catalog.species) && unit.catalog.species.includes('機械')
-    );
-
-    // 既に自身が発行したDeltaが存在するか確認
-    const delta = self.delta.find(
-      delta => delta.source?.unit === self.id && delta.source?.effectCode === 'unblockable'
-    );
-
-    if (machineUnits.length >= 3) {
-      // 3体以上いる場合、ブロックされない効果を付与
-      if (!delta) {
-        // ブロックされない効果を付与
-        Effect.keyword(stack, self, self, '次元干渉', {
-          cost: 0,
-          source: { unit: self.id, effectCode: 'unblockable' },
-        });
-      }
-    } else if (delta) {
-      // 3体未満になった場合、効果を削除
-      self.delta = self.delta.filter(
-        d => d.source?.unit !== self.id || d.source?.effectCode !== 'unblockable'
-      );
-    }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['self'],
+      condition: () =>
+        stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('機械'))
+          .length >= 3,
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.keyword(stack, stack.processing, target, '次元干渉', {
+            cost: 0,
+            source,
+          });
+        }
+      },
+      effectCode: 'unblockable',
+    });
   },
 
   // このユニットが破壊された時の効果

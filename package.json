@@ -10,23 +10,23 @@
     "lint": "bunx oxlint && bunx eslint --fix"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.10",
+    "@supabase/supabase-js": "^2.119.0",
     "js-yaml": "^4.3.2",
     "nanoid": "^5.1.16",
-    "ws": "^8.21.0"
+    "ws": "^8.22.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
-    "@typescript-eslint/eslint-plugin": "^8.52.0",
-    "@typescript-eslint/parser": "^8.52.0",
-    "dependency-cruiser": "^16.10.0",
-    "eslint": "^9.39.2",
-    "globals": "^16.0.0",
-    "lefthook": "^2.0.13",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
+    "@typescript-eslint/parser": "^8.72.2",
+    "dependency-cruiser": "^16.10.4",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "lefthook": "^2.2.2",
     "oxfmt": "^0.75.0",
-    "oxlint-tsgolint": "^0.10.0",
-    "typescript-eslint": "^8.52.0"
+    "oxlint-tsgolint": "^0.10.1",
+    "typescript-eslint": "^8.72.2"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"

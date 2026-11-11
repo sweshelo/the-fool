@@ -24,7 +24,8 @@ export const effects: CardEffects = {
     if (
       stack.source.id !== stack.processing.id ||
       stack.option?.type !== 'break' ||
-      stack.option.cause !== 'damage'
+      stack.option.cause !== 'damage' ||
+      (stack.target instanceof Unit && stack.target.leaving?.destination !== 'trash') // 対象の転送先が一致している
     )
       return;
 

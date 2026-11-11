@@ -16,8 +16,8 @@ export const effects: CardEffects = {
     const isNinja = stack.target.catalog.species?.includes('忍者') === true;
 
     if (isNinja) {
-      // 忍者の場合、フィールドが4体以下か確認
-      return owner.field.length <= 4;
+      // 忍者の場合、フィールドが4体以下で対象が生存しているか確認
+      return owner.field.length <= 4 && owner.field.some(unit => unit.id === stack.target?.id);
     } else {
       // 忍者以外の場合は常に発動（デッキに忍者がいなくても発動する）
       return true;

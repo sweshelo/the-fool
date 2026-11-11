@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // ■天上剣技・心眼の太刀
@@ -36,36 +37,25 @@ export const effects: CardEffects = {
 
   // フィールド効果: 天使ユニットに破壊効果耐性と次元干渉/コスト3を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    const owner = stack.processing.owner;
-
-    // 天使ユニットに効果を付与
-    owner.field.forEach(unit => {
-      if (unit.catalog.species?.includes('天使')) {
-        // 既にこのユニットが発行したDeltaが存在するか確認（破壊効果耐性）
-        const breakResistDelta = unit.delta.find(
-          d => d.source?.unit === stack.processing.id && d.source?.effectCode === '破壊効果耐性'
-        );
-
-        // 破壊効果耐性が付与されていなければ付与
-        if (!breakResistDelta) {
-          Effect.keyword(stack, stack.processing, unit, '破壊効果耐性', {
-            source: { unit: stack.processing.id, effectCode: '破壊効果耐性' },
-          });
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      condition: unit => unit.catalog.species?.includes('天使'),
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '破壊効果耐性', { source });
         }
-
-        // 既にこのユニットが発行したDeltaが存在するか確認（次元干渉/コスト3）
-        const dimensionDelta = unit.delta.find(
-          d => d.source?.unit === stack.processing.id && d.source?.effectCode === '次元干渉'
-        );
-
-        // 次元干渉が付与されていなければ付与
-        if (!dimensionDelta) {
-          Effect.keyword(stack, stack.processing, unit, '次元干渉', {
-            source: { unit: stack.processing.id, effectCode: '次元干渉' },
-            cost: 3, // コスト3を指定
-          });
+      },
+      effectCode: '破壊効果耐性',
+    });
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      condition: unit => unit.catalog.species?.includes('天使'),
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '次元干渉', { source, cost: 3 });
         }
-      }
+      },
+      effectCode: '次元干渉',
     });
   },
 

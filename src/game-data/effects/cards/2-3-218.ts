@@ -1,45 +1,35 @@
-import type { Card, Unit } from '@/package/core/class/card';
+import { Unit, type Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '../engine/permanent';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
 
 export const effects: CardEffects = {
   handEffect: (core: Core, self: Card) => {
-    const targetDelta = self.delta.find(
-      delta => delta.source?.unit === self.id && delta.source.effectCode === '悠久のセレマ'
-    );
-    if (targetDelta && targetDelta.effect.type === 'cost') {
-      targetDelta.effect.value = core.round;
-    } else {
-      self.delta.push(
-        new Delta(
-          { type: 'cost', value: core.round },
-          {
-            source: {
-              unit: self.id,
-              effectCode: '悠久のセレマ',
-            },
-          }
-        )
-      );
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: () => core.round,
+        }),
+      effectCode: '悠久のセレマ',
+      targets: ['self'],
+    });
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const targetDelta = stack.processing.delta.find(
-      delta =>
-        delta.source?.unit === stack.processing.id &&
-        delta.source.effectCode === 'タイムパラドックス'
-    );
-    if (targetDelta && targetDelta.effect.type === 'bp') {
-      targetDelta.effect.diff = stack.core.round * 1000;
-    } else {
-      Effect.modifyBP(stack, stack.processing, stack.processing, stack.core.round * 1000, {
-        source: { unit: stack.processing.id, effectCode: 'タイムパラドックス' },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.dynamicBP(stack, stack.processing, target, () => stack.core.round * 1000, {
+            source,
+          });
+        }
+      },
+      effectCode: 'タイムパラドックス',
+      targets: ['self'],
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard) => {

@@ -1,6 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -27,16 +28,20 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    const diff = stack.processing.owner.field.length * 500;
-    stack.processing.owner.field.forEach(unit => {
-      if (unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        const delta = unit.delta.find(delta => delta.source?.unit === stack.processing.id);
-        if (delta?.effect.type === 'bp') delta.effect.diff = diff;
-      } else {
-        Effect.modifyBP(stack, stack.processing, unit, diff, {
-          source: { unit: stack.processing.id },
-        });
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.dynamicBP(
+            stack,
+            stack.processing,
+            target,
+            target => target.owner.field.length * 500,
+            { source }
+          );
+        }
+      },
+      effectCode: '万物共鳴',
+      targets: ['owns'],
     });
   },
 };

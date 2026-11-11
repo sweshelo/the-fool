@@ -1,30 +1,24 @@
 import type { Card } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { Delta } from '@/package/core/class/delta';
 import { Effect } from '../engine/effect';
 import { System } from '../engine/system';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   handEffect: (_core: Core, self: Card) => {
-    const targetDelta = self.delta.find(delta => delta.source?.unit === self.id);
-    const silencedUnits = [...self.owner.opponent.field, ...self.owner.field].filter(unit =>
-      unit.hasKeyword('沈黙')
-    ).length;
-
-    if (targetDelta && targetDelta.effect.type === 'cost') {
-      targetDelta.effect.value = Math.max(-silencedUnits, -4);
-    } else {
-      self.delta.push(
-        new Delta(
-          {
-            type: 'cost',
-            value: Math.max(-silencedUnits, -4),
-          },
-          { source: { unit: self.id } }
-        )
-      );
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: () =>
+            -[...self.owner.opponent.field, ...self.owner.field].filter(unit =>
+              unit.hasKeyword('沈黙')
+            ).length,
+        }),
+      effectCode: '腹から声を出せ！',
+      targets: ['self'],
+    });
   },
 
   onDriveSelf: async (stack: StackWithCard) => {

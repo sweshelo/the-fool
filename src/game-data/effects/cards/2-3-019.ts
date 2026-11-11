@@ -1,7 +1,7 @@
-import { Delta } from '@/package/core/class/delta';
 import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 【不屈】【貫通】（召喚時付与）
@@ -34,23 +34,14 @@ export const effects: CardEffects = {
 
   // 手札のこのカードのコスト減少
   handEffect: (_core: unknown, self: Unit) => {
-    const delta = self.delta.find(delta => delta.source?.unit === self.id);
-    const handCount = self.owner.hand.length;
-    const reduce = Math.max(-handCount, -self.catalog.cost + 4);
-
-    if (delta && delta.effect.type === 'cost') {
-      delta.effect.value = reduce;
-    } else {
-      self.delta.push(
-        new Delta(
-          { type: 'cost', value: reduce },
-          {
-            source: {
-              unit: self.id,
-            },
-          }
-        )
-      );
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: card => -card.owner.hand.length,
+        }),
+      effectCode: '牙将の指揮',
+      targets: ['self'],
+    });
   },
 };

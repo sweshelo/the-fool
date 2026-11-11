@@ -2,44 +2,23 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Core } from '@/package/core';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 【消滅効果耐性】
   // ■血濡れの妃王
   // 手札のこのカードのコストは-［お互いのトリガーゾーンの数］される。このユニットのコストは3以下にならない。
   handEffect: (core: Core, self: Unit): void => {
-    // お互いのトリガーゾーンの数を計算
-    const allTriggerCount = core.players.reduce(
-      (count, player) => count + player.trigger.length,
-      0
-    );
-
-    // コスト減少量（ただし、コストは3以下にならない）
-    const reduction = Math.min(allTriggerCount, self.catalog.cost - 3);
-
-    // 既にコスト減少のdeltaが存在するかチェック
-    const costDelta = self.delta.find(
-      delta => delta.effect.type === 'cost' && delta.source?.effectCode === '血濡れの妃王'
-    );
-
-    if (costDelta && costDelta.effect.type === 'cost') {
-      // 既存のdeltaを更新
-      costDelta.effect.value = -reduction;
-    } else if (reduction > 0) {
-      // 新しいdeltaを追加
-      self.delta.push(
-        new Delta(
-          { type: 'cost', value: -reduction },
-          {
-            source: {
-              unit: self.id,
-              effectCode: '血濡れの妃王',
-            },
-          }
-        )
-      );
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: () =>
+            -core.players.reduce((count, player) => count + player.trigger.length, 0),
+        }),
+      effectCode: '血濡れの妃王',
+      targets: ['self'],
+    });
   },
 
   // ■ヘパイストスの炉炎
