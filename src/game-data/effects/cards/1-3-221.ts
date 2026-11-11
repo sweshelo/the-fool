@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onBreak: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -20,18 +21,18 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const targetDelta = stack.processing.delta.find(
-      delta => delta.source?.unit === stack.processing.id
-    );
-    const diff =
-      stack.processing.owner.field.filter(unit => unit.catalog.species?.includes('侍')).length *
-      1000;
-    if (targetDelta?.effect.type === 'bp') {
-      targetDelta.effect.diff = diff;
-    } else {
-      Effect.modifyBP(stack, stack.processing, stack.processing, diff, {
-        source: { unit: stack.processing.id },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) =>
+        Effect.dynamicBP(
+          stack,
+          stack.processing,
+          stack.processing,
+          self =>
+            self.owner.field.filter(unit => unit.catalog.species?.includes('侍')).length * 1000,
+          { source }
+        ),
+      targets: ['self'],
+      effectCode: '闘士',
+    });
   },
 };

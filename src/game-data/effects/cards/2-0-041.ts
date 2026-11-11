@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // 召喚時効果
@@ -30,25 +31,13 @@ export const effects: CardEffects = {
 
   // レベル2の時に【加護】を与える
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    // Lv2で加護がない場合: 加護を付与
-    if (
-      stack.processing.lv === 2 &&
-      !stack.processing.delta.find(delta => delta.source?.unit === stack.processing.id)
-    ) {
-      Effect.keyword(stack, stack.processing, stack.processing, '加護', {
-        source: { unit: stack.processing.id },
-      });
-    }
-
-    // Lv2以外で自分の効果による加護がある場合: 加護を除去
-    if (
-      stack.processing.lv !== 2 &&
-      stack.processing.delta.find(delta => delta.source?.unit === stack.processing.id)
-    ) {
-      stack.processing.delta = stack.processing.delta.filter(
-        delta => delta.source?.unit !== stack.processing.id
-      );
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) =>
+        Effect.keyword(stack, stack.processing, stack.processing, '加護', { source }),
+      targets: ['self'],
+      condition: target => target.lv === 2,
+      effectCode: '信仰の歪み',
+    });
   },
 
   // プレイヤーアタック時効果

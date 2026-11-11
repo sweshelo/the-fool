@@ -325,6 +325,9 @@ export class Stack implements IStack {
       this.processing = undefined;
     });
 
+    // フィールド効果が解決するまで呼び出し
+    this.recursiveResolveFieldEffect(core);
+
     // Log
     if (!this.type.startsWith('_'))
       console.log(
@@ -336,6 +339,13 @@ export class Stack implements IStack {
       );
 
     core.room.sync();
+  }
+
+  private async recursiveResolveFieldEffect(core: Core): Promise<void> {
+    this.processFieldEffect();
+    const hadChildren = this.children.length > 0;
+    await this.resolveChild(core);
+    if (hadChildren) this.recursiveResolveFieldEffect(core);
   }
 
   private async resolveChild(core: Core): Promise<void> {
@@ -515,7 +525,7 @@ export class Stack implements IStack {
           card.delta
             .map(delta => (delta.effect.type === 'cost' ? delta.effect.value : 0))
             .reduce((acc, cur) => acc + cur, 0);
-        player.cp.current -= cost;
+        player.cp.current -= Math.max(cost, 0);
         if (cost > 0) this.core.room.soundEffect('cp-consume');
         core.room.sync();
 

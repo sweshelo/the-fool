@@ -9,6 +9,7 @@ export const effects: CardEffects = {
     if (
       stack.processing.owner.purple &&
       stack.processing.owner.purple >= 3 &&
+      stack.core.room.rule.player.max.field > stack.processing.owner.field.length &&
       EffectHelper.isUnitSelectable(stack.core, filter, stack.processing.owner)
     ) {
       await System.show(stack, 'リボーン・オブ・ナイル', 'コスト2以下を【複製】し消滅');

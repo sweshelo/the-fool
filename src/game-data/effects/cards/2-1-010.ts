@@ -80,9 +80,7 @@ export const effects: CardEffects = {
       stack.target?.id === owner.opponent.id
     ) {
       await System.show(stack, '天命の一閃', 'ライフ+1');
-
-      // ライフを+1する（最大値を超えないように）
-      owner.life.current = Math.min(owner.life.current + 1, owner.life.max);
+      Effect.modifyLife(stack, stack.processing, stack.processing.owner, 1);
     }
   },
 };

@@ -1,20 +1,19 @@
-import { Delta } from '@/package/core/class/delta';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';
 import { Core } from '@/package/core';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // コスト減少（手札効果）
   handEffect(core: Core, self: Unit) {
-    const owner = self.owner;
-    const opponent = owner.opponent;
-    if (owner.hand.includes(self) && opponent.field.length >= 2 && owner.field.length === 0) {
-      if (!self.delta.find(delta => delta.source?.unit === self.id))
-        self.delta.push(new Delta({ type: 'cost', value: -3 }, { source: { unit: self.id } }));
-    } else {
-      self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) => Effect.modifyCost(self, -3, { source }),
+      targets: ['self'],
+      effectCode: 'わんわんどりーみん',
+      condition: target =>
+        target.owner.opponent.field.length >= 2 && target.owner.field.length === 0,
+    });
   },
 
   // フィールドに出た時: 相手ユニット1体破壊→自身の基本BP+破壊したユニットのBP

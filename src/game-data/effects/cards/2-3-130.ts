@@ -18,7 +18,7 @@ export const effects: CardEffects = {
       effect: (card, source) => Effect.ban(stack, stack.processing, card, { source }),
       effectCode: '禁忌の呪法',
       condition: card =>
-        stack.core.getTurnPlayer().id !== card.owner.id && card instanceof Intercept,
+        stack.core.getTurnPlayer().id === card.owner.id && card instanceof Intercept,
       targets: ['opponents', 'trigger'],
     });
   },

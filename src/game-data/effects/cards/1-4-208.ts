@@ -1,6 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // 【消滅効果耐性】
@@ -70,27 +71,14 @@ export const effects: CardEffects = {
 
   // フィールド効果：対戦相手のBP7000以上のユニットに防御禁止を与える
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // 対戦相手のフィールドのBP7000以上のユニットを対象にする
-    stack.processing.owner.opponent.field.forEach(unit => {
-      // BP7000以上のユニットか確認
-      if (unit.currentBP >= 7000) {
-        // 既にこのユニットが発行したDeltaが存在するか確認
-        const delta = unit.delta.find(
-          d => d.source?.unit === stack.processing.id && d.source?.effectCode === '裂帛の威令'
-        );
-
-        // 既にDeltaが存在しない場合のみ防御禁止を付与
-        if (!delta) {
-          Effect.keyword(stack, stack.processing, unit, '防御禁止', {
-            source: { unit: stack.processing.id, effectCode: '裂帛の威令' },
-          });
-        }
-      } else {
-        // BP7000未満になった場合、このユニットが付与した防御禁止を削除
-        unit.delta = unit.delta.filter(
-          d => !(d.source?.unit === stack.processing.id && d.source?.effectCode === '裂帛の威令')
-        );
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.keyword(stack, stack.processing, target, '防御禁止', { source });
+      },
+      condition: target => target instanceof Unit && target.currentBP >= 7000,
+      effectCode: '裂帛の威令',
+      targets: ['opponents'],
     });
   },
 };
