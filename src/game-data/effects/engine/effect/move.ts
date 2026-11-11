@@ -18,7 +18,8 @@ export function effectMove(
 
   const origin = cardFind.place.name;
 
-  if (!['hand', 'trigger', 'deck', 'trash', 'field', 'delete'].includes(origin)) {
+  // 2-0-050 [神の救済] は called 領域からのバウンスを可能とする
+  if (!['hand', 'trigger', 'deck', 'trash', 'field', 'delete', 'called'].includes(origin)) {
     throw new Error(`無効な移動元です: ${origin}`);
   }
 
@@ -57,6 +58,10 @@ export function effectMove(
       break;
     case 'delete':
       owner.delete = owner.delete.filter(c => c.id !== target.id);
+      break;
+    case 'called':
+      target.reset();
+      owner.called = owner.called.filter(c => c.id !== target.id);
       break;
   }
 
