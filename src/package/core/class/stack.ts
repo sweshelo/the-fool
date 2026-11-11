@@ -343,8 +343,9 @@ export class Stack implements IStack {
 
   private async recursiveResolveFieldEffect(core: Core): Promise<void> {
     this.processFieldEffect();
+    const hadChildren = this.children.length > 0;
     await this.resolveChild(core);
-    if (this.children.length > 0) this.recursiveResolveFieldEffect(core);
+    if (hadChildren) this.recursiveResolveFieldEffect(core);
   }
 
   private async resolveChild(core: Core): Promise<void> {
