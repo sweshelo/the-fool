@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   isBootable: (): boolean => {
@@ -20,7 +19,7 @@ export const effects: CardEffects = {
     );
     if (target) {
       await System.show(stack, 'トリック・オア・デス', 'インターセプトカードのコスト-1');
-      target.delta.push(new Delta({ type: 'cost', value: -1 }));
+      Effect.modifyCost(target, -1);
     }
   },
 };

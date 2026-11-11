@@ -1,7 +1,6 @@
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Intercept, Trigger, Unit } from '@/package/core/class/card';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // ■推理とは爆発だァ！
@@ -66,10 +65,9 @@ export const effects: CardEffects = {
     );
 
     if (redUnits.length > 0) {
-      // 注意: ユニットのIDを指定しないDeltaを生成
-      // これにより、ユニットがフィールドを離れても効果が持続する
+      // コストを減少
       for (const unit of redUnits) {
-        unit.delta.push(new Delta({ type: 'cost', value: -1 }));
+        Effect.modifyCost(unit, -1);
       }
     }
   },

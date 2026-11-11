@@ -2,49 +2,23 @@ import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // 手札の黄属性ユニットのコストを-1する
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const owner = stack.processing.owner;
-
-    // Check if player is the turn player
-    if (owner.id !== stack.core.getTurnPlayer().id) return;
-
-    // Check if no units have been summoned this turn by checking histories
-    const hasNotSummonedUnits = !stack.core.histories.some(
-      history =>
-        history.action === 'drive' &&
-        history.card.owner.id === owner.id &&
-        history.card instanceof Unit
-    );
-
-    // Apply or remove cost reduction to yellow units in hand
-    owner.hand.forEach(card => {
-      if (card.catalog.color === Color.YELLOW && card instanceof Unit) {
-        // Find delta from this card
-        const delta = card.delta.find(d => d.source?.unit === stack.processing.id);
-
-        if (delta && delta.effect.type === 'cost') {
-          if (!hasNotSummonedUnits) {
-            // Remove delta if condition is no longer met
-            card.delta = card.delta.filter(d => !(d.source?.unit === stack.processing.id));
-          }
-        } else if (hasNotSummonedUnits) {
-          // Add delta if condition is met
-          card.delta.push(
-            new Delta(
-              { type: 'cost', value: -1 },
-              {
-                source: {
-                  unit: stack.processing.id,
-                },
-              }
-            )
-          );
-        }
-      }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns', 'hand'],
+      effect: (target, source) => Effect.modifyCost(target, -1, { source }),
+      condition: target =>
+        target.catalog.color === Color.YELLOW &&
+        (target.catalog.type === 'advanced_unit' || target.catalog.type === 'unit') &&
+        stack.processing.owner.id === stack.core.getTurnPlayer().id &&
+        !EffectHelper.combo(stack.core, stack.processing, {
+          action: 'drive',
+          type: ['unit', 'advanced_unit'],
+        }),
+      effectCode: 'ビタミン供給',
     });
   },
 

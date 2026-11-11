@@ -101,7 +101,8 @@ export class Unit extends Card implements IUnit {
           !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限') &&
           !(delta.effect.type === 'bp') &&
           !(delta.effect.type === 'damage') &&
-          !(delta.effect.type === 'banned')
+          !(delta.effect.type === 'banned') &&
+          !(delta.effect.type === 'dynamic-bp')
       )
       .map(delta => {
         if (delta.effect.type === 'dynamic-cost') {
@@ -152,4 +153,47 @@ export class Unit extends Card implements IUnit {
   }
 }
 
-export class Evolve extends Unit implements IUnit {}
+export class Evolve extends Unit implements IUnit {
+  // 自身をコピーしたユニットを生成する
+  // BPやDeltaは恒久的なものとしてコピーする
+  /**
+   * @param owner コピーの所有者
+   * @param copy 【複製】かどうか
+   */
+  clone(owner: Player, copy: boolean = false): Unit {
+    const unit = new Evolve(owner, this.catalogId);
+    unit.bp = this.currentBP;
+    unit.isCopy = copy;
+    unit.delta = this.delta
+      .filter(
+        delta =>
+          !(delta.effect.type === 'keyword' && delta.effect.name === '行動制限') &&
+          !(delta.effect.type === 'bp') &&
+          !(delta.effect.type === 'damage') &&
+          !(delta.effect.type === 'banned') &&
+          !(delta.effect.type === 'dynamic-bp')
+      )
+      .map(delta => {
+        if (delta.effect.type === 'dynamic-cost') {
+          // dynamic-costは計算して固定化する
+          const cost = delta.calculator?.(this) ?? delta.effect.diff ?? 0;
+          return new Delta({
+            type: 'cost',
+            value: cost,
+          });
+        } else {
+          // デスカウンター / 寿命カウンター はそのまま維持、dynamic-costはcostに変換、それ以外は永続化
+          const isCounter = delta.effect.type === 'death' || delta.effect.type === 'life';
+          return new Delta(delta.effect, {
+            ...delta,
+            event: isCounter ? delta.event : undefined,
+            source: isCounter ? delta.source : undefined,
+          });
+        }
+      });
+    unit.active = this.active;
+    unit.lv = this.lv;
+    unit.isBooted = this.isBooted;
+    return unit;
+  }
+}

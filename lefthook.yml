@@ -1,7 +1,8 @@
 pre-commit:
   jobs:
     - name: lint
-      run: bunx oxlint {staged_files}
+      run: bunx oxlint --no-error-on-unmatched-pattern {staged_files}
+      glob: '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}'
 
     - name: ban as
       run: bunx eslint

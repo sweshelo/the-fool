@@ -1,6 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -10,24 +11,13 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    // 封神太極陣
-    const owner = stack.processing.owner;
-
-    owner.field.forEach(unit => {
-      // 既にこのユニットが発行したDeltaが存在するか確認
-      const delta = unit.delta.find(
-        d => d.source?.unit === stack.processing.id && d.source?.effectCode === '封神太極陣'
-      );
-
-      if (!delta) {
-        // 新しいDeltaを発行
-        Effect.modifyBP(stack, stack.processing, unit, 1000, {
-          source: {
-            unit: stack.processing.id,
-            effectCode: '封神太極陣',
-          },
-        });
-      }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit)
+          Effect.modifyBP(stack, stack.processing, target, 1000, { source });
+      },
+      effectCode: '封神太極陣',
+      targets: ['owns'],
     });
   },
 

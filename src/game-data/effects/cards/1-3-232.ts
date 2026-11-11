@@ -1,6 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>): Promise<void> => {
@@ -21,16 +22,15 @@ export const effects: CardEffects = {
   },
 
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.opponent.field
-      .filter(
-        unit =>
-          unit.catalog.cost <= 2 &&
-          !unit.delta.some(delta => delta.source?.unit === stack.processing.id)
-      )
-      .forEach(unit =>
-        Effect.keyword(stack, stack.processing, unit, '攻撃禁止', {
-          source: { unit: stack.processing.id },
-        })
-      );
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.keyword(stack, stack.processing, target, '攻撃禁止', { source });
+        }
+      },
+      condition: target => target.catalog.cost <= 2,
+      effectCode: '世界の真理',
+      targets: ['opponents'],
+    });
   },
 };

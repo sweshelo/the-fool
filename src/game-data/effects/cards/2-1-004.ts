@@ -1,50 +1,24 @@
 import { Unit } from '@/package/core/class/card';
-import { Effect, EffectHelper, System } from '..';
+import { Effect, EffectHelper } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Color } from '@/submodule/suit/constant/color';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '@/game-data/effects/engine/permanent';
 
 export const effects: CardEffects = {
   // 手札の赤属性ユニットのコストを-1する
   fieldEffect: (stack: StackWithCard<Unit>) => {
-    const owner = stack.processing.owner;
-
-    // Check if player is the turn player
-    if (owner.id !== stack.core.getTurnPlayer().id) return;
-
-    // Check if no units have been summoned this turn by checking histories
-    const hasNotSummonedUnits = !stack.core.histories.some(
-      history =>
-        history.action === 'drive' &&
-        history.card.owner.id === owner.id &&
-        history.card instanceof Unit
-    );
-
-    // Apply or remove cost reduction to red units in hand
-    owner.hand.forEach(card => {
-      if (card.catalog.color === Color.RED && card instanceof Unit) {
-        // Find delta from this card
-        const delta = card.delta.find(d => d.source?.unit === stack.processing.id);
-
-        if (delta && delta.effect.type === 'cost') {
-          if (!hasNotSummonedUnits) {
-            // Remove delta if condition is no longer met
-            card.delta = card.delta.filter(d => !(d.source?.unit === stack.processing.id));
-          }
-        } else if (hasNotSummonedUnits) {
-          // Add delta if condition is met
-          card.delta.push(
-            new Delta(
-              { type: 'cost', value: -1 },
-              {
-                source: {
-                  unit: stack.processing.id,
-                },
-              }
-            )
-          );
-        }
-      }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns', 'hand'],
+      effect: (target, source) => Effect.modifyCost(target, -1, { source }),
+      condition: target =>
+        target.catalog.color === Color.RED &&
+        (target.catalog.type === 'advanced_unit' || target.catalog.type === 'unit') &&
+        stack.processing.owner.id === stack.core.getTurnPlayer().id &&
+        !EffectHelper.combo(stack.core, stack.processing, {
+          action: 'drive',
+          type: ['unit', 'advanced_unit'],
+        }),
+      effectCode: '甘い誘い',
     });
   },
 
@@ -52,16 +26,14 @@ export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard<Unit>) => {
     // Find opponent units
     const targetsFilter = (unit: Unit) => unit.owner.id !== stack.processing.owner.id;
-    const targets_selectable = EffectHelper.isUnitSelectable(
+    const isSelectable = EffectHelper.isUnitSelectable(
       stack.core,
       targetsFilter,
       stack.processing.owner
     );
 
-    if (targets_selectable) {
-      const damage = stack.processing.lv >= 2 ? 4000 : 1000;
-      await System.show(stack, 'ストロベリーファイア♪', `対戦相手のユニットに${damage}ダメージ`);
-
+    const damage = stack.processing.lv >= 2 ? 4000 : 1000;
+    const strawberryFire = async () => {
       // Select target unit
       const [target] = await EffectHelper.pickUnit(
         stack,
@@ -72,8 +44,16 @@ export const effects: CardEffects = {
 
       // Deal damage
       Effect.damage(stack, stack.processing, target, damage);
-    } else {
-      await System.show(stack, '甘い誘い', '手札の赤属性のコスト-1');
-    }
+    };
+
+    await EffectHelper.combine(stack, [
+      {
+        title: 'ストロベリーファイア♪',
+        description: `対戦相手のユニットに${damage}ダメージ`,
+        effect: strawberryFire,
+        condition: isSelectable,
+      },
+      { title: '甘い誘い', description: '手札の赤属性のコスト-1', effect: () => {} },
+    ]);
   },
 };
