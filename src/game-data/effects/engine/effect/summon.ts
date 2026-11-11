@@ -13,7 +13,7 @@ export async function effectSummon(
   const hasFieldSpace = target.owner.field.length < stack.core.room.rule.player.max.field;
   const isNotEvolve = !(target instanceof Evolve);
 
-  if (hasFieldSpace && isNotEvolve) {
+  if (hasFieldSpace && (isNotEvolve || isCopy)) {
     const exist = target.owner.find(target);
     if (exist.result && exist.place && exist.place?.name !== 'field') {
       target.owner[exist.place.name] = target.owner[exist.place.name].filter(
