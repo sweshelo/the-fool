@@ -298,10 +298,27 @@ export class Server {
           break;
         case 'core':
           const room = this.getRoom(client);
+
+          // 送信者が参加済みのプレイヤー本人であることを検証する（なりすまし防止）
+          const sender = this.clients.get(client)?.playerId;
+          if (!sender || room.clients.get(sender) !== client) {
+            throw new ServerError(
+              'ルームに参加していないクライアントからの操作です。',
+              ErrorCode.ROOM_NOT_FOUND
+            );
+          }
+          if ('player' in payload && payload.player !== sender) {
+            throw new ServerError(
+              '他のプレイヤーとしての操作は許可されていません。',
+              ErrorCode.GAME_INVALID_MOVE
+            );
+          }
+
           // oxlint-disable-next-line no-floating-promises
-          room?.core.handleMessage(message).catch(e => {
+          room.core.handleMessage(message).catch(e => {
             console.error('メッセージハンドリング中にエラーが発生しました。', e);
-            room.broadcastToPlayer(room.core.getTurnPlayer().id, MessageHelper.defrost());
+            // ここで例外を投げるとプロセス全体が停止するため、送信者に直接 defrost を返す
+            if (client.readyState === 1) client.send(JSON.stringify(MessageHelper.defrost()));
           });
           break;
         case 'server':
@@ -543,6 +560,10 @@ export class Server {
     // ルーム作成
     const room = new Room(`Matching: ${mode}`, rule);
     room.matchingMode = mode;
+    room.reservedPlayers = new Map([
+      [player1.player.id, player1.player],
+      [player2.player.id, player2.player],
+    ]);
     this.rooms.set(room.id, room);
 
     // ルーム作成ログを記録

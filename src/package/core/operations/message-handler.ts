@@ -48,6 +48,15 @@ export async function handleMessage(core: Core, message: Message) {
     core.room.logger.logAction(core, message);
   }
 
+  // デバッグ用アクションはルールでデバッグが有効化されている場合のみ受け付ける
+  const isDebugAction =
+    message.payload.type === 'DebugDraw' ||
+    message.payload.type === 'DebugMake' ||
+    message.payload.type === 'DebugDrive';
+  if (isDebugAction && !core.room.rule.debug?.enable) {
+    throw new Error('デバッグ機能が無効なルームでデバッグ操作が要求されました');
+  }
+
   switch (message.payload.type) {
     case 'Choose': {
       const payload: ChoosePayload = message.payload;
