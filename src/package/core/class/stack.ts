@@ -328,7 +328,7 @@ export class Stack implements IStack {
     });
 
     // フィールド効果が解決するまで呼び出し
-    this.recursiveResolveFieldEffect(core);
+    await this.recursiveResolveFieldEffect(core);
 
     // 勝敗をチェック
     const loser = core.players.filter(player => player.life.current <= 0);

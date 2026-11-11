@@ -12,11 +12,26 @@ export const effects: CardEffects = {
       stack.processing.owner
     ),
   onDrive: async (stack: StackWithCard) => {
-    const field = [...stack.processing.owner.field, ...stack.processing.owner.opponent.field];
     const [choice] =
       (await EffectHelper.choice(stack, stack.processing.owner, '選略・海精の悪戯', [
-        { id: '1', description: 'レベル+1', condition: field.some(unit => unit.lv === 1) },
-        { id: '2', description: 'レベル-1', condition: field.some(unit => unit.lv === 3) },
+        {
+          id: '1',
+          description: 'レベル+1',
+          condition: EffectHelper.isUnitSelectable(
+            stack.core,
+            unit => unit.lv === 1,
+            stack.processing.owner
+          ),
+        },
+        {
+          id: '2',
+          description: 'レベル-1',
+          condition: EffectHelper.isUnitSelectable(
+            stack.core,
+            unit => unit.lv === 3,
+            stack.processing.owner
+          ),
+        },
       ])) ?? [];
 
     switch (choice) {

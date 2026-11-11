@@ -15,7 +15,8 @@ export const effects: CardEffects = {
         {
           id: '1',
           description: '【魔導士】を【特殊召喚】',
-          condition: stack.processing.owner.trash.some(filter),
+          condition:
+            stack.processing.owner.trash.some(filter) && stack.processing.owner.field.length <= 4,
         },
         { id: '2', description: '自身のレベル+2' },
       ])) ?? [];
