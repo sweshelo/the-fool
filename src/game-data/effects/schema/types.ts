@@ -30,7 +30,9 @@ export type OnEffectMethod =
  * Type for card effect methods starting with "check"
  * These methods return Promise<boolean>
  */
-export type CheckEffectMethod = (stack: StackWithCard<Card>) => Promise<boolean> | boolean;
+export type CheckEffectMethod = (
+  stack: StackWithCard<Card>
+) => Promise<boolean> | boolean | undefined;
 
 /**
  * Type for checkJoker method

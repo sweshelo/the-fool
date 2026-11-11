@@ -549,8 +549,11 @@ export class Stack implements IStack {
         // 発動したインターセプトカードを捨札に送る
         if (card.remain <= 0) {
           card.reset();
-          player.called = player.called.filter(c => c.id !== card.id);
-          player.trash.push(card);
+          // called 領域からカードが無くなっていない場合
+          if (player.called.some(c => c.id === card.id)) {
+            player.called = player.called.filter(c => c.id !== card.id);
+            player.trash.push(card);
+          }
         }
         core.room.sync();
 
