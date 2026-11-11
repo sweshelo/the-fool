@@ -1,9 +1,6 @@
-import { Color } from '@/submodule/suit/constant/color';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { Unit } from '@/package/core/class/card';
-
-const TARGET_COLOR = Color.PURPLE;
 
 export const effects: CardEffects = {
   checkAttack: (stack: StackWithCard) => {
@@ -11,9 +8,7 @@ export const effects: CardEffects = {
       stack.processing.owner.id !== stack.source.id &&
       !!stack.processing.owner.trash.find(
         card =>
-          card.catalog.type === 'unit' &&
-          card.catalog.cost <= (stack.processing.owner.purple ?? 0) &&
-          card.catalog.color === TARGET_COLOR
+          card.catalog.type === 'unit' && card.catalog.cost <= (stack.processing.owner.purple ?? 0)
       ) &&
       stack.processing.owner.field.length <= 4
     );
@@ -23,9 +18,7 @@ export const effects: CardEffects = {
     const [target] = EffectHelper.random(
       stack.processing.owner.trash.filter(
         card =>
-          card.catalog.type === 'unit' &&
-          card.catalog.cost <= (stack.processing.owner.purple ?? 0) &&
-          card.catalog.color === TARGET_COLOR
+          card.catalog.type === 'unit' && card.catalog.cost <= (stack.processing.owner.purple ?? 0)
       )
     );
     if (!target || !(target instanceof Unit)) throw new Error('2-1-058: 不正なTarget');
