@@ -59,6 +59,10 @@ export function effectMove(
     case 'delete':
       owner.delete = owner.delete.filter(c => c.id !== target.id);
       break;
+    case 'called':
+      target.reset();
+      owner.called = owner.called.filter(c => c.id !== target.id);
+      break;
   }
 
   const controllableArea = ['field', 'hand', 'trigger'];
