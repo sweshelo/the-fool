@@ -1,6 +1,7 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import { Effect, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   //【貫通】
@@ -20,32 +21,24 @@ export const effects: CardEffects = {
 
   //闘士／昆虫・悪魔：フィールドの【昆虫】と【悪魔】1体につき+1000される
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // すでに自身が発行したDeltaがあるか確認
-    const delta = stack.processing.delta.find(
-      delta =>
-        delta.source?.unit === stack.processing.id &&
-        delta.source?.effectCode === '闘士／昆虫・悪魔'
-    );
-
-    // 自分フィールドにいる【昆虫】と【悪魔】ユニットの数をカウント
-    const bugandDevilCount = stack.processing.owner.field.filter(
-      unit => unit.catalog.species?.includes('昆虫') || unit.catalog.species?.includes('悪魔')
-    ).length;
-
-    // BP増加量を計算
-    const bpBoost = bugandDevilCount * 1000;
-
-    if (delta && delta.effect.type === 'bp') {
-      // Deltaを更新
-      delta.effect.diff = bpBoost;
-    } else {
-      // 新規にDeltaを生成
-      Effect.modifyBP(stack, stack.processing, stack.processing, bpBoost, {
-        source: {
-          unit: stack.processing.id,
-          effectCode: '闘士／昆虫・悪魔',
-        },
-      });
-    }
+    PermanentEffect.mount(stack.processing, {
+      effect: (target, source) => {
+        if (target instanceof Unit) {
+          Effect.dynamicBP(
+            stack,
+            stack.processing,
+            target,
+            self =>
+              self.owner.field.filter(
+                unit =>
+                  unit.catalog.species?.includes('昆虫') || unit.catalog.species?.includes('悪魔')
+              ).length * 1000,
+            { source }
+          );
+        }
+      },
+      effectCode: '闘士／昆虫・悪魔',
+      targets: ['self'],
+    });
   },
 };

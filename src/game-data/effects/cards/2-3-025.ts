@@ -1,5 +1,7 @@
+import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 自身が召喚された時に発動する効果を記述
@@ -44,17 +46,16 @@ export const effects: CardEffects = {
     }
   },
 
-  fieldEffect: stack => {
-    stack.processing.owner.field
-      .filter(
-        unit =>
-          unit.catalog.species?.includes('魔導士') &&
-          !unit.delta.find(delta => delta.source?.unit === stack.processing.id)
-      )
-      .forEach(unit => {
-        Effect.modifyBP(stack, stack.processing, unit, unit.catalog.cost * 1000, {
-          source: { unit: stack.processing.id },
-        });
-      });
+  fieldEffect: (stack: StackWithCard<Unit>) => {
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      condition: unit => unit.catalog.species?.includes('魔導士'),
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.modifyBP(stack, stack.processing, unit, unit.catalog.cost * 1000, { source });
+        }
+      },
+      effectCode: '慈母の寵愛',
+    });
   },
 };

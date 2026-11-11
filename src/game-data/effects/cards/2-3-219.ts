@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // このユニットがフィールドに出た時、あなたはカードを1枚引き、コストを-2する。
@@ -16,35 +16,22 @@ export const effects: CardEffects = {
     // カードを1枚引く
     const card = EffectTemplate.draw(stack.processing.owner, stack.core);
     if (card) {
-      card.delta.push(new Delta({ type: 'cost', value: -2 }));
+      Effect.modifyCost(card, -2);
     }
   },
 
   // あなたの【四聖獣】ユニットに【秩序の盾】を与える（フィールド効果）
   fieldEffect: (stack: StackWithCard<Unit>): void => {
-    // 自分の四聖獣ユニットを取得
-    const fourGodUnits = stack.processing.owner.field.filter(unit =>
-      unit.catalog.species?.includes('四聖獣')
-    );
-
-    // 各四聖獣ユニットに【秩序の盾】を付与
-    for (const unit of fourGodUnits) {
-      // このカードから既に付与された【秩序の盾】があるか確認
-      const orderShieldDelta = unit.delta.find(
-        delta =>
-          delta.source?.unit === stack.processing.id &&
-          delta.source.effectCode === '秩序の盾' &&
-          delta.effect.type === 'keyword' &&
-          delta.effect.name === '秩序の盾'
-      );
-
-      // まだ付与されていない場合は付与する
-      if (!orderShieldDelta) {
-        Effect.keyword(stack, stack.processing, unit, '秩序の盾', {
-          source: { unit: stack.processing.id, effectCode: '秩序の盾' },
-        });
-      }
-    }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      condition: unit => unit.catalog.species?.includes('四聖獣'),
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '秩序の盾', { source });
+        }
+      },
+      effectCode: '秩序の盾',
+    });
   },
 
   // あなたの【四聖獣】が戦闘で勝利した時、あなたのデッキからコスト4以下の【四聖獣】をランダムで1体【特殊召喚】する。

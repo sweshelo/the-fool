@@ -1,5 +1,4 @@
 import { Unit } from '@/package/core/class/card';
-import { Delta } from '@/package/core/class/delta';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 
@@ -63,6 +62,6 @@ export const effects: CardEffects = {
           unit.catalog.name === '牽牛星アルタイル' ||
           unit.catalog.name === '天川星デネブ'
       )
-      .forEach(card => card.delta.push(new Delta({ type: 'cost', value: -1 })));
+      .forEach(card => Effect.modifyCost(card, -1));
   },
 };

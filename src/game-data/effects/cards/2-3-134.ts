@@ -1,7 +1,7 @@
 import { Unit } from '@/package/core/class/card';
 import { EffectHelper, System, Effect } from '..';
 import type { StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects = {
   // 自身が召喚された時に発動する効果を記述
@@ -28,13 +28,12 @@ export const effects = {
   },
 
   handEffect: (core: unknown, self: Unit) => {
-    if (!self.delta.some(delta => delta.source?.unit === self.id)) {
-      if (!self.owner.purple || self.owner.purple <= 3)
-        self.delta.push(new Delta({ type: 'cost', value: -1 }, { source: { unit: self.id } }));
-    } else {
-      if (self.owner.purple && self.owner.purple > 3)
-        self.delta = self.delta.filter(delta => delta.source?.unit !== self.id);
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) => Effect.modifyCost(target, -1, { source }),
+      effectCode: '破壊光線',
+      targets: ['self'],
+      condition: target => !target.owner.purple || target.owner.purple <= 3,
+    });
   },
 
   onModifyPurple: async (stack: StackWithCard<Unit>) => {

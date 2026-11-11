@@ -44,11 +44,7 @@ export const effects: CardEffects = {
       // ②: 自分の全ユニットの【沈黙】を除去
       await System.show(stack, 'ヴァイス・オア・シュヴァルツ', '【沈黙】を除去');
       for (const unit of silencedUnits) {
-        if (unit.delta) {
-          unit.delta = unit.delta.filter(
-            delta => !(delta.effect.type === 'keyword' && delta.effect.name === '沈黙')
-          );
-        }
+        Effect.removeKeyword(stack, unit, '沈黙');
       }
     }
   },

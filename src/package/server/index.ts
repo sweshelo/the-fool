@@ -23,6 +23,7 @@ import { PlayCreditService } from '@/package/server/credits';
 import type { MatchingMode, QueuedPlayer, MatchResult } from './matching';
 import { config } from '@/config';
 import type { Rule } from '@/submodule/suit/types';
+import { Terminate } from '@/package/core/class/terminate';
 
 class ServerError extends Error {
   constructor(
@@ -316,6 +317,7 @@ export class Server {
 
           // oxlint-disable-next-line no-floating-promises
           room.core.handleMessage(message).catch(e => {
+            if (e instanceof Terminate) return;
             console.error('メッセージハンドリング中にエラーが発生しました。', e);
             // ここで例外を投げるとプロセス全体が停止するため、送信者に直接 defrost を返す
             if (client.readyState === 1) client.send(JSON.stringify(MessageHelper.defrost()));

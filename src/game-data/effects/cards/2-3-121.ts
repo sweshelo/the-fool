@@ -1,7 +1,6 @@
 import { Unit } from '@/package/core/class/card';
 import { Effect, EffectHelper, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
-import { Delta } from '@/package/core/class/delta';
 
 export const effects: CardEffects = {
   // 神々のロンド - When summoned, add up to 3 random units from trash to hand
@@ -73,6 +72,6 @@ export const effects: CardEffects = {
     Effect.bounce(stack, stack.processing, stack.processing, 'hand');
 
     // Reduce cost by 2
-    stack.processing.delta.push(new Delta({ type: 'cost', value: -2 }, { permanent: true }));
+    Effect.modifyCost(stack.processing, -2, { permanent: true });
   },
 };

@@ -1,7 +1,7 @@
-import { Delta } from '@/package/core/class/delta';
 import { Effect, EffectHelper, EffectTemplate, System } from '..';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import type { Unit } from '@/package/core/class/card';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   // 【スピードムーブ】【消滅効果耐性】（召喚時付与）
@@ -24,23 +24,15 @@ export const effects: CardEffects = {
 
   // 手札のこのカードのコスト減少
   handEffect(_core: unknown, self: Unit) {
-    const delta = self.delta.find(delta => delta.source?.unit === self.id);
-    const reduce = Math.max(-self.owner.hand.length, -6);
-
-    if (delta && delta.effect.type === 'cost') {
-      delta.effect.value = reduce;
-    } else {
-      self.delta.push(
-        new Delta(
-          { type: 'cost', value: reduce },
-          {
-            source: {
-              unit: self.id,
-            },
-          }
-        )
-      );
-    }
+    PermanentEffect.mount(self, {
+      effect: (target, source) =>
+        Effect.dynamicCost(target, {
+          source,
+          calculator: () => -self.owner.hand.length,
+        }),
+      effectCode: '未来のために',
+      targets: ['self'],
+    });
   },
 
   // プレイヤーアタック成功時、選略

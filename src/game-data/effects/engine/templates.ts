@@ -62,7 +62,7 @@ export class EffectTemplate {
    * [援軍]効果
    * @param player ドローするプレイヤー
    * @param match サーチする条件
-   * @returns void
+   * @returns ドローしたカード／ドローしなかった場合は undefined
    */
   static reinforcements(
     stack: Stack,

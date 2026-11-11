@@ -49,6 +49,9 @@ export class Unit extends Card implements IUnit {
     this.bp = catalog?.bp?.[this.lv - 1] ?? 0;
   }
 
+  /**
+   * 効果による変動を考慮して、現在の実際のBPを返却します。
+   */
   get currentBP() {
     return (
       this.bp +

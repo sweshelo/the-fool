@@ -1,8 +1,9 @@
-import type { Unit } from '@/package/core/class/card';
+import { Unit } from '@/package/core/class/card';
 import type { CardEffects, StackWithCard } from '../schema/types';
 import { System } from '../engine/system';
 import { Effect } from '../engine/effect';
 import { EffectTemplate } from '../engine/templates';
+import { PermanentEffect } from '../engine/permanent';
 
 export const effects: CardEffects = {
   onDriveSelf: async (stack: StackWithCard) => {
@@ -16,17 +17,15 @@ export const effects: CardEffects = {
     }
   },
   fieldEffect: (stack: StackWithCard) => {
-    stack.processing.owner.field.forEach(unit => {
-      if (unit.lv >= 3 && !unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        Effect.keyword(stack, stack.processing, unit, '貫通', {
-          source: { unit: stack.processing.id, effectCode: '風遁・鎌鼬' },
-        });
-      }
-      if (unit.lv < 3 && unit.delta.some(delta => delta.source?.unit === stack.processing.id)) {
-        Effect.removeKeyword(stack, unit, '貫通', {
-          source: { unit: stack.processing.id, effectCode: '風遁・鎌鼬' },
-        });
-      }
+    PermanentEffect.mount(stack.processing, {
+      targets: ['owns'],
+      condition: unit => unit.lv >= 3,
+      effect: (unit, source) => {
+        if (unit instanceof Unit) {
+          Effect.keyword(stack, stack.processing, unit, '貫通', { source });
+        }
+      },
+      effectCode: '風遁・鎌鼬',
     });
   },
 };
